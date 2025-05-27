@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Test Runner",
+            "preLaunchTask": "Build All Tools (All Platforms)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Binaries/TestRunner-Windows-X64",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "logging": {
+                "engineLogging": false,
+                "moduleLoad": false,
+                "exceptions": true,
+                "processExit": true,
+                "programOutput": true,
+                "threadExit": true
+            }
+        }
+    ]
+}

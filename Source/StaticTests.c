@@ -1,0 +1,38 @@
+/**
+ * This file is supposed to contain some static tests for the project.
+ * These are meant to be very basic that check some of the assumptions made in the codebase.
+ * Good idea to avoid functions here, or at least keep them very simple.
+ * Important to also prefix the declarations with `PNSLR_StaticTests_` to avoid conflicts with other code.
+ * These tests will be included the last in the compilation process,
+ * so they can be used to verify that the code is working as expected.
+ */
+
+#include "__Prelude.h"
+
+typedef struct PNSLR_StaticTests_OffsetTestStruct
+{
+    i32 a;
+    i32 b;
+} PNSLR_StaticTests_OffsetTestStruct;
+
+static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, a) == 0, "Offset of 'a' should be 0");
+static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, b) == 4, "Offset of 'b' should be 4");
+
+// ensure all platform macros are defined, and exactly one is set
+static_assert((PNSLR_WINDOWS + PNSLR_LINUX + PNSLR_OSX + PNSLR_ANDROID + PNSLR_IOS + PNSLR_PS5 + PNSLR_XSERIES + PNSLR_SWITCH) == 1, "Exactly one platform must be defined.");
+
+// ensure all architecture macros are defined, and exactly one is set
+static_assert((PNSLR_X64 + PNSLR_ARM64) == 1, "Exactly one architecture must be defined.");
+
+// primitive type size assertions
+static_assert(sizeof(b8)  == 1, " b8 must be 1 byte ");
+static_assert(sizeof(u8)  == 1, " u8 must be 1 byte ");
+static_assert(sizeof(i8)  == 1, " i8 must be 1 byte ");
+static_assert(sizeof(u16) == 2, "u16 must be 2 bytes");
+static_assert(sizeof(i16) == 2, "i16 must be 2 bytes");
+static_assert(sizeof(u32) == 4, "u32 must be 4 bytes");
+static_assert(sizeof(i32) == 4, "i32 must be 4 bytes");
+static_assert(sizeof(f32) == 4, "f32 must be 4 bytes");
+static_assert(sizeof(u64) == 8, "u64 must be 8 bytes");
+static_assert(sizeof(i64) == 8, "i64 must be 8 bytes");
+static_assert(sizeof(f64) == 8, "f64 must be 8 bytes");

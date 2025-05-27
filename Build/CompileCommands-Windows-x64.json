@@ -1,0 +1,20 @@
+[
+    {
+        "directory": "..",
+        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/",
+        "file": "Source/zzzz_Unity.c",
+        "output": "Temp/unity-windows-x64.obj"
+    },
+    {
+        "directory": "..",
+        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /std:c11 Tools/TestRunner/TestRunner.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/ /ISource/ /FoTemp/test-runner-windows-x64.obj /FeBinaries/TestRunner-Windows-X64.exe",
+        "file": "Tools/TestRunner/TestRunner.c",
+        "output": "Binaries/TestRunner-Windows-X64.exe"
+    },
+    {
+        "directory": "..",
+        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /std:c11 Tools/BindGen/BindingsGenerator.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/ /ISource/ /FoTemp/bind-gen-windows-x64.obj /FeBinaries/BindingsGenerator-Windows-X64.exe",
+        "file": "Tools/BindGen/BindingsGenerator.c",
+        "output": "Binaries/BindingsGenerator-WIndows-X64.exe"
+    }
+]
