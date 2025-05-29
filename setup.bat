@@ -74,7 +74,7 @@ if "!NDK_ROOT!" neq "" (
 rem Set up symlinks for toolchains =================================================
 
 rem Remove existing symlinks in Toolchains directory
-for /f "delims=" %%L in ('dir Toolchains\ /a:l /b') do (
+for /f "delims=" %%L in ('dir Toolchains\ /a:l /b 2^>nul') do (
     if exist "Toolchains\%%L\" (
         rmdir "Toolchains\%%L" /s /q >nul 2>&1 || (
             echo WARNING: Failed to remove existing symlink "Toolchains\%%L". It may be in use or require admin privileges.
