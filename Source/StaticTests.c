@@ -18,6 +18,9 @@ typedef struct PNSLR_StaticTests_OffsetTestStruct
 static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, a) == 0, "Offset of 'a' should be 0");
 static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, b) == 4, "Offset of 'b' should be 4");
 
+// ensure all compiler macros are defined, and exactly one is set
+static_assert((PNSLR_CLANG + PNSLR_GCC + PNSLR_MSVC) == 1, "Exactly one compiler must be defined.");
+
 // ensure all platform macros are defined, and exactly one is set
 static_assert((PNSLR_WINDOWS + PNSLR_LINUX + PNSLR_OSX + PNSLR_ANDROID + PNSLR_IOS + PNSLR_PS5 + PNSLR_XSERIES + PNSLR_SWITCH) == 1, "Exactly one platform must be defined.");
 
@@ -30,6 +33,7 @@ static_assert(sizeof(u8)  == 1, " u8 must be 1 byte ");
 static_assert(sizeof(i8)  == 1, " i8 must be 1 byte ");
 static_assert(sizeof(u16) == 2, "u16 must be 2 bytes");
 static_assert(sizeof(i16) == 2, "i16 must be 2 bytes");
+static_assert(sizeof(b32) == 4, "b32 must be 4 bytes");
 static_assert(sizeof(u32) == 4, "u32 must be 4 bytes");
 static_assert(sizeof(i32) == 4, "i32 must be 4 bytes");
 static_assert(sizeof(f32) == 4, "f32 must be 4 bytes");
