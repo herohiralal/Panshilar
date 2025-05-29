@@ -1,18 +1,10 @@
-#include "Intrinsics.h"
+#include "Compiler.h"
 
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Weverything"
-#elif defined(__GNUC__)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Weverything"
-#elif defined(_MSC_VER)
-    #pragma warning(push, 0)
-#endif
+PRAGMA_SUPPRESS_WARNINGS
 
-#if defined(__GNUC__) || defined(__clang__)
+#if PNSLR_CLANG || PNSLR_GCC
     #include <stdlib.h>
-#elif defined(_MSC_VER)
+#elif PNSLR_MSVC
     #include <malloc.h>
     #define aligned_alloc(alignment, size) _aligned_malloc(size, alignment)
 #else
@@ -21,13 +13,9 @@
 
 #include <string.h>
 
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#elif defined(__GNUC__)
-    #pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-    #pragma warning(pop)
-#endif
+PRAGMA_REENABLE_WARNINGS
+
+#include "Intrinsics.h"
 
 #ifndef NULL
     #define NULL ((void*)0)

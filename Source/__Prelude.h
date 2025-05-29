@@ -10,104 +10,56 @@
 
 // platform
 
-#if defined(PNSLR_WINDOWS)
-    #define PNSLR_LINUX 0
-    #define PNSLR_OSX 0
-    #define PNSLR_ANDROID 0
-    #define PNSLR_IOS 0
-    #define PNSLR_PS5 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_LINUX)
+#ifndef PNSLR_WINDOWS
     #define PNSLR_WINDOWS 0
-    #define PNSLR_OSX 0
-    #define PNSLR_ANDROID 0
-    #define PNSLR_IOS 0
-    #define PNSLR_PS5 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_OSX)
-    #define PNSLR_WINDOWS 0
+#endif
+#ifndef PNSLR_LINUX
     #define PNSLR_LINUX 0
-    #define PNSLR_ANDROID 0
-    #define PNSLR_IOS 0
-    #define PNSLR_PS5 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_ANDROID)
-    #define PNSLR_WINDOWS 0
-    #define PNSLR_LINUX 0
+#endif
+#ifndef PNSLR_OSX
     #define PNSLR_OSX 0
-    #define PNSLR_IOS 0
-    #define PNSLR_PS5 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_IOS)
-    #define PNSLR_WINDOWS 0
-    #define PNSLR_LINUX 0
-    #define PNSLR_OSX 0
+#endif
+#ifndef PNSLR_ANDROID
     #define PNSLR_ANDROID 0
-    #define PNSLR_PS5 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_PS5)
-    #define PNSLR_WINDOWS 0
-    #define PNSLR_LINUX 0
-    #define PNSLR_OSX 0
-    #define PNSLR_ANDROID 0
+#endif
+#ifndef PNSLR_IOS
     #define PNSLR_IOS 0
-    #define PNSLR_XSERIES 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_XSERIES)
-    #define PNSLR_WINDOWS 0
-    #define PNSLR_LINUX 0
-    #define PNSLR_OSX 0
-    #define PNSLR_ANDROID 0
-    #define PNSLR_IOS 0
+#endif
+#ifndef PNSLR_PS5
     #define PNSLR_PS5 0
-    #define PNSLR_SWITCH 0
-#elif defined(PNSLR_SWITCH)
-    #define PNSLR_WINDOWS 0
-    #define PNSLR_LINUX 0
-    #define PNSLR_OSX 0
-    #define PNSLR_ANDROID 0
-    #define PNSLR_IOS 0
-    #define PNSLR_PS5 0
+#endif
+#ifndef PNSLR_XSERIES
     #define PNSLR_XSERIES 0
-#else
-    #error "No platform defined."
+#endif
+#ifndef PNSLR_SWITCH
+    #define PNSLR_SWITCH 0
 #endif
 
 // architecture
 
-#if defined(PNSLR_X64)
-    #define PNSLR_ARM64 0
-#elif defined(PNSLR_ARM64)
+#ifndef PNSLR_X64
     #define PNSLR_X64 0
-#else
-    #error "No architecture defined."
+#endif
+#ifndef PNSLR_ARM64
+    #define PNSLR_ARM64 0
 #endif
 
 // derived
 
-#define PNSLR_UNIX (PNSLR_LINUX || PNSLR_OSX || PNSLR_ANDROID || PNSLR_IOS)
+#define PNSLR_UNIX    (PNSLR_LINUX || PNSLR_OSX || PNSLR_ANDROID || PNSLR_IOS)
 #define PNSLR_DESKTOP (PNSLR_WINDOWS || PNSLR_LINUX || PNSLR_OSX)
-#define PNSLR_MOBILE (PNSLR_ANDROID || PNSLR_IOS)
+#define PNSLR_MOBILE  (PNSLR_ANDROID || PNSLR_IOS)
 #define PNSLR_CONSOLE (PNSLR_PS5 || PNSLR_XSERIES || PNSLR_SWITCH)
 
 // Includes ========================================================================
 
+// always include this first and outside the implementation block
+// it contains some important macros that we'll use
+#include "Dependencies/PNSLR_Intrinsics/Compiler.h"
+
 #ifdef PNSLR_IMPLEMENTATION
 
-    #if defined(__clang__)
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Weverything"
-    #elif defined(__GNUC__)
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Weverything"
-    #elif defined(_MSC_VER)
-        #pragma warning(push, 0)
-    #endif
+    PRAGMA_SUPPRESS_WARNINGS
 
     #if PNSLR_WINDOWS
         #include <Windows.h>
@@ -134,59 +86,13 @@
         #include <android/native_activity.h>
     #endif
 
-    #if defined(__clang__)
-        #pragma clang diagnostic pop
-    #elif defined(__GNUC__)
-        #pragma GCC diagnostic pop
-    #elif defined(_MSC_VER)
-        #pragma warning(pop)
-    #endif
+    PRAGMA_REENABLE_WARNINGS
 
 #endif
 
 // always include this last and outside the implementation block
 // it contains some important macros/typedefs that we'll use
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
-
-// Macros ==========================================================================
-
-#if !defined(__cplusplus)
-
-    #if defined(offsetof)
-        #undef offsetof // avoid conflict with stddef.h, if somehow inherited
-    #endif
-
-    #if PNSLR_UNIX
-
-        #define thread_local            __thread
-        #define inline                  __inline__
-        #define noinline                __attribute__((noinline))
-        #define forceinline             inline __attribute__((always_inline))
-        #define alignas(x)              __attribute__((aligned(x)))
-        #define deprecated              __attribute__((deprecated))
-        #define noreturn                __attribute__((noreturn))
-        #define alignof(type)           __alignof__(type)
-        #define offsetof(type, member)  __builtin_offsetof(type, member)
-
-    #elif PNSLR_WINDOWS
-
-        #define thread_local            __declspec(thread)
-        #define inline                  __inline
-        #define noinline                __declspec(noinline)
-        #define forceinline             __forceinline
-        #define alignas(x)              __declspec(align(x))
-        #define deprecated              __declspec(deprecated)
-        #define noreturn                __declspec(noreturn)
-        #define alignof(type)           __alignof(type)
-        #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
-
-    #else
-        #error "Required features not supported by this compiler."
-    #endif
-
-    #define static_assert           _Static_assert
-
-#endif
 
 // Runtime =========================================================================
 

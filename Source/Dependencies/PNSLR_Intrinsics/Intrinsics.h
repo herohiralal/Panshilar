@@ -8,6 +8,8 @@
 #define PNSLR_INTRINSICS
 
 //+skipreflect
+// Compiler ========================================================================
+
 // Primitives ======================================================================
 
 typedef _Bool               b8;
@@ -92,6 +94,46 @@ DECLARE_ARRAY_SLICE(utf8str);
         .count = sizeof(str) - 1, \
         .data = (utf8ch*) str \
     }
+
+// Macros ==========================================================================
+
+#if !defined(__cplusplus)
+
+    #if defined(offsetof)
+        #undef offsetof // avoid conflict with stddef.h, if somehow inherited
+    #endif
+
+    #if PNSLR_MSVC
+
+        #define thread_local            __declspec(thread)
+        #define inline                  __inline
+        #define noinline                __declspec(noinline)
+        #define forceinline             __forceinline
+        #define alignas(x)              __declspec(align(x))
+        #define deprecated              __declspec(deprecated)
+        #define noreturn                __declspec(noreturn)
+        #define alignof(type)           __alignof(type)
+        #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
+
+    #elif (PNSLR_CLANG || PNSLR_GCC)
+
+        #define thread_local            __thread
+        #define inline                  __inline__
+        #define noinline                __attribute__((noinline))
+        #define forceinline             inline __attribute__((always_inline))
+        #define alignas(x)              __attribute__((aligned(x)))
+        #define deprecated              __attribute__((deprecated))
+        #define noreturn                __attribute__((noreturn))
+        #define alignof(type)           __alignof__(type)
+        #define offsetof(type, member)  __builtin_offsetof(type, member)
+
+    #else
+        #error "Required features not supported by this compiler."
+    #endif
+
+    #define static_assert           _Static_assert
+
+#endif
 //-skipreflect
 
 // Memory Management ===============================================================
