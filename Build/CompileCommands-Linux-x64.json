@@ -1,7 +1,7 @@
 [
     {
         "directory": "..",
-        "command": "\"Toolchains/Linux-x64/bin/clang.exe\" -c -std=c11 -DPNSLR_IMPLEMENTATION -DPNSLR_LINUX=1 -DPNSLR_X64=1 Source/zzzz_Unity.c -o Temp/unity-linux-x64.o -IToolchains/Linux-x64/usr/include/",
+        "command": "\"Toolchains/Linux-x64/bin/clang.exe\" -c -std=c11 -DPNSLR_IMPLEMENTATION -DPNSLR_LINUX=1 -DPNSLR_X64=1 Source/zzzz_Unity.c -o Temp/unity-linux-x64.o -IToolchains/Linux-x64/usr/include/ -Werror -Wall -Wextra -Wconversion",
         "file": "Source/zzzz_Unity.c",
         "output": "Temp/unity-linux-x64.o"
     }
