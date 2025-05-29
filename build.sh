@@ -21,6 +21,13 @@ else
     echo "INFO: OSX-ARM64 toolchain found!"
 fi
 
+# Exit if nothing found
+
+if [ $IOS_TOOLCHAIN_FOUND -eq 0 ] && [ $OSX_TOOLCHAIN_FOUND -eq 0 ]; then
+    echo "ERROR: No valid toolchains found for iOS-ARM64 or OSX-ARM64!"
+    exit 1
+fi
+
 # Build ============================================================================
 
 FAILED_BUILDS=()
