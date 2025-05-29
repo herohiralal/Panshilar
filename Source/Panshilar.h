@@ -2,6 +2,7 @@
 #define PNSLR_MAIN_HEADER
 
 #include "__Prelude.h"
+#include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
 #include "Allocators.h"
 #include "Strings.h"
 #include "IO.h"
@@ -17,7 +18,7 @@
         return 0; \
     }
 
-#if PNSLR_WINDOWS && defined(_MSC_VER)
+#if PNSLR_WINDOWS
 
 #define PNSLR_LIBRARY_ENTRY_POINT \
     b32 __stdcall DllMain(void* hInstDLL, u32 fdwReason, void* lpvReserved) { return true; }

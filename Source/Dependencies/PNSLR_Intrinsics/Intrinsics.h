@@ -7,6 +7,7 @@
 #ifndef PNSLR_INTRINSICS // ========================================================
 #define PNSLR_INTRINSICS
 
+//+skipreflect
 // Primitives ======================================================================
 
 typedef _Bool               b8;
@@ -91,6 +92,7 @@ DECLARE_ARRAY_SLICE(utf8str);
         .count = sizeof(str) - 1, \
         .data = (utf8ch*) str \
     }
+//-skipreflect
 
 // Memory Management ===============================================================
 

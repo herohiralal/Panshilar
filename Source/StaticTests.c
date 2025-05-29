@@ -36,3 +36,12 @@ static_assert(sizeof(f32) == 4, "f32 must be 4 bytes");
 static_assert(sizeof(u64) == 8, "u64 must be 8 bytes");
 static_assert(sizeof(i64) == 8, "i64 must be 8 bytes");
 static_assert(sizeof(f64) == 8, "f64 must be 8 bytes");
+
+// assert msvc toolchain for windows
+// will not be supporting MinGW or anything else because so much Windows-specific
+// stuff relies very directly on MSVC toolchain features
+// eventually also want to add some kind of rendering etc. in a future library
+// for this to link with that, MSVC is the only option
+#if PNSLR_WINDOWS && !defined(_MSC_VER)
+    #error "MSVC toolchain is required for Windows platform."
+#endif
