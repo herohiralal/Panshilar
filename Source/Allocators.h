@@ -46,7 +46,7 @@ REFLECT(MakeAllocator(Name = "DefaultHeapAllocator", Get = PNSLR_GetDefaultHeapA
     (ArraySlice(ty)) \
     { \
         .count = (i64)(count__), \
-        .data = (ty*) PNSLR_Allocate(allocator, zeroed, sizeof(ty) * (count__), alignof(ty), CURRENT_LOC()) \
+        .data = (ty*) PNSLR_Allocate(allocator, zeroed, (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC()) \
     }
 
 // Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator.

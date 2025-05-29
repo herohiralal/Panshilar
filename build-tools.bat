@@ -7,6 +7,8 @@ rem Build Tools ================================================================
 rem Building most stuff here in debug mode because performance is not really
 rem critical, but rather being able to debug issues quickly, update and move on.
 
+call warnings-setup.bat
+
 set FAILED_COMPILATIONS=
 
 rem Windows-x64

@@ -42,6 +42,6 @@ static_assert(sizeof(f64) == 8, "f64 must be 8 bytes");
 // stuff relies very directly on MSVC toolchain features
 // eventually also want to add some kind of rendering etc. in a future library
 // for this to link with that, MSVC is the only option
-#if PNSLR_WINDOWS && !defined(_MSC_VER)
+#if PNSLR_WINDOWS != defined(_MSC_VER)
     #error "MSVC toolchain is required for Windows platform."
 #endif

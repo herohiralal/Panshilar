@@ -19,7 +19,7 @@ if %errorlevel% neq 0 (
 echo.
 echo.
 echo Building PNSLR_Intrinsics-Linux-x64
-%TOOLCHAINS%\Linux-x64\bin\clang.exe -c -std=c11 .\Intrinsics.c -o Prebuilt\intrinsics-linux-x64.o -I%TOOLCHAINS%\Linux-x64\usr\include\ %CLANG_WARNINGS%
+%TOOLCHAINS%\Linux-x64\bin\clang.exe -c -std=c11 .\Intrinsics.c -o Prebuilt\intrinsics-linux-x64.o -I%TOOLCHAINS%\Linux-x64\usr\include\ %CLANG_WARNINGS% --target=x86_64-unknown-linux-gnu
 if %errorlevel% neq 0 (
     echo Failed to build PNSLR_Intrinsics-Linux-x64
 ) else (
@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
 echo.
 echo.
 echo Building PNSLR_Intrinsics-Linux-ARM64
-%TOOLCHAINS%\Linux-ARM64\bin\clang.exe -c -std=c11 .\Intrinsics.c -o Prebuilt\intrinsics-linux-arm64.o -I%TOOLCHAINS%\Linux-ARM64\usr\include\ %CLANG_WARNINGS%
+%TOOLCHAINS%\Linux-ARM64\bin\clang.exe -c -std=c11 .\Intrinsics.c -o Prebuilt\intrinsics-linux-arm64.o -I%TOOLCHAINS%\Linux-ARM64\usr\include\ %CLANG_WARNINGS% --target=aarch64-unknown-linux-gnu
 if %errorlevel% neq 0 (
     echo Failed to build PNSLR_Intrinsics-Linux-ARM64
 ) else (
