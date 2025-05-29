@@ -27,14 +27,14 @@ Allocator PNSLR_GetDefaultHeapAllocator(void);
 // Main allocator function for the default heap allocator.
 void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location);
 
-// Get the default temporary allocator.
-Allocator PNSLR_GetDefaultTempAllocator(void);
+// // Get the default temporary allocator.
+// Allocator PNSLR_GetDefaultTempAllocator(void);
 
-// Main allocator function for the default temporary allocator.
-void* PNSLR_DefaultTempAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location);
+// // Main allocator function for the default temporary allocator.
+// void* PNSLR_DefaultTempAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location);
 
 REFLECT(MakeAllocator(Name = "DefaultHeapAllocator", Get = PNSLR_GetDefaultHeapAllocator, Fn = PNSLR_DefaultHeapAllocatorFn));
-REFLECT(MakeAllocator(Name = "DefaultTempAllocator", Get = PNSLR_GetDefaultTempAllocator, Fn = PNSLR_DefaultTempAllocatorFn));
+// REFLECT(MakeAllocator(Name = "DefaultTempAllocator", Get = PNSLR_GetDefaultTempAllocator, Fn = PNSLR_DefaultTempAllocatorFn));
 
 //+skipreflect
 

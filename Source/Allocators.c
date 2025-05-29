@@ -141,12 +141,12 @@ void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 a
     }
 }
 
-Allocator PNSLR_GetDefaultTempAllocator(void)
-{
-    return (Allocator) {.function = PNSLR_DefaultTempAllocatorFn, .data = nil};
-}
+// Allocator PNSLR_GetDefaultTempAllocator(void)
+// {
+//     return (Allocator) {.function = PNSLR_DefaultTempAllocatorFn, .data = nil};
+// }
 
-void* PNSLR_DefaultTempAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location)
-{
-    return nil;
-}
+// void* PNSLR_DefaultTempAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location)
+// {
+//     return nil;
+// }

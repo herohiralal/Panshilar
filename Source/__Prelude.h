@@ -10,7 +10,7 @@
 
 // platform
 
-#if PNSLR_WINDOWS
+#if defined(PNSLR_WINDOWS)
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
     #define PNSLR_ANDROID 0
@@ -18,7 +18,7 @@
     #define PNSLR_PS5 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_LINUX
+#elif defined(PNSLR_LINUX)
     #define PNSLR_WINDOWS 0
     #define PNSLR_OSX 0
     #define PNSLR_ANDROID 0
@@ -26,7 +26,7 @@
     #define PNSLR_PS5 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_OSX
+#elif defined(PNSLR_OSX)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_ANDROID 0
@@ -34,7 +34,7 @@
     #define PNSLR_PS5 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_ANDROID
+#elif defined(PNSLR_ANDROID)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
@@ -42,7 +42,7 @@
     #define PNSLR_PS5 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_IOS
+#elif defined(PNSLR_IOS)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
@@ -50,7 +50,7 @@
     #define PNSLR_PS5 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_PS5
+#elif defined(PNSLR_PS5)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
@@ -58,7 +58,7 @@
     #define PNSLR_IOS 0
     #define PNSLR_XSERIES 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_XSERIES
+#elif defined(PNSLR_XSERIES)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
@@ -66,7 +66,7 @@
     #define PNSLR_IOS 0
     #define PNSLR_PS5 0
     #define PNSLR_SWITCH 0
-#elif PNSLR_SWITCH
+#elif defined(PNSLR_SWITCH)
     #define PNSLR_WINDOWS 0
     #define PNSLR_LINUX 0
     #define PNSLR_OSX 0
@@ -80,9 +80,9 @@
 
 // architecture
 
-#if PNSLR_X64
+#if defined(PNSLR_X64)
     #define PNSLR_ARM64 0
-#elif PNSLR_ARM64
+#elif defined(PNSLR_ARM64)
     #define PNSLR_X64 0
 #else
     #error "No architecture defined."
@@ -98,6 +98,16 @@
 // Includes ========================================================================
 
 #ifdef PNSLR_IMPLEMENTATION
+
+    #if defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Weverything"
+    #elif defined(__GNUC__)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Weverything"
+    #elif defined(_MSC_VER)
+        #pragma warning(push, 0)
+    #endif
 
     #if PNSLR_WINDOWS
         #include <Windows.h>
@@ -122,6 +132,14 @@
         #include <android/log.h>
         #include <android/asset_manager.h>
         #include <android/native_activity.h>
+    #endif
+
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #elif defined(__GNUC__)
+        #pragma GCC diagnostic pop
+    #elif defined(_MSC_VER)
+        #pragma warning(pop)
     #endif
 
 #endif
