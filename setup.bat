@@ -4,32 +4,9 @@ setlocal EnableDelayedExpansion
 
 rem Gather toolchains ==============================================================
 
-set WINDOWS_TOOLCHAIN_FOUND=0
 set LINUX_X64_TOOLCHAIN_FOUND=0
 set LINUX_ARM64_TOOLCHAIN_FOUND=0
 set ANDROID_TOOLCHAIN_FOUND=0
-
-rem Windows MSVC Toolchain
-
-where /Q cl.exe >nul 2>&1
-if errorlevel 1 (
-    set __VSCMD_ARG_NO_LOGO=1
-    for /f "tokens=*" %%i in ('"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath') do set VS=%%i
-    if "!VS!" neq "" (
-        call "!VS!\Common7\Tools\vsdevcmd.bat" -arch=x64 -host_arch=x64 && (
-            set WINDOWS_TOOLCHAIN_FOUND=1
-        )
-    )
-) else (
-    set WINDOWS_TOOLCHAIN_FOUND=1
-)
-
-set WINDOWS_TOOLCHAIN=%VCTOOLSINSTALLDIR%
-if "!WINDOWS_TOOLCHAIN_FOUND!"=="0" (
-    echo WARNING: Windows-x64 toolchain not found!
-) else (
-    echo INFO: Windows-x64 toolchain found at %WINDOWS_TOOLCHAIN%!
-)
 
 rem Linux Toolchains
 
@@ -83,17 +60,6 @@ for /f "delims=" %%L in ('dir Toolchains\ /a:l /b 2^>nul') do (
 )
 
 set FAILED_SYMLINKS=
-
-if "!WINDOWS_TOOLCHAIN_FOUND!"=="1" (
-
-    rem Sucks to have to do this, but because of how Windows SDKs are structured...
-
-    mklink /D "Toolchains\Windows-x64"        "!WINDOWS_TOOLCHAIN!"                        >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! Windows-x64;
-    mklink /D "Toolchains\WindowsIncludes"    "!VCTOOLSINSTALLDIR!Include"                 >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! WindowsIncludes;
-    mklink /D "Toolchains\WindowsLibs"        "!VCTOOLSINSTALLDIR!Lib"                     >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! WindowsLibs;
-    mklink /D "Toolchains\WindowsSdkIncludes" "!WindowsSdkDir!Include\!WindowsSDKVersion!" >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! WindowsSdkIncludes;
-    mklink /D "Toolchains\WindowsSdkLibs"     "!WindowsSdkDir!Lib\!WindowsSDKVersion!"     >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! WindowsSdkLibs;
-)
 
 if "!LINUX_X64_TOOLCHAIN_FOUND!"=="1" (
     mklink /D "Toolchains\Linux-x64"          "!LINUX_X64_TOOLCHAIN!"                      >nul 2>&1 || FAILED_SYMLINKS=!FAILED_SYMLINKS! Linux-x64;

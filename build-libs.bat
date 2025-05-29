@@ -2,6 +2,7 @@
 
 setlocal EnableDelayedExpansion
 
+call setup-vsdevcmd.bat
 call warnings-setup.bat
 
 rem Build ==========================================================================
@@ -9,18 +10,18 @@ rem Build ======================================================================
 set FAILED_PLATFORMS=
 
 rem Windows-x64
-set WINDOWS_TOOLCHAIN="Toolchains\Windows-x64\bin\Hostx64\x64"
-if exist %WINDOWS_TOOLCHAIN%\cl.exe (
+where cl.exe >nul 2>&1
+if %errorlevel% equ 0 (
     echo.
     echo.
     echo Compiling for Windows-x64...
 
-    "%WINDOWS_TOOLCHAIN%\cl.exe" /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj /IToolchains\WindowsSdkIncludes\um\ /IToolchains\WindowsSdkIncludes\shared\ /IToolchains\WindowsSdkIncludes\winrt\ /IToolchains\WindowsSdkIncludes\ucrt\ /IToolchains\WindowsIncludes\ %MSVC_WARNINGS%
+    cl.exe /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj %MSVC_WARNINGS%
     if errorlevel 1 (
         echo ERROR: Windows-x64 compilation failed!
         set FAILED_PLATFORMS=!FAILED_PLATFORMS! Windows-x64
     ) else (
-        "%WINDOWS_TOOLCHAIN%\lib.exe" /NOLOGO Temp/unity-windows-x64.obj Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-windows-x64.obj /OUT:Libraries/panshilar-windows-x64.lib
+        lib.exe /NOLOGO Temp/unity-windows-x64.obj Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-windows-x64.obj /OUT:Libraries/panshilar-windows-x64.lib
         if errorlevel 1 (
             echo ERROR: Windows-x64 library creation failed!
             set FAILED_PLATFORMS=!FAILED_PLATFORMS! Windows-x64

@@ -2,6 +2,7 @@
 
 SetLocal EnableDelayedExpansion
 
+call ..\..\..\setup-vsdevcmd.bat
 call ..\..\..\warnings-setup.bat
 
 set TOOLCHAINS=..\..\..\Toolchains
@@ -9,7 +10,7 @@ set TOOLCHAINS=..\..\..\Toolchains
 echo.
 echo.
 echo Building PNSLR_Intrinsics-Windows-x64
-%TOOLCHAINS%\Windows-x64\bin\Hostx64\x64\cl.exe /nologo /c /std:c11 .\Intrinsics.c /FoPrebuilt\intrinsics-windows-x64.obj /I%TOOLCHAINS%\WindowsSdkIncludes\um\ /I%TOOLCHAINS%\WindowsSdkIncludes\shared\ /I%TOOLCHAINS%\WindowsSdkIncludes\winrt\ /I%TOOLCHAINS%\WindowsSdkIncludes\ucrt\ /I%TOOLCHAINS%\WindowsIncludes\ %MSVC_WARNINGS%
+cl.exe /nologo /c /std:c11 .\Intrinsics.c /FoPrebuilt\intrinsics-windows-x64.obj %MSVC_WARNINGS%
 if %errorlevel% neq 0 (
     echo Failed to build PNSLR_Intrinsics-Windows-x64
 ) else (
