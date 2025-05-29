@@ -16,12 +16,12 @@ if %errorlevel% equ 0 (
     echo.
     echo Compiling for Windows-x64...
 
-    cl.exe /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj %MSVC_WARNINGS%
+    cl.exe /Brepro /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj %MSVC_WARNINGS%
     if errorlevel 1 (
         echo ERROR: Windows-x64 compilation failed!
         set FAILED_PLATFORMS=!FAILED_PLATFORMS! Windows-x64
     ) else (
-        lib.exe /NOLOGO Temp/unity-windows-x64.obj Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-windows-x64.obj /OUT:Libraries/panshilar-windows-x64.lib
+        lib.exe /Brepro /NOLOGO Temp/unity-windows-x64.obj Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-windows-x64.obj /OUT:Libraries/panshilar-windows-x64.lib
         if errorlevel 1 (
             echo ERROR: Windows-x64 library creation failed!
             set FAILED_PLATFORMS=!FAILED_PLATFORMS! Windows-x64

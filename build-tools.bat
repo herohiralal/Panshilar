@@ -17,7 +17,7 @@ echo.
 echo Building for Windows-x64...
 where cl.exe >nul 2>&1
 if %errorlevel% equ 0 (
-    cl.exe /nologo /std:c11 Tools/TestRunner/TestRunner.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /ISource\ /D_DEBUG /Od /Zi /DEBUG /FoTemp/test-runner-windows-x64.obj /FeBinaries/TestRunner-Windows-X64.exe /FdBinaries\TestRunner-Windows-X64.pdb %MSVC_WARNINGS%
+    cl.exe /Brepro /nologo /std:c11 Tools/TestRunner/TestRunner.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /ISource\ /D_DEBUG /Od /Zi /DEBUG /FoTemp/test-runner-windows-x64.obj /FeBinaries/TestRunner-Windows-X64.exe /FdBinaries\TestRunner-Windows-X64.pdb %MSVC_WARNINGS%
     if errorlevel 1 (
         echo ERROR: Windows-x64 TestRunner compilation failed!
         set FAILED_COMPILATIONS=!FAILED_COMPILATIONS! TestRunner-Windows-X64;
@@ -25,7 +25,7 @@ if %errorlevel% equ 0 (
         echo SUCCESS: TestRunner.exe created successfully!
     )
 
-    cl.exe /nologo /std:c11 Tools/BindGen/BindingsGenerator.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /ISource\ /D_DEBUG /Od /Zi /DEBUG /FoTemp/bindings-generator-windows-x64.obj /FeBinaries/BindingsGenerator-Windows-X64.exe /FdBinaries\BindingsGenerator-Windows-X64.pdb %MSVC_WARNINGS%
+    cl.exe /Brepro /nologo /std:c11 Tools/BindGen/BindingsGenerator.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /ISource\ /D_DEBUG /Od /Zi /DEBUG /FoTemp/bindings-generator-windows-x64.obj /FeBinaries/BindingsGenerator-Windows-X64.exe /FdBinaries\BindingsGenerator-Windows-X64.pdb %MSVC_WARNINGS%
     if errorlevel 1 (
         echo ERROR: Windows-x64 BindingsGenerator compilation failed!
         set FAILED_COMPILATIONS=!FAILED_COMPILATIONS! BindingsGenerator-Windows-X64;
