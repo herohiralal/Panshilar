@@ -1,7 +1,7 @@
 [
     {
         "directory": "..",
-        "command": "\"Toolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe\" --target=aarch64-linux-android28 -c -std=c11 -DPNSLR_IMPLEMENTATION -DPNSLR_ANDROID=1 -DPNSLR_ARM64=1 Source/zzzz_Unity.c -o Temp/unity-android-arm64.o -IToolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/",
+        "command": "\"Toolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe\" --target=aarch64-linux-android28 -c -std=c11 -DPNSLR_IMPLEMENTATION -DPNSLR_ANDROID=1 -DPNSLR_ARM64=1 Source/zzzz_Unity.c -o Temp/unity-android-arm64.o -IToolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/ -Werror -Wall -Wextra -Wconversion",
         "file": "Source/zzzz_Unity.c",
         "output": "Temp/unity-android-arm64.o"
     }
