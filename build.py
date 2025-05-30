@@ -144,6 +144,8 @@ def main():
 
     failedBuilds = []
 
+    printSectionBreak()
+
     # endregion
 
     # region Windows-x64 Builds ===============================================================================================
@@ -168,9 +170,9 @@ def main():
                 '/c',
                 INTRINSICS_INPUT_FILE,
                 f'/Fo{getIntrinsicsOutputFile(tgt, arch)}',
-            ]
+            ] + commonArgs
 
-            if runCommand([clExecutable] + MSVC_COMMON_ARGS + args):
+            if runCommand([clExecutable] + args):
                 printSuccess('Intrinsics rebuilt successfully.')
             else:
                 printFailure('Failed to rebuild intrinsics.')
@@ -192,7 +194,7 @@ def main():
         clangExecutable = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe')
         arExecutable    = os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe')
         commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={linuxX64Toolchain}',
+            f'--sysroot={linuxX64Toolchain}\\',
             '--target=x86_64-pc-linux-gnu',
         ]
 
@@ -203,9 +205,9 @@ def main():
                 '-c',
                 INTRINSICS_INPUT_FILE,
                 f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ]
+            ] + commonArgs
 
-            if runCommand([clangExecutable] + CLANG_COMMON_ARGS + args):
+            if runCommand([clangExecutable] + args):
                 printSuccess('Intrinsics rebuilt successfully.')
             else:
                 printFailure('Failed to rebuild intrinsics.')
@@ -227,8 +229,8 @@ def main():
         clangExecutable = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe')
         arExecutable    = os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe')
         commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={linuxArm64Toolchain}',
-            '--target=x86_64-pc-linux-gnu',
+            f'--sysroot={linuxArm64Toolchain}\\',
+            '--target=aarch64-unknown-linux-gnu',
         ]
 
         if rebuildIntrinsics:
@@ -238,9 +240,9 @@ def main():
                 '-c',
                 INTRINSICS_INPUT_FILE,
                 f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ]
+            ] + commonArgs
 
-            if runCommand([clangExecutable] + CLANG_COMMON_ARGS + args):
+            if runCommand([clangExecutable] + args):
                 printSuccess('Intrinsics rebuilt successfully.')
             else:
                 printFailure('Failed to rebuild intrinsics.')
@@ -262,8 +264,8 @@ def main():
         clangExecutable = os.path.join(androidToolchain, 'bin', 'clang.exe')
         arExecutable    = os.path.join(androidToolchain, 'bin', 'llvm-ar.exe')
         commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={androidToolchain}\sysroot',
-            '--target=aarch64-linux-android',
+            f'--sysroot={androidToolchain}\\sysroot\\',
+            '--target=aarch64-linux-android28',
         ]
 
         if rebuildIntrinsics:
@@ -273,9 +275,9 @@ def main():
                 '-c',
                 INTRINSICS_INPUT_FILE,
                 f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ]
+            ] + commonArgs
 
-            if runCommand([clangExecutable] + CLANG_COMMON_ARGS + args):
+            if runCommand([clangExecutable] + args):
                 printSuccess('Intrinsics rebuilt successfully.')
             else:
                 printFailure('Failed to rebuild intrinsics.')
