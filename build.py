@@ -4,7 +4,7 @@ import os, sys, subprocess
 
 CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' # Rebuild the intrinsics dependency
 CMD_ARG_RUN_TESTS           = '-tests'              # Run the tests after building
-CMD_ARG_REGENERATE_BINDINGS = '-regen-bindings'     # Regenerate the bindings after building
+CMD_ARG_REGENERATE_BINDINGS = '-rebind'             # Regenerate the bindings after building
 
 # endregion
 
@@ -175,7 +175,22 @@ def runCommand(command: list[str], name: str) -> bool:
 
 # endregion
 
-# region Main Build Function ==================================================================================================
+# region Main Logic  ==========================================================================================================
+
+def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str, toolchainEnvVarName: str) -> str:
+    toolchainFound = '1' == os.getenv(statusBoolEnvVarName)
+    if not toolchainFound:
+        printWarn(f'{prettyTgt}-{prettyArch} toolchain not found!')
+        return ''
+
+    toolchainPath = os.getenv(toolchainEnvVarName)
+    if not toolchainPath:
+        printErr(f'{prettyTgt}-{prettyArch} toolchain path not set!')
+        failedProcesses.append(f'{prettyTgt}-{prettyArch} Toolchain Path Query')
+        return ''
+
+    printInfo(f'Using {prettyTgt} {prettyArch} toolchain at: {toolchainPath}.')
+    return toolchainPath
 
 def buildPlatform(
         prettyTgt:          str,
@@ -236,54 +251,28 @@ def main():
 
     # region Check for toolchains =============================================================================================
 
+    windowsToolchain      = ''
+    linuxX64Toolchain     = ''
+    linuxArm64Toolchain   = ''
+    androidToolchain      = ''
+    iosToolchain          = ''
+    iosSimulatorToolchain = ''
+    osxToolchain          = ''
+
     if sys.platform == 'win32':
-        windowsToolchainFound    = '1' == os.getenv('WINDOWS_TOOLCHAIN_FOUND')
-        linuxX64ToolchainFound   = '1' == os.getenv('LINUX_X64_TOOLCHAIN_FOUND')
-        linuxArm64ToolchainFound = '1' == os.getenv('LINUX_ARM64_TOOLCHAIN_FOUND')
-        androidToolchainFound    = '1' == os.getenv('ANDROID_TOOLCHAIN_FOUND')
-
-        iosToolchainFound = False
-        iosSimulatorToolchainFound = False
-        osxToolchainFound = False
-
-        if not windowsToolchainFound:
-            printWarn('Windows toolchain not found!')
-
-        if not linuxX64ToolchainFound:
-            printWarn('Linux-x64 toolchain not found!')
-
-        if not linuxArm64ToolchainFound:
-            printWarn('Linux-ARM64 toolchain not found!')
-
-        if not androidToolchainFound:
-            printWarn('Android toolchain not found!')
-
-        if not windowsToolchainFound and not linuxX64ToolchainFound and not linuxArm64ToolchainFound and not androidToolchainFound:
-            printErr('No relevant toolchains found!')
-            exit(1)
+        printSectionStart()
+        windowsToolchain    = getToolchainPath('Windows', 'x64',   'WINDOWS_TOOLCHAIN_FOUND',     'WINDOWS_TOOLCHAIN')
+        linuxX64Toolchain   = getToolchainPath('Linux',   'x64',   'LINUX_X64_TOOLCHAIN_FOUND',   'LINUX_X64_TOOLCHAIN')
+        linuxArm64Toolchain = getToolchainPath('Linux',   'ARM64', 'LINUX_ARM64_TOOLCHAIN_FOUND', 'LINUX_ARM64_TOOLCHAIN')
+        androidToolchain    = getToolchainPath('Android', 'ARM64', 'ANDROID_TOOLCHAIN_FOUND',     'ANDROID_TOOLCHAIN')
+        printSectionEnd()
 
     elif sys.platform == 'darwin':
-        windowsToolchainFound    = False
-        linuxX64ToolchainFound   = False
-        linuxArm64ToolchainFound = False
-        androidToolchainFound    = False
-
-        iosToolchainFound          = '1' == os.getenv('IOS_TOOLCHAIN_FOUND')
-        iosSimulatorToolchainFound = '1' == os.getenv('IOS_SIMULATOR_TOOLCHAIN_FOUND')
-        osxToolchainFound          = '1' == os.getenv('OSX_TOOLCHAIN_FOUND')
-
-        if not iosToolchainFound:
-            printWarn('iOS toolchain not found!')
-
-        if not iosSimulatorToolchainFound:
-            printWarn('iOS Simulator toolchain not found!')
-
-        if not osxToolchainFound:
-            printWarn('macOS toolchain not found!')
-
-        if not iosToolchainFound and not iosSimulatorToolchainFound and not osxToolchainFound:
-            printErr('No relevant toolchains found!')
-            exit(1)
+        printSectionStart()
+        iosToolchain =          getToolchainPath('iOS',           'ARM64', 'IOS_SDK_FOUND',     'IOS_SDK_PATH')
+        iosSimulatorToolchain = getToolchainPath('iOS-Simulator', 'ARM64', 'IOS_SIM_SDK_FOUND', 'IOS_SIM_SDK_PATH')
+        osxToolchain =          getToolchainPath('macOS',         'ARM64', 'OSX_SDK_FOUND',     'OSX_SDK_PATH')
+        printSectionEnd()
 
     else:
         print(f'Unsupported platform: {sys.platform}')
@@ -291,15 +280,9 @@ def main():
 
     # endregion
 
-    # region Windows-x64 Builds ===============================================================================================
+    # region Builds ===========================================================================================================
 
-    if windowsToolchainFound:
-        windowsToolchain = os.getenv('WINDOWS_TOOLCHAIN')
-        if not windowsToolchain:
-            printErr('Windows toolchain path not set!')
-            exit(1)
-
-        printInfo(f'Using Windows toolchain at: {windowsToolchain}.')
+    if windowsToolchain:
         buildPlatform(
             'Windows',
             'x64',
@@ -312,17 +295,7 @@ def main():
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    # endregion
-
-    # region Linux-x64 Builds =================================================================================================
-
-    if linuxX64ToolchainFound:
-        linuxX64Toolchain = os.getenv('LINUX_X64_TOOLCHAIN')
-        if not linuxX64Toolchain:
-            printErr('Linux-x64 toolchain path not set!')
-            exit(1)
-
-        printInfo(f'Using Linux-x64 toolchain at: {linuxX64Toolchain}.')
+    if linuxX64Toolchain:
         buildPlatform(
             'Linux',
             'x64',
@@ -335,17 +308,7 @@ def main():
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    # endregion
-
-    # region Linux-ARM64 Builds ===============================================================================================
-
-    if linuxArm64ToolchainFound:
-        linuxArm64Toolchain = os.getenv('LINUX_ARM64_TOOLCHAIN')
-        if not linuxArm64Toolchain:
-            printErr('Linux-ARM64 toolchain path not set!')
-            exit(1)
-
-        printInfo(f'Using Linux-ARM64 toolchain at: {linuxArm64Toolchain}.')
+    if linuxArm64Toolchain:
         buildPlatform(
             'Linux',
             'ARM64',
@@ -358,17 +321,7 @@ def main():
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    # endregion
-
-    # region Android-ARM64 Builds =============================================================================================
-
-    if androidToolchainFound:
-        androidToolchain = os.getenv('ANDROID_TOOLCHAIN')
-        if not androidToolchain:
-            printErr('Android toolchain path not set!')
-            exit(1)
-
-        printInfo(f'Using Android toolchain at: {androidToolchain}.')
+    if androidToolchain:
         buildPlatform(
             'Android',
             'ARM64',
@@ -385,6 +338,7 @@ def main():
 
     # region Summary ==========================================================================================================
 
+    printSectionStart()
     if not failedProcesses:
         printSuccess('All builds completed successfully!')
     else:
@@ -392,6 +346,9 @@ def main():
         for process in failedProcesses:
             print(f' - {process}')
         printFailure('One or more processes failed. Please check the output above for details.')
+    printSectionEnd()
+
+    sys.exit(0 if not failedProcesses else 1)
 
     # endregion
 
