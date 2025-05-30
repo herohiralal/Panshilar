@@ -75,7 +75,7 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
     if tgt == 'windows':
         return [
             '/Brepro',
-            '/nologo',
+            '/NOLOGO',
             intrinsicsObjFile,
             libraryObjFile,
             f'/OUT:{outputFile}',
@@ -138,9 +138,12 @@ failedProcesses: list[str] = []  # List to track failed processes
 
 #region Helper functions ======================================================================================================
 
-def printSectionBreak():
-    print('=' * 80)
+def printSectionStart():
     print('')
+    print('=' * 80)
+
+def printSectionEnd():
+    print('=' * 80)
     print('')
 
 def printInfo(message: str):
@@ -154,13 +157,12 @@ def printErr(message: str):
 
 def printSuccess(message: str):
     print(f'\033[1;32m[SUCCESS]: \033[0m {message}')
-    printSectionBreak()
 
 def printFailure(message: str):
     print(f'\033[1;31m[FAILURE]: \033[0m{message}')
-    printSectionBreak()
 
 def runCommand(command: list[str], name: str) -> bool:
+    printSectionStart()
     printInfo(f'Running: {name}')
     result = subprocess.run(command, stdout = sys.stdout)
     if result.returncode == 0:
@@ -168,6 +170,7 @@ def runCommand(command: list[str], name: str) -> bool:
     else:
         printFailure(f'Failed to complete: {name}')
         failedProcesses.append(name)
+    printSectionEnd()
     return result.returncode == 0
 
 # endregion
@@ -287,8 +290,6 @@ def main():
         exit(1)
 
     # endregion
-
-    printSectionBreak()
 
     # region Windows-x64 Builds ===============================================================================================
 
