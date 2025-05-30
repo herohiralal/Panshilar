@@ -146,7 +146,8 @@ def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
 
 # region Global State =========================================================================================================
 
-failedProcesses: list[str] = []  # List to track failed processes
+succeededProcesses: list[str] = []  # List to track successful processes
+failedProcesses:    list[str] = []  # List to track failed processes
 
 # endregion
 
@@ -185,6 +186,7 @@ def runCommand(command: list[str], name: str) -> bool:
     result = subprocess.run(command, stdout = sys.stdout)
     if result.returncode == 0:
         printSuccess(f'Completed successfully: {name}')
+        succeededProcesses.append(name)
     else:
         printFailure(f'Failed to complete: {name}')
         failedProcesses.append(name)
@@ -237,13 +239,13 @@ def buildPlatform(
         return False
 
     testsSuccessful = True
-    if runTests and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+    if runTests and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if sys.platform == 'win32' else 'arm64' if sys.platform == 'darwin' else '')):
         args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
         testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') # and \ TODO: re-enable
         #                 runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
 
     bindGenSuccessful = True
-    if regenerateBindings and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+    if regenerateBindings and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if sys.platform == 'win32' else 'arm64' if sys.platform == 'darwin' else '')):
         args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
         bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') # and \ TODO: re-enable
         #                   runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
@@ -352,13 +354,20 @@ def main():
     # region Summary ==========================================================================================================
 
     printSectionStart()
-    if not failedProcesses:
-        printSuccess('All builds completed successfully!')
-    else:
+
+    if succeededProcesses:
+        printInfo('Succeeded processes:')
+        for process in succeededProcesses:
+            print(f' - {process}')
+
+    if failedProcesses:
         printErr('Failed processes:')
         for process in failedProcesses:
             print(f' - {process}')
         printFailure('One or more processes failed. Please check the output above for details.')
+    else:
+        printSuccess('All processes completed successfully!')
+
     printSectionEnd()
 
     sys.exit(0 if not failedProcesses else 1)
