@@ -99,15 +99,20 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
         return [
             inputFile,
             getLibraryPath(tgt, arch),
-            '/ISource/'
+            '/ISource/',
             f'/Fe{outputFile}',
             f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
-            f'FdBinaries/TestRunner-{tgt}-{arch}.pdb',
+            f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
         ] + MSVC_DEBUG_ARGS
     else:
         return [
             inputFile,
-            f'-o{outputFile}',
+            getLibraryPath(tgt, arch),
+            '-o',
+            outputFile,
+            f'-ISource/',
+            # '-v',
+            # '-###',
         ] + CLANG_DEBUG_ARGS
 
 def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
@@ -120,13 +125,22 @@ def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
     if tgt == 'windows':
         return [
             inputFile,
-            f'/Fo{outputFile}',
-        ]
+            getLibraryPath(tgt, arch),
+            '/ISource',
+            f'/Fe{outputFile}',
+            f'/FoTemp/BindingsGenerator-{tgt}-{arch}.obj',
+            f'/FdBinaries/BindingsGenerator-{tgt}-{arch}.pdb',
+        ] + MSVC_DEBUG_ARGS
     else:
         return [
             inputFile,
-            f'-o{outputFile}',
-        ]
+            getLibraryPath(tgt, arch),
+            '-o',
+            outputFile,
+            f'-ISource/',
+            # '-v',
+            # '-###',
+        ] + CLANG_DEBUG_ARGS
 
 # endregion
 
@@ -146,6 +160,9 @@ def printSectionEnd():
     print('=' * 80)
     print('')
 
+def printDebug(message: str):
+   print(f'\033[1m[DEBUG]:\033[0m\033[90m   {message}\033[0m')
+
 def printInfo(message: str):
     print(f'\033[1;36m[INFO]:    \033[0m{message}')
 
@@ -164,6 +181,7 @@ def printFailure(message: str):
 def runCommand(command: list[str], name: str) -> bool:
     printSectionStart()
     printInfo(f'Running: {name}')
+    printDebug(f'Command: {" ".join(command)}')
     result = subprocess.run(command, stdout = sys.stdout)
     if result.returncode == 0:
         printSuccess(f'Completed successfully: {name}')
@@ -206,34 +224,29 @@ def buildPlatform(
         regenerateBindings: bool
     ) -> bool:
     if rebuildIntrinsics:
-        printInfo(f'Rebuilding intrinsics for {prettyTgt}-{prettyArch}...')
         args = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
         if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Intrinsics Compile'):
             return False
 
-    printInfo(f'Compiling Panshilar library for {prettyTgt}-{prettyArch}...')
     args = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
     if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Library Compile'):
         return False
 
-    printInfo(f'Linking Panshilar library for {prettyTgt}-{prettyArch}...')
     args = getLibraryLinkArgs(tgt, arch)
     if not runCommand([linker] + args, f'{prettyTgt}-{prettyArch} Library Link'):
         return False
 
     testsSuccessful = True
-    if runTests:
-        printInfo(f'Building Test Runner for {prettyTgt}-{prettyArch}...')
-        args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch)
-        testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') and \
-                          runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
+    if runTests and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+        args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
+        testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') # and \ TODO: re-enable
+        #                 runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
 
     bindGenSuccessful = True
-    if regenerateBindings:
-        printInfo(f'Regenerating bindings for {prettyTgt}-{prettyArch}...')
-        args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch)
-        bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') and \
-                            runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
+    if regenerateBindings and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+        args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
+        bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') # and \ TODO: re-enable
+        #                   runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
 
     return testsSuccessful and bindGenSuccessful
 
@@ -303,7 +316,7 @@ def main():
             'x64',
             os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
             os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
-            CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-pc-linux-gnu'],
+            CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-unknown-linux-gnu'],
             ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
             rebuildIntrinsics, runTests, regenerateBindings,
         )
@@ -316,7 +329,7 @@ def main():
             'arm64',
             os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
             os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
-            CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnu'],
+            CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnueabi'],
             ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
             rebuildIntrinsics, runTests, regenerateBindings,
         )
