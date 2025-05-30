@@ -268,6 +268,7 @@ def main():
     linuxX64Toolchain     = ''
     linuxArm64Toolchain   = ''
     androidToolchain      = ''
+    osxTools              = ''
     iosToolchain          = ''
     iosSimulatorToolchain = ''
     osxToolchain          = ''
@@ -282,9 +283,10 @@ def main():
 
     elif sys.platform == 'darwin':
         printSectionStart()
-        iosToolchain =          getToolchainPath('iOS',           'ARM64', 'IOS_SDK_FOUND',     'IOS_SDK_PATH')
+        osxTools              = os.getenv('BUILD_TOOLS_PATH', '')
+        iosToolchain          = getToolchainPath('iOS',           'ARM64', 'IOS_SDK_FOUND',     'IOS_SDK_PATH')
         iosSimulatorToolchain = getToolchainPath('iOS-Simulator', 'ARM64', 'IOS_SIM_SDK_FOUND', 'IOS_SIM_SDK_PATH')
-        osxToolchain =          getToolchainPath('macOS',         'ARM64', 'OSX_SDK_FOUND',     'OSX_SDK_PATH')
+        osxToolchain          = getToolchainPath('macOS',         'ARM64', 'OSX_SDK_FOUND',     'OSX_SDK_PATH')
         printSectionEnd()
 
     else:
@@ -321,6 +323,24 @@ def main():
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 
+    if osxTools and osxToolchain:
+        buildPlatform(
+            'MacOS',
+            'Apple Silicon',
+            'osx',
+            'arm64',
+            os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'usr', 'bin', 'ar'),
+            CLANG_COMMON_ARGS + [
+                '--sysroot',
+                osxToolchain,
+                '-target',
+                'arm64-apple-macos11.0',
+            ],
+            ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
+
     if linuxArm64Toolchain:
         buildPlatform(
             'Linux',
@@ -344,6 +364,48 @@ def main():
             os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
             CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28'],
             ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
+
+    if osxTools and iosToolchain:
+        buildPlatform(
+            'iOS',
+            'ARM64',
+            'ios',
+            'arm64',
+            os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'usr', 'bin', 'ar'),
+            CLANG_COMMON_ARGS + [
+                '--sysroot',
+                iosToolchain,
+                '-miphoneos-version-min=16.0',
+                '-target',
+                'aarch64-apple-ios16.0',
+                '-arch',
+                'arm64',
+            ],
+            ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
+
+    if osxTools and iosSimulatorToolchain:
+        buildPlatform(
+            'iOS-Simulator',
+            'ARM64',
+            'iossimulator',
+            'arm64',
+            os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'usr', 'bin', 'ar'),
+            CLANG_COMMON_ARGS + [
+                '--sysroot',
+                iosSimulatorToolchain,
+                '-miphoneos-version-min=16.0',
+                '-target',
+                'aarch64-apple-ios16.0-simulator',
+                '-arch',
+                'arm64',
+            ],
+            ['-DPNSLR_IOS_SIMULATOR=1', '-DPNSLR_ARM64=1'],
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 

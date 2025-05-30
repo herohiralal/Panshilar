@@ -11,7 +11,7 @@ export OSX_SDK_FOUND=0
 export BUILD_TOOLS_PATH="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain"
 BUILD_PLATFORMS_PATH="/Applications/Xcode.app/Contents/Developer/Platforms"
 
-if [ ! -d $BUILD_TOOLS_PATH/usr/bin/clang ]; then
+if [ ! -e $BUILD_TOOLS_PATH/usr/bin/clang ]; then
     echo "ERROR: Build tools not found at $BUILD_TOOLS_PATH"
     exit 1
 fi
