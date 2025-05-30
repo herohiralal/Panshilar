@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "__Prelude.h"
 
 #include "Allocators.c"

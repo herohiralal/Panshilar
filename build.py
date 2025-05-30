@@ -1,12 +1,18 @@
 import os, sys, subprocess
 
-# Commandline arguments
+# region Commandline arguments ================================================================================================
+
 CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' # Rebuild the intrinsics dependency
 CMD_ARG_RUN_TESTS           = '-tests'              # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-regen-bindings'     # Regenerate the bindings after building
 
-# Internal Constants
-MSVC_COMMON_ARGS = ['/Brepro', '/nologo', '/std:c11', '/Wall', '/WX', '/wd4100', '/wd5045']
+# endregion
+
+# region Internal Constants ===================================================================================================
+
+MSVC_DEBUG_ARGS   = ['/Zi', '/Od', '/D_DEBUG']
+MSVC_COMMON_ARGS  = ['/Brepro', '/nologo', '/std:c11', '/Wall', '/WX', '/wd4100', '/wd5045']
+CLANG_DEBUG_ARGS  = ['-g', '-O0', '-DDEBUG']
 CLANG_COMMON_ARGS = [
     '-std=c11',
     '-Wall', '-Wextra', '-Wshadow', '-Wconversion', '-Wsign-conversion',
@@ -14,27 +20,119 @@ CLANG_COMMON_ARGS = [
     '-Wstrict-prototypes', '-Werror', '-Wno-unused-parameter'
 ]
 
+# endregion
+
 # region File paths ===========================================================================================================
 
-INTRINSICS_INPUT_FILE  = 'Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c'
-LIBRARY_INPUT_FILE     = 'Source/zzzz_Unity.c'
-TEST_RUNNER_INPUT_FILE = 'Tools/TestRunner/TestRunner.c'
-BIND_GEN_INPUT_FILE    = 'Tools/BindGen/BindingsGenerator.c'
-
-def getIntrinsicsOutputFile(tgt, arch):
+def getIntrinsicsObjectPath(tgt: str, arch: str) -> str:
     return f'Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
 
-def getLibraryCompileOutputFile(tgt, arch):
+def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
+    inputFile = 'Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c'
+    outputFile = getIntrinsicsObjectPath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            '/c',
+            inputFile,
+            f'/Fo{outputFile}',
+        ]
+    else:
+        return [
+            '-c',
+            inputFile,
+            f'-o{outputFile}',
+        ]
+
+def getLibraryObjectPath(tgt: str, arch: str) -> str:
     return f'Temp/unity-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
 
-def getLibraryOutputFile(tgt, arch):
+def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
+    inputFile = 'Source/zzzz_Unity.c'
+    outputFile = getLibraryObjectPath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            '/c',
+            inputFile,
+            f'/Fo{outputFile}',
+        ]
+    else:
+        return [
+            '-c',
+            inputFile,
+            f'-o{outputFile}',
+        ]
+
+def getLibraryPath(tgt: str, arch: str) -> str:
     return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
 
-def getTestRunnerOutputFile(tgt, arch):
+def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
+    intrinsicsObjFile = getIntrinsicsObjectPath(tgt, arch)
+    libraryObjFile    = getLibraryObjectPath(tgt, arch)
+    outputFile        = getLibraryPath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            '/Brepro',
+            '/nologo',
+            intrinsicsObjFile,
+            libraryObjFile,
+            f'/OUT:{outputFile}',
+        ]
+    else:
+        return [
+            'rcs',
+            outputFile,
+            intrinsicsObjFile,
+            libraryObjFile,
+        ]
+
+def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
-def getBindGenOutputFile(tgt, arch):
+def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
+    inputFile  = 'Tools/TestRunner/TestRunner.c'
+    outputFile = getTestRunnerExecutablePath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            inputFile,
+            getLibraryPath(tgt, arch),
+            '/ISource/'
+            f'/Fe{outputFile}',
+            f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
+            f'FdBinaries/TestRunner-{tgt}-{arch}.pdb',
+        ] + MSVC_DEBUG_ARGS
+    else:
+        return [
+            inputFile,
+            f'-o{outputFile}',
+        ] + CLANG_DEBUG_ARGS
+
+def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
+
+def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
+    inputFile = 'Tools/BindGen/BindingsGenerator.c'
+    outputFile = getBindingsGeneratorExecutablePath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            inputFile,
+            f'/Fo{outputFile}',
+        ]
+    else:
+        return [
+            inputFile,
+            f'-o{outputFile}',
+        ]
+
+# endregion
+
+# region Global State =========================================================================================================
+
+failedProcesses: list[str] = []  # List to track failed processes
 
 # endregion
 
@@ -45,26 +143,81 @@ def printSectionBreak():
     print('')
     print('')
 
-def printInfo(message):
+def printInfo(message: str):
     print(f'\033[1;36m[INFO]:    \033[0m{message}')
 
-def printWarn(message):
+def printWarn(message: str):
     print(f'\033[1;33m[WARNING]: \033[0m{message}')
 
-def printErr(message):
+def printErr(message: str):
     print(f'\033[1;31m[ERROR]:   \033[0m{message}')
 
-def printSuccess(message):
+def printSuccess(message: str):
     print(f'\033[1;32m[SUCCESS]: \033[0m {message}')
     printSectionBreak()
 
-def printFailure(message):
+def printFailure(message: str):
     print(f'\033[1;31m[FAILURE]: \033[0m{message}')
     printSectionBreak()
 
-def runCommand(command):
+def runCommand(command: list[str], name: str) -> bool:
+    printInfo(f'Running: {name}')
     result = subprocess.run(command, stdout = sys.stdout)
+    if result.returncode == 0:
+        printSuccess(f'Completed successfully: {name}')
+    else:
+        printFailure(f'Failed to complete: {name}')
+        failedProcesses.append(name)
     return result.returncode == 0
+
+# endregion
+
+# region Main Build Function ==================================================================================================
+
+def buildPlatform(
+        prettyTgt:          str,
+        prettyArch:         str,
+        tgt:                str,
+        arch:               str,
+        compiler:           str,
+        linker:             str,
+        commonCompilerArgs: list[str],
+        envArgs:            list[str],
+        rebuildIntrinsics:  bool,
+        runTests:           bool,
+        regenerateBindings: bool
+    ) -> bool:
+    if rebuildIntrinsics:
+        printInfo(f'Rebuilding intrinsics for {prettyTgt}-{prettyArch}...')
+        args = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
+        if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Intrinsics Compile'):
+            return False
+
+    printInfo(f'Compiling Panshilar library for {prettyTgt}-{prettyArch}...')
+    args = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
+    if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Library Compile'):
+        return False
+
+    printInfo(f'Linking Panshilar library for {prettyTgt}-{prettyArch}...')
+    args = getLibraryLinkArgs(tgt, arch)
+    if not runCommand([linker] + args, f'{prettyTgt}-{prettyArch} Library Link'):
+        return False
+
+    testsSuccessful = True
+    if runTests:
+        printInfo(f'Building Test Runner for {prettyTgt}-{prettyArch}...')
+        args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch)
+        testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') and \
+                          runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
+
+    bindGenSuccessful = True
+    if regenerateBindings:
+        printInfo(f'Regenerating bindings for {prettyTgt}-{prettyArch}...')
+        args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch)
+        bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') and \
+                            runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
+
+    return testsSuccessful and bindGenSuccessful
 
 # endregion
 
@@ -135,18 +288,7 @@ def main():
 
     # endregion
 
-    # region Set up commons ===================================================================================================
-
-    objectFileExt        = 'o'
-    windowsObjectFileExt = 'obj'
-    staticLibExt         = 'a'
-    windowsStaticLibExt  = 'lib'
-
-    failedBuilds = []
-
     printSectionBreak()
-
-    # endregion
 
     # region Windows-x64 Builds ===============================================================================================
 
@@ -157,26 +299,17 @@ def main():
             exit(1)
 
         printInfo(f'Using Windows toolchain at: {windowsToolchain}.')
-        tgt           = 'windows'
-        arch          = 'x64'
-        clExecutable  = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe')
-        libExecutable = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe')
-        commonArgs    = MSVC_COMMON_ARGS + []
-
-        if rebuildIntrinsics:
-            printInfo('Rebuilding intrinsics...')
-
-            args = [
-                '/c',
-                INTRINSICS_INPUT_FILE,
-                f'/Fo{getIntrinsicsOutputFile(tgt, arch)}',
-            ] + commonArgs
-
-            if runCommand([clExecutable] + args):
-                printSuccess('Intrinsics rebuilt successfully.')
-            else:
-                printFailure('Failed to rebuild intrinsics.')
-                failedBuilds.append('Windows-x64 Intrinsics')
+        buildPlatform(
+            'Windows',
+            'x64',
+            'windows',
+            'x64',
+            os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
+            os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe'),
+            MSVC_COMMON_ARGS + [],
+            ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
 
     # endregion
 
@@ -189,29 +322,17 @@ def main():
             exit(1)
 
         printInfo(f'Using Linux-x64 toolchain at: {linuxX64Toolchain}.')
-        tgt             = 'linux'
-        arch            = 'x64'
-        clangExecutable = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe')
-        arExecutable    = os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe')
-        commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={linuxX64Toolchain}\\',
-            '--target=x86_64-pc-linux-gnu',
-        ]
-
-        if rebuildIntrinsics:
-            printInfo('Rebuilding intrinsics...')
-
-            args = [
-                '-c',
-                INTRINSICS_INPUT_FILE,
-                f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ] + commonArgs
-
-            if runCommand([clangExecutable] + args):
-                printSuccess('Intrinsics rebuilt successfully.')
-            else:
-                printFailure('Failed to rebuild intrinsics.')
-                failedBuilds.append('Linux-x64 Intrinsics')
+        buildPlatform(
+            'Linux',
+            'x64',
+            'linux',
+            'x64',
+            os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
+            os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
+            CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-pc-linux-gnu'],
+            ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
 
     # endregion
 
@@ -224,29 +345,17 @@ def main():
             exit(1)
 
         printInfo(f'Using Linux-ARM64 toolchain at: {linuxArm64Toolchain}.')
-        tgt             = 'linux'
-        arch            = 'arm64'
-        clangExecutable = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe')
-        arExecutable    = os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe')
-        commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={linuxArm64Toolchain}\\',
-            '--target=aarch64-unknown-linux-gnu',
-        ]
-
-        if rebuildIntrinsics:
-            printInfo('Rebuilding intrinsics...')
-
-            args = [
-                '-c',
-                INTRINSICS_INPUT_FILE,
-                f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ] + commonArgs
-
-            if runCommand([clangExecutable] + args):
-                printSuccess('Intrinsics rebuilt successfully.')
-            else:
-                printFailure('Failed to rebuild intrinsics.')
-                failedBuilds.append('Linux-ARM64 Intrinsics')
+        buildPlatform(
+            'Linux',
+            'ARM64',
+            'linux',
+            'arm64',
+            os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
+            os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
+            CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnu'],
+            ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
 
     # endregion
 
@@ -259,33 +368,31 @@ def main():
             exit(1)
 
         printInfo(f'Using Android toolchain at: {androidToolchain}.')
-        tgt             = 'android'
-        arch            = 'arm64'
-        clangExecutable = os.path.join(androidToolchain, 'bin', 'clang.exe')
-        arExecutable    = os.path.join(androidToolchain, 'bin', 'llvm-ar.exe')
-        commonArgs      = CLANG_COMMON_ARGS + [
-            f'--sysroot={androidToolchain}\\sysroot\\',
-            '--target=aarch64-linux-android28',
-        ]
-
-        if rebuildIntrinsics:
-            printInfo('Rebuilding intrinsics...')
-
-            args = [
-                '-c',
-                INTRINSICS_INPUT_FILE,
-                f'-o{getIntrinsicsOutputFile(tgt, arch)}',
-            ] + commonArgs
-
-            if runCommand([clangExecutable] + args):
-                printSuccess('Intrinsics rebuilt successfully.')
-            else:
-                printFailure('Failed to rebuild intrinsics.')
-                failedBuilds.append('Android-ARM64 Intrinsics')
+        buildPlatform(
+            'Android',
+            'ARM64',
+            'android',
+            'arm64',
+            os.path.join(androidToolchain, 'bin', 'clang.exe'),
+            os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
+            CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28'],
+            ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
+            rebuildIntrinsics, runTests, regenerateBindings,
+        )
 
     # endregion
 
-    exit(0)
+    # region Summary ==========================================================================================================
+
+    if not failedProcesses:
+        printSuccess('All builds completed successfully!')
+    else:
+        printErr('Failed processes:')
+        for process in failedProcesses:
+            print(f' - {process}')
+        printFailure('One or more processes failed. Please check the output above for details.')
+
+    # endregion
 
 if __name__ == '__main__':
     main()
