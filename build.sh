@@ -33,4 +33,4 @@ fi
 
 # Run Build Script =================================================================
 
-python build.py "$@"
+python3 build.py "$@"

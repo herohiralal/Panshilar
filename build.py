@@ -182,7 +182,7 @@ def printFailure(message: str):
 def runCommand(command: list[str], name: str) -> bool:
     printSectionStart()
     printInfo(f'Running: {name}')
-    printDebug(f'Command: {" ".join(command)}')
+    # printDebug(f'Command: {" ".join(command)}')
     result = subprocess.run(command, stdout = sys.stdout)
     if result.returncode == 0:
         printSuccess(f'Completed successfully: {name}')
@@ -407,7 +407,7 @@ def main():
                 '-arch',
                 'arm64',
             ],
-            ['-DPNSLR_IOS_SIMULATOR=1', '-DPNSLR_ARM64=1'],
+            ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
             rebuildIntrinsics, runTests, regenerateBindings,
         )
 
