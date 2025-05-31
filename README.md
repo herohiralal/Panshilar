@@ -74,18 +74,22 @@ Currently it supposrts two hosts that can build different subsets of the targets
 - OSX     (ARM64) -> iOS     (ARM64)
 ```
 
-The batch files (`*.bat`/`*.sh`) for both are set up, although at the time of writing this, the OSX shell file is untested (never been run at all).
-Hate Apple platforms for being closed. Love their tooling sometimes though.
+The batch files (`build.bat`/`build.sh`) for both host platforms are set up, which in turn call `build.py`.
 
-Windows host will require running `setup.bat` once. This will set up toolchains, which by the way will need to be downloaded:
-- Windows Build Tools + Windows Development Kit
+Build Depndencies:
+- Python 3.
+- Visual Studio Build Tools + Windows SDK
 - Android NDK (something that can build API level 28, it'll pick the first one available)
 - Linux cross-compilers ([get here](https://dev.epicgames.com/documentation/en-us/unreal-engine/cross-compiling-for-linux?application_version=4.27))
   - Thanks Epic Games!
+- Xcode Build Tools
+- OSX toolchain
+- iPhone Simulator Toolchain
+- iPhone Toolchain
 
-If any toolchain is not found, the batch files are set to ignore that platform when building.
+If any toolchain is not found, the build scripts are set to ignore that platform when building.
 
-Also, never switching to a build system. Unity build, with a batch file command invocation is how it'll remain forever.
+Also, never switching to a build system. Unity build, with a single build command invocation is how it'll remain forever.
 
 ## How to use
 
