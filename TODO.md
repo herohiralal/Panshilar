@@ -27,11 +27,11 @@ This file contains todo items for Panshilar library.
   - [ ] GetParent
   - [ ] GetFileName
   - [ ] GetExtension
-- [ ] Parsing
-  - [ ] Boolean
-  - [ ] Enum
-  - [ ] Float
-  - [ ] Int
+- [ ] StrConv
+  - [ ] String <-> Boolean
+  - [ ] String <-> Enum
+  - [ ] String <-> Float
+  - [ ] String <-> Int
 - [ ] Disk I/O Functionality
   - [ ] Iterate
   - [ ] WriteStream
@@ -57,9 +57,19 @@ This file contains todo items for Panshilar library.
     - [ ] colour
     - [ ] quaternion
     - [ ] matrices
+  - [ ] Linear Algebra
+  - [ ] Trigonometry
 - [ ] Allocators
   - [ ] Arena
   - [ ] Pool
   - [ ] Buddy
+- [ ] Time
+  - [ ] GetCurrent
+  - [ ] Unix Epoch conv
+  - [ ] Apollo(?)
+- [ ] Environment
+  - [ ] Exit with code
+  - [ ] Get Cmdline
+- [ ] Tokenizer
 
 > \* - case-insensitive variants also needed
