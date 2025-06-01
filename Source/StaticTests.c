@@ -9,14 +9,15 @@
 
 #include "__Prelude.h"
 
-typedef struct PNSLR_StaticTests_OffsetTestStruct
-{
-    i32 a;
-    i32 b;
-} PNSLR_StaticTests_OffsetTestStruct;
+// auto alignment check
+typedef struct { i32 a; i32 b; } PNSLR_StaticTests_AutoAlignCheck;
+static_assert(offsetof(PNSLR_StaticTests_AutoAlignCheck, a) == 0, "Offset of 'a' should be 0");
+static_assert(offsetof(PNSLR_StaticTests_AutoAlignCheck, b) == 4, "Offset of 'b' should be 4");
 
-static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, a) == 0, "Offset of 'a' should be 0");
-static_assert(offsetof(PNSLR_StaticTests_OffsetTestStruct, b) == 4, "Offset of 'b' should be 4");
+// manual alignment check
+typedef struct alignas(16) { i32 a; i32 b; } PNSLR_StaticTests_ManualAlignCheck;
+static_assert(alignof(PNSLR_StaticTests_ManualAlignCheck) == 16, "Custom alignment should be 16 bytes");
+static_assert(alignof(PNSLR_StaticTests_ManualAlignCheck) == 16, "Custom alignment should be 16 bytes");
 
 // ensure all compiler macros are defined, and exactly one is set
 static_assert((PNSLR_CLANG + PNSLR_GCC + PNSLR_MSVC) == 1, "Exactly one compiler must be defined.");

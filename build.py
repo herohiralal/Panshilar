@@ -11,7 +11,7 @@ CMD_ARG_REGENERATE_BINDINGS = '-rebind'             # Regenerate the bindings af
 # region Internal Constants ===================================================================================================
 
 MSVC_DEBUG_ARGS   = ['/Zi', '/Od', '/D_DEBUG']
-MSVC_COMMON_ARGS  = ['/Brepro', '/nologo', '/std:c11', '/Wall', '/WX', '/wd4100', '/wd5045']
+MSVC_COMMON_ARGS  = ['/Brepro', '/nologo', '/std:c11', '/Wall', '/WX', '/wd4100', '/wd5045', '/wd4324', '/wd4820']
 CLANG_DEBUG_ARGS  = ['-g', '-O0', '-DDEBUG']
 CLANG_COMMON_ARGS = [
     '-std=c11',
