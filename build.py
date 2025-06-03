@@ -398,8 +398,10 @@ def main():
             compilerPath     = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
             cStandard        = 'c11',
             intelliSenseMode = 'windows-msvc-x64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-Windows-x64.json',
         ))
 
@@ -420,8 +422,11 @@ def main():
             compilerPath     = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
             cStandard        = 'c11',
             intelliSenseMode = 'linux-clang-x64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_LINUX=1', 'PNSLR_X64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source',
+                f'{linuxX64Toolchain}\\usr\\include'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_X64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-Linux-x64.json',
         ))
 
@@ -447,8 +452,10 @@ def main():
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
             intelliSenseMode = 'macos-clang-arm64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_OSX=1', 'PNSLR_ARM64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-MacOS-ARM64.json',
         ))
 
@@ -469,8 +476,11 @@ def main():
             compilerPath     = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
             cStandard        = 'c11',
             intelliSenseMode = 'linux-clang-arm64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source',
+                f'{linuxArm64Toolchain}\\usr\\include'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-Linux-ARM64.json',
         ))
 
@@ -491,8 +501,11 @@ def main():
             compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe'),
             cStandard        = 'c11',
             intelliSenseMode = 'linux-clang-arm64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source',
+                f'{androidToolchain}\\sysroot\\usr\\include',
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-Android-ARM64.json',
         ))
 
@@ -521,8 +534,10 @@ def main():
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
             intelliSenseMode = 'clang-arm64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-iOS-ARM64.json',
         ))
 
@@ -551,8 +566,10 @@ def main():
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
             intelliSenseMode = 'clang-arm64',
-            includePath      = ['Source'],
-            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
+            includePath      = [
+                '${workspaceFolder}/Source'
+            ],
+            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compileCommands  = '${workspaceFolder}/Build/CompileCommands-iOS-Simulator-ARM64.json',
         ))
 
