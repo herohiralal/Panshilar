@@ -1,4 +1,5 @@
 import os, sys, subprocess
+from pathlib import Path
 
 # region Commandline arguments ================================================================================================
 
@@ -43,13 +44,34 @@ CLANG_COMMON_ARGS = [
 # region File paths ===========================================================================================================
 
 def getIntrinsicsSourcePath() -> str:
-    return f'Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c'
+    return f'Source/Dependencies/PNSLR_Intrinsics/'
+
+def getLibrarySourcePath() -> str:
+    return f'Source/'
+
+def getTestRunnerSourcePath() -> str:
+    return f'Tools/TestRunner/'
+
+def getBindingsGeneratorSourcePath() -> str:
+    return f'Tools/BindGen/'
 
 def getIntrinsicsObjectPath(tgt: str, arch: str) -> str:
     return f'Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
 
+def getLibraryObjectPath(tgt: str, arch: str) -> str:
+    return f'Temp/unity-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
+
+def getLibraryPath(tgt: str, arch: str) -> str:
+    return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
+
+def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
+    return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
+
+def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
+    return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
+
 def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getIntrinsicsSourcePath()
+    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.c'
     outputFile = getIntrinsicsObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -65,14 +87,8 @@ def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
             f'-o{outputFile}',
         ]
 
-def getLibrarySourcePath() -> str:
-    return f'Source/zzzz_Unity.c'
-
-def getLibraryObjectPath(tgt: str, arch: str) -> str:
-    return f'Temp/unity-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
-
 def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getLibrarySourcePath()
+    inputFile  = getLibrarySourcePath() + 'zzzz_Unity.c'
     outputFile = getLibraryObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -87,9 +103,6 @@ def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
             inputFile,
             f'-o{outputFile}',
         ]
-
-def getLibraryPath(tgt: str, arch: str) -> str:
-    return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
 
 def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
     intrinsicsObjFile = getIntrinsicsObjectPath(tgt, arch)
@@ -112,14 +125,8 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             libraryObjFile,
         ]
 
-def getTestRunnerSourcePath() -> str:
-    return f'Tools/TestRunner/TestRunner.c'
-
-def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
-    return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
-
 def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getTestRunnerSourcePath()
+    inputFile  = getTestRunnerSourcePath() + 'TestRunner.c'
     outputFile = getTestRunnerExecutablePath(tgt, arch)
 
     if tgt == 'windows':
@@ -142,14 +149,8 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             # '-###',
         ] + CLANG_DEBUG_ARGS
 
-def getBindingsGeneratorSourcePath() -> str:
-    return f'Tools/BindGen/BindingsGenerator.c'
-
-def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
-    return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
-
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getBindingsGeneratorSourcePath()
+    inputFile  = getBindingsGeneratorSourcePath() + 'BindingsGenerator.c'
     outputFile = getBindingsGeneratorExecutablePath(tgt, arch)
 
     if tgt == 'windows':
@@ -252,7 +253,13 @@ def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str,
     printInfo(f'Using {prettyTgt} {prettyArch} toolchain at: {toolchainPath}.')
     return toolchainPath
 
+ALL_INTRINSICS_FILES:  list[str] = [str(f) for f in Path(getIntrinsicsSourcePath()       ).glob('*.c') if f.is_file()]
+ALL_LIBRARY_FILES:     list[str] = [str(f) for f in Path(getLibrarySourcePath()          ).glob('*.c') if f.is_file()]
+ALL_TEST_RUNNER_FILES: list[str] = [str(f) for f in Path(getTestRunnerSourcePath()       ).glob('*.c') if f.is_file()]
+ALL_BIND_GEN_FILES:    list[str] = [str(f) for f in Path(getBindingsGeneratorSourcePath()).glob('*.c') if f.is_file()]
+
 def buildPlatform(
+        actuallyBuild:      bool,
         prettyTgt:          str,
         prettyArch:         str,
         tgt:                str,
@@ -263,59 +270,70 @@ def buildPlatform(
         envArgs:            list[str],
     ) -> bool:
 
-    runTools = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else ''))
+    runTools       = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else ''))
+    actuallyBuild2 = actuallyBuild or CMD_ARG_BUILD_ALL
 
     intrinsicsCompiled    = True
     intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
-        intrinsicsCompiled = runCommand([compiler] + intrinsicsCompileArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile')
+        intrinsicsCompiled = (not actuallyBuild2) or \
+                             (True and runCommand([compiler] + intrinsicsCompileArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
 
     libraryCompiled    = True
     libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
-    libraryCompiled    = intrinsicsCompiled and runCommand([compiler] + libraryCompileArgs, f'{prettyTgt}-{prettyArch} Library Compile')
+    libraryCompiled    = (not actuallyBuild2) or \
+                         (intrinsicsCompiled and runCommand([compiler] + libraryCompileArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
 
     libraryLinked   = True
     libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
-    libraryLinked   = libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link')
+    libraryLinked   = (not actuallyBuild2) or \
+                      (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
 
     testsSuccessful     = True
     testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
-    testsSuccessful     = (not CMD_ARG_RUN_TESTS) or (not runTools) or \
+    testsSuccessful     = (not actuallyBuild2) or (not CMD_ARG_RUN_TESTS) or (not runTools) or \
                           (libraryLinked and runCommand([compiler] + testRunnerBuildArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
 
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
-    bindGenSuccessful          = (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
+    bindGenSuccessful          = (not actuallyBuild2) or (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
                                  (libraryLinked and runCommand([compiler] + bindingsGeneratorBuildArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
-    compileCommands: list[dict[str, str]] = [
-        {
+    compileCommands: list[dict[str, str]] = []
+
+    for file in ALL_INTRINSICS_FILES:
+        compileCommands.append({
             'directory': '..',
-            'command':   compiler + ' "' + '" "'.join(intrinsicsCompileArgs) + '"',
-            'file':      getIntrinsicsSourcePath(),
-        },
-        {
+            'command':   '"' + '" "'.join([compiler] + getIntrinsicsCompileArgs(tgt, arch)) + '"',
+            'file':      file,
+        })
+
+    for file in ALL_LIBRARY_FILES:
+        compileCommands.append({
             'directory': '..',
-            'command':   compiler + ' "' + '" "'.join(libraryCompileArgs) + '"',
-            'file':      getLibrarySourcePath(),
-        },
-        {
+            'command':   '"' + '" "'.join([compiler] + getLibraryCompileArgs(tgt, arch)) + '"',
+            'file':      file,
+        })
+
+    for file in ALL_TEST_RUNNER_FILES:
+        compileCommands.append({
             'directory': '..',
-            'command':   compiler + ' "' + '" "'.join(testRunnerBuildArgs) + '"',
-            'file':      getTestRunnerSourcePath(),
-        },
-        {
+            'command':   '"' + '" "'.join([compiler] + getTestRunnerBuildArgs(tgt, arch)) + '"',
+            'file':      file,
+        })
+
+    for file in ALL_BIND_GEN_FILES:
+        compileCommands.append({
             'directory': '..',
-            'command':   compiler + ' "' + '" "'.join(bindingsGeneratorBuildArgs) + '"',
-            'file':      getBindingsGeneratorSourcePath(),
-        },
-    ]
+            'command':   '"' + '" "'.join([compiler] + getBindGenBuildArgs(tgt, arch)) + '"',
+            'file':      file,
+        })
 
     compileCommandsFile = f'Build/CompileCommands-{prettyTgt}-{prettyArch}.json'
     os.makedirs(os.path.dirname(compileCommandsFile), exist_ok=True)
     with open(compileCommandsFile, 'w') as f:
         import json
-        json.dump(compileCommands, f, indent=2)
+        json.dump(compileCommands, f, indent = 2)
 
     return libraryLinked and testsSuccessful and bindGenSuccessful
 
@@ -358,8 +376,9 @@ def main():
 
     # region Builds ===========================================================================================================
 
-    if windowsToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_WINDOWS_X64):
+    if windowsToolchain:
         buildPlatform(
+            CMD_ARG_BUILD_WINDOWS_X64,
             'Windows',
             'x64',
             'windows',
@@ -370,8 +389,9 @@ def main():
             ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
         )
 
-    if linuxX64Toolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_LINUX_X64):
+    if linuxX64Toolchain:
         buildPlatform(
+            CMD_ARG_BUILD_LINUX_X64,
             'Linux',
             'x64',
             'linux',
@@ -382,8 +402,9 @@ def main():
             ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
         )
 
-    if osxTools and osxToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_OSX_ARM64):
+    if osxTools and osxToolchain:
         buildPlatform(
+            CMD_ARG_BUILD_OSX_ARM64,
             'MacOS',
             'Apple Silicon',
             'osx',
@@ -399,8 +420,9 @@ def main():
             ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
         )
 
-    if linuxArm64Toolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_LINUX_ARM64):
+    if linuxArm64Toolchain:
         buildPlatform(
+            CMD_ARG_BUILD_LINUX_ARM64,
             'Linux',
             'ARM64',
             'linux',
@@ -411,8 +433,9 @@ def main():
             ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
         )
 
-    if androidToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_ANDROID_ARM64):
+    if androidToolchain:
         buildPlatform(
+            CMD_ARG_BUILD_ANDROID_ARM64,
             'Android',
             'ARM64',
             'android',
@@ -423,8 +446,9 @@ def main():
             ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
         )
 
-    if osxTools and iosToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_IOS_ARM64):
+    if osxTools and iosToolchain:
         buildPlatform(
+            CMD_ARG_BUILD_IOS_ARM64,
             'iOS',
             'ARM64',
             'ios',
@@ -443,8 +467,9 @@ def main():
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
         )
 
-    if osxTools and iosSimulatorToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_IOS_SIM_ARM64):
+    if osxTools and iosSimulatorToolchain:
         buildPlatform(
+            CMD_ARG_BUILD_IOS_SIM_ARM64,
             'iOS-Simulator',
             'ARM64',
             'iossimulator',

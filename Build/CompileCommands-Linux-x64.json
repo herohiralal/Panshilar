@@ -1,22 +1,47 @@
 [
   {
     "directory": "..",
-    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\\" \"--target=x86_64-unknown-linux-gnu\" \"-c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"-oSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-linux-x64.o\"",
-    "file": "Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c"
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"-oSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-linux-x64.o\"",
+    "file": "Source\\Dependencies\\PNSLR_Intrinsics\\Intrinsics.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\\" \"--target=x86_64-unknown-linux-gnu\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_X64=1\"",
-    "file": "Source/zzzz_Unity.c"
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\Allocators.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\\" \"--target=x86_64-unknown-linux-gnu\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-linux-x64.a\" \"-o\" \"Binaries/TestRunner-linux-x64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_X64=1\"",
-    "file": "Tools/TestRunner/TestRunner.c"
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\Console.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\\" \"--target=x86_64-unknown-linux-gnu\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-linux-x64.a\" \"-o\" \"Binaries/BindingsGenerator-linux-x64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_X64=1\"",
-    "file": "Tools/BindGen/BindingsGenerator.c"
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\Environment.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\StaticTests.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\Strings.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-x64.o\"",
+    "file": "Source\\zzzz_Unity.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-linux-x64.a\" \"-o\" \"Binaries/TestRunner-linux-x64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\"",
+    "file": "Tools\\TestRunner\\TestRunner.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-linux-x64.a\" \"-o\" \"Binaries/BindingsGenerator-linux-x64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\"",
+    "file": "Tools\\BindGen\\BindingsGenerator.c"
   }
 ]

@@ -1,22 +1,47 @@
 [
   {
     "directory": "..",
-    "command": "C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\\" \"--target=aarch64-linux-android28\" \"-c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"-oSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-android-arm64.o\"",
-    "file": "Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c"
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"-oSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-android-arm64.o\"",
+    "file": "Source\\Dependencies\\PNSLR_Intrinsics\\Intrinsics.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\\" \"--target=aarch64-linux-android28\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\" \"-DPNSLR_ANDROID=1\" \"-DPNSLR_ARM64=1\"",
-    "file": "Source/zzzz_Unity.c"
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\Allocators.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\\" \"--target=aarch64-linux-android28\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-android-arm64.a\" \"-o\" \"Binaries/TestRunner-android-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_ANDROID=1\" \"-DPNSLR_ARM64=1\"",
-    "file": "Tools/TestRunner/TestRunner.c"
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\Console.c"
   },
   {
     "directory": "..",
-    "command": "C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\\" \"--target=aarch64-linux-android28\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-android-arm64.a\" \"-o\" \"Binaries/BindingsGenerator-android-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_ANDROID=1\" \"-DPNSLR_ARM64=1\"",
-    "file": "Tools/BindGen/BindingsGenerator.c"
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\Environment.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\StaticTests.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\Strings.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-android-arm64.o\"",
+    "file": "Source\\zzzz_Unity.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-android-arm64.a\" \"-o\" \"Binaries/TestRunner-android-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\"",
+    "file": "Tools\\TestRunner\\TestRunner.c"
+  },
+  {
+    "directory": "..",
+    "command": "\"C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-android-arm64.a\" \"-o\" \"Binaries/BindingsGenerator-android-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\"",
+    "file": "Tools\\BindGen\\BindingsGenerator.c"
   }
 ]
