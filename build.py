@@ -7,20 +7,20 @@ CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests 
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
 CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
-CMD_ARG_BUILD_WINDOWS_X64   = "+win-x64"            in sys.argv # Build the Windows x64 target
+CMD_ARG_BUILD_WINDOWS_X64   = "+windows-x64"        in sys.argv # Build the Windows x64 target
 CMD_ARG_BUILD_LINUX_X64     = "+linux-x64"          in sys.argv # Build the Linux x64 target
 CMD_ARG_BUILD_LINUX_ARM64   = "+linux-arm64"        in sys.argv # Build the Linux ARM64 target
 CMD_ARG_BUILD_OSX_ARM64     = "+osx-arm64"          in sys.argv # Build the macOS ARM64 target
 CMD_ARG_BUILD_ANDROID_ARM64 = "+android-arm64"      in sys.argv # Build the Android ARM64 target
 CMD_ARG_BUILD_IOS_ARM64     = "+ios-arm64"          in sys.argv # Build the iOS ARM64 target
-CMD_ARG_BUILD_IOS_SIM_ARM64 = "+iossim-arm64"       in sys.argv # Build the iOS Simulator ARM64 target
+CMD_ARG_BUILD_IOS_SIM_ARM64 = "+iossimulator-arm64" in sys.argv # Build the iOS Simulator ARM64 target
 CMD_ARG_BUILD_ALL           = True and \
-                             not CMD_ARG_BUILD_WINDOWS_X64 and \
-                             not CMD_ARG_BUILD_LINUX_X64 and \
-                             not CMD_ARG_BUILD_LINUX_ARM64 and \
-                             not CMD_ARG_BUILD_OSX_ARM64 and \
+                             not CMD_ARG_BUILD_WINDOWS_X64   and \
+                             not CMD_ARG_BUILD_LINUX_X64     and \
+                             not CMD_ARG_BUILD_LINUX_ARM64   and \
+                             not CMD_ARG_BUILD_OSX_ARM64     and \
                              not CMD_ARG_BUILD_ANDROID_ARM64 and \
-                             not CMD_ARG_BUILD_IOS_ARM64 and \
+                             not CMD_ARG_BUILD_IOS_ARM64     and \
                              not CMD_ARG_BUILD_IOS_SIM_ARM64 and \
                              True                               # Build all targets by default if no specific target is specified
 
