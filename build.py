@@ -1,5 +1,4 @@
 import os, sys, subprocess
-from pathlib import Path
 from dataclasses import dataclass, asdict
 
 # region Commandline arguments ================================================================================================
@@ -238,11 +237,6 @@ def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str,
     printInfo(f'Using {prettyTgt} {prettyArch} toolchain at: {toolchainPath}.')
     return toolchainPath
 
-ALL_INTRINSICS_FILES:  list[str] = [str(f) for f in Path(getIntrinsicsSourcePath()       ).glob('*.c') if f.is_file()]
-ALL_LIBRARY_FILES:     list[str] = [str(f) for f in Path(getLibrarySourcePath()          ).glob('*.c') if f.is_file()]
-ALL_TEST_RUNNER_FILES: list[str] = [str(f) for f in Path(getTestRunnerSourcePath()       ).glob('*.c') if f.is_file()]
-ALL_BIND_GEN_FILES:    list[str] = [str(f) for f in Path(getBindingsGeneratorSourcePath()).glob('*.c') if f.is_file()]
-
 def buildPlatform(
         prettyTgt:          str,
         prettyArch:         str,
@@ -282,42 +276,6 @@ def buildPlatform(
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
     bindGenSuccessful          = (not actuallyBuild2) or (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
                                  (libraryLinked and runCommand([compiler] + bindingsGeneratorBuildArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
-
-    compileCommands: list[dict[str, str]] = []
-
-    for file in ALL_INTRINSICS_FILES:
-        compileCommands.append({
-            'directory': '..',
-            'command':   '"' + '" "'.join([compiler] + getIntrinsicsCompileArgs(tgt, arch)) + '"',
-            'file':      file,
-        })
-
-    for file in ALL_LIBRARY_FILES:
-        compileCommands.append({
-            'directory': '..',
-            'command':   '"' + '" "'.join([compiler] + getLibraryCompileArgs(tgt, arch)) + '"',
-            'file':      file,
-        })
-
-    for file in ALL_TEST_RUNNER_FILES:
-        compileCommands.append({
-            'directory': '..',
-            'command':   '"' + '" "'.join([compiler] + getTestRunnerBuildArgs(tgt, arch)) + '"',
-            'file':      file,
-        })
-
-    for file in ALL_BIND_GEN_FILES:
-        compileCommands.append({
-            'directory': '..',
-            'command':   '"' + '" "'.join([compiler] + getBindGenBuildArgs(tgt, arch)) + '"',
-            'file':      file,
-        })
-
-    compileCommandsFile = f'Build/CompileCommands-{prettyTgt}-{prettyArch}.json'
-    os.makedirs(os.path.dirname(compileCommandsFile), exist_ok=True)
-    with open(compileCommandsFile, 'w') as f:
-        import json
-        json.dump(compileCommands, f, indent = 2)
 
     return libraryLinked and testsSuccessful and bindGenSuccessful
 
@@ -365,10 +323,9 @@ def main():
         name:             str
         compilerPath:     str
         cStandard:        str
-        intelliSenseMode: str
         includePath:      list[str]
         defines:          list[str]
-        compileCommands:  str
+        compilerArgs:     list[str]
 
     @dataclass
     class CCppProperties:
@@ -382,6 +339,8 @@ def main():
     # region Builds ===========================================================================================================
 
     if windowsToolchain:
+        commonArgs = MSVC_COMMON_ARGS + []
+
         buildPlatform(
             'Windows',
             'x64',
@@ -389,23 +348,24 @@ def main():
             'x64',
             os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
             os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe'),
-            MSVC_COMMON_ARGS + [],
+            commonArgs,
             ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
         )
 
         properties.configurations.append(CCppPropertiesConfiguration(
             name             = 'Windows-x64',
-            compilerPath     = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
+            compilerPath     = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe').replace('\\', '/'),
             cStandard        = 'c11',
-            intelliSenseMode = 'windows-msvc-x64',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-Windows-x64.json',
+            compilerArgs     = commonArgs
         ))
 
     if linuxX64Toolchain:
+        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-unknown-linux-gnu']
+
         buildPlatform(
             'Linux',
             'x64',
@@ -413,24 +373,25 @@ def main():
             'x64',
             os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
             os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
-            CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-unknown-linux-gnu'],
+            commonArgs,
             ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
         )
 
         properties.configurations.append(CCppPropertiesConfiguration(
             name             = 'Linux-x64',
-            compilerPath     = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
+            compilerPath     = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
-            intelliSenseMode = 'linux-clang-x64',
             includePath      = [
                 '${workspaceFolder}/Source',
-                f'{linuxX64Toolchain}\\usr\\include'
+                f'{linuxX64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_X64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-Linux-x64.json',
+            compilerArgs     = commonArgs,
         ))
 
     if osxTools and osxToolchain:
+        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'x86_64-apple-macos11.0']
+
         buildPlatform(
             'MacOS',
             'Apple Silicon',
@@ -438,12 +399,7 @@ def main():
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
-            CLANG_COMMON_ARGS + [
-                '--sysroot',
-                osxToolchain,
-                '-target',
-                'arm64-apple-macos11.0',
-            ],
+            commonArgs,
             ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
         )
 
@@ -451,15 +407,16 @@ def main():
             name             = 'MacOS-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
-            intelliSenseMode = 'macos-clang-arm64',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_OSX=1', 'PNSLR_ARM64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-MacOS-ARM64.json',
+            compilerArgs     = commonArgs,
         ))
 
     if linuxArm64Toolchain:
+        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnueabi']
+
         buildPlatform(
             'Linux',
             'ARM64',
@@ -467,24 +424,25 @@ def main():
             'arm64',
             os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
             os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
-            CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnueabi'],
+            commonArgs,
             ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
         )
 
         properties.configurations.append(CCppPropertiesConfiguration(
             name             = 'Linux-ARM64',
-            compilerPath     = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
+            compilerPath     = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
-            intelliSenseMode = 'linux-clang-arm64',
             includePath      = [
                 '${workspaceFolder}/Source',
-                f'{linuxArm64Toolchain}\\usr\\include'
+                f'{linuxArm64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-Linux-ARM64.json',
+            compilerArgs     = commonArgs,
         ))
 
     if androidToolchain:
+        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28']
+
         buildPlatform(
             'Android',
             'ARM64',
@@ -492,24 +450,25 @@ def main():
             'arm64',
             os.path.join(androidToolchain, 'bin', 'clang.exe'),
             os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
-            CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28'],
+            commonArgs,
             ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
         )
 
         properties.configurations.append(CCppPropertiesConfiguration(
             name             = 'Android-ARM64',
-            compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe'),
+            compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
-            intelliSenseMode = 'linux-clang-arm64',
             includePath      = [
                 '${workspaceFolder}/Source',
-                f'{androidToolchain}\\sysroot\\usr\\include',
+                f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-Android-ARM64.json',
+            compilerArgs     = commonArgs,
         ))
 
     if osxTools and iosToolchain:
+        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', iosToolchain, '-miphoneos-version-min=16.0', '-target', 'aarch64-apple-ios16.0', '-arch', 'arm64']
+
         buildPlatform(
             'iOS',
             'ARM64',
@@ -517,15 +476,7 @@ def main():
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
-            CLANG_COMMON_ARGS + [
-                '--sysroot',
-                iosToolchain,
-                '-miphoneos-version-min=16.0',
-                '-target',
-                'aarch64-apple-ios16.0',
-                '-arch',
-                'arm64',
-            ],
+            commonArgs,
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
         )
 
@@ -533,15 +484,15 @@ def main():
             name             = 'iOS-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
-            intelliSenseMode = 'clang-arm64',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-iOS-ARM64.json',
+            compilerArgs     = commonArgs,
         ))
 
     if osxTools and iosSimulatorToolchain:
+        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', iosSimulatorToolchain, '-miphoneos-version-min=16.0', '-target', 'aarch64-apple-ios16.0-simulator', '-arch', 'arm64']
         buildPlatform(
             'iOS-Simulator',
             'ARM64',
@@ -549,15 +500,7 @@ def main():
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
-            CLANG_COMMON_ARGS + [
-                '--sysroot',
-                iosSimulatorToolchain,
-                '-miphoneos-version-min=16.0',
-                '-target',
-                'aarch64-apple-ios16.0-simulator',
-                '-arch',
-                'arm64',
-            ],
+            commonArgs,
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
         )
 
@@ -565,12 +508,11 @@ def main():
             name             = 'iOS-Simulator-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
-            intelliSenseMode = 'clang-arm64',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
             defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
-            compileCommands  = '${workspaceFolder}/Build/CompileCommands-iOS-Simulator-ARM64.json',
+            compilerArgs     = commonArgs,
         ))
 
 
