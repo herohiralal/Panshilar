@@ -1,20 +1,22 @@
 [
-    {
-        "directory": "..",
-        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /c /std:c11 Source/zzzz_Unity.c /DPNSLR_IMPLEMENTATION /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /FoTemp/unity-windows-x64.obj /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/ /Wall /WX",
-        "file": "Source/zzzz_Unity.c",
-        "output": "Temp/unity-windows-x64.obj"
-    },
-    {
-        "directory": "..",
-        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /std:c11 Tools/TestRunner/TestRunner.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/ /ISource/ /FoTemp/test-runner-windows-x64.obj /FeBinaries/TestRunner-Windows-X64.exe /Wall /WX",
-        "file": "Tools/TestRunner/TestRunner.c",
-        "output": "Binaries/TestRunner-Windows-X64.exe"
-    },
-    {
-        "directory": "..",
-        "command": "\"Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe\" /nologo /std:c11 Tools/BindGen/BindingsGenerator.c Libraries/panshilar-windows-x64.lib /DPNSLR_WINDOWS=1 /DPNSLR_X64=1 /IToolchains/WindowsIncludes/um/ /IToolchains/WindowsIncludes/shared/ /IToolchains/WindowsIncludes/winrt/ /IToolchains/WindowsIncludes/ /ISource/ /FoTemp/bind-gen-windows-x64.obj /FeBinaries/BindingsGenerator-Windows-X64.exe /Wall /WX",
-        "file": "Tools/BindGen/BindingsGenerator.c",
-        "output": "Binaries/BindingsGenerator-WIndows-X64.exe"
-    }
+  {
+    "directory": "..",
+    "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.exe \"/Brepro\" \"/nologo\" \"/std:c11\" \"/Wall\" \"/WX\" \"/wd4100\" \"/wd5045\" \"/wd4324\" \"/wd4820\" \"/c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"/FoSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-windows-x64.obj\"",
+    "file": "Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.exe \"/Brepro\" \"/nologo\" \"/std:c11\" \"/Wall\" \"/WX\" \"/wd4100\" \"/wd5045\" \"/wd4324\" \"/wd4820\" \"/c\" \"Source/zzzz_Unity.c\" \"/FoTemp/unity-windows-x64.obj\" \"/DPNSLR_WINDOWS=1\" \"/DPNSLR_X64=1\"",
+    "file": "Source/zzzz_Unity.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.exe \"/Brepro\" \"/nologo\" \"/std:c11\" \"/Wall\" \"/WX\" \"/wd4100\" \"/wd5045\" \"/wd4324\" \"/wd4820\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-windows-x64.lib\" \"/ISource/\" \"/FeBinaries/TestRunner-windows-x64.exe\" \"/FoTemp/TestRunner-windows-x64.obj\" \"/FdBinaries/TestRunner-windows-x64.pdb\" \"/Zi\" \"/Od\" \"/D_DEBUG\" \"/DPNSLR_WINDOWS=1\" \"/DPNSLR_X64=1\"",
+    "file": "Tools/TestRunner/TestRunner.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.exe \"/Brepro\" \"/nologo\" \"/std:c11\" \"/Wall\" \"/WX\" \"/wd4100\" \"/wd5045\" \"/wd4324\" \"/wd4820\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-windows-x64.lib\" \"/ISource\" \"/FeBinaries/BindingsGenerator-windows-x64.exe\" \"/FoTemp/BindingsGenerator-windows-x64.obj\" \"/FdBinaries/BindingsGenerator-windows-x64.pdb\" \"/Zi\" \"/Od\" \"/D_DEBUG\" \"/DPNSLR_WINDOWS=1\" \"/DPNSLR_X64=1\"",
+    "file": "Tools/BindGen/BindingsGenerator.c"
+  }
 ]

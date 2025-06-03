@@ -3,74 +3,25 @@
     "configurations": [
         {
             "name": "Windows-x64",
-            "includePath": [
-                "${workspaceFolder}/Source/",
-                "${workspaceFolder}/Toolchains/WindowsIncludes/",
-                "${workspaceFolder}/Toolchains/WindowsSdkIncludes/um",
-                "${workspaceFolder}/Toolchains/WindowsSdkIncludes/shared",
-                "${workspaceFolder}/Toolchains/WindowsSdkIncludes/winrt",
-                "${workspaceFolder}/Toolchains/WindowsSdkIncludes/ucrt"
-            ],
-            "defines": [
-                "PNSLR_IMPLEMENTATION",
-                "PNSLR_WINDOWS=1",
-                "PNSLR_X64=1"
-            ],
-            "windowsSdkVersion": "10.0.22621.0",
-            "compilerPath": "${workspaceFolder}/Toolchains/Windows-x64/bin/Hostx64/x64/cl.exe",
             "cStandard": "c11",
-            "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "compileCommands": "${workspaceFolder}/Build/CompileCommands-Windows-x64.json"
         },
         {
             "name": "Linux-x64",
-            "includePath": [
-                "${workspaceFolder}/Source/",
-                "${workspaceFolder}/Toolchains/Linux-x64/usr/include/"
-            ],
-            "defines": [
-                "PNSLR_IMPLEMENTATION",
-                "PNSLR_LINUX=1",
-                "PNSLR_X64=1"
-            ],
-            "compilerPath": "${workspaceFolder}/Toolchains/Linux-x64/bin/clang.exe",
             "cStandard": "c11",
-            "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-x64",
             "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-x64.json"
         },
         {
             "name": "Linux-ARM64",
-            "includePath": [
-                "${workspaceFolder}/Source/**",
-                "${workspaceFolder}/Toolchains/Linux-ARM64/usr/include/"
-            ],
-            "defines": [
-                "PNSLR_IMPLEMENTATION",
-                "PNSLR_LINUX=1",
-                "PNSLR_ARM64=1"
-            ],
-            "compilerPath": "${workspaceFolder}/Toolchains/Linux-ARM64/bin/clang.exe",
             "cStandard": "c11",
-            "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-arm64",
             "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-ARM64.json"
         },
         {
             "name": "Android-ARM64",
-            "includePath": [
-                "${workspaceFolder}/Source/**",
-                "${workspaceFolder}/Toolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include"
-            ],
-            "defines": [
-                "PNSLR_IMPLEMENTATION",
-                "PNSLR_ANDROID=1",
-                "PNSLR_ARM64=1"
-            ],
-            "compilerPath": "${workspaceFolder}/Toolchains/Android/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
             "cStandard": "c11",
-            "cppStandard": "c++17",
             "intelliSenseMode": "linux-clang-arm64",
             "compileCommands": "${workspaceFolder}/Build/CompileCommands-Android-ARM64.json"
         }

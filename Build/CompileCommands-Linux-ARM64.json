@@ -1,8 +1,22 @@
 [
-    {
-        "directory": "..",
-        "command": "\"Toolchains/Linux-ARM64/bin/clang.exe\" -c -std=c11 -DPNSLR_IMPLEMENTATION -DPNSLR_LINUX=1 -DPNSLR_ARM64=1 Source/zzzz_Unity.c -o Temp/unity-linux-arm64.o -IToolchains/Linux-ARM64/usr/include/ -Werror -Wall -Wextra -Wconversion",
-        "file": "Source/zzzz_Unity.c",
-        "output": "Temp/unity-linux-arm64.o"
-    }
+  {
+    "directory": "..",
+    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\\" \"--target=aarch64-unknown-linux-gnueabi\" \"-c\" \"Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c\" \"-oSource/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-linux-arm64.o\"",
+    "file": "Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\\" \"--target=aarch64-unknown-linux-gnueabi\" \"-c\" \"Source/zzzz_Unity.c\" \"-oTemp/unity-linux-arm64.o\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_ARM64=1\"",
+    "file": "Source/zzzz_Unity.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\\" \"--target=aarch64-unknown-linux-gnueabi\" \"Tools/TestRunner/TestRunner.c\" \"Libraries/panshilar-linux-arm64.a\" \"-o\" \"Binaries/TestRunner-linux-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_ARM64=1\"",
+    "file": "Tools/TestRunner/TestRunner.c"
+  },
+  {
+    "directory": "..",
+    "command": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\bin\\clang.exe \"-std=c11\" \"-Wall\" \"-Wextra\" \"-Wshadow\" \"-Wconversion\" \"-Wsign-conversion\" \"-Wdouble-promotion\" \"-Wfloat-equal\" \"-Wundef\" \"-Wswitch-enum\" \"-Wstrict-prototypes\" \"-Werror\" \"-Wno-unused-parameter\" \"--sysroot=C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\\" \"--target=aarch64-unknown-linux-gnueabi\" \"Tools/BindGen/BindingsGenerator.c\" \"Libraries/panshilar-linux-arm64.a\" \"-o\" \"Binaries/BindingsGenerator-linux-arm64\" \"-ISource/\" \"-g\" \"-O0\" \"-DDEBUG\" \"-DPNSLR_LINUX=1\" \"-DPNSLR_ARM64=1\"",
+    "file": "Tools/BindGen/BindingsGenerator.c"
+  }
 ]

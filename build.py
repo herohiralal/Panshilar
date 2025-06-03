@@ -7,22 +7,22 @@ CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests 
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
 CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
-CMD_ARG_BUILD_WINDOWS_X64   = "+windows-x64"        in sys.argv # Build the Windows x64 target
-CMD_ARG_BUILD_LINUX_X64     = "+linux-x64"          in sys.argv # Build the Linux x64 target
-CMD_ARG_BUILD_LINUX_ARM64   = "+linux-arm64"        in sys.argv # Build the Linux ARM64 target
-CMD_ARG_BUILD_OSX_ARM64     = "+osx-arm64"          in sys.argv # Build the macOS ARM64 target
-CMD_ARG_BUILD_ANDROID_ARM64 = "+android-arm64"      in sys.argv # Build the Android ARM64 target
-CMD_ARG_BUILD_IOS_ARM64     = "+ios-arm64"          in sys.argv # Build the iOS ARM64 target
-CMD_ARG_BUILD_IOS_SIM_ARM64 = "+iossimulator-arm64" in sys.argv # Build the iOS Simulator ARM64 target
+CMD_ARG_BUILD_WINDOWS_X64   = '+windows-x64'        in sys.argv # Build the Windows x64 target
+CMD_ARG_BUILD_LINUX_X64     = '+linux-x64'          in sys.argv # Build the Linux x64 target
+CMD_ARG_BUILD_LINUX_ARM64   = '+linux-arm64'        in sys.argv # Build the Linux ARM64 target
+CMD_ARG_BUILD_OSX_ARM64     = '+osx-arm64'          in sys.argv # Build the macOS ARM64 target
+CMD_ARG_BUILD_ANDROID_ARM64 = '+android-arm64'      in sys.argv # Build the Android ARM64 target
+CMD_ARG_BUILD_IOS_ARM64     = '+ios-arm64'          in sys.argv # Build the iOS ARM64 target
+CMD_ARG_BUILD_IOS_SIM_ARM64 = '+iossimulator-arm64' in sys.argv # Build the iOS Simulator ARM64 target
 CMD_ARG_BUILD_ALL           = True and \
-                             not CMD_ARG_BUILD_WINDOWS_X64   and \
-                             not CMD_ARG_BUILD_LINUX_X64     and \
-                             not CMD_ARG_BUILD_LINUX_ARM64   and \
-                             not CMD_ARG_BUILD_OSX_ARM64     and \
-                             not CMD_ARG_BUILD_ANDROID_ARM64 and \
-                             not CMD_ARG_BUILD_IOS_ARM64     and \
-                             not CMD_ARG_BUILD_IOS_SIM_ARM64 and \
-                             True                               # Build all targets by default if no specific target is specified
+                              not CMD_ARG_BUILD_WINDOWS_X64   and \
+                              not CMD_ARG_BUILD_LINUX_X64     and \
+                              not CMD_ARG_BUILD_LINUX_ARM64   and \
+                              not CMD_ARG_BUILD_OSX_ARM64     and \
+                              not CMD_ARG_BUILD_ANDROID_ARM64 and \
+                              not CMD_ARG_BUILD_IOS_ARM64     and \
+                              not CMD_ARG_BUILD_IOS_SIM_ARM64 and \
+                              True                               # Build all targets by default if no specific target is specified
 
 # endregion
 
@@ -42,11 +42,14 @@ CLANG_COMMON_ARGS = [
 
 # region File paths ===========================================================================================================
 
+def getIntrinsicsSourcePath() -> str:
+    return f'Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c'
+
 def getIntrinsicsObjectPath(tgt: str, arch: str) -> str:
     return f'Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
 
 def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile = 'Source/Dependencies/PNSLR_Intrinsics/Intrinsics.c'
+    inputFile  = getIntrinsicsSourcePath()
     outputFile = getIntrinsicsObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -62,11 +65,14 @@ def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
             f'-o{outputFile}',
         ]
 
+def getLibrarySourcePath() -> str:
+    return f'Source/zzzz_Unity.c'
+
 def getLibraryObjectPath(tgt: str, arch: str) -> str:
     return f'Temp/unity-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
 
 def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile = 'Source/zzzz_Unity.c'
+    inputFile  = getLibrarySourcePath()
     outputFile = getLibraryObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -106,11 +112,14 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             libraryObjFile,
         ]
 
+def getTestRunnerSourcePath() -> str:
+    return f'Tools/TestRunner/TestRunner.c'
+
 def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
 def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = 'Tools/TestRunner/TestRunner.c'
+    inputFile  = getTestRunnerSourcePath()
     outputFile = getTestRunnerExecutablePath(tgt, arch)
 
     if tgt == 'windows':
@@ -133,11 +142,14 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             # '-###',
         ] + CLANG_DEBUG_ARGS
 
+def getBindingsGeneratorSourcePath() -> str:
+    return f'Tools/BindGen/BindingsGenerator.c'
+
 def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile = 'Tools/BindGen/BindingsGenerator.c'
+    inputFile  = getBindingsGeneratorSourcePath()
     outputFile = getBindingsGeneratorExecutablePath(tgt, arch)
 
     if tgt == 'windows':
@@ -186,7 +198,7 @@ def printSectionEnd():
     print2('')
 
 def printDebug(message: str):
-    print2(f'\033[1m[DEBUG]:\033[0m\033[90m   {message}\033[0m')
+    print2(  f'\033[1m[DEBUG]:    \033[0m\033[90m{message}\033[0m')
 
 def printInfo(message: str):
     print2(f'\033[1;36m[INFO]:    \033[0m{message}')
@@ -198,7 +210,7 @@ def printErr(message: str):
     print2(f'\033[1;31m[ERROR]:   \033[0m{message}')
 
 def printSuccess(message: str):
-    print2(f'\033[1;32m[SUCCESS]: \033[0m {message}')
+    print2(f'\033[1;32m[SUCCESS]: \033[0m{message}')
 
 def printFailure(message: str):
     print2(f'\033[1;31m[FAILURE]: \033[0m{message}')
@@ -206,7 +218,7 @@ def printFailure(message: str):
 def runCommand(command: list[str], name: str) -> bool:
     printSectionStart()
     printInfo(f'Running: {name}')
-    # printDebug(f'Command: {" ".join(command)}')
+    # printDebug(f'Command: {' '.join(command)}')
     if CMD_ARG_VERY_SILENT:
         result = subprocess.run(command, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
     else:
@@ -250,32 +262,62 @@ def buildPlatform(
         commonCompilerArgs: list[str],
         envArgs:            list[str],
     ) -> bool:
+
+    runTools = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else ''))
+
+    intrinsicsCompiled    = True
+    intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
-        args = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
-        if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Intrinsics Compile'):
-            return False
+        intrinsicsCompiled = runCommand([compiler] + intrinsicsCompileArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile')
 
-    args = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
-    if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Library Compile'):
-        return False
+    libraryCompiled    = True
+    libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
+    libraryCompiled    = intrinsicsCompiled and runCommand([compiler] + libraryCompileArgs, f'{prettyTgt}-{prettyArch} Library Compile')
 
-    args = getLibraryLinkArgs(tgt, arch)
-    if not runCommand([linker] + args, f'{prettyTgt}-{prettyArch} Library Link'):
-        return False
+    libraryLinked   = True
+    libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
+    libraryLinked   = libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link')
 
-    testsSuccessful = True
-    if CMD_ARG_RUN_TESTS and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
-        args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
-        testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') # and \ TODO: re-enable
-        #                 runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
+    testsSuccessful     = True
+    testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
+    testsSuccessful     = (not CMD_ARG_RUN_TESTS) or (not runTools) or \
+                          (libraryLinked and runCommand([compiler] + testRunnerBuildArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
 
-    bindGenSuccessful = True
-    if CMD_ARG_REGENERATE_BINDINGS and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
-        args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
-        bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') # and \ TODO: re-enable
-        #                   runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
+    bindGenSuccessful          = True
+    bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
+    bindGenSuccessful          = (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
+                                 (libraryLinked and runCommand([compiler] + bindingsGeneratorBuildArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
-    return testsSuccessful and bindGenSuccessful
+    compileCommands: list[dict[str, str]] = [
+        {
+            'directory': '..',
+            'command':   compiler + ' "' + '" "'.join(intrinsicsCompileArgs) + '"',
+            'file':      getIntrinsicsSourcePath(),
+        },
+        {
+            'directory': '..',
+            'command':   compiler + ' "' + '" "'.join(libraryCompileArgs) + '"',
+            'file':      getLibrarySourcePath(),
+        },
+        {
+            'directory': '..',
+            'command':   compiler + ' "' + '" "'.join(testRunnerBuildArgs) + '"',
+            'file':      getTestRunnerSourcePath(),
+        },
+        {
+            'directory': '..',
+            'command':   compiler + ' "' + '" "'.join(bindingsGeneratorBuildArgs) + '"',
+            'file':      getBindingsGeneratorSourcePath(),
+        },
+    ]
+
+    compileCommandsFile = f'Build/CompileCommands-{prettyTgt}-{prettyArch}.json'
+    os.makedirs(os.path.dirname(compileCommandsFile), exist_ok=True)
+    with open(compileCommandsFile, 'w') as f:
+        import json
+        json.dump(compileCommands, f, indent=2)
+
+    return libraryLinked and testsSuccessful and bindGenSuccessful
 
 # endregion
 
