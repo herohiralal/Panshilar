@@ -1,29 +1,61 @@
 {
-    "version": 4,
-    "configurations": [
-        {
-            "name": "Windows-x64",
-            "cStandard": "c11",
-            "intelliSenseMode": "windows-msvc-x64",
-            "compileCommands": "${workspaceFolder}/Build/CompileCommands-Windows-x64.json"
-        },
-        {
-            "name": "Linux-x64",
-            "cStandard": "c11",
-            "intelliSenseMode": "linux-clang-x64",
-            "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-x64.json"
-        },
-        {
-            "name": "Linux-ARM64",
-            "cStandard": "c11",
-            "intelliSenseMode": "linux-clang-arm64",
-            "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-ARM64.json"
-        },
-        {
-            "name": "Android-ARM64",
-            "cStandard": "c11",
-            "intelliSenseMode": "linux-clang-arm64",
-            "compileCommands": "${workspaceFolder}/Build/CompileCommands-Android-ARM64.json"
-        }
-    ]
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Windows-x64",
+      "compilerPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\cl.exe",
+      "cStandard": "c11",
+      "intelliSenseMode": "windows-msvc-x64",
+      "includePath": [
+        "Source"
+      ],
+      "defines": [
+        "PNSLR_WINDOWS=1",
+        "PNSLR_X64=1"
+      ],
+      "compileCommands": "${workspaceFolder}/Build/CompileCommands-Windows-x64.json"
+    },
+    {
+      "name": "Linux-x64",
+      "compilerPath": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\x86_64-unknown-linux-gnu\\bin\\clang.exe",
+      "cStandard": "c11",
+      "intelliSenseMode": "linux-clang-x64",
+      "includePath": [
+        "Source"
+      ],
+      "defines": [
+        "PNSLR_LINUX=1",
+        "PNSLR_X64=1"
+      ],
+      "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-x64.json"
+    },
+    {
+      "name": "Linux-ARM64",
+      "compilerPath": "C:\\Software\\linux-cross-compiler\\v19-clang-11.0.1-centos7\\aarch64-unknown-linux-gnueabi\\bin\\clang.exe",
+      "cStandard": "c11",
+      "intelliSenseMode": "linux-clang-arm64",
+      "includePath": [
+        "Source"
+      ],
+      "defines": [
+        "PNSLR_LINUX=1",
+        "PNSLR_ARM64=1"
+      ],
+      "compileCommands": "${workspaceFolder}/Build/CompileCommands-Linux-ARM64.json"
+    },
+    {
+      "name": "Android-ARM64",
+      "compilerPath": "C:\\Users\\HeroHiralal\\AppData\\Local\\Android\\Sdk\\ndk\\29.0.13113456\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang.exe",
+      "cStandard": "c11",
+      "intelliSenseMode": "linux-clang-arm64",
+      "includePath": [
+        "Source"
+      ],
+      "defines": [
+        "PNSLR_ANDROID=1",
+        "PNSLR_ARM64=1"
+      ],
+      "compileCommands": "${workspaceFolder}/Build/CompileCommands-Android-ARM64.json"
+    }
+  ]
 }
