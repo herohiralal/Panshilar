@@ -2,9 +2,27 @@ import os, sys, subprocess
 
 # region Commandline arguments ================================================================================================
 
-CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' # Rebuild the intrinsics dependency
-CMD_ARG_RUN_TESTS           = '-tests'              # Run the tests after building
-CMD_ARG_REGENERATE_BINDINGS = '-rebind'             # Regenerate the bindings after building
+CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' in sys.argv # Rebuild the intrinsics dependency
+CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
+CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
+CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
+CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
+CMD_ARG_BUILD_WINDOWS_X64   = "+win-x64"            in sys.argv # Build the Windows x64 target
+CMD_ARG_BUILD_LINUX_X64     = "+linux-x64"          in sys.argv # Build the Linux x64 target
+CMD_ARG_BUILD_LINUX_ARM64   = "+linux-arm64"        in sys.argv # Build the Linux ARM64 target
+CMD_ARG_BUILD_OSX_ARM64     = "+osx-arm64"          in sys.argv # Build the macOS ARM64 target
+CMD_ARG_BUILD_ANDROID_ARM64 = "+android-arm64"      in sys.argv # Build the Android ARM64 target
+CMD_ARG_BUILD_IOS_ARM64     = "+ios-arm64"          in sys.argv # Build the iOS ARM64 target
+CMD_ARG_BUILD_IOS_SIM_ARM64 = "+iossim-arm64"       in sys.argv # Build the iOS Simulator ARM64 target
+CMD_ARG_BUILD_ALL           = True and \
+                             not CMD_ARG_BUILD_WINDOWS_X64 and \
+                             not CMD_ARG_BUILD_LINUX_X64 and \
+                             not CMD_ARG_BUILD_LINUX_ARM64 and \
+                             not CMD_ARG_BUILD_OSX_ARM64 and \
+                             not CMD_ARG_BUILD_ANDROID_ARM64 and \
+                             not CMD_ARG_BUILD_IOS_ARM64 and \
+                             not CMD_ARG_BUILD_IOS_SIM_ARM64 and \
+                             True                               # Build all targets by default if no specific target is specified
 
 # endregion
 
@@ -153,37 +171,47 @@ failedProcesses:    list[str] = []  # List to track failed processes
 
 #region Helper functions ======================================================================================================
 
+def print2(message: str):
+    if CMD_ARG_SILENT or CMD_ARG_VERY_SILENT:
+        return
+
+    print(message)
+
 def printSectionStart():
-    print('')
-    print('=' * 80)
+    print2('')
+    print2('=' * 80)
 
 def printSectionEnd():
-    print('=' * 80)
-    print('')
+    print2('=' * 80)
+    print2('')
 
 def printDebug(message: str):
-   print(f'\033[1m[DEBUG]:\033[0m\033[90m   {message}\033[0m')
+    print2(f'\033[1m[DEBUG]:\033[0m\033[90m   {message}\033[0m')
 
 def printInfo(message: str):
-    print(f'\033[1;36m[INFO]:    \033[0m{message}')
+    print2(f'\033[1;36m[INFO]:    \033[0m{message}')
 
 def printWarn(message: str):
-    print(f'\033[1;33m[WARNING]: \033[0m{message}')
+    print2(f'\033[1;33m[WARNING]: \033[0m{message}')
 
 def printErr(message: str):
-    print(f'\033[1;31m[ERROR]:   \033[0m{message}')
+    print2(f'\033[1;31m[ERROR]:   \033[0m{message}')
 
 def printSuccess(message: str):
-    print(f'\033[1;32m[SUCCESS]: \033[0m {message}')
+    print2(f'\033[1;32m[SUCCESS]: \033[0m {message}')
 
 def printFailure(message: str):
-    print(f'\033[1;31m[FAILURE]: \033[0m{message}')
+    print2(f'\033[1;31m[FAILURE]: \033[0m{message}')
 
 def runCommand(command: list[str], name: str) -> bool:
     printSectionStart()
     printInfo(f'Running: {name}')
     # printDebug(f'Command: {" ".join(command)}')
-    result = subprocess.run(command, stdout = sys.stdout)
+    if CMD_ARG_VERY_SILENT:
+        result = subprocess.run(command, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+    else:
+        result = subprocess.run(command, stdout = sys.stdout, stderr = sys.stderr)
+
     if result.returncode == 0:
         printSuccess(f'Completed successfully: {name}')
         succeededProcesses.append(name)
@@ -221,11 +249,8 @@ def buildPlatform(
         linker:             str,
         commonCompilerArgs: list[str],
         envArgs:            list[str],
-        rebuildIntrinsics:  bool,
-        runTests:           bool,
-        regenerateBindings: bool
     ) -> bool:
-    if rebuildIntrinsics:
+    if CMD_ARG_REBUILD_INTRINSICS:
         args = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
         if not runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Intrinsics Compile'):
             return False
@@ -239,13 +264,13 @@ def buildPlatform(
         return False
 
     testsSuccessful = True
-    if runTests and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+    if CMD_ARG_RUN_TESTS and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
         args = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
         testsSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} Test Runner Build') # and \ TODO: re-enable
         #                 runCommand([getTestRunnerExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} Test Runner Execution')
 
     bindGenSuccessful = True
-    if regenerateBindings and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
+    if CMD_ARG_REGENERATE_BINDINGS and (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else '')):
         args = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
         bindGenSuccessful = runCommand([compiler] + args, f'{prettyTgt}-{prettyArch} BindGen Build') # and \ TODO: re-enable
         #                   runCommand([getBindingsGeneratorExecutablePath(tgt, arch)], f'{prettyTgt}-{prettyArch} BindGen Execution')
@@ -255,14 +280,6 @@ def buildPlatform(
 # endregion
 
 def main():
-
-    # region Gather commandline arguments =====================================================================================
-
-    rebuildIntrinsics  = CMD_ARG_REBUILD_INTRINSICS  in sys.argv
-    runTests           = CMD_ARG_RUN_TESTS           in sys.argv
-    regenerateBindings = CMD_ARG_REGENERATE_BINDINGS in sys.argv
-
-    # endregion
 
     # region Check for toolchains =============================================================================================
 
@@ -292,14 +309,14 @@ def main():
         printSectionEnd()
 
     else:
-        print(f'Unsupported platform: {sys.platform}')
+        print2(f'Unsupported platform: {sys.platform}')
         exit(1)
 
     # endregion
 
     # region Builds ===========================================================================================================
 
-    if windowsToolchain:
+    if windowsToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_WINDOWS_X64):
         buildPlatform(
             'Windows',
             'x64',
@@ -309,10 +326,9 @@ def main():
             os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe'),
             MSVC_COMMON_ARGS + [],
             ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if linuxX64Toolchain:
+    if linuxX64Toolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_LINUX_X64):
         buildPlatform(
             'Linux',
             'x64',
@@ -322,10 +338,9 @@ def main():
             os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
             CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-unknown-linux-gnu'],
             ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if osxTools and osxToolchain:
+    if osxTools and osxToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_OSX_ARM64):
         buildPlatform(
             'MacOS',
             'Apple Silicon',
@@ -340,10 +355,9 @@ def main():
                 'arm64-apple-macos11.0',
             ],
             ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if linuxArm64Toolchain:
+    if linuxArm64Toolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_LINUX_ARM64):
         buildPlatform(
             'Linux',
             'ARM64',
@@ -353,10 +367,9 @@ def main():
             os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
             CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnueabi'],
             ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if androidToolchain:
+    if androidToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_ANDROID_ARM64):
         buildPlatform(
             'Android',
             'ARM64',
@@ -366,10 +379,9 @@ def main():
             os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
             CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28'],
             ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if osxTools and iosToolchain:
+    if osxTools and iosToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_IOS_ARM64):
         buildPlatform(
             'iOS',
             'ARM64',
@@ -387,10 +399,9 @@ def main():
                 'arm64',
             ],
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
-    if osxTools and iosSimulatorToolchain:
+    if osxTools and iosSimulatorToolchain and (CMD_ARG_BUILD_ALL or CMD_ARG_BUILD_IOS_SIM_ARM64):
         buildPlatform(
             'iOS-Simulator',
             'ARM64',
@@ -408,7 +419,6 @@ def main():
                 'arm64',
             ],
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
-            rebuildIntrinsics, runTests, regenerateBindings,
         )
 
     # endregion
@@ -420,12 +430,12 @@ def main():
     if succeededProcesses:
         printInfo('Succeeded processes:')
         for process in succeededProcesses:
-            print(f' - {process}')
+            print2(f' - {process}')
 
     if failedProcesses:
         printErr('Failed processes:')
         for process in failedProcesses:
-            print(f' - {process}')
+            print2(f' - {process}')
         printFailure('One or more processes failed. Please check the output above for details.')
     else:
         printSuccess('All processes completed successfully!')
