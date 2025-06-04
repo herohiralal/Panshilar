@@ -1,12 +1,12 @@
 #include "Allocators.h"
 
-void* PNSLR_Allocate(Allocator allocator, b8 zeroed, i32 size, i32 alignment, SourceCodeLocation location)
+void* PNSLR_Allocate(PNSLR_Allocator allocator, b8 zeroed, i32 size, i32 alignment, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function) { return nil; }
+    if (!allocator.procedure) { return nil; }
 
-    return allocator.function(
+    return allocator.procedure(
         allocator.data,
-        zeroed ? ALLOCATOR_ALLOCATE : ALLOCATOR_ALLOCATE_NO_ZERO,
+        zeroed ? PNSLR_AllocatorMode_Allocate : PNSLR_AllocatorMode_AllocateNoZero,
         size,
         alignment,
         nil,
@@ -15,13 +15,13 @@ void* PNSLR_Allocate(Allocator allocator, b8 zeroed, i32 size, i32 alignment, So
     );
 }
 
-void* PNSLR_Resize(Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, SourceCodeLocation location)
+void* PNSLR_Resize(PNSLR_Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function) { return nil; }
+    if (!allocator.procedure) { return nil; }
 
-    return allocator.function(
+    return allocator.procedure(
         allocator.data,
-        zeroed ? ALLOCATOR_RESIZE : ALLOCATOR_RESIZE_NO_ZERO,
+        zeroed ? PNSLR_AllocatorMode_Resize : PNSLR_AllocatorMode_ResizeNoZero,
         newSize,
         alignment,
         oldMemory,
@@ -30,9 +30,9 @@ void* PNSLR_Resize(Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize,
     );
 }
 
-void* PNSLR_DefaultResize(Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, SourceCodeLocation location)
+void* PNSLR_DefaultResize(PNSLR_Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function) { return nil; }
+    if (!allocator.procedure) { return nil; }
 
     void* newMemory = PNSLR_Allocate(allocator, zeroed, newSize, alignment, location);
     PNSLR_Intrinsic_MemCopy(newMemory, oldMemory, oldSize < newSize ? oldSize : newSize);
@@ -40,13 +40,13 @@ void* PNSLR_DefaultResize(Allocator allocator, b8 zeroed, void* oldMemory, i32 o
     return newMemory;
 }
 
-void PNSLR_Free(Allocator allocator, void* memory, SourceCodeLocation location)
+void PNSLR_Free(PNSLR_Allocator allocator, void* memory, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function || !memory) { return; }
+    if (!allocator.procedure || !memory) { return; }
 
-    allocator.function(
+    allocator.procedure(
         allocator.data,
-        ALLOCATOR_FREE,
+        PNSLR_AllocatorMode_Free,
         0,
         0,
         memory,
@@ -55,13 +55,13 @@ void PNSLR_Free(Allocator allocator, void* memory, SourceCodeLocation location)
     );
 }
 
-void PNSLR_FreeAll(Allocator allocator, SourceCodeLocation location)
+void PNSLR_FreeAll(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function) { return; }
+    if (!allocator.procedure) { return; }
 
-    allocator.function(
+    allocator.procedure(
         allocator.data,
-        ALLOCATOR_FREE_ALL,
+        PNSLR_AllocatorMode_FreeAll,
         0,
         0,
         nil,
@@ -70,13 +70,13 @@ void PNSLR_FreeAll(Allocator allocator, SourceCodeLocation location)
     );
 }
 
-u64 PNSLR_QueryAllocatorCapabilities(Allocator allocator, SourceCodeLocation location)
+u64 PNSLR_QueryAllocatorCapabilities(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location)
 {
-    if (!allocator.function) { return ALLOCATOR_CAPABILITY_NONE; }
+    if (!allocator.procedure) { return PNSLR_AllocatorCapability_None; }
 
-    void* result = allocator.function(
+    void* result = allocator.procedure(
         allocator.data,
-        ALLOCATOR_QUERY_CAPABILITIES,
+        PNSLR_AllocatorMode_QueryCapabilities,
         0,
         0,
         nil,
@@ -88,29 +88,29 @@ u64 PNSLR_QueryAllocatorCapabilities(Allocator allocator, SourceCodeLocation loc
     return (u64)(result);
 }
 
-Allocator PNSLR_GetDefaultHeapAllocator(void)
+PNSLR_Allocator PNSLR_GetDefaultHeapAllocator(void)
 {
-    return (Allocator) {.function = PNSLR_DefaultHeapAllocatorFn, .data = nil};
+    return (PNSLR_Allocator) {.procedure = PNSLR_DefaultHeapAllocatorFn, .data = nil};
 }
 
 // Allocates to the system heap.
-void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location)
+void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location)
 {
     switch (mode)
     {
-        case ALLOCATOR_ALLOCATE:
-        case ALLOCATOR_ALLOCATE_NO_ZERO:
+        case PNSLR_AllocatorMode_Allocate:
+        case PNSLR_AllocatorMode_AllocateNoZero:
         {
             void* memory = PNSLR_Intrinsic_Malloc(alignment, size);
-            if (memory && mode == ALLOCATOR_ALLOCATE) { PNSLR_Intrinsic_MemSet(memory, 0, size); }
+            if (memory && mode == PNSLR_AllocatorMode_Allocate) { PNSLR_Intrinsic_MemSet(memory, 0, size); }
             return memory;
         }
-        case ALLOCATOR_RESIZE:
-        case ALLOCATOR_RESIZE_NO_ZERO:
+        case PNSLR_AllocatorMode_Resize:
+        case PNSLR_AllocatorMode_ResizeNoZero:
         {
             PNSLR_DefaultResize(
-                (Allocator) {.function = PNSLR_DefaultHeapAllocatorFn, .data = allocatorData},
-                mode != ALLOCATOR_RESIZE_NO_ZERO,
+                (PNSLR_Allocator) {.procedure = PNSLR_DefaultHeapAllocatorFn, .data = allocatorData},
+                mode == PNSLR_AllocatorMode_Resize,
                 oldMemory,
                 oldSize,
                 size,
@@ -118,35 +118,25 @@ void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 a
                 location
             );
         }
-        case ALLOCATOR_FREE:
+        case PNSLR_AllocatorMode_Free:
         {
             PNSLR_Intrinsic_Free(oldMemory);
             return nil;
         }
-        case ALLOCATOR_FREE_ALL:
+        case PNSLR_AllocatorMode_FreeAll:
         {
             return nil;
         }
-        case ALLOCATOR_QUERY_CAPABILITIES:
+        case PNSLR_AllocatorMode_QueryCapabilities:
         {
             return (void*)(
-                ALLOCATOR_CAPABILITY_THREAD_SAFE |
-                ALLOCATOR_CAPABILITY_FREE |
-                ALLOCATOR_CAPABILITY_RESIZE_FR |
-                ALLOCATOR_CAPABILITY_HINT_HEAP
+                PNSLR_AllocatorCapability_ThreadSafe |
+                PNSLR_AllocatorCapability_Free |
+                PNSLR_AllocatorCapability_ResizeFR |
+                PNSLR_AllocatorCapability_HintHeap
             );
         }
         default:
             return nil; // Unsupported mode.
     }
 }
-
-// Allocator PNSLR_GetDefaultTempAllocator(void)
-// {
-//     return (Allocator) {.function = PNSLR_DefaultTempAllocatorFn, .data = nil};
-// }
-
-// void* PNSLR_DefaultTempAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location)
-// {
-//     return nil;
-// }

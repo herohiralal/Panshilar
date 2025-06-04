@@ -66,6 +66,11 @@
     #endif
 
     #if PNSLR_UNIX
+
+        // since we're on C11
+        #define _POSIX_C_SOURCE 200809L
+        #define _XOPEN_SOURCE 700
+
         #include <unistd.h>
         #include <fcntl.h>
         #include <sys/types.h>
@@ -93,56 +98,6 @@
 // always include this last and outside the implementation block
 // it contains some important macros/typedefs that we'll use
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
-
-// Runtime =========================================================================
-
-typedef struct SourceCodeLocation
-{
-    utf8str file;     // File name
-    i32     line;     // Line number
-    i32     column;   // Column number
-    utf8str function; // Function name
-} SourceCodeLocation;
-
-#define CURRENT_LOC() (SourceCodeLocation) \
-{ \
-    .file = (utf8str){ .count = sizeof(__FILE__) - 1, .data = (utf8ch*)__FILE__ }, \
-    .line = __LINE__, \
-    .column = 0, /* not available but might get forwarded from somewhere */ \
-    .function = (utf8str){ .count = sizeof(__FUNCTION__) - 1, .data = (utf8ch*)__FUNCTION__ } \
-}
-
-// Allocator modes
-#define ALLOCATOR_ALLOCATE           ((u8) 0)
-#define ALLOCATOR_RESIZE             ((u8) 1)
-#define ALLOCATOR_FREE               ((u8) 2)
-#define ALLOCATOR_FREE_ALL           ((u8) 3)
-#define ALLOCATOR_ALLOCATE_NO_ZERO   ((u8) 4)
-#define ALLOCATOR_RESIZE_NO_ZERO     ((u8) 5)
-#define ALLOCATOR_QUERY_CAPABILITIES ((u8) 255)
-
-// Allocator capabilities
-#define ALLOCATOR_CAPABILITY_NONE        ((u64) (1 << 0))
-#define ALLOCATOR_CAPABILITY_THREAD_SAFE ((u64) (1 << 1))
-#define ALLOCATOR_CAPABILITY_RESIZE_FR   ((u64) (1 << 2))
-#define ALLOCATOR_CAPABILITY_FREE        ((u64) (1 << 3))
-#define ALLOCATOR_CAPABILITY_HINT_BUMP   ((u64) (1 << 17))
-#define ALLOCATOR_CAPABILITY_HINT_HEAP   ((u64) (1 << 18))
-#define ALLOCATOR_CAPABILITY_HINT_TEMP   ((u64) (1 << 19))
-#define ALLOCATOR_CAPABILITY_HINT_DEBUG  ((u64) (1 << 20))
-
-typedef void* (*AllocatorFn)(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location);
-
-// ideally, don't want to use this in structs, only as function parameters
-typedef struct Allocator
-{
-    AllocatorFn function;
-    void*       data; // Optional data for the allocator function
-} Allocator;
-
-// Metadata ========================================================================
-
-#define REFLECT(...)
 
 #endif // PNSLR_ENTRY ==============================================================
 //-skipreflect

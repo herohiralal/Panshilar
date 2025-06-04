@@ -2,7 +2,9 @@
 #include "__Prelude.h"
 
 #include "Environment.c"
+#include "Runtime.c"
 #include "Allocators.c"
+#include "Chrono.c"
 #include "Strings.c"
 #include "Console.c"
 

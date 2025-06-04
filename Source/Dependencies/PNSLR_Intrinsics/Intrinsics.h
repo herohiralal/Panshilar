@@ -132,6 +132,9 @@ DECLARE_ARRAY_SLICE(utf8str);
     #endif
 
     #define static_assert _Static_assert
+    #define ENUM_START(name, backingType)       typedef backingType name;
+    #define ENUM_FLAGS_START(name, backingType) typedef backingType name;
+    #define ENUM_END
 
 #endif
 //-skipreflect

@@ -2,44 +2,134 @@
 #define PNSLR_ALLOCATORS
 
 #include "__Prelude.h"
+#include "Runtime.h"
+
+/**
+ * Defines the mode to be used when calling the allocator function.
+ */
+ENUM_START(PNSLR_AllocatorMode, u8)
+    #define PNSLR_AllocatorMode_Allocate           ((PNSLR_AllocatorMode)   0)
+    #define PNSLR_AllocatorMode_Resize             ((PNSLR_AllocatorMode)   1)
+    #define PNSLR_AllocatorMode_Free               ((PNSLR_AllocatorMode)   2)
+    #define PNSLR_AllocatorMode_FreeAll            ((PNSLR_AllocatorMode)   3)
+    #define PNSLR_AllocatorMode_AllocateNoZero     ((PNSLR_AllocatorMode)   4)
+    #define PNSLR_AllocatorMode_ResizeNoZero       ((PNSLR_AllocatorMode)   5)
+    #define PNSLR_AllocatorMode_QueryCapabilities  ((PNSLR_AllocatorMode) 255)
+ENUM_END
+
+/**
+ * Defines the capabilities of an allocator.
+ */
+ENUM_START(PNSLR_AllocatorCapability, u64)
+    #define PNSLR_AllocatorCapability_None       ((PNSLR_AllocatorCapability) (1 <<  0))
+    #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1 <<  1))
+    #define PNSLR_AllocatorCapability_ResizeFR   ((PNSLR_AllocatorCapability) (1 <<  2))
+    #define PNSLR_AllocatorCapability_Free       ((PNSLR_AllocatorCapability) (1 <<  3))
+    #define PNSLR_AllocatorCapability_HintBump   ((PNSLR_AllocatorCapability) (1 << 17))
+    #define PNSLR_AllocatorCapability_HintHeap   ((PNSLR_AllocatorCapability) (1 << 18))
+    #define PNSLR_AllocatorCapability_HintTemp   ((PNSLR_AllocatorCapability) (1 << 19))
+    #define PNSLR_AllocatorCapability_HintDebug  ((PNSLR_AllocatorCapability) (1 << 20))
+ENUM_END
+
+/**
+ * Defines the delegate type for the allocator function.
+ */
+typedef void* (*PNSLR_AllocatorProcedure)(
+    void*                    allocatorData,
+    u8                       mode,
+    i32                      size,
+    i32                      alignment,
+    void*                    oldMemory,
+    i32                      oldSize,
+    PNSLR_SourceCodeLocation location
+);
+
+/**
+ * Defines a generic allocator structure that can be used to allocate, resize, and free memory.
+ */
+typedef struct PNSLR_Allocator
+{
+    PNSLR_AllocatorProcedure procedure;
+    void*                    data; // Optional data for the allocator function
+} PNSLR_Allocator;
 
 /**
  * Allocate memory using the provided allocator.
  */
-void* PNSLR_Allocate(Allocator allocator, b8 zeroed, i32 size, i32 alignment, SourceCodeLocation location);
+void* PNSLR_Allocate(
+    PNSLR_Allocator allocator,
+    b8 zeroed,
+    i32 size,
+    i32 alignment,
+    PNSLR_SourceCodeLocation location
+);
 
 /**
  * Resize memory using the provided allocator.
  */
-void* PNSLR_Resize(Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, SourceCodeLocation location);
+void* PNSLR_Resize(
+    PNSLR_Allocator allocator,
+    b8 zeroed,
+    void* oldMemory,
+    i32 oldSize,
+    i32 newSize,
+    i32 alignment,
+    PNSLR_SourceCodeLocation location
+);
 
 /**
  * Fallback resize function that can be used when the allocator does not support resizing.
  */
-void* PNSLR_DefaultResize(Allocator allocator, b8 zeroed, void* oldMemory, i32 oldSize, i32 newSize, i32 alignment, SourceCodeLocation location);
+void* PNSLR_DefaultResize(
+    PNSLR_Allocator allocator,
+    b8 zeroed,
+    void* oldMemory,
+    i32 oldSize,
+    i32 newSize,
+    i32 alignment,
+    PNSLR_SourceCodeLocation location
+);
 
 /**
  * Free memory using the provided allocator.
  */
-void PNSLR_Free(Allocator allocator, void* memory, SourceCodeLocation location);
+void PNSLR_Free(
+    PNSLR_Allocator allocator,
+    void* memory,
+    PNSLR_SourceCodeLocation location
+);
 
 /**
  * Free all memory allocated by the provided allocator.
  */
-void PNSLR_FreeAll(Allocator allocator, SourceCodeLocation location);
+void PNSLR_FreeAll(
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location
+);
 
 /**
  * Query the capabilities of the provided allocator.
  */
-u64 PNSLR_QueryAllocatorCapabilities(Allocator allocator, SourceCodeLocation location);
+u64 PNSLR_QueryAllocatorCapabilities(
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location
+);
 
 // Get the default heap allocator.
-Allocator PNSLR_GetDefaultHeapAllocator(void);
+PNSLR_Allocator PNSLR_GetDefaultHeapAllocator(void);
 
 /**
  * Main allocator function for the default heap allocator.
  */
-void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 alignment, void* oldMemory, i32 oldSize, SourceCodeLocation location);
+void* PNSLR_DefaultHeapAllocatorFn(
+    void* allocatorData,
+    u8 mode,
+    i32 size,
+    i32 alignment,
+    void* oldMemory,
+    i32 oldSize,
+    PNSLR_SourceCodeLocation location
+);
 
 //+skipreflect
 
@@ -90,12 +180,6 @@ void* PNSLR_DefaultHeapAllocatorFn(void* allocatorData, u8 mode, i32 size, i32 a
  */
 #define PNSLR_DEFAULT_HEAP_ALLOCATOR \
     PNSLR_GetDefaultHeapAllocator()
-
-/**
- * Short-hand for the default temporary allocator.
- */
-#define PNSLR_DEFAULT_TEMP_ALLOCATOR \
-    PNSLR_GetDefaultTempAllocator()
 
 //-skipreflect
 

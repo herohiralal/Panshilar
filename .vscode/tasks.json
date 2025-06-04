@@ -18,18 +18,20 @@
         },
         {
             "label": "Build All Tools (All Platforms)",
-            "dependsOn": "Build Panshilar (All Platforms)",
             "type": "shell",
             "windows": {
-                "command": "${workspaceFolder}/build-tools.bat"
+                "command": "${workspaceFolder}/build.bat"
             },
             "osx": {
-                "command": "${workspaceFolder}/build-tools.sh"
+                "command": "${workspaceFolder}/build.sh"
             },
+            "args": [
+                "-tests"
+            ],
             "problemMatcher": [],
             "group": {
-                "kind": "build",
-                "isDefault": false
+                "kind": "test",
+                "isDefault": true
             }
         }
     ]

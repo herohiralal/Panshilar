@@ -248,7 +248,8 @@ def buildPlatform(
         envArgs:            list[str],
     ) -> bool:
 
-    runTools       = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and (arch == ('x64' if tgt == 'windows' else 'arm64' if tgt == 'osx' else ''))
+    runTools       = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx') and \
+                     (arch == ('x64' if sys.platform == 'win32' else 'arm64' if sys.platform == 'darwin' else ''))
     actuallyBuild2 = True
 
     intrinsicsCompiled    = True
