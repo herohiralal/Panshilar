@@ -3,6 +3,9 @@
 
 #include "__Prelude.h"
 
+/**
+ * Defines the platforms supported by the library.
+ */
 typedef enum
 {
     PNSLR_Platform_Unknown = 0,
@@ -16,6 +19,9 @@ typedef enum
     PNSLR_Platform_Switch,
 } PNSLR_Platform;
 
+/**
+ * Defines the architectures supported by the library.
+ */
 typedef enum
 {
     PNSLR_Architecture_Unknown = 0,
@@ -23,10 +29,14 @@ typedef enum
     PNSLR_Architecture_ARM64,
 } PNSLR_Architecture;
 
-// Get the current platform.
+/**
+ * Get the current platform.
+ */
 PNSLR_Platform PNSLR_GetPlatform(void);
 
-// Get the current architecture.
+/**
+ * Get the current architecture.
+ */
 PNSLR_Architecture PNSLR_GetArchitecture(void);
 
 #endif // PNSLR_ENVIRONMENT ========================================================

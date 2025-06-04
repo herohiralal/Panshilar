@@ -131,21 +131,36 @@ DECLARE_ARRAY_SLICE(utf8str);
         #error "Required features not supported by this compiler."
     #endif
 
-    #define static_assert           _Static_assert
+    #define static_assert _Static_assert
 
 #endif
 //-skipreflect
 
 // Memory Management ===============================================================
 
+/**
+ * Allocate memory with the specified alignment and size.
+ */
 void* PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);
 
+/**
+ * Free memory allocated with PNSLR_Intrinsic_Malloc.
+ */
 void PNSLR_Intrinsic_Free(void* memory);
 
+/**
+ * Set a block of memory to a specific value.
+ */
 void PNSLR_Intrinsic_MemSet(void* memory, i32 value, i32 size);
 
+/**
+ * Copy a block of memory from source to destination.
+ */
 void PNSLR_Intrinsic_MemCopy(void* destination, const void* source, i32 size);
 
+/**
+ * Copy a block of memory from source to destination, handling overlapping regions.
+ */
 void PNSLR_Intrinsic_MemMove(void* destination, const void* source, i32 size);
 
 #endif // PNSLR_INTRINSICS =========================================================
