@@ -26,15 +26,16 @@ typedef float               f32;
 typedef double              f64;
 typedef unsigned char       utf8ch;
 typedef char*               cstring;
+typedef void*               rawptr;
 
 #undef nil
 #undef bool
 #undef false
 #undef true
 
-#define nil   ((void*) 0)
-#define false ((b8)    0)
-#define true  ((b8)    1)
+#define nil   ((rawptr) 0)
+#define false ((b8)     0)
+#define true  ((b8)     1)
 
 #define U8_MIN  ((u8)  (0))
 #define U8_MAX  ((u8)  (255))
@@ -59,11 +60,7 @@ typedef char*               cstring;
 
 // Collections =====================================================================
 
-#define Array(ty, size) Array_##ty##_##size
 #define ArraySlice(ty)  ArraySlice_##ty
-
-#define DECLARE_ARRAY(ty, size) \
-    typedef struct { ty data[size]; } Array(ty, size);
 
 #define DECLARE_ARRAY_SLICE(ty) \
     typedef struct { i64 count; ty* data; } ArraySlice(ty);
@@ -144,26 +141,26 @@ DECLARE_ARRAY_SLICE(utf8str);
 /**
  * Allocate memory with the specified alignment and size.
  */
-void* PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);
+rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);
 
 /**
  * Free memory allocated with PNSLR_Intrinsic_Malloc.
  */
-void PNSLR_Intrinsic_Free(void* memory);
+void PNSLR_Intrinsic_Free(rawptr memory);
 
 /**
  * Set a block of memory to a specific value.
  */
-void PNSLR_Intrinsic_MemSet(void* memory, i32 value, i32 size);
+void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size);
 
 /**
  * Copy a block of memory from source to destination.
  */
-void PNSLR_Intrinsic_MemCopy(void* destination, const void* source, i32 size);
+void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size);
 
 /**
  * Copy a block of memory from source to destination, handling overlapping regions.
  */
-void PNSLR_Intrinsic_MemMove(void* destination, const void* source, i32 size);
+void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size);
 
 #endif // PNSLR_INTRINSICS =========================================================

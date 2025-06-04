@@ -21,7 +21,7 @@
 #if PNSLR_WINDOWS
 
 #define PNSLR_LIBRARY_ENTRY_POINT \
-    b32 __stdcall DllMain(void* hInstDLL, u32 fdwReason, void* lpvReserved) { return true; }
+    b32 __stdcall DllMain(rawptr hInstDLL, u32 fdwReason, rawptr lpvReserved) { return true; }
 
 #else
 
