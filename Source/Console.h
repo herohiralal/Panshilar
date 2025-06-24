@@ -1,5 +1,5 @@
-#ifndef PNSLR_CONSOLE // ===========================================================
-#define PNSLR_CONSOLE
+#ifndef PNSLR_CONSOLE_H // =========================================================
+#define PNSLR_CONSOLE_H
 
 #include "__Prelude.h"
 
@@ -8,4 +8,4 @@
  */
 i32 PNSLR_PrintToStdOut(utf8str message);
 
-#endif // PNSLR_CONSOLE ============================================================
+#endif // PNSLR_CONSOLE_H ==========================================================

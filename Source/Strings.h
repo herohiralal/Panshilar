@@ -1,5 +1,5 @@
-#ifndef PNSLR_STRINGS // ===========================================================
-#define PNSLR_STRINGS
+#ifndef PNSLR_STRINGS_H // =========================================================
+#define PNSLR_STRINGS_H
 
 #include "__Prelude.h"
 
@@ -13,4 +13,4 @@ i32 PNSLR_GetStringLength(cstring str);
  */
 utf8str PNSLR_StringFromCString(cstring str);
 
-#endif // PNSLR_STRINGS ============================================================
+#endif // PNSLR_STRINGS_H ==========================================================

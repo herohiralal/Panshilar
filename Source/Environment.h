@@ -1,5 +1,5 @@
-#ifndef PNSLR_ENVIRONMENT // =======================================================
-#define PNSLR_ENVIRONMENT
+#ifndef PNSLR_ENVIRONMENT_H // =====================================================
+#define PNSLR_ENVIRONMENT_H
 
 #include "__Prelude.h"
 
@@ -37,4 +37,4 @@ PNSLR_Platform PNSLR_GetPlatform(void);
  */
 PNSLR_Architecture PNSLR_GetArchitecture(void);
 
-#endif // PNSLR_ENVIRONMENT ========================================================
+#endif // PNSLR_ENVIRONMENT_H ======================================================

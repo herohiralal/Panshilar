@@ -4,8 +4,8 @@
  * standard library headers in our code.
  */
 
-#ifndef PNSLR_INTRINSICS // ========================================================
-#define PNSLR_INTRINSICS
+#ifndef PNSLR_INTRINSICS_H // ======================================================
+#define PNSLR_INTRINSICS_H
 
 //+skipreflect
 // Compiler ========================================================================
@@ -164,4 +164,4 @@ void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size);
  */
 void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size);
 
-#endif // PNSLR_INTRINSICS =========================================================
+#endif // PNSLR_INTRINSICS_H =======================================================

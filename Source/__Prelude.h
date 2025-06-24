@@ -3,8 +3,8 @@
     #error "Panshilar is a C library and does not support C++ in this manner. Please use it only via the provided static libraries and headers."
 #endif
 
-#ifndef PNSLR_ENTRY // =============================================================
-#define PNSLR_ENTRY
+#ifndef PNSLR_ENTRY_H // ===========================================================
+#define PNSLR_ENTRY_H
 
 // Environment setup ===============================================================
 
@@ -99,5 +99,5 @@
 // it contains some important macros/typedefs that we'll use
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
 
-#endif // PNSLR_ENTRY ==============================================================
+#endif // PNSLR_ENTRY_H ============================================================
 //-skipreflect

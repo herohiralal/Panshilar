@@ -1,5 +1,5 @@
-#ifndef PNSLR_IO // ================================================================
-#define PNSLR_IO
+#ifndef PNSLR_IO_H // ==============================================================
+#define PNSLR_IO_H
 
 #include "__Prelude.h"
 
@@ -26,4 +26,4 @@ typedef struct alignas(8) PNSLR_FileHandle {
     u8 buffer[PNSLR_PTR_SIZE];
 } PNSLR_FileHandle;
 
-#endif // PNSLR_IO =================================================================
+#endif // PNSLR_IO_H ===============================================================

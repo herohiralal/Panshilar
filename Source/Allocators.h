@@ -1,5 +1,5 @@
-#ifndef PNSLR_ALLOCATORS // ========================================================
-#define PNSLR_ALLOCATORS
+#ifndef PNSLR_ALLOCATORS_H // ======================================================
+#define PNSLR_ALLOCATORS_H
 
 #include "__Prelude.h"
 #include "Runtime.h"
@@ -265,4 +265,4 @@ rawptr PNSLR_AllocatorFn_Stack(
 
 //-skipreflect
 
-#endif // PNSLR_ALLOCATORS =========================================================
+#endif // PNSLR_ALLOCATORS_H =======================================================

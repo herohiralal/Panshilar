@@ -1,5 +1,5 @@
-#ifndef PNSLR_SYNC_PRIMITIVES // ===================================================
-#define PNSLR_SYNC_PRIMITIVES
+#ifndef PNSLR_SYNC_PRIMITIVES_H // =================================================
+#define PNSLR_SYNC_PRIMITIVES_H
 
 #include "__Prelude.h"
 
@@ -91,4 +91,4 @@ b8 PNSLR_TryLockRWMutexShared(PNSLR_RWMutex* rwmutex);
  */
 b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
 
-#endif // PNSLR_SYNC_PRIMITIVES ====================================================
+#endif // PNSLR_SYNC_PRIMITIVES_H ==================================================

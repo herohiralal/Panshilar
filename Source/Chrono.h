@@ -1,5 +1,5 @@
-#ifndef PNSLR_CHRONO // ============================================================
-#define PNSLR_CHRONO
+#ifndef PNSLR_CHRONO_H // ==========================================================
+#define PNSLR_CHRONO_H
 
 #include "__Prelude.h"
 
@@ -8,4 +8,4 @@
  */
 i64 PNSLR_NanosecondsSinceUnixEpoch(void);
 
-#endif // PNSLR_CHRONO ===============================================================
+#endif // PNSLR_CHRONO_H ===========================================================

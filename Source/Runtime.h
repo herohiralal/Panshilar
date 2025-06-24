@@ -1,5 +1,5 @@
-#ifndef PNSLR_RUNTIME // ===========================================================
-#define PNSLR_RUNTIME
+#ifndef PNSLR_RUNTIME_H // =========================================================
+#define PNSLR_RUNTIME_H
 
 #include "__Prelude.h"
 
@@ -29,4 +29,4 @@ typedef struct PNSLR_SourceCodeLocation
 
 //-skipreflect
 
-#endif // PNSLR_RUNTIME ============================================================
+#endif // PNSLR_RUNTIME_H ==========================================================
