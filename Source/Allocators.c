@@ -162,6 +162,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
         }
         case PNSLR_AllocatorMode_FreeAll:
         {
+            if (error) { *error = PNSLR_AllocatorError_None; } // No error by default
             return nil;
         }
         case PNSLR_AllocatorMode_QueryCapabilities:
@@ -174,13 +175,14 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
             );
         }
         default:
+            if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
             return nil; // Unsupported mode.
     }
 
     return nil; // Should not reach here.
 }
 
-PNSLR_Allocator PNSLR_CreateAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     PNSLR_StackAllocatorPayload* payload = PNSLR_Allocate(
         backingAllocator,
@@ -193,7 +195,9 @@ PNSLR_Allocator PNSLR_CreateAllocator_Stack(PNSLR_Allocator backingAllocator, PN
 
     if (!payload) { return PNSLR_NIL_ALLOCATOR; }
 
-    payload->currentPage = PNSLR_Allocate(
+    payload->lastAllocation   = nil;
+    payload->backingAllocator = backingAllocator;
+    payload->currentPage      = PNSLR_Allocate(
         backingAllocator,
         true,
         sizeof(PNSLR_StackAllocatorPage),
@@ -202,13 +206,36 @@ PNSLR_Allocator PNSLR_CreateAllocator_Stack(PNSLR_Allocator backingAllocator, PN
         error
     );
 
+    payload->currentPage->previousPage = nil;
+    payload->currentPage->usedBytes    = 0;
+
     return (PNSLR_Allocator) {
         .procedure = PNSLR_AllocatorFn_Stack,
         .data = payload
     };
 }
 
-rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    if (!allocator.procedure || !allocator.data) { return; }
+    if (error) { *error = PNSLR_AllocatorError_None; } // No error by default
+
+    PNSLR_StackAllocatorPayload* payload = (PNSLR_StackAllocatorPayload*) allocator.data;
+
+    // Free all pages in the stack allocator
+    for (PNSLR_StackAllocatorPage* page = payload->currentPage; page; page = page->previousPage)
+    {
+        // Free the current page
+        PNSLR_Free(payload->backingAllocator, page, location, error);
+        if (error && *error != PNSLR_AllocatorError_None) { return; } // Stop on error
+    }
+
+    // Free the payload itself
+    PNSLR_Free(payload->backingAllocator, payload, location, error);
+    if (error && *error != PNSLR_AllocatorError_None) { return; } // Stop on error
+}
+
+rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError *error)
 {
     PNSLR_StackAllocatorPayload* payload = (PNSLR_StackAllocatorPayload*)allocatorData;
     if (!payload || !payload->currentPage) { return nil; }
@@ -218,30 +245,7 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
         case PNSLR_AllocatorMode_Allocate:
         case PNSLR_AllocatorMode_AllocateNoZero:
         {
-            if (payload->currentPage->usedBytes + size > sizeof(payload->currentPage->buffer))
-            {
-                // Allocate a new page if the current one is full
-                PNSLR_StackAllocatorPage* newPage = PNSLR_Allocate(
-                    (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_Stack, .data = allocatorData},
-                    true,
-                    sizeof(PNSLR_StackAllocatorPage),
-                    alignof(PNSLR_StackAllocatorPage),
-                    location,
-                    error
-                );
-
-                if (!newPage) { return nil; }
-
-                newPage->previousPage = payload->currentPage;
-                newPage->usedBytes = 0;
-                payload->currentPage = newPage;
-            }
-
-            rawptr memory = payload->currentPage->buffer + payload->currentPage->usedBytes;
-            payload->currentPage->usedBytes += size;
-
-            if (mode == PNSLR_AllocatorMode_Allocate) { PNSLR_Intrinsic_MemSet(memory, 0, size); }
-            return memory;
+            break;
         }
         case PNSLR_AllocatorMode_Resize:
         case PNSLR_AllocatorMode_ResizeNoZero:
@@ -250,17 +254,45 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
         }
         case PNSLR_AllocatorMode_Free:
         {
+            if (oldMemory != payload->lastAllocation)
+            {
+                if (error) { *error = PNSLR_AllocatorError_OutOfOrderFree; }
+                return nil; // Invalid free, not the last allocated memory
+            }
             break;
         }
         case PNSLR_AllocatorMode_FreeAll:
         {
-            break;
+            PNSLR_StackAllocatorPage* page = payload->currentPage;
+            while (page && page->previousPage)
+            {
+                PNSLR_StackAllocatorPage* prev = page->previousPage;
+                PNSLR_Free(payload->backingAllocator, page, location, error);
+                if (error && *error != PNSLR_AllocatorError_None) { return nil; }
+                page = prev;
+            }
+
+            payload->lastAllocation = nil;
+            payload->currentPage    = page;
+            if (page)
+            {
+                page->previousPage = nil;
+                page->usedBytes    = 0;
+            }
+
+            if (error) { *error = PNSLR_AllocatorError_None; }
+            return nil;
         }
         case PNSLR_AllocatorMode_QueryCapabilities:
         {
-            break;
+            return (rawptr)(
+                PNSLR_AllocatorCapability_Free |
+                PNSLR_AllocatorCapability_FreeAll |
+                PNSLR_AllocatorCapability_HintBump
+            );
         }
         default:
+            if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
             return nil; // Unsupported mode.
     }
 

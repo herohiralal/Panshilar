@@ -25,6 +25,7 @@ ENUM_START(PNSLR_AllocatorCapability, u64)
     #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1 <<  1))
     #define PNSLR_AllocatorCapability_ResizeFR   ((PNSLR_AllocatorCapability) (1 <<  2))
     #define PNSLR_AllocatorCapability_Free       ((PNSLR_AllocatorCapability) (1 <<  3))
+    #define PNSLR_AllocatorCapability_FreeAll    ((PNSLR_AllocatorCapability) (1 <<  4))
     #define PNSLR_AllocatorCapability_HintNil    ((PNSLR_AllocatorCapability) (1 << 26))
     #define PNSLR_AllocatorCapability_HintBump   ((PNSLR_AllocatorCapability) (1 << 27))
     #define PNSLR_AllocatorCapability_HintHeap   ((PNSLR_AllocatorCapability) (1 << 28))
@@ -42,6 +43,9 @@ ENUM_START(PNSLR_AllocatorError, u8)
     #define PNSLR_AllocatorError_InvalidSize      ((PNSLR_AllocatorError) 3)
     #define PNSLR_AllocatorError_InvalidMode      ((PNSLR_AllocatorError) 4)
     #define PNSLR_AllocatorError_Internal         ((PNSLR_AllocatorError) 5)
+    #define PNSLR_AllocatorError_OutOfOrderFree   ((PNSLR_AllocatorError) 6)
+    #define PNSLR_AllocatorError_DoubleFree       ((PNSLR_AllocatorError) 7)
+    #define PNSLR_AllocatorError_CantFreeAll      ((PNSLR_AllocatorError) 8)
 ENUM_END
 
 /**
@@ -64,7 +68,7 @@ typedef rawptr (*PNSLR_AllocatorProcedure)(
 typedef struct PNSLR_Allocator
 {
     PNSLR_AllocatorProcedure procedure;
-    rawptr                    data; // Optional data for the allocator function
+    rawptr                   data; // Optional data for the allocator function
 } PNSLR_Allocator;
 
 /**
@@ -178,19 +182,24 @@ typedef struct PNSLR_StackAllocationHeader {
  * The payload used by the stack allocator.
  */
 typedef struct PNSLR_StackAllocatorPayload {
+    PNSLR_Allocator           backingAllocator;
     PNSLR_StackAllocatorPage* currentPage;
     rawptr                    lastAllocation; // to debug double frees or skipped frees
 } PNSLR_StackAllocatorPayload;
 
 /**
  * Create a stack allocator with the specified backing allocator.
+ * The stack allocator will use the backing allocator to allocate its pages.
+ * The stack allocator will not free the backing allocator, so it is the caller's responsibility to
+ * free the backing allocator when it is no longer needed.
  */
 PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
 
 /**
- * Allocate memory using the stack allocator.
+ * Destroy a stack allocator and free all its resources.
+ * This does not free the backing allocator, only the stack allocator's own resources.
  */
-void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location);
+void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
 
 /**
  * Main allocator function for the stack allocator.
