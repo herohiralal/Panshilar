@@ -6,7 +6,7 @@
 /**
  * The most basic synchronization primitive.
  */
-typedef struct alignas(sizeof(rawptr)) PNSLR_Mutex {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex {
     u8 buffer[5 * 8];
 }  PNSLR_Mutex;
 
@@ -41,7 +41,7 @@ b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
  * This is a synchronization primitive that allows multiple readers or a single writer.
  * It is useful for scenarios where reads are more frequent than writes.
  */
-typedef struct alignas(sizeof(rawptr)) PNSLR_RWMutex {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex {
     u8 buffer[7 * 8];
 } PNSLR_RWMutex;
 

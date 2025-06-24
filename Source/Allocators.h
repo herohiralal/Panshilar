@@ -157,7 +157,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
 /**
  * A page of a stack allocator.
  */
-typedef struct alignas(sizeof(rawptr)) PNSLR_StackAllocatorPage {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_StackAllocatorPage {
     struct PNSLR_StackAllocatorPage* previousPage;
     i32                              usedBytes;
     u8                               buffer[4096];

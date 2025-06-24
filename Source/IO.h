@@ -23,7 +23,7 @@ i64 PNSLR_GetFileTimestamp(utf8str path);
  * Represents a file handle. Used with a size buffer to ensure cross-platform compatibility.
  */
 typedef struct alignas(8) PNSLR_FileHandle {
-    u8 buffer[sizeof(rawptr)];
+    u8 buffer[PNSLR_PTR_SIZE];
 } PNSLR_FileHandle;
 
 #endif // PNSLR_IO =================================================================

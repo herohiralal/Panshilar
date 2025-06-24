@@ -42,6 +42,7 @@ static_assert(sizeof(u64)    == 8, "u64 must be 8 bytes");
 static_assert(sizeof(i64)    == 8, "i64 must be 8 bytes");
 static_assert(sizeof(f64)    == 8, "f64 must be 8 bytes");
 static_assert(sizeof(rawptr) == 8, "ptr must be 8 bytes");
+static_assert(PNSLR_PTR_SIZE == 8, "ptr must be 8 bytes"); // keep in sync with sizeof(rawptr)
 
 // assert msvc toolchain for windows
 // will not be supporting MinGW or anything else because so much Windows-specific

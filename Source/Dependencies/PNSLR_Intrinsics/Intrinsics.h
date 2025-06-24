@@ -132,6 +132,7 @@ DECLARE_ARRAY_SLICE(utf8str);
     #define ENUM_START(name, backingType)       typedef backingType name;
     #define ENUM_FLAGS_START(name, backingType) typedef backingType name;
     #define ENUM_END
+    #define PNSLR_PTR_SIZE 8
 
 #endif
 //-skipreflect
