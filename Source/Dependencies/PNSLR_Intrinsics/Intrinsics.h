@@ -65,6 +65,9 @@ typedef void*               rawptr;
 #define DECLARE_ARRAY_SLICE(ty) \
     typedef struct { i64 count; ty* data; } ArraySlice(ty);
 
+#define EMPTY_ARRAY_SLICE(ty) \
+    (ArraySlice(ty)) { .count = 0, .data = nil }
+
 DECLARE_ARRAY_SLICE(     b8);
 DECLARE_ARRAY_SLICE(    b32);
 DECLARE_ARRAY_SLICE(     u8);
