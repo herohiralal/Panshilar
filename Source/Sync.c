@@ -8,6 +8,12 @@
     static_assert(sizeof  (PNSLR_RWMutex) >= sizeof (SRWLOCK)      , "PNSLR_RWMutex must be at least as ""large as SRWLOCK.");
     static_assert((alignof(PNSLR_RWMutex) %  alignof(SRWLOCK)) == 0, "PNSLR_RWMutex must be at least as aligned as SRWLOCK.");
 
+    static_assert(sizeof  (PNSLR_Semaphore) >= sizeof (HANDLE)      , "PNSLR_Semaphore must be at least as ""large as HANDLE.");
+    static_assert((alignof(PNSLR_Semaphore) %  alignof(HANDLE)) == 0, "PNSLR_Semaphore must be at least as aligned as HANDLE.");
+
+    static_assert(sizeof  (PNSLR_ConditionVariable) >= sizeof (CONDITION_VARIABLE)      , "PNSLR_ConditionVariable must be at least as ""large as CONDITION_VARIABLE.");
+    static_assert((alignof(PNSLR_ConditionVariable) %  alignof(CONDITION_VARIABLE)) == 0, "PNSLR_ConditionVariable must be at least as aligned as CONDITION_VARIABLE.");
+
 #elif PNSLR_UNIX
 
     static_assert(sizeof  (PNSLR_Mutex) >= sizeof (pthread_mutex_t)      , "PNSLR_Mutex must be at least as ""large as pthread_mutex_t.");
@@ -15,6 +21,12 @@
 
     static_assert(sizeof  (PNSLR_RWMutex) >= sizeof (pthread_rwlock_t)      , "PNSLR_RWMutex must be at least as ""large as pthread_rwlock_t.");
     static_assert((alignof(PNSLR_RWMutex) %  alignof(pthread_rwlock_t)) == 0, "PNSLR_RWMutex must be at least as aligned as pthread_rwlock_t.");
+
+    static_assert(sizeof  (PNSLR_Semaphore) >= sizeof (sem_t)      , "PNSLR_Semaphore must be at least as ""large as sem_t.");
+    static_assert((alignof(PNSLR_Semaphore) %  alignof(sem_t)) == 0, "PNSLR_Semaphore must be at least as aligned as sem_t.");
+
+    static_assert(sizeof  (PNSLR_ConditionVariable) >= sizeof (pthread_cond_t)      , "PNSLR_ConditionVariable must be at least as ""large as pthread_cond_t.");
+    static_assert((alignof(PNSLR_ConditionVariable) %  alignof(pthread_cond_t)) == 0, "PNSLR_ConditionVariable must be at least as aligned as pthread_cond_t.");
 
 #else
 
@@ -165,6 +177,186 @@ b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex)
         return !!TryAcquireSRWLockExclusive((SRWLOCK*) rwmutex);
     #elif PNSLR_UNIX
         return 0 == pthread_rwlock_trywrlock((pthread_rwlock_t*) rwmutex);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount)
+{
+    #if PNSLR_WINDOWS
+        *semaphore = CreateSemaphoreExW(nil, initialCount, LONG_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
+        if (*semaphore == nil) {
+            // Handle error
+        }
+    #elif PNSLR_UNIX
+        sem_init((sem_t*) semaphore, 0, initialCount);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore)
+{
+    #if PNSLR_WINDOWS
+        if (!CloseHandle(*semaphore)) {
+            // Handle error
+        }
+    #elif PNSLR_UNIX
+        sem_destroy((sem_t*) semaphore);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_WaitSemaphore(PNSLR_Semaphore* semaphore)
+{
+    #if PNSLR_WINDOWS
+        DWORD result = WaitForSingleObject(*semaphore, INFINITE);
+        if (result != WAIT_OBJECT_0) {
+            // Handle error
+        }
+    #elif PNSLR_UNIX
+        if (sem_wait((sem_t*) semaphore) != 0) {
+            // Handle error
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs)
+{
+    #if PNSLR_WINDOWS
+        DWORD result = WaitForSingleObject(*semaphore, timeoutNs / 1000000);
+        if (result == WAIT_OBJECT_0) {
+            return true; // Semaphore acquired
+        } else if (result == WAIT_TIMEOUT) {
+            return false; // Timeout expired
+        } else {
+            // Handle error
+            return false;
+        }
+    #elif PNSLR_UNIX
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += timeoutNs / 1000000000;
+        ts.tv_nsec += timeoutNs % 1000000000;
+        if (sem_timedwait((sem_t*) semaphore, &ts) == 0) {
+            return true; // Semaphore acquired
+        } else if (errno == ETIMEDOUT) {
+            return false; // Timeout expired
+        } else {
+            // Handle error
+            return false;
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count)
+{
+    #if PNSLR_WINDOWS
+        LONG previousCount;
+        if (!ReleaseSemaphore(*semaphore, count, &previousCount)) {
+            // Handle error
+        }
+    #elif PNSLR_UNIX
+        for (i32 i = 0; i < count; ++i) {
+            if (sem_post((sem_t*) semaphore) != 0) {
+                // Handle error
+            }
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_CreateConditionVariable(PNSLR_ConditionVariable* condVar)
+{
+    #if PNSLR_WINDOWS
+        InitializeConditionVariable((CONDITION_VARIABLE*) condVar);
+    #elif PNSLR_UNIX
+        pthread_cond_init((pthread_cond_t*) condVar, nil);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_DestroyConditionVariable(PNSLR_ConditionVariable* condVar)
+{
+    #if PNSLR_WINDOWS
+        // CONDITION_VARIABLE has no destruction API, so nothing to do here.
+    #elif PNSLR_UNIX
+        pthread_cond_destroy((pthread_cond_t*) condVar);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_WaitConditionVariable(PNSLR_ConditionVariable* condVar, PNSLR_Mutex* mutex)
+{
+    #if PNSLR_WINDOWS
+        if (!SleepConditionVariableCS((CONDITION_VARIABLE*) condVar, (CRITICAL_SECTION*) mutex, INFINITE)) {
+            // Handle error
+        }
+    #elif PNSLR_UNIX
+        if (pthread_cond_wait((pthread_cond_t*) condVar, (pthread_mutex_t*) mutex) != 0) {
+            // Handle error
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable *condvar, PNSLR_Mutex *mutex, i32 timeoutNs)
+{
+    #if PNSLR_WINDOWS
+        DWORD result = SleepConditionVariableCS((CONDITION_VARIABLE*) condvar, (CRITICAL_SECTION*) mutex, timeoutNs / 1000000);
+        if (result) {
+            return true; // Condition variable signaled
+        } else if (GetLastError() == ERROR_TIMEOUT) {
+            return false; // Timeout expired
+        } else {
+            // Handle error
+            return false;
+        }
+    #elif PNSLR_UNIX
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += timeoutNs / 1000000000;
+        ts.tv_nsec += timeoutNs % 1000000000;
+        if (pthread_cond_timedwait((pthread_cond_t*) condvar, (pthread_mutex_t*) mutex, &ts) == 0) {
+            return true; // Condition variable signaled
+        } else if (errno == ETIMEDOUT) {
+            return false; // Timeout expired
+        } else {
+            // Handle error
+            return false;
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable *condVar)
+{
+    #if PNSLR_WINDOWS
+        WakeConditionVariable((CONDITION_VARIABLE*) condVar);
+    #elif PNSLR_UNIX
+        pthread_cond_signal((pthread_cond_t*) condVar);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condVar)
+{
+    #if PNSLR_WINDOWS
+        WakeAllConditionVariable((CONDITION_VARIABLE*) condVar);
+    #elif PNSLR_UNIX
+        pthread_cond_broadcast((pthread_cond_t*) condVar);
     #else
         #error "Unknown platform."
     #endif

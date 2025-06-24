@@ -91,4 +91,87 @@ b8 PNSLR_TryLockRWMutexShared(PNSLR_RWMutex* rwmutex);
  */
 b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
 
+/**
+ * A semaphore synchronization primitive.
+ * It allows a certain number of threads to access a resource concurrently.
+ */
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Semaphore {
+    u8 buffer[4 * 8];
+} PNSLR_Semaphore;
+
+/**
+ * Creates a semaphore.
+ * The initial count specifies how many threads can access the resource concurrently.
+ */
+void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount);
+
+/**
+ * Destroys a semaphore.
+ */
+void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore);
+
+/**
+ * Waits on a semaphore.
+ * The calling thread will block until the semaphore count is greater than zero.
+ */
+void PNSLR_WaitSemaphore(PNSLR_Semaphore* semaphore);
+
+/**
+ * Waits on a semaphore with a timeout.
+ * The calling thread will block until the semaphore count is greater than zero or the timeout expires.
+ * Returns true if the semaphore was acquired, false if the timeout expired.
+ */
+b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs);
+
+/**
+ * Signals a semaphore, incrementing its count by a specified amount.
+ * If the count was zero, this will wake up one or more waiting threads.
+ */
+void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count);
+
+/**
+ * A condition variable for signaling between threads.
+ * It allows threads to wait for a condition to be signaled.
+ */
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_ConditionVariable {
+    u8 buffer[6 * 8];
+} PNSLR_ConditionVariable;
+
+/**
+ * Creates a condition variable.
+ */
+void PNSLR_CreateConditionVariable(PNSLR_ConditionVariable* condvar);
+
+/**
+ * Destroys a condition variable.
+ */
+void PNSLR_DestroyConditionVariable(PNSLR_ConditionVariable* condvar);
+
+/**
+ * Waits on a condition variable.
+ * The calling thread will block until the condition variable is signaled.
+ * The mutex must be locked before calling this function.
+ */
+void PNSLR_WaitConditionVariable(PNSLR_ConditionVariable* condvar, PNSLR_Mutex* mutex);
+
+/**
+ * Waits on a condition variable with a timeout.
+ * The calling thread will block until the condition variable is signaled or the timeout expires.
+ * The mutex must be locked before calling this function.
+ * Returns true if the condition variable was signaled, false if the timeout expired.
+ */
+b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable* condvar, PNSLR_Mutex* mutex, i32 timeoutNs);
+
+/**
+ * Signals a condition variable, waking up one waiting thread.
+ * If no threads are waiting, this has no effect.
+ */
+void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
+
+/**
+ * Signals a condition variable, waking up all waiting threads.
+ * If no threads are waiting, this has no effect.
+ */
+void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
+
 #endif // PNSLR_SYNC_PRIMITIVES_H ==================================================
