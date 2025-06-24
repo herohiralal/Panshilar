@@ -126,6 +126,19 @@ PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void)
 
 rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    if (size < 0 )
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidSize; }
+        return nil; // Invalid size or alignment
+    }
+
+    // check alignment
+    if ((alignment < 1) || (alignment & (alignment - 1))) // if alignment is not a power of two
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidAlignment; }
+        return nil;
+    }
+
     switch (mode)
     {
         case PNSLR_AllocatorMode_Allocate:
@@ -157,12 +170,18 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
         }
         case PNSLR_AllocatorMode_Free:
         {
+            if (oldMemory == nil)
+            {
+                if (error) { *error = PNSLR_AllocatorError_None; } // No memory to free
+                return nil;
+            }
+
             PNSLR_Intrinsic_Free(oldMemory);
             return nil;
         }
         case PNSLR_AllocatorMode_FreeAll:
         {
-            if (error) { *error = PNSLR_AllocatorError_None; } // No error by default
+            if (error) { *error = PNSLR_AllocatorError_CantFreeAll; } // No error by default
             return nil;
         }
         case PNSLR_AllocatorMode_QueryCapabilities:
@@ -170,7 +189,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
             return (rawptr)(
                 PNSLR_AllocatorCapability_ThreadSafe |
                 PNSLR_AllocatorCapability_Free |
-                PNSLR_AllocatorCapability_ResizeFR |
+                PNSLR_AllocatorCapability_Resize |
                 PNSLR_AllocatorCapability_HintHeap
             );
         }
@@ -237,6 +256,19 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
 
 rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError *error)
 {
+    if (size < 0 )
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidSize; }
+        return nil; // Invalid size or alignment
+    }
+
+    // check alignment
+    if ((alignment < 1) || (alignment & (alignment - 1))) // if alignment is not a power of two
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidAlignment; }
+        return nil;
+    }
+
     PNSLR_StackAllocatorPayload* payload = (PNSLR_StackAllocatorPayload*)allocatorData;
     if (!payload || !payload->currentPage) { return nil; }
 
@@ -254,6 +286,12 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
         }
         case PNSLR_AllocatorMode_Free:
         {
+            if (oldMemory == nil)
+            {
+                if (error) { *error = PNSLR_AllocatorError_None; } // No memory to free
+                return nil;
+            }
+
             if (oldMemory != payload->lastAllocation)
             {
                 if (error) { *error = PNSLR_AllocatorError_OutOfOrderFree; }

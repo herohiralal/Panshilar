@@ -23,7 +23,7 @@ ENUM_END
 ENUM_START(PNSLR_AllocatorCapability, u64)
     #define PNSLR_AllocatorCapability_None       ((PNSLR_AllocatorCapability) (1 <<  0))
     #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1 <<  1))
-    #define PNSLR_AllocatorCapability_ResizeFR   ((PNSLR_AllocatorCapability) (1 <<  2))
+    #define PNSLR_AllocatorCapability_Resize     ((PNSLR_AllocatorCapability) (1 <<  2))
     #define PNSLR_AllocatorCapability_Free       ((PNSLR_AllocatorCapability) (1 <<  3))
     #define PNSLR_AllocatorCapability_FreeAll    ((PNSLR_AllocatorCapability) (1 <<  4))
     #define PNSLR_AllocatorCapability_HintNil    ((PNSLR_AllocatorCapability) (1 << 26))
