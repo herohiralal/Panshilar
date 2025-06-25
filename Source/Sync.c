@@ -185,8 +185,9 @@ b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex)
 void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount)
 {
     #if PNSLR_WINDOWS
-        *semaphore = CreateSemaphoreExW(nil, initialCount, LONG_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
-        if (*semaphore == nil) {
+        HANDLE tempSemaphore = CreateSemaphoreExW(nil, initialCount, LONG_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
+        *((HANDLE*) semaphore) = tempSemaphore;
+        if (tempSemaphore == nil) {
             // Handle error
         }
     #elif PNSLR_UNIX
@@ -199,7 +200,7 @@ void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount)
 void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore)
 {
     #if PNSLR_WINDOWS
-        if (!CloseHandle(*semaphore)) {
+        if (!CloseHandle(*(HANDLE*) semaphore)) {
             // Handle error
         }
     #elif PNSLR_UNIX
@@ -212,7 +213,7 @@ void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore)
 void PNSLR_WaitSemaphore(PNSLR_Semaphore* semaphore)
 {
     #if PNSLR_WINDOWS
-        DWORD result = WaitForSingleObject(*semaphore, INFINITE);
+        DWORD result = WaitForSingleObject(*(HANDLE*) semaphore, INFINITE);
         if (result != WAIT_OBJECT_0) {
             // Handle error
         }
@@ -228,7 +229,7 @@ void PNSLR_WaitSemaphore(PNSLR_Semaphore* semaphore)
 b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs)
 {
     #if PNSLR_WINDOWS
-        DWORD result = WaitForSingleObject(*semaphore, timeoutNs / 1000000);
+        DWORD result = WaitForSingleObject(*(HANDLE*) semaphore, timeoutNs / 1000000);
         if (result == WAIT_OBJECT_0) {
             return true; // Semaphore acquired
         } else if (result == WAIT_TIMEOUT) {
@@ -259,7 +260,7 @@ void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count)
 {
     #if PNSLR_WINDOWS
         LONG previousCount;
-        if (!ReleaseSemaphore(*semaphore, count, &previousCount)) {
+        if (!ReleaseSemaphore(*(HANDLE*) semaphore, count, &previousCount)) {
             // Handle error
         }
     #elif PNSLR_UNIX
