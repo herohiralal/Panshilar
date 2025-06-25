@@ -422,13 +422,13 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
             payload->lastAllocation       = header->lastAllocation;
             payload->lastAllocationHeader = header->lastAllocationHeader;
 
-            // update used bytes on the page
-            payload->currentPage->usedBytes = ((u64)(header)) - ((u64)(rawptr)((u8*)(payload->currentPage->buffer)));
-            if (payload->currentPage->usedBytes < 0)
+            u64 usedBytesTemp               = ((u64)(header)) - ((u64)(rawptr)((u8*)(payload->currentPage->buffer)));
+            if (usedBytesTemp > I32_MAX)
             {
                 if (error) { *error = PNSLR_AllocatorError_Internal; }
                 return nil; // Internal error, used bytes cannot be negative
             }
+            payload->currentPage->usedBytes = (i32) usedBytesTemp;
 
             // clear the header to avoid double frees
             header->page                  = nil;
