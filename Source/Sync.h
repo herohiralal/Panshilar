@@ -17,7 +17,7 @@ typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex {
 /**
  * Creates a mutex.
  */
-void PNSLR_CreateMutex(PNSLR_Mutex* mutex);
+PNSLR_Mutex PNSLR_CreateMutex(void);
 
 /**
  * Destroys a mutex.
@@ -54,7 +54,7 @@ typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex {
 /**
  * Creates a read-write mutex.
  */
-void PNSLR_CreateRWMutex(PNSLR_RWMutex* rwmutex);
+PNSLR_RWMutex PNSLR_CreateRWMutex(void);
 
 /**
  * Destroys a read-write mutex.
@@ -111,7 +111,7 @@ typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Semaphore {
  * Creates a semaphore.
  * The initial count specifies how many threads can access the resource concurrently.
  */
-void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount);
+PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount);
 
 /**
  * Destroys a semaphore.
@@ -150,7 +150,7 @@ typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_ConditionVariable {
 /**
  * Creates a condition variable.
  */
-void PNSLR_CreateConditionVariable(PNSLR_ConditionVariable* condvar);
+PNSLR_ConditionVariable PNSLR_CreateConditionVariable(void);
 
 /**
  * Destroys a condition variable.

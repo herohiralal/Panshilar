@@ -34,8 +34,11 @@
 
 #endif
 
-void PNSLR_CreateMutex(PNSLR_Mutex* mutex)
+PNSLR_Mutex PNSLR_CreateMutex(void)
 {
+    PNSLR_Mutex  output;
+    PNSLR_Mutex* mutex = &output;
+
     #if PNSLR_WINDOWS
         InitializeCriticalSection((CRITICAL_SECTION*) mutex);
         SetCriticalSectionSpinCount((CRITICAL_SECTION*) mutex, 4000); // good balance between performance and responsiveness
@@ -48,6 +51,8 @@ void PNSLR_CreateMutex(PNSLR_Mutex* mutex)
     #else
         #error "Unknown platform."
     #endif
+
+    return output;
 }
 
 void PNSLR_DestroyMutex(PNSLR_Mutex* mutex)
@@ -94,8 +99,11 @@ b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex)
     #endif
 }
 
-void PNSLR_CreateRWMutex(PNSLR_RWMutex* rwmutex)
+PNSLR_RWMutex PNSLR_CreateRWMutex(void)
 {
+    PNSLR_RWMutex  output;
+    PNSLR_RWMutex* rwmutex = &output;
+
     #if PNSLR_WINDOWS
         InitializeSRWLock((SRWLOCK*) rwmutex);
     #elif PNSLR_UNIX
@@ -103,6 +111,8 @@ void PNSLR_CreateRWMutex(PNSLR_RWMutex* rwmutex)
     #else
         #error "Unknown platform."
     #endif
+
+    return output;
 }
 
 void PNSLR_DestroyRWMutex(PNSLR_RWMutex* rwmutex)
@@ -182,8 +192,11 @@ b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex)
     #endif
 }
 
-void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount)
+PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount)
 {
+    PNSLR_Semaphore  output;
+    PNSLR_Semaphore* semaphore = &output;
+
     #if PNSLR_WINDOWS
         HANDLE tempSemaphore = CreateSemaphoreExW(nil, initialCount, LONG_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
         *((HANDLE*) semaphore) = tempSemaphore;
@@ -195,6 +208,8 @@ void PNSLR_CreateSemaphore(PNSLR_Semaphore* semaphore, i32 initialCount)
     #else
         #error "Unknown platform."
     #endif
+
+    return output;
 }
 
 void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore)
@@ -274,8 +289,11 @@ void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count)
     #endif
 }
 
-void PNSLR_CreateConditionVariable(PNSLR_ConditionVariable* condVar)
+PNSLR_ConditionVariable PNSLR_CreateConditionVariable(void)
 {
+    PNSLR_ConditionVariable  output;
+    PNSLR_ConditionVariable* condVar = &output;
+
     #if PNSLR_WINDOWS
         InitializeConditionVariable((CONDITION_VARIABLE*) condVar);
     #elif PNSLR_UNIX
@@ -283,6 +301,8 @@ void PNSLR_CreateConditionVariable(PNSLR_ConditionVariable* condVar)
     #else
         #error "Unknown platform."
     #endif
+
+    return output;
 }
 
 void PNSLR_DestroyConditionVariable(PNSLR_ConditionVariable* condVar)
