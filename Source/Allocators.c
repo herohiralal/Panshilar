@@ -277,12 +277,78 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
         case PNSLR_AllocatorMode_Allocate:
         case PNSLR_AllocatorMode_AllocateNoZero:
         {
-            break;
+            const i32 headerSize       = sizeof(PNSLR_StackAllocationHeader);
+            const i32 headerAlignment  = alignof(PNSLR_StackAllocationHeader);
+
+            // this is a very rough calculation and doesn't actually account for offsets or the alignment of the allocation itself
+            // but it should be enough for most cases, and the cases where it will throw an out-of-memory error are rare
+            // and are actually off by a few bytes
+            if ((headerAlignment + headerSize + alignment + size) > sizeof(payload->currentPage->buffer))
+            {
+                if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
+                return nil; // Not enough space in the current page
+            }
+
+            u64 usedBytesEndPtr              = (u64)(rawptr)(((u8*)(payload->currentPage->buffer)) + payload->currentPage->usedBytes);
+            u64 usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(headerAlignment - 1);
+            u64 headerEndPtr                 = usedBytesEndPtrHeaderAligned + headerSize;
+            u64 headerEndPtrAllocAligned     = (headerEndPtr + alignment - 1) & ~(alignment - 1);
+            u64 allocEndPtr                  = headerEndPtrAllocAligned + size;
+            u64 effectiveUsedBytes           = allocEndPtr - (u64)(rawptr)(payload->currentPage->buffer);
+
+            if (effectiveUsedBytes > sizeof(payload->currentPage->buffer))
+            {
+                // allocate a new page
+                PNSLR_StackAllocatorPage* newPage = PNSLR_Allocate(
+                    payload->backingAllocator,
+                    true,
+                    sizeof(PNSLR_StackAllocatorPage),
+                    alignof(PNSLR_StackAllocatorPage),
+                    location,
+                    error
+                );
+
+                if (!newPage)
+                {
+                    if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
+                    return nil; // Not enough space in the backing allocator
+                }
+
+                newPage->previousPage = payload->currentPage;
+                newPage->usedBytes    = 0;
+                payload->currentPage  = newPage;
+
+                usedBytesEndPtr              = (u64)(rawptr)(newPage->buffer);
+                usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(headerAlignment - 1);
+                headerEndPtr                 = usedBytesEndPtrHeaderAligned + headerSize;
+                headerEndPtrAllocAligned     = (headerEndPtr + alignment - 1) & ~(alignment - 1);
+                allocEndPtr                  = headerEndPtrAllocAligned + size;
+                effectiveUsedBytes           = allocEndPtr - (u64)(rawptr)(payload->currentPage->buffer);
+            }
+
+            PNSLR_StackAllocatorPage* pageToUse        = payload->currentPage;
+            pageToUse->usedBytes                       = effectiveUsedBytes;
+            PNSLR_StackAllocationHeader* header        = (PNSLR_StackAllocationHeader*) usedBytesEndPtrHeaderAligned;
+            rawptr                       tgtAllocation = (rawptr) headerEndPtrAllocAligned;
+
+            header->page            = pageToUse;
+            header->size            = size;
+            header->alignment       = alignment;
+            header->lastAllocation  = payload->lastAllocation;
+            payload->lastAllocation = tgtAllocation;
+
+            if (mode == PNSLR_AllocatorMode_Allocate)
+            {
+                PNSLR_Intrinsic_MemSet(tgtAllocation, 0, size); // Zero the memory if requested
+            }
+
+            return tgtAllocation;
         }
         case PNSLR_AllocatorMode_Resize:
         case PNSLR_AllocatorMode_ResizeNoZero:
         {
-            break;
+            if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
+            return nil; // Resizing breaks stack semantics
         }
         case PNSLR_AllocatorMode_Free:
         {
