@@ -140,21 +140,35 @@ DECLARE_ARRAY_SLICE(utf8str);
 
 #else
 
-    #if PNSLR_MSVC
-        #define thread_local __declspec(thread)
-    #else
-        #define thread_local thread_local
+    #if defined(offsetof)
+        #undef offsetof // avoid conflict with stddef.h, if somehow inherited
     #endif
 
-    #define inline                        inline
-    #define noinline                      noinline
-    #define forceinline                   forceinline
-    #define alignas(x)                    alignas(x)
-    #define deprecated                    deprecated
-    #define noreturn                      noreturn
-    #define alignof(type)                 alignof(type)
-    #define offsetof(type, member)        offsetof(type, member)
-    #define static_assert                 static_assert
+    #if PNSLR_MSVC
+
+        #define thread_local            __declspec(thread)
+        #define noinline                __declspec(noinline)
+        #define forceinline             __forceinline
+        #define noreturn                __declspec(noreturn)
+        #define offsetof(type, member)  ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+
+    #elif (PNSLR_CLANG || PNSLR_GCC)
+
+        #define thread_local            thread_local
+        #define noinline                __attribute__((noinline))
+        #define forceinline             inline __attribute__((always_inline))
+        #define noreturn                __attribute__((noreturn))
+        #define offsetof(type, member)  __builtin_offsetof(type, member)
+
+    #else
+        #error "Required features not supported by this compiler."
+    #endif
+
+    #define inline        inline
+    #define alignas(x)    alignas(x)
+    #define alignof(type) alignof(type)
+    #define deprecated    [[deprecated]]
+    #define static_assert static_assert
 
 #endif
 
