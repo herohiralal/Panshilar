@@ -10,7 +10,12 @@
 //+skipreflect
 // Primitives ======================================================================
 
-typedef _Bool               b8;
+#if !defined(__cplusplus)
+    typedef _Bool           b8;
+#else
+    typedef bool            b8;
+#endif
+
 typedef unsigned int        b32; // mainly for interop purposes with certain other libraries
 typedef unsigned char       u8;
 typedef unsigned short int  u16;

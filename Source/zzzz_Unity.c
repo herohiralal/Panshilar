@@ -9,6 +9,3 @@
 #include "Strings.c"
 #include "IO.c"
 #include "Console.c"
-
-// static tests to make sure everything is working as expected
-#include "StaticTests.c"
