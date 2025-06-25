@@ -27,9 +27,11 @@ typedef char*               cstring;
 typedef void*               rawptr;
 
 #undef nil
-#undef bool
-#undef false
-#undef true
+#if !defined(__cplusplus)
+    #undef bool
+    #undef false
+    #undef true
+#endif
 
 #define nil   ((rawptr) 0)
 #define false ((b8)     0)
@@ -130,12 +132,31 @@ DECLARE_ARRAY_SLICE(utf8str);
     #endif
 
     #define static_assert _Static_assert
-    #define ENUM_START(name, backingType)       typedef backingType name;
-    #define ENUM_FLAGS_START(name, backingType) typedef backingType name;
-    #define ENUM_END
-    #define PNSLR_PTR_SIZE 8
+
+#else
+
+    #if PNSLR_MSVC
+        #define thread_local __declspec(thread)
+    #else
+        #define thread_local thread_local
+    #endif
+
+    #define inline                        inline
+    #define noinline                      noinline
+    #define forceinline                   forceinline
+    #define alignas(x)                    alignas(x)
+    #define deprecated                    deprecated
+    #define noreturn                      noreturn
+    #define alignof(type)                 alignof(type)
+    #define offsetof(type, member)        offsetof(type, member)
+    #define static_assert                 static_assert
 
 #endif
+
+#define ENUM_START(name, backingType)       typedef backingType name;
+#define ENUM_FLAGS_START(name, backingType) typedef backingType name;
+#define ENUM_END
+#define PNSLR_PTR_SIZE                      8
 
 #if defined(__cplusplus)
     #define EXTERN_C_BEGIN extern "C" {
