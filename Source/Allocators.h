@@ -193,10 +193,10 @@ typedef struct PNSLR_StackAllocationHeader {
  * The payload used by the stack allocator.
  */
 typedef struct PNSLR_StackAllocatorPayload {
-    PNSLR_Allocator           backingAllocator;
-    PNSLR_StackAllocatorPage* currentPage;
-    rawptr                    lastAllocation; // to debug double frees or skipped frees
-    rawptr                    lastAllocationHeader;
+    PNSLR_Allocator              backingAllocator;
+    PNSLR_StackAllocatorPage*    currentPage;
+    rawptr                       lastAllocation; // to debug double frees or skipped frees
+    PNSLR_StackAllocationHeader* lastAllocationHeader;
 } PNSLR_StackAllocatorPayload;
 
 /**

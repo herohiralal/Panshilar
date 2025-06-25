@@ -366,6 +366,77 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
                 if (error) { *error = PNSLR_AllocatorError_OutOfOrderFree; }
                 return nil; // Invalid free, not the last allocated memory
             }
+
+            PNSLR_StackAllocationHeader* header = payload->lastAllocationHeader;
+            if (!header)
+            {
+                if (error) { *error = PNSLR_AllocatorError_DoubleFree; }
+                return nil; // Double free detected
+            }
+
+            if (!header->page)
+            {
+                if (error) { *error = PNSLR_AllocatorError_Internal; }
+                return nil; // Internal error, page should not be nil
+            }
+
+            // find whether the header's page is even in the current page chain
+            {
+                b8 found = false;
+                for (PNSLR_StackAllocatorPage* page = payload->currentPage; page; page = page->previousPage)
+                {
+                    if (page == header->page)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    if (error) { *error = PNSLR_AllocatorError_Internal; }
+                    return nil;
+                    // we've already confirmed that the allocation belongs to the current allocator
+                    // but if the allocation's page is not in the current page chain, it means that the allocator is in an invalid state
+                }
+            }
+
+            // free all the pages till the current allocation's page is reached
+            {
+                PNSLR_StackAllocatorPage* page = nil;
+                for (page = payload->currentPage; page != header->page; page = page->previousPage)
+                {
+                    if (!page)
+                    {
+                        if (error) { *error = PNSLR_AllocatorError_Internal; }
+                        return nil; // Internal error, page should not be nil
+                    }
+
+                    PNSLR_Free(payload->backingAllocator, page, location, error);
+                    if (error && *error != PNSLR_AllocatorError_None) { return nil; } // Stop on error
+                }
+
+                payload->currentPage = page; // set the current page to the page of the allocation being freed
+            }
+
+            payload->lastAllocation       = header->lastAllocation;
+            payload->lastAllocationHeader = header->lastAllocationHeader;
+
+            // update used bytes on the page
+            payload->currentPage->usedBytes = ((u64)(header)) - ((u64)(rawptr)((u8*)(payload->currentPage->buffer)));
+            if (payload->currentPage->usedBytes < 0)
+            {
+                if (error) { *error = PNSLR_AllocatorError_Internal; }
+                return nil; // Internal error, used bytes cannot be negative
+            }
+
+            // clear the header to avoid double frees
+            header->page                  = nil;
+            header->size                  = 0;
+            header->alignment             = 0;
+            header->lastAllocation        = nil;
+            header->lastAllocationHeader  = nil;
+
             break;
         }
         case PNSLR_AllocatorMode_FreeAll:
