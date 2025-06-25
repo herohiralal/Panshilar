@@ -3,6 +3,10 @@
 
 #include "__Prelude.h"
 
+EXTERN_C_BEGIN
+
+// Mutex ===========================================================================
+
 /**
  * The most basic synchronization primitive.
  */
@@ -35,6 +39,8 @@ void PNSLR_UnlockMutex(PNSLR_Mutex* mutex);
  * Returns true if the mutex was successfully locked, false otherwise.
  */
 b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
+
+// Read-Write Mutex ================================================================
 
 /**
  * A read-write mutex.
@@ -91,6 +97,8 @@ b8 PNSLR_TryLockRWMutexShared(PNSLR_RWMutex* rwmutex);
  */
 b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
 
+// Semaphore =======================================================================
+
 /**
  * A semaphore synchronization primitive.
  * It allows a certain number of threads to access a resource concurrently.
@@ -128,6 +136,8 @@ b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs);
  * If the count was zero, this will wake up one or more waiting threads.
  */
 void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count);
+
+// Condition Variable ==============================================================
 
 /**
  * A condition variable for signaling between threads.
@@ -173,5 +183,7 @@ void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
  * If no threads are waiting, this has no effect.
  */
 void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
+
+EXTERN_C_END
 
 #endif // PNSLR_SYNC_PRIMITIVES_H ==================================================

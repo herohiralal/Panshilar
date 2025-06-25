@@ -4,6 +4,10 @@
 #include "__Prelude.h"
 #include "Runtime.h"
 
+EXTERN_C_BEGIN
+
+// Allocator Declaration ===========================================================
+
 /**
  * Defines the mode to be used when calling the allocator function.
  */
@@ -70,6 +74,8 @@ typedef struct PNSLR_Allocator
     PNSLR_AllocatorProcedure procedure;
     rawptr                   data; // Optional data for the allocator function
 } PNSLR_Allocator;
+
+// Allocation ease-of-use functions ================================================
 
 /**
  * Allocate memory using the provided allocator.
@@ -139,6 +145,8 @@ u64 PNSLR_QueryAllocatorCapabilities(
     PNSLR_AllocatorError*    error
 );
 
+// Default Heap Allocator ==========================================================
+
 /**
  * Get the default heap allocator.
  */
@@ -157,6 +165,8 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
     PNSLR_SourceCodeLocation location,
     PNSLR_AllocatorError*    error
 );
+
+// Stack Allocator =================================================================
 
 /**
  * A page of a stack allocator.
@@ -219,11 +229,13 @@ rawptr PNSLR_AllocatorFn_Stack(
 
 //+skipreflect
 
+// Allocation Macros ===============================================================
+
 /**
  * Allocate an object of type 'ty' using the provided allocator.
  */
 #define PNSLR_New(ty, allocator, error__) \
-    (ty*) PNSLR_Allocate(allocator, true, sizeof(ty), alignof(ty), CURRENT_LOC(), error__)
+    ((ty*) PNSLR_Allocate(allocator, true, sizeof(ty), alignof(ty), CURRENT_LOC(), error__))
 
 /**
  * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
@@ -275,5 +287,7 @@ rawptr PNSLR_AllocatorFn_Stack(
     PNSLR_GetAllocator_DefaultHeap()
 
 //-skipreflect
+
+EXTERN_C_END
 
 #endif // PNSLR_ALLOCATORS_H =======================================================
