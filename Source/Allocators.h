@@ -176,6 +176,7 @@ typedef struct PNSLR_StackAllocationHeader {
     i32                       size;
     i32                       alignment;
     rawptr                    lastAllocation;
+    rawptr                    lastAllocationHeader;
 } PNSLR_StackAllocationHeader;
 
 /**
@@ -185,6 +186,7 @@ typedef struct PNSLR_StackAllocatorPayload {
     PNSLR_Allocator           backingAllocator;
     PNSLR_StackAllocatorPage* currentPage;
     rawptr                    lastAllocation; // to debug double frees or skipped frees
+    rawptr                    lastAllocationHeader;
 } PNSLR_StackAllocatorPayload;
 
 /**

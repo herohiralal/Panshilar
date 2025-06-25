@@ -214,9 +214,10 @@ PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR
 
     if (!payload) { return PNSLR_NIL_ALLOCATOR; }
 
-    payload->lastAllocation   = nil;
-    payload->backingAllocator = backingAllocator;
-    payload->currentPage      = PNSLR_Allocate(
+    payload->lastAllocation       = nil;
+    payload->lastAllocationHeader = nil;
+    payload->backingAllocator     = backingAllocator;
+    payload->currentPage          = PNSLR_Allocate(
         backingAllocator,
         true,
         sizeof(PNSLR_StackAllocatorPage),
@@ -331,11 +332,13 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
             PNSLR_StackAllocationHeader* header        = (PNSLR_StackAllocationHeader*) usedBytesEndPtrHeaderAligned;
             rawptr                       tgtAllocation = (rawptr) headerEndPtrAllocAligned;
 
-            header->page            = pageToUse;
-            header->size            = size;
-            header->alignment       = alignment;
-            header->lastAllocation  = payload->lastAllocation;
-            payload->lastAllocation = tgtAllocation;
+            header->page                  = pageToUse;
+            header->size                  = size;
+            header->alignment             = alignment;
+            header->lastAllocation        = payload->lastAllocation;
+            header->lastAllocationHeader  = payload->lastAllocationHeader;
+            payload->lastAllocation       = tgtAllocation;
+            payload->lastAllocationHeader = (rawptr)header;
 
             if (mode == PNSLR_AllocatorMode_Allocate)
             {
@@ -376,8 +379,9 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
                 page = prev;
             }
 
-            payload->lastAllocation = nil;
-            payload->currentPage    = page;
+            payload->lastAllocation       = nil;
+            payload->lastAllocationHeader = nil;
+            payload->currentPage          = page;
             if (page)
             {
                 page->previousPage = nil;
