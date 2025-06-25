@@ -8,8 +8,6 @@
 #define PNSLR_INTRINSICS_H
 
 //+skipreflect
-// Compiler ========================================================================
-
 // Primitives ======================================================================
 
 typedef _Bool               b8;
@@ -138,9 +136,20 @@ DECLARE_ARRAY_SLICE(utf8str);
     #define PNSLR_PTR_SIZE 8
 
 #endif
+
+#if defined(__cplusplus)
+    #define EXTERN_C_BEGIN extern "C" {
+    #define EXTERN_C_END   }
+#else
+    #define EXTERN_C_BEGIN
+    #define EXTERN_C_END
+#endif
+
 //-skipreflect
 
 // Memory Management ===============================================================
+
+EXTERN_C_BEGIN
 
 /**
  * Allocate memory with the specified alignment and size.
@@ -166,5 +175,7 @@ void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size);
  * Copy a block of memory from source to destination, handling overlapping regions.
  */
 void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size);
+
+EXTERN_C_END
 
 #endif // PNSLR_INTRINSICS_H =======================================================
