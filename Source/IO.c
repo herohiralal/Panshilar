@@ -1,66 +1,101 @@
 #include "IO.h"
+#include "Allocators.h"
+
+static PNSLR_Allocator GetPathsInternalAllocator(void)
+{
+    // TODO: the allocations made by stack allocator will leak when the thread exits
+    //       we should figure out a way to let the stack allocator know when the thread exits
+    //       so it can free the memory
+
+    static thread_local b8              initialised       = false;
+    static thread_local PNSLR_Allocator internalAllocator = {.data = nil, .procedure = nil};
+
+    if (!initialised)
+    {
+        PNSLR_AllocatorError error = PNSLR_AllocatorError_None;
+        internalAllocator          = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &error);
+        initialised                = true;
+
+        if (error != PNSLR_AllocatorError_None)
+        {
+            // as a fallback, just using the default heap allocator
+            internalAllocator = PNSLR_DEFAULT_HEAP_ALLOCATOR;
+        }
+        else
+        {
+            // TODO: maybe this is where some kind of thread-cleanup code can go?
+        }
+    }
+
+    return internalAllocator;
+}
 
 b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type)
 {
+    PNSLR_Allocator internalAllocator = GetPathsInternalAllocator();
+
     // copy the filename to a temporary buffer
-    char tempBuffer[path.count + 1];
-    PNSLR_Intrinsic_MemCopy(tempBuffer, path.data, (i32) path.count);
-    tempBuffer[path.count] = '\0';
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
+    tempBuffer2.data[path.count] = '\0';
 
     b8 canBeFile      = (type == PNSLR_PathCheckType_Either || type == PNSLR_PathCheckType_File);
     b8 canBeDirectory = (type == PNSLR_PathCheckType_Either || type == PNSLR_PathCheckType_Directory);
 
+    b8 result         = false;
+
     #if PNSLR_WINDOWS
 
-        DWORD fileAttributes = GetFileAttributesA(tempBuffer);
+        DWORD fileAttributes = GetFileAttributesA(tempBuffer2.data); // TODO: switch to UTF-16 strings for better compatibility
         if (fileAttributes == INVALID_FILE_ATTRIBUTES)
         {
-            return false; // File does not exist
+            result = false; // File does not exist
         }
-
-        if (canBeFile && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        else if (canBeFile && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
-            return true; // It's a file
+            result = true; // It's a file
         }
-
-        if (canBeDirectory && (fileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        else if (canBeDirectory && (fileAttributes & FILE_ATTRIBUTE_DIRECTORY))
         {
-            return true; // It's a directory
+            result = true; // It's a directory
         }
 
     #elif PNSLR_UNIX
 
         struct stat fileStat;
-        if (stat(tempBuffer, &fileStat) != 0)
+        if (stat(tempBuffer2.data, &fileStat) != 0)
         {
-            return false; // File does not exist
+            result = false; // File does not exist
         }
-
-        if (canBeFile && S_ISREG(fileStat.st_mode))
+        else if (canBeFile && S_ISREG(fileStat.st_mode))
         {
-            return true; // It's a file
+            result = true; // It's a file
         }
-
-        if (canBeDirectory && S_ISDIR(fileStat.st_mode))
+        else if (canBeDirectory && S_ISDIR(fileStat.st_mode))
         {
-            return true; // It's a directory
+            result = true; // It's a directory
         }
 
     #endif
 
-    return false;
+    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
+
+    return result;
 }
 
 i64 PNSLR_GetFileTimestamp(utf8str path)
 {
-    char tempBuffer[path.count + 1];
-    PNSLR_Intrinsic_MemCopy(tempBuffer, path.data, (i32) path.count);
-    tempBuffer[path.count] = '\0';
+    PNSLR_Allocator internalAllocator = GetPathsInternalAllocator();
+
+    // copy the filename to a temporary buffer
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
+    tempBuffer2.data[path.count] = '\0';
 
     i64 timestamp = 0;
     #if PNSLR_WINDOWS
 
-        HANDLE fileHandle = CreateFileA(tempBuffer, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE fileHandle = CreateFileA(tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fileHandle != INVALID_HANDLE_VALUE)
         {
             FILETIME fileTime;
@@ -78,13 +113,15 @@ i64 PNSLR_GetFileTimestamp(utf8str path)
     #elif PNSLR_UNIX
 
         struct stat fileStat;
-        if (stat(tempBuffer, &fileStat) == 0)
+        if (stat(tempBuffer2.data, &fileStat) == 0)
         {
             // Convert to nanoseconds since epoch
             timestamp = (i64)fileStat.st_mtime * 1000000000LL; // Convert seconds to nanoseconds
         }
 
     #endif
+
+    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
 
     return timestamp;
 }

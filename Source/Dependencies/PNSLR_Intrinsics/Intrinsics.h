@@ -85,6 +85,7 @@ DECLARE_ARRAY_SLICE(    i32);
 DECLARE_ARRAY_SLICE(    i64);
 DECLARE_ARRAY_SLICE(    f32);
 DECLARE_ARRAY_SLICE(    f64);
+DECLARE_ARRAY_SLICE(   char);
 DECLARE_ARRAY_SLICE( utf8ch);
 DECLARE_ARRAY_SLICE(cstring);
 
@@ -102,73 +103,68 @@ DECLARE_ARRAY_SLICE(utf8str);
 
 // Macros ==========================================================================
 
-#if !defined(__cplusplus)
+#if defined(offsetof)
+    #undef offsetof // avoid conflict with stddef.h, if somehow inherited
+#endif
 
-    #if defined(offsetof)
-        #undef offsetof // avoid conflict with stddef.h, if somehow inherited
+#if PNSLR_MSVC
+
+        #define thread_local            __declspec(thread)
+        #define noinline                __declspec(noinline)
+        #define forceinline             __forceinline
+        #define noreturn                __declspec(noreturn)
+
+#elif (PNSLR_CLANG || PNSLR_GCC)
+
+        #define noinline                __attribute__((noinline))
+        #define forceinline             inline __attribute__((always_inline))
+        #define noreturn                __attribute__((noreturn))
+        #define offsetof(type, member)  __builtin_offsetof(type, member)
+
+#else
+    #error "Required features not supported by this compiler."
+#endif
+
+#ifdef __cplusplus
+
+    #if (PNSLR_CLANG || PNSLR_GCC)
+        #define thread_local           thread_local
     #endif
+
+    #define inline                     inline
+    #define alignas(x)                 alignas(x)
+    #define alignof(type)              alignof(type)
+    #define deprecated                 [[deprecated]]
+
+    #if PNSLR_MSVC
+        #define offsetof(type, member) ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+    #endif
+
+    #define static_assert              static_assert
+
+#else
 
     #if PNSLR_MSVC
 
-        #define thread_local            __declspec(thread)
         #define inline                  __inline
-        #define noinline                __declspec(noinline)
-        #define forceinline             __forceinline
         #define alignas(x)              __declspec(align(x))
-        #define deprecated              __declspec(deprecated)
-        #define noreturn                __declspec(noreturn)
         #define alignof(type)           __alignof(type)
+        #define deprecated              __declspec(deprecated)
         #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
 
     #elif (PNSLR_CLANG || PNSLR_GCC)
 
         #define thread_local            __thread
         #define inline                  __inline__
-        #define noinline                __attribute__((noinline))
-        #define forceinline             inline __attribute__((always_inline))
         #define alignas(x)              __attribute__((aligned(x)))
-        #define deprecated              __attribute__((deprecated))
-        #define noreturn                __attribute__((noreturn))
         #define alignof(type)           __alignof__(type)
-        #define offsetof(type, member)  __builtin_offsetof(type, member)
+        #define deprecated              __attribute__((deprecated))
 
     #else
         #error "Required features not supported by this compiler."
     #endif
 
     #define static_assert _Static_assert
-
-#else
-
-    #if defined(offsetof)
-        #undef offsetof // avoid conflict with stddef.h, if somehow inherited
-    #endif
-
-    #if PNSLR_MSVC
-
-        #define thread_local            __declspec(thread)
-        #define noinline                __declspec(noinline)
-        #define forceinline             __forceinline
-        #define noreturn                __declspec(noreturn)
-        #define offsetof(type, member)  ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
-
-    #elif (PNSLR_CLANG || PNSLR_GCC)
-
-        #define thread_local            thread_local
-        #define noinline                __attribute__((noinline))
-        #define forceinline             inline __attribute__((always_inline))
-        #define noreturn                __attribute__((noreturn))
-        #define offsetof(type, member)  __builtin_offsetof(type, member)
-
-    #else
-        #error "Required features not supported by this compiler."
-    #endif
-
-    #define inline        inline
-    #define alignas(x)    alignas(x)
-    #define alignof(type) alignof(type)
-    #define deprecated    [[deprecated]]
-    #define static_assert static_assert
 
 #endif
 
@@ -177,7 +173,7 @@ DECLARE_ARRAY_SLICE(utf8str);
 #define ENUM_END
 #define PNSLR_PTR_SIZE                      8
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
     #define EXTERN_C_BEGIN extern "C" {
     #define EXTERN_C_END   }
 #else
