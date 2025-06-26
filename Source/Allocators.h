@@ -75,6 +75,8 @@ typedef struct PNSLR_Allocator
     rawptr                   data; // Optional data for the allocator function
 } PNSLR_Allocator;
 
+DECLARE_ARRAY_SLICE(PNSLR_Allocator);
+
 // Allocation ease-of-use functions ================================================
 
 /**
