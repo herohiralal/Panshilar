@@ -36,15 +36,15 @@ struct PNSLR_Intrinsic_ThreadCleanupHelper
     }
 };
 
-static thread_local PNSLR_Intrinsic_ThreadCleanupHelper threadCleanupHelper;
+static thread_local PNSLR_Intrinsic_ThreadCleanupHelper G_ThreadCleanupHelper;
 
 void PNSLR_Intrinsic_RegisterThreadCleanup(PNSLR_Intrinsic_ThreadCleanupDelegate delegate)
 {
     for (i32 i = 0; i < 8; ++i)
     {
-        if (threadCleanupHelper.delegates[i] == nil)
+        if (G_ThreadCleanupHelper.delegates[i] == nil)
         {
-            threadCleanupHelper.delegates[i] = delegate;
+            G_ThreadCleanupHelper.delegates[i] = delegate;
             return;
         }
     }
