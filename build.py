@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 # region Commandline arguments ================================================================================================
 
 CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' in sys.argv # Rebuild the intrinsics dependency
-CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
 CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
@@ -13,11 +12,14 @@ CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all o
 
 # region Internal Constants ===================================================================================================
 
-MSVC_DEBUG_ARGS   = ['/Zi', '/Od', '/D_DEBUG']
-MSVC_COMMON_ARGS  = ['/Brepro', '/nologo', '/std:c11', '/Wall', '/WX', '/wd4100', '/wd5045', '/wd4324', '/wd4820']
-CLANG_DEBUG_ARGS  = ['-g', '-O0', '-DDEBUG']
-CLANG_COMMON_ARGS = [
-    '-std=c11',
+MSVC_DEBUG_ARGS    = ['/Zi', '/Od', '/D_DEBUG']
+MSVC_C_STD_ARGS    = ['/std:c11']
+MSVC_CXX_STD_ARGS  = ['/std:c++14']
+MSVC_COMMON_ARGS   = ['/Brepro', '/nologo', '/Wall', '/WX', '/wd4100', '/wd5045', '/wd4324', '/wd4820']
+CLANG_DEBUG_ARGS   = ['-g', '-O0', '-DDEBUG']
+CLANG_C_STD_ARGS   = ['-std=c11']
+CLANG_CXX_STD_ARGS = ['-std=c++14']
+CLANG_COMMON_ARGS  = [
     '-Wall', '-Wextra', '-Wshadow', '-Wconversion', '-Wsign-conversion',
     '-Wdouble-promotion', '-Wfloat-equal', '-Wundef', '-Wswitch-enum',
     '-Wstrict-prototypes', '-Werror', '-Wno-unused-parameter'
@@ -33,9 +35,6 @@ def getIntrinsicsSourcePath() -> str:
 def getLibrarySourcePath() -> str:
     return f'Source/'
 
-def getTestRunnerSourcePath() -> str:
-    return f'Tools/TestRunner/'
-
 def getBindingsGeneratorSourcePath() -> str:
     return f'Tools/BindGen/'
 
@@ -48,14 +47,11 @@ def getLibraryObjectPath(tgt: str, arch: str) -> str:
 def getLibraryPath(tgt: str, arch: str) -> str:
     return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
 
-def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
-    return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
-
 def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
 def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.c'
+    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.cpp'
     outputFile = getIntrinsicsObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -108,30 +104,6 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             intrinsicsObjFile,
             libraryObjFile,
         ]
-
-def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getTestRunnerSourcePath() + 'TestRunner.c'
-    outputFile = getTestRunnerExecutablePath(tgt, arch)
-
-    if tgt == 'windows':
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '/ISource/',
-            f'/Fe{outputFile}',
-            f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
-            f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
-        ] + MSVC_DEBUG_ARGS
-    else:
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '-o',
-            outputFile,
-            f'-ISource/',
-            # '-v',
-            # '-###',
-        ] + CLANG_DEBUG_ARGS
 
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
     inputFile  = getBindingsGeneratorSourcePath() + 'BindingsGenerator.c'
@@ -242,7 +214,10 @@ def buildPlatform(
         prettyArch:         str,
         tgt:                str,
         arch:               str,
-        compiler:           str,
+        cCompiler:          str,
+        cxxCompiler:        str,
+        cStdArgs:           list[str],
+        cxxStdArgs:         list[str],
         linker:             str,
         commonCompilerArgs: list[str],
         envArgs:            list[str],
@@ -256,29 +231,24 @@ def buildPlatform(
     intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
         intrinsicsCompiled = (not actuallyBuild2) or \
-                             (True and runCommand([compiler] + intrinsicsCompileArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
+                             (True and runCommand([cxxCompiler] + intrinsicsCompileArgs + cxxStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
 
     libraryCompiled    = True
     libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
     libraryCompiled    = (not actuallyBuild2) or \
-                         (intrinsicsCompiled and runCommand([compiler] + libraryCompileArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
+                         (intrinsicsCompiled and runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
 
     libraryLinked   = True
     libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
     libraryLinked   = (not actuallyBuild2) or \
                       (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
 
-    testsSuccessful     = True
-    testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
-    testsSuccessful     = (not actuallyBuild2) or (not CMD_ARG_RUN_TESTS) or (not runTools) or \
-                          (libraryLinked and runCommand([compiler] + testRunnerBuildArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
-
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
     bindGenSuccessful          = (not actuallyBuild2) or (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
-                                 (libraryLinked and runCommand([compiler] + bindingsGeneratorBuildArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
+                                 (libraryLinked and runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
-    return libraryLinked and testsSuccessful and bindGenSuccessful
+    return libraryLinked and bindGenSuccessful
 
 # endregion
 
@@ -324,6 +294,7 @@ def main():
         name:             str
         compilerPath:     str
         cStandard:        str
+        cppStandard:      str
         includePath:      list[str]
         defines:          list[str]
         compilerArgs:     list[str]
@@ -348,6 +319,9 @@ def main():
             'windows',
             'x64',
             os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
+            os.path.join(windowsToolchain, "bin", 'HostX64', 'x64', 'cl.exe'),
+            MSVC_C_STD_ARGS,
+            MSVC_CXX_STD_ARGS,
             os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe'),
             commonArgs,
             ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
@@ -357,6 +331,7 @@ def main():
             name             = 'Windows-x64',
             compilerPath     = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe').replace('\\', '/'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
@@ -373,6 +348,9 @@ def main():
             'linux',
             'x64',
             os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
+            os.path.join(linuxX64Toolchain, 'bin', 'clang++.exe'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
             commonArgs,
             ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
@@ -382,6 +360,7 @@ def main():
             name             = 'Linux-x64',
             compilerPath     = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
                 f'{linuxX64Toolchain}\\usr\\include'.replace('\\', '/')
@@ -399,6 +378,9 @@ def main():
             'osx',
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'bin', 'clang++'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
             commonArgs,
             ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
@@ -408,6 +390,7 @@ def main():
             name             = 'MacOS-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
@@ -424,6 +407,9 @@ def main():
             'linux',
             'arm64',
             os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
+            os.path.join(linuxArm64Toolchain, 'bin', 'clang++.exe'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
             commonArgs,
             ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
@@ -433,6 +419,7 @@ def main():
             name             = 'Linux-ARM64',
             compilerPath     = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
                 f'{linuxArm64Toolchain}\\usr\\include'.replace('\\', '/')
@@ -450,6 +437,9 @@ def main():
             'android',
             'arm64',
             os.path.join(androidToolchain, 'bin', 'clang.exe'),
+            os.path.join(androidToolchain, 'bin', 'clang++.exe'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
             commonArgs,
             ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
@@ -459,6 +449,7 @@ def main():
             name             = 'Android-ARM64',
             compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe').replace('\\', '/'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
                 f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
@@ -476,6 +467,9 @@ def main():
             'ios',
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'usr', 'bin', 'clang++'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
             commonArgs,
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
@@ -485,6 +479,7 @@ def main():
             name             = 'iOS-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
@@ -500,6 +495,9 @@ def main():
             'iossimulator',
             'arm64',
             os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'usr', 'bin', 'clang++'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
             os.path.join(osxTools, 'usr', 'bin', 'ar'),
             commonArgs,
             ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
@@ -509,6 +507,7 @@ def main():
             name             = 'iOS-Simulator-ARM64',
             compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
             cStandard        = 'c11',
+            cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source'
             ],

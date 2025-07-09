@@ -17,36 +17,32 @@ PRAGMA_REENABLE_WARNINGS
 
 #include "Intrinsics.h"
 
-#ifndef NULL
-    #define NULL ((rawptr)0)
-#endif
-
 rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size)
 {
-    if (size <= 0 || alignment <= 0) { return NULL; }
+    if (size <= 0 || alignment <= 0) { return nil; }
     return aligned_alloc((u64) alignment, (u64) size);
 }
 
 void PNSLR_Intrinsic_Free(rawptr memory)
 {
-    if (memory == NULL) { return; }
+    if (memory == nil) { return; }
     free(memory);
 }
 
 void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size)
 {
-    if (memory == NULL || size <= 0) { return; }
+    if (memory == nil || size <= 0) { return; }
     memset(memory, value, (u64) size);
 }
 
 void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size)
 {
-    if (destination == NULL || source == NULL || size <= 0) { return; }
+    if (destination == nil || source == nil || size <= 0) { return; }
     memcpy(destination, source, (u64) size);
 }
 
 void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size)
 {
-    if (destination == NULL || source == NULL || size <= 0) { return; }
+    if (destination == nil || source == nil || size <= 0) { return; }
     memmove(destination, source, (u64) size);
 }
