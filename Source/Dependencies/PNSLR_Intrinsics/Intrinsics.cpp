@@ -3,7 +3,7 @@
 PRAGMA_SUPPRESS_WARNINGS
 
 #if PNSLR_CLANG || PNSLR_GCC
-    #include <stdlib.h>
+    #include <cstdlib>
 #elif PNSLR_MSVC
     #include <malloc.h>
     #define aligned_alloc(alignment, size) _aligned_malloc(size, alignment)
@@ -16,6 +16,39 @@ PRAGMA_SUPPRESS_WARNINGS
 PRAGMA_REENABLE_WARNINGS
 
 #include "Intrinsics.h"
+
+struct PNSLR_Intrinsic_ThreadCleanupHelper
+{
+    PNSLR_Intrinsic_ThreadCleanupDelegate delegates[8];
+
+    ~PNSLR_Intrinsic_ThreadCleanupHelper()
+    {
+        for (i32 i = 0; i < 8; ++i)
+        {
+            PNSLR_Intrinsic_ThreadCleanupDelegate& delegate = delegates[i];
+
+            if (delegate != nil)
+            {
+                delegate();
+                delegate = static_cast<PNSLR_Intrinsic_ThreadCleanupDelegate>(nil);
+            }
+        }
+    }
+};
+
+static thread_local PNSLR_Intrinsic_ThreadCleanupHelper threadCleanupHelper;
+
+void PNSLR_Intrinsic_RegisterThreadCleanup(PNSLR_Intrinsic_ThreadCleanupDelegate delegate)
+{
+    for (i32 i = 0; i < 8; ++i)
+    {
+        if (threadCleanupHelper.delegates[i] == nil)
+        {
+            threadCleanupHelper.delegates[i] = delegate;
+            return;
+        }
+    }
+}
 
 rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size)
 {
