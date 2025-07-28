@@ -30,7 +30,7 @@ struct PNSLR_Intrinsic_ThreadCleanupHelper
             if (delegate != nil)
             {
                 delegate();
-                delegate = static_cast<PNSLR_Intrinsic_ThreadCleanupDelegate>(nil);
+                delegate = (PNSLR_Intrinsic_ThreadCleanupDelegate) (nil);
             }
         }
     }
