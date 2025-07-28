@@ -284,17 +284,17 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
             // this is a very rough calculation and doesn't actually account for offsets or the alignment of the allocation itself
             // but it should be enough for most cases, and the cases where it will throw an out-of-memory error are rare
             // and are actually off by a few bytes
-            if ((headerAlignment + headerSize + alignment + size) > sizeof(payload->currentPage->buffer))
+            if ((headerAlignment + headerSize + alignment + size) > (i32) sizeof(payload->currentPage->buffer))
             {
                 if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
                 return nil; // Not enough space in the current page
             }
 
             u64 usedBytesEndPtr              = (u64)(rawptr)(((u8*)(payload->currentPage->buffer)) + payload->currentPage->usedBytes);
-            u64 usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(headerAlignment - 1);
+            u64 usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(u64)(headerAlignment - 1);
             u64 headerEndPtr                 = usedBytesEndPtrHeaderAligned + headerSize;
-            u64 headerEndPtrAllocAligned     = (headerEndPtr + alignment - 1) & ~(alignment - 1);
-            u64 allocEndPtr                  = headerEndPtrAllocAligned + size;
+            u64 headerEndPtrAllocAligned     = (headerEndPtr + (u64) alignment - 1) & ~(u64)(alignment - 1);
+            u64 allocEndPtr                  = headerEndPtrAllocAligned + (u64) size;
             u64 effectiveUsedBytes           = allocEndPtr - (u64)(rawptr)(payload->currentPage->buffer);
 
             if (effectiveUsedBytes > sizeof(payload->currentPage->buffer))
@@ -320,10 +320,10 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
                 payload->currentPage  = newPage;
 
                 usedBytesEndPtr              = (u64)(rawptr)(newPage->buffer);
-                usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(headerAlignment - 1);
+                usedBytesEndPtrHeaderAligned = (usedBytesEndPtr + headerAlignment - 1) & ~(u64)(headerAlignment - 1);
                 headerEndPtr                 = usedBytesEndPtrHeaderAligned + headerSize;
-                headerEndPtrAllocAligned     = (headerEndPtr + alignment - 1) & ~(alignment - 1);
-                allocEndPtr                  = headerEndPtrAllocAligned + size;
+                headerEndPtrAllocAligned     = (headerEndPtr + (u64) alignment - 1) & ~(u64)(alignment - 1);
+                allocEndPtr                  = headerEndPtrAllocAligned + (u64) size;
                 effectiveUsedBytes           = allocEndPtr - (u64)(rawptr)(payload->currentPage->buffer);
             }
 
@@ -428,7 +428,7 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alig
                 if (error) { *error = PNSLR_AllocatorError_Internal; }
                 return nil; // Internal error, used bytes cannot be negative
             }
-            payload->currentPage->usedBytes = (i32) usedBytesTemp;
+            payload->currentPage->usedBytes = usedBytesTemp;
 
             // clear the header to avoid double frees
             header->page                  = nil;

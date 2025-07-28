@@ -175,7 +175,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_StackAllocatorPage {
     struct PNSLR_StackAllocatorPage* previousPage;
-    i32                              usedBytes;
+    u64                              usedBytes;
     u8                               buffer[4096];
 } PNSLR_StackAllocatorPage;
 
@@ -246,7 +246,7 @@ rawptr PNSLR_AllocatorFn_Stack(
     (ArraySlice(ty)) \
     { \
         .count = (i64)(count__), \
-        .data = (ty*) PNSLR_Allocate(allocator, zeroed, (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        .data = (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
     }
 
 /**

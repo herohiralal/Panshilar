@@ -204,7 +204,7 @@ PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount)
             // Handle error
         }
     #elif PNSLR_UNIX
-        sem_init((sem_t*) semaphore, 0, initialCount);
+        sem_init((sem_t*) semaphore, 0, (u32) initialCount);
     #else
         #error "Unknown platform."
     #endif
