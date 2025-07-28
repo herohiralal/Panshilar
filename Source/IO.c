@@ -4,92 +4,65 @@
 
 // internal allocator stuff ========================================================
 
-static thread_local u64             G_PathsInternalAllocatorUsageCount = 0;
-static thread_local PNSLR_Allocator G_PathsInternalAllocator           = {.data = nil, .procedure = nil};
+/**
+ * The way all of this internal allocator stuff works is that we have some thread-local
+ * variables that store some state for the allocators. Initially, it's set to uninitialised.
+ * In this state, the system will attempt to create a new stack allocator using the default heap allocator.
+ * Upon failure, it will mark itself as cleared, and fall back to the default heap allocator.
+ * Any subsequent calls will return the default heap allocator.
+ * If the stack allocator instead is created, it'll mark itself as ready and return the stack allocator.
+ * When the thread exits, the cleanup function will be called, which will destroy the stack allocator
+ * and mark the state as cleared.
+ */
 
-static ArraySlice(PNSLR_Allocator) G_PathsInternalAllocators      = {.count = 0, .data = nil};
-static u64                         G_PathsInternalAllocatorsCount = 0;
-static PNSLR_Mutex                 G_PathsInternalAllocatorsMutex = {0};
-static b8                          G_PathsInternalAllocatorsInit  = false;
+ENUM_START(PNSLR_PathsInternalAllocatorState, u8)
+    #define PNSLR_PathsInternalAllocatorState_Uninitialised ((PNSLR_PathsInternalAllocatorState) 0)
+    #define PNSLR_PathsInternalAllocatorState_Ready         ((PNSLR_PathsInternalAllocatorState) 1)
+    #define PNSLR_PathsInternalAllocatorState_Cleared       ((PNSLR_PathsInternalAllocatorState) 2)
+ENUM_END
+
+static thread_local PNSLR_PathsInternalAllocatorState G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Uninitialised;
+static thread_local PNSLR_Allocator                   G_PathsInternalAllocator      = {0};
 
 static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 {
-    if (G_PathsInternalAllocatorUsageCount == 0)
+    switch (G_PathsInternalAllocatorState)
     {
-        // this is weird and must be done preferably in a procedural/imperative way but
-        // for the sake of convenience, we don't
-        // although for most of the program's run, this variable will remain read-only
-        // so maybe it's not that bad
-        if (!G_PathsInternalAllocatorsInit)
-        {
-            G_PathsInternalAllocatorsMutex = PNSLR_CreateMutex();
-            G_PathsInternalAllocatorsInit  = true;
-        }
+        case PNSLR_PathsInternalAllocatorState_Cleared:
+            return PNSLR_DEFAULT_HEAP_ALLOCATOR; // if cleared, fall back to default heap allocator
 
-        b8 createNew = false;
+        case PNSLR_PathsInternalAllocatorState_Ready:
+            return G_PathsInternalAllocator;
 
-        PNSLR_LockMutex(&G_PathsInternalAllocatorsMutex);
+        case PNSLR_PathsInternalAllocatorState_Uninitialised:
+            PNSLR_AllocatorError error = PNSLR_AllocatorError_None;
+            G_PathsInternalAllocator   = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &error);
+            if (error != PNSLR_AllocatorError_None)
+            {
+                G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
+                return PNSLR_DEFAULT_HEAP_ALLOCATOR; // if initialisation fails, fall back to default heap allocator
+            }
 
-        if (G_PathsInternalAllocatorsCount == 0)
-        {
-            createNew = true;
-        }
-        else
-        {
-            // there are allocators in the pool
-            G_PathsInternalAllocator = G_PathsInternalAllocators.data[G_PathsInternalAllocatorsCount - 1];
+            G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Ready;
+            PNSLR_Intrinsic_RegisterThreadCleanup(ReleasePathsInternalAllocator);
+            return G_PathsInternalAllocator;
 
-            // clear from pool
-            G_PathsInternalAllocators.data[G_PathsInternalAllocatorsCount - 1] = PNSLR_NIL_ALLOCATOR;
-            G_PathsInternalAllocatorsCount--;
-        }
-
-        PNSLR_UnlockMutex(&G_PathsInternalAllocatorsMutex);
-
-        if (createNew)
-        {
-            G_PathsInternalAllocatorUsageCount = 0; // reset
-            PNSLR_AllocatorError error         = PNSLR_AllocatorError_None;
-            G_PathsInternalAllocator           = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &error);
-
-            // on failure, fallback to the heap allocator
-            if (error != PNSLR_AllocatorError_None) { G_PathsInternalAllocator = PNSLR_DEFAULT_HEAP_ALLOCATOR; }
-        }
+        default:
+            // should never reach here, but just in case
+            return PNSLR_DEFAULT_HEAP_ALLOCATOR;
     }
 
-    G_PathsInternalAllocatorUsageCount++;
-    return G_PathsInternalAllocator;
+    // should never reach here, but just in case
+    return PNSLR_DEFAULT_HEAP_ALLOCATOR;
 }
 
 static void ReleasePathsInternalAllocator()
 {
-    G_PathsInternalAllocatorUsageCount--;
-    if (G_PathsInternalAllocatorUsageCount <= 0)
+    if (G_PathsInternalAllocatorState == PNSLR_PathsInternalAllocatorState_Ready)
     {
-        PNSLR_LockMutex(&G_PathsInternalAllocatorsMutex);
-
-        // resize the array if needed
-        if (G_PathsInternalAllocatorsCount >= G_PathsInternalAllocators.count)
-        {
-            // create new
-            i64 newSize = (G_PathsInternalAllocatorsCount + 1) * 2;
-            ArraySlice(PNSLR_Allocator) newAllocators = PNSLR_MakeSlice(PNSLR_Allocator, newSize, false, PNSLR_DEFAULT_HEAP_ALLOCATOR, nil);
-
-            // copy old
-            PNSLR_Intrinsic_MemCopy(newAllocators.data, G_PathsInternalAllocators.data, (i32)(G_PathsInternalAllocatorsCount * sizeof(PNSLR_Allocator)));
-
-            // delete old
-            PNSLR_FreeSlice(G_PathsInternalAllocators, PNSLR_DEFAULT_HEAP_ALLOCATOR, nil);
-
-            // set to new
-            G_PathsInternalAllocators = newAllocators;
-        }
-
-        // add to the pool
-        G_PathsInternalAllocators.data[G_PathsInternalAllocatorsCount] = G_PathsInternalAllocator;
-        G_PathsInternalAllocatorsCount++;
-
-        PNSLR_UnlockMutex(&G_PathsInternalAllocatorsMutex);
+        PNSLR_DestroyAllocator_Stack(G_PathsInternalAllocator, CURRENT_LOC(), nil);
+        G_PathsInternalAllocator = (PNSLR_Allocator) {0};
+        G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
     }
 }
 
@@ -144,8 +117,6 @@ b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type)
     #endif
 
     PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
-    ReleasePathsInternalAllocator();
-
     return result;
 }
 
@@ -188,7 +159,5 @@ i64 PNSLR_GetFileTimestamp(utf8str path)
     #endif
 
     PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
-    ReleasePathsInternalAllocator();
-
     return timestamp;
 }
