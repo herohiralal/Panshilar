@@ -197,8 +197,6 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
             if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
             return nil; // Unsupported mode.
     }
-
-    return nil; // Should not reach here.
 }
 
 PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
@@ -255,7 +253,7 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
     if (error && *error != PNSLR_AllocatorError_None) { return; } // Stop on error
 }
 
-rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError *error)
+rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     if (size < 0 )
     {

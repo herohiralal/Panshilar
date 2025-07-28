@@ -191,7 +191,7 @@ EXTERN_C_BEGIN
  * Delegate type for thread cleanup functions.
  * This is used to register cleanup functions that will be called when the thread exits.
  */
-typedef rawptr (*PNSLR_Intrinsic_ThreadCleanupDelegate)(void);
+typedef void (*PNSLR_Intrinsic_ThreadCleanupDelegate)(void);
 
 /**
  * Register a thread cleanup function.

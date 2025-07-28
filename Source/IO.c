@@ -24,6 +24,16 @@ ENUM_END
 static thread_local PNSLR_PathsInternalAllocatorState G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Uninitialised;
 static thread_local PNSLR_Allocator                   G_PathsInternalAllocator      = {0};
 
+static void ReleasePathsInternalAllocator(void)
+{
+    if (G_PathsInternalAllocatorState == PNSLR_PathsInternalAllocatorState_Ready)
+    {
+        PNSLR_DestroyAllocator_Stack(G_PathsInternalAllocator, CURRENT_LOC(), nil);
+        G_PathsInternalAllocator = (PNSLR_Allocator) {0};
+        G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
+    }
+}
+
 static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 {
     switch (G_PathsInternalAllocatorState)
@@ -35,9 +45,10 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
             return G_PathsInternalAllocator;
 
         case PNSLR_PathsInternalAllocatorState_Uninitialised:
-            PNSLR_AllocatorError error = PNSLR_AllocatorError_None;
-            G_PathsInternalAllocator   = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &error);
-            if (error != PNSLR_AllocatorError_None)
+            ; // fall through to initialisation
+            PNSLR_AllocatorError err;
+            G_PathsInternalAllocator   = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &err);
+            if (err != PNSLR_AllocatorError_None)
             {
                 G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
                 return PNSLR_DEFAULT_HEAP_ALLOCATOR; // if initialisation fails, fall back to default heap allocator
@@ -50,19 +61,6 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
         default:
             // should never reach here, but just in case
             return PNSLR_DEFAULT_HEAP_ALLOCATOR;
-    }
-
-    // should never reach here, but just in case
-    return PNSLR_DEFAULT_HEAP_ALLOCATOR;
-}
-
-static void ReleasePathsInternalAllocator()
-{
-    if (G_PathsInternalAllocatorState == PNSLR_PathsInternalAllocatorState_Ready)
-    {
-        PNSLR_DestroyAllocator_Stack(G_PathsInternalAllocator, CURRENT_LOC(), nil);
-        G_PathsInternalAllocator = (PNSLR_Allocator) {0};
-        G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
     }
 }
 
