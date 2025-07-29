@@ -277,7 +277,7 @@ def buildPlatform(
     testsSuccessful     = True
     testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
     testsSuccessful     = (not actuallyBuild2) or (not CMD_ARG_RUN_TESTS) or (not runTools) or \
-                          (libraryLinked and runCommand([cCompiler] + testRunnerBuildArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
+                          (libraryLinked and runCommand([cCompiler] + testRunnerBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
 
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
