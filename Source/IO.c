@@ -137,7 +137,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 #elif PNSLR_UNIX
                 {
                     struct stat statBuf;
-                    if (stat(foundPath.data, &statBuf) == 0)
+                    if (stat((char*) foundPath.data, &statBuf) == 0)
                     {
                         isDirectory = S_ISDIR(statBuf.st_mode);
                     }
