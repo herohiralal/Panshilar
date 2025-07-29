@@ -4,6 +4,7 @@ from dataclasses import dataclass, asdict
 # region Commandline arguments ================================================================================================
 
 CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' in sys.argv # Rebuild the intrinsics dependency
+CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
 CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
@@ -35,6 +36,9 @@ def getIntrinsicsSourcePath() -> str:
 def getLibrarySourcePath() -> str:
     return f'Source/'
 
+def getTestRunnerSourcePath() -> str:
+    return f'Tools/TestRunner/'
+
 def getBindingsGeneratorSourcePath() -> str:
     return f'Tools/BindGen/'
 
@@ -46,6 +50,9 @@ def getLibraryObjectPath(tgt: str, arch: str) -> str:
 
 def getLibraryPath(tgt: str, arch: str) -> str:
     return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
+
+def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
+    return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
 def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
@@ -104,6 +111,30 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             intrinsicsObjFile,
             libraryObjFile,
         ]
+
+def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
+    inputFile  = getTestRunnerSourcePath() + 'TestRunner.c'
+    outputFile = getTestRunnerExecutablePath(tgt, arch)
+
+    if tgt == 'windows':
+        return [
+            inputFile,
+            getLibraryPath(tgt, arch),
+            '/ISource/',
+            f'/Fe{outputFile}',
+            f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
+            f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
+        ] + MSVC_DEBUG_ARGS
+    else:
+        return [
+            inputFile,
+            getLibraryPath(tgt, arch),
+            '-o',
+            outputFile,
+            f'-ISource/',
+            # '-v',
+            # '-###',
+        ] + CLANG_DEBUG_ARGS
 
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
     inputFile  = getBindingsGeneratorSourcePath() + 'BindingsGenerator.c'
@@ -243,12 +274,17 @@ def buildPlatform(
     libraryLinked   = (not actuallyBuild2) or \
                       (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
 
+    testsSuccessful     = True
+    testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
+    testsSuccessful     = (not actuallyBuild2) or (not CMD_ARG_RUN_TESTS) or (not runTools) or \
+                          (libraryLinked and runCommand([cCompiler] + testRunnerBuildArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
+
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
     bindGenSuccessful          = (not actuallyBuild2) or (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
                                  (libraryLinked and runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
-    return libraryLinked and bindGenSuccessful
+    return libraryLinked and testsSuccessful and bindGenSuccessful
 
 # endregion
 
