@@ -73,9 +73,21 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     PNSLR_Allocator internalAllocator = AcquirePathsInternalAllocator();
 
     // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 3), false, internalAllocator, nil);
     PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
-    tempBuffer2.data[path.count] = '\0';
+    #if PNSLR_WINDOWS
+    {
+        tempBuffer2.data[path.count] = '\\'; // use backslash for Windows paths
+        tempBuffer2.data[path.count + 1] = '*'; // add wildcard for file matching
+        tempBuffer2.data[path.count + 2] = '\0'; // null-terminate
+        tempBuffer2.count = path.count + 2;
+    }
+    #elif PNSLR_UNIX
+    {
+        tempBuffer2.data[path.count] = '\0'; // null-terminate
+        tempBuffer2.count = path.count;
+    }
+    #endif
 
     #if PNSLR_WINDOWS
 
@@ -86,26 +98,62 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
         {
             do
             {
-                i32 fileNameLen = PNSLR_GetStringLength(findData.cFileName);
-                if (fileNameLen == 0                                                                ) { continue; } // skip empty names
-                if (fileNameLen == 1 && findData.cFileName[0] == '.'                                ) { continue; } // skip current directory
-                if (fileNameLen == 2 && findData.cFileName[0] == '.' && findData.cFileName[1] == '.') { continue; } // skip parent directory
+                char* nextFileName = findData.cFileName;
 
-                utf8str foundPath = PNSLR_MakeSlice(utf8ch, (path.count + fileNameLen + 1), false, internalAllocator, nil);
+    #elif PNSLR_UNIX
+
+        DIR *dir = opendir(tempBuffer2.data);
+        if (dir != NULL)
+        {
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL)
+            {
+                char* nextFileName = entry->d_name;
+
+    #endif
+                i32 fileNameLen = PNSLR_GetStringLength(nextFileName);
+                if (fileNameLen == 0                                                    ) { continue; } // skip empty names
+                if (fileNameLen == 1 && nextFileName[0] == '.'                          ) { continue; } // skip current directory
+                if (fileNameLen == 2 && nextFileName[0] == '.' && nextFileName[1] == '.') { continue; } // skip parent directory
+
+                utf8str foundPath = PNSLR_MakeSlice(utf8ch, (path.count + fileNameLen + 1 + 1), false, internalAllocator, nil);
                 PNSLR_Intrinsic_MemCopy(foundPath.data, path.data, (i32) path.count);
                 foundPath.data[path.count] = '/'; // add path separator
-                PNSLR_Intrinsic_MemCopy(foundPath.data + path.count + 1, findData.cFileName, fileNameLen);
-                foundPath.count = path.count + fileNameLen + 1; // update count to include the separator
+                PNSLR_Intrinsic_MemCopy(foundPath.data + path.count + 1, nextFileName, fileNameLen);
+                foundPath.data[path.count + 1 + fileNameLen] = '\0'; // null-terminate the string, just in case
+                foundPath.count = path.count + fileNameLen + 1; // update count
 
                 for (i32 i = 0; i < foundPath.count; ++i)
                 {
                     if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalize path separators
                 }
 
-                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+                b8 isDirectory = false;
+
+                #if PNSLR_WINDOWS
+                {
+                    isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+                }
+                #elif PNSLR_UNIX
+                {
+                    struct stat statBuf;
+                    if (stat(foundPath.data, &statBuf) == 0)
+                    {
+                        isDirectory = S_ISDIR(statBuf.st_mode);
+                    }
+                }
+                #endif
+
+                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, isDirectory);
+
+                // handle recursion
+                if (iterateFurther && recursive && isDirectory) { PNSLR_IterateDirectory(foundPath, recursive, visitorPayload, visitorFunc); }
+
                 PNSLR_FreeSlice(foundPath, internalAllocator, nil);
 
                 if (!iterateFurther) { break; } // stop iteration if the visitor function returns false
+
+    #if PNSLR_WINDOWS
 
             } while (FindNextFileA(findHandle, &findData));
 
@@ -113,6 +161,11 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
         }
 
     #elif PNSLR_UNIX
+
+            }
+
+            closedir(dir);
+        }
 
     #endif
 
