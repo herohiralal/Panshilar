@@ -11,7 +11,7 @@ EXTERN_C_BEGIN
  * The most basic synchronization primitive.
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex {
-    u8 buffer[5 * 8];
+    u8 buffer[6 * 8];
 }  PNSLR_Mutex;
 
 /**
