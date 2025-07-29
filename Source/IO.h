@@ -12,6 +12,17 @@ ENUM_START(PNSLR_PathCheckType, u8)
 ENUM_END
 
 /**
+ * The signature of the delegate that's supposed to be called for iterating over a directory.
+ */
+typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, utf8str path, b8 isDirectory);
+
+/**
+ * Iterates over a directory and calls the visitor function for each file/directory found.
+ * If `recursive` is true, it will also iterate over subdirectories.
+ */
+void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc);
+
+/**
  * Checks if a file/directory exists at the specified path.
  */
 b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type);

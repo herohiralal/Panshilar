@@ -1,6 +1,6 @@
 #include "IO.h"
 #include "Allocators.h"
-#include "Sync.h"
+#include "Strings.h"
 
 // internal allocator stuff ========================================================
 
@@ -65,6 +65,59 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 }
 
 // actual function implementations =================================================
+
+// TODO: use UTF-16 strings on Windows for better compatibility
+
+void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
+{
+    PNSLR_Allocator internalAllocator = AcquirePathsInternalAllocator();
+
+    // copy the filename to a temporary buffer
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
+    tempBuffer2.data[path.count] = '\0';
+
+    #if PNSLR_WINDOWS
+
+        WIN32_FIND_DATAA findData;
+        HANDLE findHandle = FindFirstFileA(tempBuffer2.data, &findData);
+
+        if (findHandle != INVALID_HANDLE_VALUE)
+        {
+            do
+            {
+                i32 fileNameLen = PNSLR_GetStringLength(findData.cFileName);
+                if (fileNameLen == 0                                                                ) { continue; } // skip empty names
+                if (fileNameLen == 1 && findData.cFileName[0] == '.'                                ) { continue; } // skip current directory
+                if (fileNameLen == 2 && findData.cFileName[0] == '.' && findData.cFileName[1] == '.') { continue; } // skip parent directory
+
+                utf8str foundPath = PNSLR_MakeSlice(utf8ch, (path.count + fileNameLen + 1), false, internalAllocator, nil);
+                PNSLR_Intrinsic_MemCopy(foundPath.data, path.data, (i32) path.count);
+                foundPath.data[path.count] = '/'; // add path separator
+                PNSLR_Intrinsic_MemCopy(foundPath.data + path.count + 1, findData.cFileName, fileNameLen);
+                foundPath.count = path.count + fileNameLen + 1; // update count to include the separator
+
+                for (i32 i = 0; i < foundPath.count; ++i)
+                {
+                    if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalize path separators
+                }
+
+                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+                PNSLR_FreeSlice(foundPath, internalAllocator, nil);
+
+                if (!iterateFurther) { break; } // stop iteration if the visitor function returns false
+
+            } while (FindNextFileA(findHandle, &findData));
+
+            FindClose(findHandle);
+        }
+
+    #elif PNSLR_UNIX
+
+    #endif
+
+    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
+}
 
 b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type)
 {
