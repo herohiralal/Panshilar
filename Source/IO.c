@@ -70,7 +70,7 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
 {
-    if (PNSLR_AreStringsEqual(path, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType_CaseSensitive))
+    if (!path.data || !path.count)
     {
         path = PNSLR_STRING_LITERAL(".");
     }
@@ -79,6 +79,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
     #if PNSLR_WINDOWS
     {
+        i32 utf16Length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) path.data, (i32) path.count, nil, 0);
     }
     #elif PNSLR_UNIX
     {
@@ -88,7 +89,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
         if (pathPtr == nil)
         {
-            PNSLR_NormalisedPath output = {.path = PNSLR_EMPTY_STRING};
+            PNSLR_NormalisedPath output = (PNSLR_NormalisedPath) {0};
             return output;
         }
 

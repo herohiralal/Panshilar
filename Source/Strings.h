@@ -6,6 +6,8 @@
 
 EXTERN_C_BEGIN
 
+// Basics/Conversions ==============================================================
+
 /**
  * Returns the length of the given C-style null-terminated string, excluding the null terminator.
  */
@@ -28,6 +30,8 @@ cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator);
  */
 utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator);
 
+// Casing ==========================================================================
+
 /**
  * Converts a UTF-8 string to uppercase.
  * The returned string is allocated using the specified allocator.
@@ -39,6 +43,8 @@ utf8str PNSLR_UpperString(utf8str str, PNSLR_Allocator allocator);
  * The returned string is allocated using the specified allocator.
  */
 utf8str PNSLR_LowerString(utf8str str, PNSLR_Allocator allocator);
+
+// Comparisons =====================================================================
 
 /**
  * Represents the type of string comparison to perform.
@@ -107,6 +113,30 @@ b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringCompa
  * Checks if a C-style null-terminated string ends with the specified UTF-8 suffix.
  */
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType);
+
+// Windows-specific bs for UTF-16 conversions ======================================
+
+//+skipreflect
+
+#if PNSLR_WINDOWS
+
+/**
+ * Converts a UTF-8 string to a UTF-16 string.
+ * The returned string is allocated using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ */
+ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
+
+/**
+ * Converts a UTF-16 string to a UTF-8 string.
+ * The returned string is allocated using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ */
+utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(utf16ch) utf16str, PNSLR_Allocator allocator);
+
+#endif
+
+//-skipreflect
 
 EXTERN_C_END
 

@@ -28,6 +28,7 @@ typedef signed long long    i64;
 typedef float               f32;
 typedef double              f64;
 typedef unsigned char       utf8ch;
+typedef unsigned short int  utf16ch;
 typedef char*               cstring;
 typedef void*               rawptr;
 
@@ -87,6 +88,7 @@ DECLARE_ARRAY_SLICE(    f32);
 DECLARE_ARRAY_SLICE(    f64);
 DECLARE_ARRAY_SLICE(   char);
 DECLARE_ARRAY_SLICE( utf8ch);
+DECLARE_ARRAY_SLICE(utf16ch);
 DECLARE_ARRAY_SLICE(cstring);
 
 // UTF-8 string type, with length info (not necessarily null-terminated).
@@ -99,14 +101,6 @@ DECLARE_ARRAY_SLICE(utf8str);
     { \
         .count = sizeof(str) - 1, \
         .data = (utf8ch*) str \
-    }
-
-// An empty utf8str.
-#define PNSLR_EMPTY_STRING \
-    (utf8str) \
-    { \
-        .count = 0, \
-        .data = (utf8ch*) "" \
     }
 
 // Macros ==========================================================================
