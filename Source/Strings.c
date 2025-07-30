@@ -1,5 +1,83 @@
 #include "Strings.h"
 
+i32 PNSLR_GetCStringLength(cstring str)
+{
+    if (str == nil) { return 0; }
+
+    i32 length = 0;
+    while (str[length] != '\0') { ++length;}
+    return length;
+}
+
+utf8str PNSLR_StringFromCString(cstring str)
+{
+    if (str == nil) { str = ""; }
+    i32 length = PNSLR_GetCStringLength(str);
+    return (utf8str) {.count = length, .data = (utf8ch*)str};
+}
+
+cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
+{
+    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
+    {
+        str = PNSLR_STRING_LITERAL("");
+    }
+
+    cstring result = PNSLR_MakeCString(str.count, false, allocator, nil);
+    if (result == nil) { return nil; } // allocation failed
+
+    PNSLR_Intrinsic_MemCopy(result, str.data, (i32) str.count);
+    result[str.count] = '\0'; // null-terminate the C-style string
+
+    return result;
+}
+
+utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
+{
+    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
+    {
+        return (utf8str) {0};
+    }
+
+    utf8str result = PNSLR_MakeString(str.count, false, allocator, nil);
+    if (result.data == nil) { return (utf8str) {0}; } // allocation failed
+
+    PNSLR_Intrinsic_MemCopy(result.data, str.data, (i32) str.count);
+    return result;
+}
+
+utf8str PNSLR_UpperString(utf8str str, PNSLR_Allocator allocator)
+{
+    utf8str copy = PNSLR_CloneString(str, allocator);
+    if (copy.data == nil) { return (utf8str) {0}; }
+
+    for (i32 i = 0; i < copy.count; ++i)
+    {
+        if (copy.data[i] >= 'a' && copy.data[i] <= 'z')
+        {
+            copy.data[i] -= ('a' - 'A'); // convert to uppercase
+        }
+    }
+
+    return copy;
+}
+
+utf8str PNSLR_LowerString(utf8str str, PNSLR_Allocator allocator)
+{
+    utf8str copy = PNSLR_CloneString(str, allocator);
+    if (copy.data == nil) { return (utf8str) {0}; }
+
+    for (i32 i = 0; i < copy.count; ++i)
+    {
+        if (copy.data[i] >= 'A' && copy.data[i] <= 'Z')
+        {
+            copy.data[i] += ('a' - 'A'); // convert to lowercase
+        }
+    }
+
+    return copy;
+}
+
 static b8 AreStringsEqualInternal(char* str1, i32 len1, char* str2, i32 len2, PNSLR_StringComparisonType comparisonType)
 {
     if (str1 == nil) { str1 = ""; len1 = 0; }
@@ -77,12 +155,12 @@ b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType 
 
 b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal(str1.data, (i32) str1.count, str2, (i32) PNSLR_GetStringLength(str2), comparisonType);
+    return AreStringsEqualInternal(str1.data, (i32) str1.count, str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
 }
 
 b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal(str1, (i32) PNSLR_GetStringLength(str1), str2, (i32) PNSLR_GetStringLength(str2), comparisonType);
+    return AreStringsEqualInternal(str1, (i32) PNSLR_GetCStringLength(str1), str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
 }
 
 b8 PNSLR_StringStartsWith(utf8str str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
@@ -97,76 +175,30 @@ b8 PNSLR_StringEndsWith(utf8str str, utf8str suffix, PNSLR_StringComparisonType 
 
 b8 PNSLR_StringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetStringLength(prefix), comparisonType);
+    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_StringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetStringLength(suffix), comparisonType);
+    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }
 
 b8 PNSLR_CStringStartsWith(cstring str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str, (i32) PNSLR_GetStringLength(str), prefix.data, (i32) prefix.count, comparisonType);
+    return StringStartsWithInternal(str, (i32) PNSLR_GetCStringLength(str), prefix.data, (i32) prefix.count, comparisonType);
 }
 
 b8 PNSLR_CStringEndsWith(cstring str, utf8str suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str, (i32) PNSLR_GetStringLength(str), suffix.data, (i32) suffix.count, comparisonType);
+    return StringEndsWithInternal(str, (i32) PNSLR_GetCStringLength(str), suffix.data, (i32) suffix.count, comparisonType);
 }
 
 b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetStringLength(prefix), comparisonType);
+    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetStringLength(suffix), comparisonType);
-}
-
-i32 PNSLR_GetStringLength(cstring str)
-{
-    if (str == nil) { return 0; }
-
-    i32 length = 0;
-    while (str[length] != '\0') { ++length;}
-    return length;
-}
-
-utf8str PNSLR_StringFromCString(cstring str)
-{
-    if (str == nil) { str = ""; }
-    i32 length = PNSLR_GetStringLength(str);
-    return (utf8str) {.count = length, .data = (utf8ch*)str};
-}
-
-cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
-{
-    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
-    {
-        str = PNSLR_STRING_LITERAL("");
-    }
-
-    cstring result = PNSLR_Allocate(allocator, false, (str.count + 1) * sizeof(char), alignof(char), CURRENT_LOC(), nil);
-    if (result == nil) { return nil; } // allocation failed
-
-    PNSLR_Intrinsic_MemCopy(result, str.data, (i32) str.count);
-    result[str.count] = '\0'; // null-terminate the C-style string
-
-    return result;
-}
-
-utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
-{
-    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
-    {
-        str = PNSLR_STRING_LITERAL("");
-    }
-
-    utf8str result = PNSLR_MakeSlice(utf8ch, str.count, false, allocator, nil);
-    if (result.data == nil) { return (utf8str) {0}; } // allocation failed
-
-    PNSLR_Intrinsic_MemCopy(result.data, str.data, (i32) str.count);
-    return result;
+    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }

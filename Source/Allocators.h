@@ -240,6 +240,18 @@ rawptr PNSLR_AllocatorFn_Stack(
     ((ty*) PNSLR_Allocate(allocator, true, sizeof(ty), alignof(ty), CURRENT_LOC(), error__))
 
 /**
+ * Delete an object allocated with `PNSLR_New`, using the provided allocator.
+ */
+#define PNSLR_Delete(obj, allocator, error__) \
+    do \
+    { \
+        if (obj) \
+        { \
+            PNSLR_Free(allocator, obj, CURRENT_LOC(), error__); \
+        } \
+    } while (false);
+
+/**
  * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
  */
 #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
@@ -261,20 +273,38 @@ rawptr PNSLR_AllocatorFn_Stack(
             (slice).data = nil; \
             (slice).count = 0; \
         } \
-    } while (false)
+    } while (false);
 
 /**
- * Delete an object allocated with `PNSLR_New`, using the provided allocator.
+ * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
  */
-#define PNSLR_Delete(obj, allocator, error__) \
+#define PNSLR_MakeString(count__, zeroed, allocator, error__) \
+    PNSLR_MakeSlice(utf8ch, count__, zeroed, allocator, error__)
+
+/**
+ * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
+ */
+#define PNSLR_FreeString(str, allocator, error__) \
+    PNSLR_FreeSlice(str, allocator, error__)
+
+/**
+ * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
+ */
+#define PNSLR_MakeCString(count__, zeroed, allocator, error__) \
+    PNSLR_MakeSlice(char, ((count__) + 1), zeroed, allocator, error__).data
+
+/**
+ * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
+ */
+#define PNSLR_FreeCString(str, allocator, error__) \
     do \
     { \
-        if (obj) \
+        if (str) \
         { \
-            PNSLR_Free(allocator, obj, CURRENT_LOC(), error__); \
-            obj = nil; \
+            PNSLR_Free(allocator, str, CURRENT_LOC(), error__); \
+            str = nil; \
         } \
-    } while (false)
+    } while (false);
 
 /**
  * Short-hand for a nil allocator, which does nothing.

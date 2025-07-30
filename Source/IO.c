@@ -111,12 +111,12 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 char* nextFileName = entry->d_name;
 
     #endif
-                i32 fileNameLen = PNSLR_GetStringLength(nextFileName);
+                i32 fileNameLen = PNSLR_GetCStringLength(nextFileName);
                 if (fileNameLen == 0                                                    ) { continue; } // skip empty names
                 if (fileNameLen == 1 && nextFileName[0] == '.'                          ) { continue; } // skip current directory
                 if (fileNameLen == 2 && nextFileName[0] == '.' && nextFileName[1] == '.') { continue; } // skip parent directory
 
-                utf8str foundPath = PNSLR_MakeSlice(utf8ch, (path.count + fileNameLen + 1 + 1), false, internalAllocator, nil);
+                utf8str foundPath = PNSLR_MakeString((path.count + fileNameLen + 1 + 1), false, internalAllocator, nil);
                 PNSLR_Intrinsic_MemCopy(foundPath.data, path.data, (i32) path.count);
                 foundPath.data[path.count] = '/'; // add path separator
                 PNSLR_Intrinsic_MemCopy(foundPath.data + path.count + 1, nextFileName, fileNameLen);
