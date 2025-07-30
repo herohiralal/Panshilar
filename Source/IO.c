@@ -77,7 +77,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
     #if PNSLR_WINDOWS
     {
-        tempBuffer2.data[path.count] = '\\'; // use backslash for Windows paths
+        tempBuffer2.data[path.count] = '/'; // use backslash for Windows paths
         tempBuffer2.data[path.count + 1] = '*'; // add wildcard for file matching
         tempBuffer2.data[path.count + 2] = '\0'; // null-terminate
         tempBuffer2.count = path.count + 2;
@@ -123,10 +123,14 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 foundPath.data[path.count + 1 + fileNameLen] = '\0'; // null-terminate the string, just in case
                 foundPath.count = path.count + fileNameLen + 1; // update count
 
-                for (i32 i = 0; i < foundPath.count; ++i)
+                #if PNSLR_WINDOWS
                 {
-                    if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalize path separators
+                    for (i32 i = 0; i < foundPath.count; ++i)
+                    {
+                        if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalize path separators
+                    }
                 }
+                #endif
 
                 b8 isDirectory = false;
 

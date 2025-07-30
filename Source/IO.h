@@ -5,12 +5,6 @@
 
 EXTERN_C_BEGIN
 
-ENUM_START(PNSLR_PathCheckType, u8)
-    #define PNSLR_PathCheckType_Either    ((PNSLR_PathCheckType) 0)
-    #define PNSLR_PathCheckType_File      ((PNSLR_PathCheckType) 1)
-    #define PNSLR_PathCheckType_Directory ((PNSLR_PathCheckType) 2)
-ENUM_END
-
 /**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
@@ -21,6 +15,12 @@ typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, utf8str pat
  * If `recursive` is true, it will also iterate over subdirectories.
  */
 void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc);
+
+ENUM_START(PNSLR_PathCheckType, u8)
+    #define PNSLR_PathCheckType_Either    ((PNSLR_PathCheckType) 0)
+    #define PNSLR_PathCheckType_File      ((PNSLR_PathCheckType) 1)
+    #define PNSLR_PathCheckType_Directory ((PNSLR_PathCheckType) 2)
+ENUM_END
 
 /**
  * Checks if a file/directory exists at the specified path.
