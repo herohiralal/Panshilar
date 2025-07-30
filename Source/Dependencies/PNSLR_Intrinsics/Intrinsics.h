@@ -101,6 +101,14 @@ DECLARE_ARRAY_SLICE(utf8str);
         .data = (utf8ch*) str \
     }
 
+// An empty utf8str.
+#define PNSLR_EMPTY_STRING \
+    (utf8str) \
+    { \
+        .count = 0, \
+        .data = "" \
+    }
+
 // Macros ==========================================================================
 
 #if defined(offsetof)

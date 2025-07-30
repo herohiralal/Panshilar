@@ -18,9 +18,9 @@ utf8str PNSLR_StringFromCString(cstring str)
 
 cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
 {
-    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
+    if (PNSLR_AreStringsEqual(str, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType_CaseSensitive))
     {
-        str = PNSLR_STRING_LITERAL("");
+        str = PNSLR_EMPTY_STRING;
     }
 
     cstring result = PNSLR_MakeCString(str.count, false, allocator, nil);
@@ -34,7 +34,7 @@ cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
 
 utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
 {
-    if (PNSLR_AreStringsEqual(str, PNSLR_STRING_LITERAL(""), PNSLR_StringComparisonType_CaseSensitive))
+    if (PNSLR_AreStringsEqual(str, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType_CaseSensitive))
     {
         return (utf8str) {0};
     }
