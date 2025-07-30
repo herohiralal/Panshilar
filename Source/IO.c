@@ -66,6 +66,11 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 // actual function implementations =================================================
 
+// PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
+// {
+//     if (PNSLR_AreStringsEqual(path, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType))
+// }
+
 // TODO: use UTF-16 strings on Windows for better compatibility
 
 void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)

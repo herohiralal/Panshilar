@@ -5,6 +5,30 @@
 
 EXTERN_C_BEGIN
 
+// /**
+//  * Represents a normalised path.
+//  * This is used to ensure that paths are in a consistent format across different platforms.
+//  * It is a simple wrapper around a UTF-8 string.
+//  * It's always an absolute path, and the path separators are always forward slashes ('/').
+//  * For directories, it always ends with a trailing slash.
+//  */
+// typedef struct PNSLR_NormalisedPath {
+//     utf8str path;
+// } PNSLR_NormalisedPath;
+
+// /**
+//  * Represents the type of path normalisation to perform.
+//  */
+// ENUM_START(PNSLR_PathNormalisationType, u8)
+//     #define PNSLR_PathNormalisationType_File      ((PNSLR_PathNormalisationType) 0)
+//     #define PNSLR_PathNormalisationType_Directory ((PNSLR_PathNormalisationType) 1)
+// ENUM_END
+
+// /**
+//  * Normalises a path to a consistent format, as specified in `PNSLR_PathNormalisationType`.
+//  */
+// PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator);
+
 /**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
