@@ -78,7 +78,7 @@ utf8str PNSLR_LowerString(utf8str str, PNSLR_Allocator allocator)
     return copy;
 }
 
-static b8 AreStringsEqualInternal(char* str1, i32 len1, char* str2, i32 len2, PNSLR_StringComparisonType comparisonType)
+static b8 AreStringsEqualInternal(cstring str1, i32 len1, cstring str2, i32 len2, PNSLR_StringComparisonType comparisonType)
 {
     if (str1 == nil) { str1 = ""; len1 = 0; }
     if (str2 == nil) { str2 = ""; len2 = 0; }
@@ -103,7 +103,7 @@ static b8 AreStringsEqualInternal(char* str1, i32 len1, char* str2, i32 len2, PN
     return true;
 }
 
-static b8 StringStartsWithInternal(char* str, i32 strLen, char* prefix, i32 prefixLen, PNSLR_StringComparisonType comparisonType)
+static b8 StringStartsWithInternal(cstring str, i32 strLen, cstring prefix, i32 prefixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str    == nil) { str = "";    strLen = 0;    }
     if (prefix == nil) { prefix = ""; prefixLen = 0; }
@@ -127,7 +127,7 @@ static b8 StringStartsWithInternal(char* str, i32 strLen, char* prefix, i32 pref
     return true;
 }
 
-static b8 StringEndsWithInternal(char* str, i32 strLen, char* suffix, i32 suffixLen, PNSLR_StringComparisonType comparisonType)
+static b8 StringEndsWithInternal(cstring str, i32 strLen, cstring suffix, i32 suffixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str == nil || suffix == nil || strLen < suffixLen) { return false; }
 
@@ -150,12 +150,12 @@ static b8 StringEndsWithInternal(char* str, i32 strLen, char* suffix, i32 suffix
 
 b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal(str1.data, (i32) str1.count, str2.data, (i32) str2.count, comparisonType);
+    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, (cstring) str1.data, (i32) str2.count, comparisonType);
 }
 
 b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal(str1.data, (i32) str1.count, str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
+    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
 }
 
 b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType)
@@ -165,40 +165,40 @@ b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType
 
 b8 PNSLR_StringStartsWith(utf8str str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str.data, (i32) str.count, prefix.data, (i32) prefix.count, comparisonType);
+    return StringStartsWithInternal((cstring) str.data, (i32) str.count, (cstring) prefix.data, (i32) prefix.count, comparisonType);
 }
 
 b8 PNSLR_StringEndsWith(utf8str str, utf8str suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str.data, (i32) str.count, suffix.data, (i32) suffix.count, comparisonType);
+    return StringEndsWithInternal((cstring) str.data, (i32) str.count, (cstring) suffix.data, (i32) suffix.count, comparisonType);
 }
 
 b8 PNSLR_StringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
+    return StringStartsWithInternal((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_StringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
+    return StringEndsWithInternal((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }
 
 b8 PNSLR_CStringStartsWith(cstring str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str, (i32) PNSLR_GetCStringLength(str), prefix.data, (i32) prefix.count, comparisonType);
+    return StringStartsWithInternal(str, (i32) PNSLR_GetCStringLength(str), (cstring) prefix.data, (i32) prefix.count, comparisonType);
 }
 
 b8 PNSLR_CStringEndsWith(cstring str, utf8str suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str, (i32) PNSLR_GetCStringLength(str), suffix.data, (i32) suffix.count, comparisonType);
+    return StringEndsWithInternal(str, (i32) PNSLR_GetCStringLength(str), (cstring) suffix.data, (i32) suffix.count, comparisonType);
 }
 
 b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
+    return StringStartsWithInternal((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
+    return StringEndsWithInternal((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }
