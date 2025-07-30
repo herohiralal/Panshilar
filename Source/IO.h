@@ -16,16 +16,19 @@ typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, utf8str pat
  */
 void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc);
 
-ENUM_START(PNSLR_PathCheckType, u8)
-    #define PNSLR_PathCheckType_Either    ((PNSLR_PathCheckType) 0)
-    #define PNSLR_PathCheckType_File      ((PNSLR_PathCheckType) 1)
-    #define PNSLR_PathCheckType_Directory ((PNSLR_PathCheckType) 2)
+/**
+ * Represents the type of path check to perform when checking if a path exists.
+ */
+ENUM_START(PNSLR_PathExistsCheckType, u8)
+    #define PNSLR_PathExistsCheckType_Either    ((PNSLR_PathExistsCheckType) 0)
+    #define PNSLR_PathExistsCheckType_File      ((PNSLR_PathExistsCheckType) 1)
+    #define PNSLR_PathExistsCheckType_Directory ((PNSLR_PathExistsCheckType) 2)
 ENUM_END
 
 /**
  * Checks if a file/directory exists at the specified path.
  */
-b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type);
+b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type);
 
 /**
  * Get the timestamp of a file at the specified path as nanoseconds since unix epoch.

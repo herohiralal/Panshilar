@@ -176,7 +176,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
 }
 
-b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type)
+b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type)
 {
     PNSLR_Allocator internalAllocator = AcquirePathsInternalAllocator();
 
@@ -185,8 +185,8 @@ b8 PNSLR_PathExists(utf8str path, PNSLR_PathCheckType type)
     PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
     tempBuffer2.data[path.count] = '\0';
 
-    b8 canBeFile      = (type == PNSLR_PathCheckType_Either || type == PNSLR_PathCheckType_File);
-    b8 canBeDirectory = (type == PNSLR_PathCheckType_Either || type == PNSLR_PathCheckType_Directory);
+    b8 canBeFile      = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_File);
+    b8 canBeDirectory = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_Directory);
 
     b8 result         = false;
 
