@@ -66,12 +66,42 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 // actual function implementations =================================================
 
-// PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
-// {
-//     if (PNSLR_AreStringsEqual(path, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType))
-// }
-
 // TODO: use UTF-16 strings on Windows for better compatibility
+
+PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
+{
+    if (PNSLR_AreStringsEqual(path, PNSLR_EMPTY_STRING, PNSLR_StringComparisonType_CaseSensitive))
+    {
+        path = PNSLR_STRING_LITERAL(".");
+    }
+
+    PNSLR_Allocator internalAllocator = AcquirePathsInternalAllocator();
+
+    #if PNSLR_WINDOWS
+    {
+    }
+    #elif PNSLR_UNIX
+    {
+        cstring relCstr = PNSLR_CStringFromString(path, internalAllocator);
+        cstring pathPtr = realpath(relCstr, nil);
+        PNSLR_FreeCString(relCstr, internalAllocator, nil);
+
+        if (pathPtr == nil)
+        {
+            PNSLR_NormalisedPath output = {.path = PNSLR_EMPTY_STRING};
+            return output;
+        }
+
+        utf8str path = PNSLR_StringFromCString(pathPtr);
+        utf8str output = PNSLR_CloneString(path, allocator);
+        PNSLR_Intrinsic_Free(pathPtr);
+
+        return (PNSLR_NormalisedPath) { .path = output };
+    }
+    #endif
+}
+
+// TODO: phase out manual string->cstring conversions
 
 void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {
