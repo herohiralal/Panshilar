@@ -64,6 +64,59 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
     }
 }
 
+// some bs internal stuff ==========================================================
+
+static i32 GetVolumeLengthFromPath(utf8str path)
+{
+    #if PNSLR_WINDOWS
+    {
+        #define IS_SLASH(c) ((c) == '/' || (c) == '\\')
+
+        if (path.count < 2)
+        {
+            return 0; // no volume
+        }
+
+        if (path.data[1] == ':' && ((path.data[0] >= 'A' && path.data[0] <= 'Z') || (path.data[0] >= 'a' && path.data[0] <= 'z')))
+        {
+            return 2; // volume is present
+        }
+
+        if (path.count >= 5 && IS_SLASH(path.data[0]) && IS_SLASH(path.data[1]) && !IS_SLASH(path.data[2]) && (path.data[2] != '.'))
+        {
+            for (i32 i = 3; i < (path.count - 1); ++i)
+            {
+                if (IS_SLASH(path.data[i]))
+                {
+                    i += 1;
+                    if (!IS_SLASH(path.data[i]))
+                    {
+                        if (path.data[i] == '.')
+                        {
+                            break;
+                        }
+                    }
+
+                    for (; i < path.count; ++i)
+                    {
+                        if (IS_SLASH(path.data[i]))
+                        {
+                            break;
+                        }
+                    }
+
+                    return i;
+                }
+                break;
+            }
+        }
+
+        #undef IS_SLASH
+    }
+    #endif
+    return 0;
+}
+
 // actual function implementations =================================================
 
 // TODO: use UTF-16 strings on Windows for better compatibility
@@ -79,7 +132,61 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
     #if PNSLR_WINDOWS
     {
-        i32 utf16Length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) path.data, (i32) path.count, nil, 0);
+        ArraySlice(utf16ch) p = PNSLR_UTF16FromUTF8WindowsOnly(path, internalAllocator);
+        i32 n = GetFullPathNameW((LPCWSTR) p.data, 0, nil, nil);
+        ArraySlice(utf16ch) buf = EMPTY_ARRAY_SLICE(utf16ch);
+        utf8str tempFullPath = (utf8str) {0};
+        if (n > 0)
+        {
+            buf = PNSLR_MakeSlice(utf16ch, n, false, internalAllocator, nil);
+            n = GetFullPathNameW((LPCWSTR) p.data, (DWORD) n, (LPWSTR) buf.data, nil);
+            if (n > 0)
+            {
+                tempFullPath = PNSLR_UTF8FromUTF16WindowsOnly(buf, internalAllocator);
+            }
+        }
+
+        utf8str resultPath = (utf8str) {0};
+
+        // clean the path
+        #define IS_SEPARATOR(c) ((c) == '/' || (c) == '\\')
+        if (tempFullPath.data && tempFullPath.count)
+        {
+            path = tempFullPath;
+            utf8str originalPath = tempFullPath;
+            i32 volumeLength = GetVolumeLengthFromPath(path);
+            path = (utf8str) {.data = path.data + volumeLength, .count = path.count - volumeLength};
+
+            if (path.count == 0)
+            {
+                // path is just a volume, needs a trailing slash and then return
+                resultPath = PNSLR_MakeString(volumeLength + 1, false, allocator, nil);
+                if (resultPath.data)
+                {
+                    PNSLR_Intrinsic_MemCopy(resultPath.data, originalPath.data, volumeLength);
+                    resultPath.data[volumeLength] = '/'; // add trailing slash
+                }
+
+                goto exitFunction;
+            }
+
+            b8 isRooted = IS_SEPARATOR(path.data[0]);
+            n = path.count;
+            i32 r = 0, dotDot = 0;
+            if (isRooted)
+            {
+            }
+        }
+        #undef IS_SEPARATOR
+
+        exitFunction:
+        ;
+        PNSLR_FreeString(tempFullPath, internalAllocator, nil);
+
+        PNSLR_FreeSlice(buf, internalAllocator, nil);
+        PNSLR_FreeSlice(p,   internalAllocator, nil);
+
+        return (PNSLR_NormalisedPath) { .path = resultPath };
     }
     #elif PNSLR_UNIX
     {
