@@ -66,9 +66,9 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 // some bs internal stuff ==========================================================
 
-static i32 GetVolumeLengthFromPath(utf8str path)
-{
-    #if PNSLR_WINDOWS
+#if PNSLR_WINDOWS
+
+    static i32 GetVolumeLengthFromPathWindowsOnly(utf8str path)
     {
         #define IS_SLASH(c) ((c) == '/' || (c) == '\\')
 
@@ -84,12 +84,12 @@ static i32 GetVolumeLengthFromPath(utf8str path)
 
         if (path.count >= 5 && IS_SLASH(path.data[0]) && IS_SLASH(path.data[1]) && !IS_SLASH(path.data[2]) && (path.data[2] != '.'))
         {
-            for (i32 i = 3; i < (path.count - 1); ++i)
+            for (i32 i = 3; i < path.count; ++i)
             {
                 if (IS_SLASH(path.data[i]))
                 {
                     i += 1;
-                    if (!IS_SLASH(path.data[i]))
+                    if (i < path.count && !IS_SLASH(path.data[i]))
                     {
                         if (path.data[i] == '.')
                         {
@@ -107,15 +107,15 @@ static i32 GetVolumeLengthFromPath(utf8str path)
 
                     return i;
                 }
-                break;
             }
         }
 
         #undef IS_SLASH
+
+        return 0;
     }
-    #endif
-    return 0;
-}
+
+#endif // PNSLR_WINDOWS
 
 // actual function implementations =================================================
 
@@ -154,7 +154,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
         {
             path = tempFullPath;
             utf8str originalPath = tempFullPath;
-            i32 volumeLength = GetVolumeLengthFromPath(path);
+            i32 volumeLength = GetVolumeLengthFromPathWindowsOnly(path);
             path = (utf8str) {.data = path.data + volumeLength, .count = path.count - volumeLength};
 
             if (path.count == 0)
@@ -171,8 +171,8 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
             }
 
             b8 isRooted = IS_SEPARATOR(path.data[0]);
-            n = path.count;
-            i32 r = 0, dotDot = 0;
+            n = (i32) path.count;
+            // i32 r = 0, dotDot = 0;
             if (isRooted)
             {
             }
@@ -200,8 +200,8 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
             return output;
         }
 
-        utf8str path = PNSLR_StringFromCString(pathPtr);
-        utf8str output = PNSLR_CloneString(path, allocator);
+        utf8str tempAlias = PNSLR_StringFromCString(pathPtr);
+        utf8str output = PNSLR_CloneString(tempAlias, allocator);
         PNSLR_Intrinsic_Free(pathPtr);
 
         return (PNSLR_NormalisedPath) { .path = output };
