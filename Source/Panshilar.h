@@ -12,6 +12,7 @@
 #include "Strings.h"
 #include "IO.h"
 #include "Console.h"
+#include "Process.h"
 
 //+skipreflect
 

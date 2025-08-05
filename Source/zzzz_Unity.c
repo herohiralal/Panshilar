@@ -9,3 +9,4 @@
 #include "Strings.c"
 #include "IO.c"
 #include "Console.c"
+#include "Process.c"
