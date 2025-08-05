@@ -115,77 +115,77 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
         return 0;
     }
 
-#endif // PNSLR_WINDOWS
+    /**
+     * When appending, compares stuff to original str.
+     * Creates a new buffer only if required.
+     */
+    typedef struct LazyPathBuffer {
+        PNSLR_Allocator    allocator;
+        utf8str            originalString;
+        ArraySlice(utf8ch) buffer;
+        i32                writeIdx;
+        utf8str            volAndPath;
+        i32                volumeLength;
+    } LazyPathBuffer;
 
-/**
- * When appending, compares stuff to original str.
- * Creates a new buffer only if required.
- */
-typedef struct LazyPathBuffer {
-    PNSLR_Allocator    allocator;
-    utf8str            originalString;
-    ArraySlice(utf8ch) buffer;
-    i32                writeIdx;
-    utf8str            volAndPath;
-    i32                volumeLength;
-} LazyPathBuffer;
-
-static u8 GetIndexFromLazyPathBuffer(LazyPathBuffer* buff, i32 idx)
-{
-    if (buff->buffer.data != nil)
+    static u8 GetIndexFromLazyPathBuffer(LazyPathBuffer* buff, i32 idx)
     {
-        return buff->buffer.data[idx];
-    }
-
-    return buff->originalString.data[idx];
-}
-
-static b8 AppendToLazyPathBuffer(LazyPathBuffer* buff, utf8ch c)
-{
-    if (buff->buffer.data == nil)
-    {
-        if (buff->writeIdx < buff->originalString.count && buff->originalString.data[buff->writeIdx] == c)
+        if (buff->buffer.data != nil)
         {
-            buff->writeIdx += 1;
-            return true; // no need to append, just increment the index
+            return buff->buffer.data[idx];
         }
 
-        // need to create a new buffer
-        PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        buff->buffer = PNSLR_MakeSlice(utf8ch, (buff->originalString.count + 1), false, buff->allocator, &err);
-        if (err != PNSLR_AllocatorError_None) { return false; } // allocation failed
-        PNSLR_Intrinsic_MemCopy(buff->buffer.data, buff->originalString.data, buff->writeIdx);
+        return buff->originalString.data[idx];
     }
 
-    buff->buffer.data[buff->writeIdx] = c;
-    buff->writeIdx++;
-    return true;
-}
-
-static utf8str StringFromLazyPathBuffer(LazyPathBuffer* buff)
-{
-    if (buff->buffer.data == nil)
+    static b8 AppendToLazyPathBuffer(LazyPathBuffer* buff, utf8ch c)
     {
-        return PNSLR_CloneString((utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength + buff->writeIdx}, buff->allocator);
+        if (buff->buffer.data == nil)
+        {
+            if (buff->writeIdx < buff->originalString.count && buff->originalString.data[buff->writeIdx] == c)
+            {
+                buff->writeIdx += 1;
+                return true; // no need to append, just increment the index
+            }
+
+            // need to create a new buffer
+            PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
+            buff->buffer = PNSLR_MakeSlice(utf8ch, (buff->originalString.count + 1), false, buff->allocator, &err);
+            if (err != PNSLR_AllocatorError_None) { return false; } // allocation failed
+            PNSLR_Intrinsic_MemCopy(buff->buffer.data, buff->originalString.data, buff->writeIdx);
+        }
+
+        buff->buffer.data[buff->writeIdx] = c;
+        buff->writeIdx++;
+        return true;
     }
 
-    utf8str x = (utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength};
-    utf8str y = (utf8str) {.data = buff->buffer.data, .count = buff->writeIdx};
-    utf8str z = PNSLR_MakeString((x.count + y.count), false, buff-> allocator, nil);
-    if (z.data != nil)
+    static utf8str StringFromLazyPathBuffer(LazyPathBuffer* buff)
     {
-        PNSLR_Intrinsic_MemCopy(z.data,           x.data, (i32) x.count);
-        PNSLR_Intrinsic_MemCopy(z.data + x.count, y.data, (i32) y.count);
+        if (buff->buffer.data == nil)
+        {
+            return PNSLR_CloneString((utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength + buff->writeIdx}, buff->allocator);
+        }
+
+        utf8str x = (utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength};
+        utf8str y = (utf8str) {.data = buff->buffer.data, .count = buff->writeIdx};
+        utf8str z = PNSLR_MakeString((x.count + y.count), false, buff-> allocator, nil);
+        if (z.data != nil)
+        {
+            PNSLR_Intrinsic_MemCopy(z.data,           x.data, (i32) x.count);
+            PNSLR_Intrinsic_MemCopy(z.data + x.count, y.data, (i32) y.count);
+        }
+
+        return z;
     }
 
-    return z;
-}
+    static void DisposeLazyPathBuffer(LazyPathBuffer* buff)
+    {
+        PNSLR_FreeSlice(buff->buffer, buff->allocator, nil);
+        *buff = (LazyPathBuffer) {0}; // reset the buffer
+    }
 
-static void DisposeLazyPathBuffer(LazyPathBuffer* buff)
-{
-    PNSLR_FreeSlice(buff->buffer, buff->allocator, nil);
-    *buff = (LazyPathBuffer) {0}; // reset the buffer
-}
+#endif // PNSLR_WINDOWS
 
 // actual function implementations =================================================
 
@@ -356,7 +356,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
         }
 
         utf8str tempAlias = PNSLR_StringFromCString(pathPtr);
-        i32 tgtCount = tempAlias.count + ((type == PNSLR_PathNormalisationType_Directory) ? 1 : 0);
+        i32 tgtCount = (i32) tempAlias.count + ((type == PNSLR_PathNormalisationType_Directory) ? 1 : 0);
         utf8str output = PNSLR_MakeString(tgtCount, false, allocator, nil);
         if (output.data != nil)
         {
