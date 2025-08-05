@@ -242,10 +242,104 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
             b8 isRooted = IS_SEPARATOR(path.data[0]);
             n = (i32) path.count;
-            // i32 r = 0, dotDot = 0;
+            LazyPathBuffer outputBuffer =
+            {
+                .originalString = path,
+                .volAndPath     = originalPath,
+                .volumeLength   = volumeLength,
+                .allocator      = allocator,
+                .buffer         = EMPTY_ARRAY_SLICE(utf8ch),
+                .writeIdx       = 0,
+            };
+
+            i32 r = 0, dotDot = 0;
             if (isRooted)
             {
+                if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
+                {
+                    goto exitFunction; // allocation failed
+                }
+                r = 1;
+                dotDot = 1;
             }
+
+            while (r < n)
+            {
+                if (IS_SEPARATOR(path.data[r]))
+                {
+                    r += 1; // skip the separator
+                }
+                else if (path.data[r] == '.' && (((r + 1) == n) || IS_SEPARATOR(path.data[r + 2])))
+                {
+                    r += 1;
+                }
+                else if (path.data[r] == '.' && path.data[r + 1] == '.' && (((r + 2) == n) || IS_SEPARATOR(path.data[r + 2])))
+                {
+                    r += 2; // skip the ".."
+                    if (outputBuffer.writeIdx > dotDot)
+                    {
+                        outputBuffer.writeIdx -= 1;
+                        while (outputBuffer.writeIdx > dotDot) {
+                            u8 idx = GetIndexFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx);
+                            if (IS_SEPARATOR(idx)) { break; }
+                            outputBuffer.writeIdx -= 1; // go back until we find a separator
+                        }
+                    }
+                    else if (!isRooted)
+                    {
+                        if (outputBuffer.writeIdx > 0)
+                        {
+                            if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
+                            {
+                                goto exitFunction; // allocation failed
+                            }
+                        }
+
+                        if (!AppendToLazyPathBuffer(&outputBuffer, '.') || !AppendToLazyPathBuffer(&outputBuffer, '.'))
+                        {
+                            goto exitFunction; // allocation failed
+                        }
+
+                        dotDot = outputBuffer.writeIdx; // remember the position of the ".."
+                    }
+                }
+                else
+                {
+                    if (isRooted && outputBuffer.writeIdx != 1 || !isRooted && outputBuffer.writeIdx != 0)
+                    {
+                        if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
+                        {
+                            goto exitFunction; // allocation failed
+                        }
+                    }
+
+                    for (; r < n && !IS_SEPARATOR(path.data[r]); ++r)
+                    {
+                        if (!AppendToLazyPathBuffer(&outputBuffer, path.data[r]))
+                        {
+                            goto exitFunction; // allocation failed
+                        }
+                    }
+                }
+            }
+
+            if (outputBuffer.writeIdx == 0)
+            {
+                if (!AppendToLazyPathBuffer(&outputBuffer, '.'))
+                {
+                    goto exitFunction; // allocation failed
+                }
+            }
+
+            utf8str tempResultPath = StringFromLazyPathBuffer(&outputBuffer);
+            DisposeLazyPathBuffer(&outputBuffer);
+
+            for (i32 i = 0; i < tempResultPath.count; ++i)
+            {
+                if (tempResultPath.data[i] == '\\') { tempResultPath.data[i] = '/'; } // normalize path separators
+            }
+
+            resultPath = tempResultPath;
         }
         #undef IS_SEPARATOR
 
