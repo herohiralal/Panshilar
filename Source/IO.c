@@ -356,7 +356,14 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
         }
 
         utf8str tempAlias = PNSLR_StringFromCString(pathPtr);
-        utf8str output = PNSLR_CloneString(tempAlias, allocator);
+        i32 tgtCount = tempAlias.count + ((type == PNSLR_PathNormalisationType_Directory) ? 1 : 0);
+        utf8str output = PNSLR_MakeString(tgtCount, false, allocator, nil);
+        if (output.data != nil)
+        {
+            PNSLR_Intrinsic_MemCopy(output.data, tempAlias.data, (i32) tempAlias.count);
+            if (type == PNSLR_PathNormalisationType_Directory) { output.data[tempAlias.count] = '/'; }
+            output.count = tgtCount;
+        }
         PNSLR_Intrinsic_Free(pathPtr);
 
         return (PNSLR_NormalisedPath) { .path = output };
