@@ -166,7 +166,7 @@ static utf8str StringFromLazyPathBuffer(LazyPathBuffer* buff)
 {
     if (buff->buffer.data == nil)
     {
-        return PNSLR_CloneString(buff->originalString, buff->allocator);
+        return PNSLR_CloneString((utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength + buff->writeIdx}, buff->allocator);
     }
 
     utf8str x = (utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength};
@@ -216,6 +216,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
             }
         }
 
+        LazyPathBuffer outputBuffer = (LazyPathBuffer) {0};
         utf8str resultPath = (utf8str) {0};
 
         // clean the path
@@ -242,7 +243,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
             b8 isRooted = IS_SEPARATOR(path.data[0]);
             n = (i32) path.count;
-            LazyPathBuffer outputBuffer =
+            outputBuffer = (LazyPathBuffer)
             {
                 .originalString = path,
                 .volAndPath     = originalPath,
@@ -255,10 +256,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
             i32 r = 0, dotDot = 0;
             if (isRooted)
             {
-                if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
-                {
-                    goto exitFunction; // allocation failed
-                }
+                if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                 r = 1;
                 dotDot = 1;
             }
@@ -269,7 +267,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
                 {
                     r += 1; // skip the separator
                 }
-                else if (path.data[r] == '.' && (((r + 1) == n) || IS_SEPARATOR(path.data[r + 2])))
+                else if (path.data[r] == '.' && (((r + 1) == n) || IS_SEPARATOR(path.data[r + 1])))
                 {
                     r += 1;
                 }
@@ -289,16 +287,10 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
                     {
                         if (outputBuffer.writeIdx > 0)
                         {
-                            if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
-                            {
-                                goto exitFunction; // allocation failed
-                            }
+                            if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                         }
 
-                        if (!AppendToLazyPathBuffer(&outputBuffer, '.') || !AppendToLazyPathBuffer(&outputBuffer, '.'))
-                        {
-                            goto exitFunction; // allocation failed
-                        }
+                        if (!AppendToLazyPathBuffer(&outputBuffer, '.') || !AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
 
                         dotDot = outputBuffer.writeIdx; // remember the position of the ".."
                     }
@@ -307,33 +299,31 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
                 {
                     if (isRooted && outputBuffer.writeIdx != 1 || !isRooted && outputBuffer.writeIdx != 0)
                     {
-                        if (!AppendToLazyPathBuffer(&outputBuffer, '/'))
-                        {
-                            goto exitFunction; // allocation failed
-                        }
+                        if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                     }
 
                     for (; r < n && !IS_SEPARATOR(path.data[r]); ++r)
                     {
-                        if (!AppendToLazyPathBuffer(&outputBuffer, path.data[r]))
-                        {
-                            goto exitFunction; // allocation failed
-                        }
+                        if (!AppendToLazyPathBuffer(&outputBuffer, path.data[r])) { goto exitFunction; }
                     }
                 }
             }
 
             if (outputBuffer.writeIdx == 0)
             {
-                if (!AppendToLazyPathBuffer(&outputBuffer, '.'))
+                if (!AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
+            }
+
+            if (type == PNSLR_PathNormalisationType_Directory)
+            {
+                u8 lastChar = outputBuffer.writeIdx > 0 ? GetIndexFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx - 1) : 0;
+                if (!IS_SEPARATOR(lastChar))
                 {
-                    goto exitFunction; // allocation failed
+                    if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                 }
             }
 
             utf8str tempResultPath = StringFromLazyPathBuffer(&outputBuffer);
-            DisposeLazyPathBuffer(&outputBuffer);
-
             for (i32 i = 0; i < tempResultPath.count; ++i)
             {
                 if (tempResultPath.data[i] == '\\') { tempResultPath.data[i] = '/'; } // normalize path separators
@@ -345,6 +335,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
         exitFunction:
         ;
+        DisposeLazyPathBuffer(&outputBuffer);
         PNSLR_FreeString(tempFullPath, internalAllocator, nil);
 
         PNSLR_FreeSlice(buf, internalAllocator, nil);
