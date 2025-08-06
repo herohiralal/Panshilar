@@ -1,8 +1,4 @@
-#include "Dependencies/PNSLR_Intrinsics/Compiler.h"
-PRAGMA_SUPPRESS_WARNINGS
-#include <stdio.h>
-PRAGMA_REENABLE_WARNINGS
-#include "Panshilar.h"
+#include "zzzz_TestRunner.h"
 
 b8 DirectoryStuffLister(void* payload, utf8str path, b8 directory)
 {

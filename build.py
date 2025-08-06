@@ -113,7 +113,7 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
         ]
 
 def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getTestRunnerSourcePath() + 'TestRunner.c'
+    inputFile  = getTestRunnerSourcePath() + 'zzzz_TestRunner.c'
     outputFile = getTestRunnerExecutablePath(tgt, arch)
 
     if tgt == 'windows':
@@ -320,6 +320,14 @@ def main():
     else:
         print2(f'Unsupported platform: {sys.platform}')
         exit(1)
+
+    # endregion
+
+    # region Setup Tests ======================================================================================================
+
+    # if CMD_ARG_RUN_TESTS:
+    #     sourcePath = getTestRunnerSourcePath()
+    #     tests = [os.path.join(sourcePath, f) for f in os.listdir(sourcePath) if f.endswith('.c') and not f.startswith('zzzz_')]
 
     # endregion
 
