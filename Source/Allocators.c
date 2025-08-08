@@ -199,12 +199,95 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
     }
 }
 
+static PNSLR_ArenaAllocatorBlock* NewArenaAllocatorBlock(PNSLR_Allocator backingAllocator, u32 capacity, u32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    u32 baseOffset = (alignment > sizeof(PNSLR_ArenaAllocatorBlock) ? alignment : sizeof(PNSLR_ArenaAllocatorBlock));
+    u32 totalSize  = capacity + baseOffset;
+
+    i32 minAlignment = (alignof(PNSLR_ArenaAllocatorBlock) > alignment ? alignof(PNSLR_ArenaAllocatorBlock) : alignment);
+    minAlignment     = (16 > minAlignment ? 16 : minAlignment);
+
+    rawptr output = PNSLR_Allocate(backingAllocator, true, totalSize, minAlignment, location, error);
+    if (output == nil) { return nil; }
+
+    PNSLR_ArenaAllocatorBlock* block    = (PNSLR_ArenaAllocatorBlock*) output;
+    u64                        end      = (u64) block + totalSize;
+    rawptr                     memory   = (rawptr)((u8*) block + baseOffset);
+    u32                        capacity = end - (u64) memory;
+
+    *block = (PNSLR_ArenaAllocatorBlock)
+    {
+        .allocator = backingAllocator,
+        .memory    = memory,
+        .capacity  = capacity,
+        .used      = 0,
+        .previous  = nil
+    };
+
+    return block;
+}
+
+static void DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_SourceCodeLocation location)
+{
+    if (block)
+    {
+        PNSLR_Free(block->allocator, block, location, nil);
+    }
+}
+
 PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    PNSLR_ArenaAllocatorPayload* payload = PNSLR_Allocate(
+        backingAllocator,
+        true,
+        sizeof(PNSLR_ArenaAllocatorPayload),
+        alignof(PNSLR_ArenaAllocatorPayload),
+        location,
+        error
+    );
+
+    if (!payload) { return PNSLR_NIL_ALLOCATOR; }
+
+    PNSLR_ArenaAllocatorBlock* block = NewArenaAllocatorBlock(backingAllocator, pageSize, 0, location, error);
+    if (!block) { return PNSLR_NIL_ALLOCATOR; }
+
+    *payload = (PNSLR_ArenaAllocatorPayload)
+    {
+        .backingAllocator = backingAllocator,
+        .currentBlock     = block,
+        .totalUsed        = 0,
+        .totalCapacity    = 0,
+        .minimumBlockSize = pageSize,
+        .numSnapshots     = 0,
+    };
+
+    payload->totalCapacity += block->capacity;
+    return (PNSLR_Allocator) {
+        .procedure = PNSLR_AllocatorFn_Arena,
+        .data = payload
+    };
 }
 
 void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    if (!allocator.procedure || !allocator.data) { return; }
+    if (error) { *error = PNSLR_AllocatorError_None; } // No error by default
+
+    PNSLR_ArenaAllocatorPayload* payload = (PNSLR_ArenaAllocatorPayload*) allocator.data;
+
+    while (payload->currentBlock)
+    {
+        PNSLR_ArenaAllocatorBlock* freeBlock = payload->currentBlock;
+        payload->currentBlock = freeBlock->previous;
+
+        payload->totalCapacity -= freeBlock->capacity;
+        DestroyArenaAllocatorBlock(freeBlock, location);
+    }
+
+    payload->totalUsed = 0;
+    payload->totalCapacity = 0;
+
+    PNSLR_Free(payload->backingAllocator, payload, location, error);
 }
 
 rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
