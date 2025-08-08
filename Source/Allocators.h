@@ -168,6 +168,59 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
     PNSLR_AllocatorError*    error
 );
 
+// Arena Alloator ==================================================================
+
+/**
+ * A block of memory used by the arena allocator.
+ */
+typedef struct PNSLR_ArenaAllocatorBlock {
+    struct PNSLR_ArenaAllocatorBlock* previous;
+    PNSLR_Allocator                   allocator;
+    rawptr                            memory;
+    u32                               capacity;
+    u32                               used;
+} PNSLR_ArenaAllocatorBlock;
+
+/**
+ * The payload used by the arena allocator.
+ */
+typedef struct PNSLR_ArenaAllocatorPayload {
+    PNSLR_Allocator            backingAllocator;
+    PNSLR_ArenaAllocatorBlock* currentBlock;
+    u32                        totalUsed;
+    u32                        totalCapacity;
+    u32                        minimumBlockSize;
+    u32                        numSnapshots;
+} PNSLR_ArenaAllocatorPayload;
+
+/**
+ * Create a new arena allocator with the specified backing allocator.
+ * The arena allocator will use the backing allocator to allocate its blocks.
+ * The arena allocator will not free the backing allocator, so it is the caller's responsibility to
+ * free the backing allocator when it is no longer needed.
+ */
+PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Destroy an arena allocator and free all its resources.
+ * This does not free the backing allocator, only the arena allocator's own resources.
+ */
+void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Main allocator function for the arena allocator.
+ */
+rawptr PNSLR_AllocatorFn_Arena(
+    rawptr allocatorData,
+    u8     mode,
+    i32    size,
+    i32    alignment,
+    rawptr oldMemory,
+    i32    oldSize,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError*    error
+);
+
 // Stack Allocator =================================================================
 
 /**

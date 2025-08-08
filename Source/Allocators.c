@@ -199,6 +199,18 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i3
     }
 }
 
+PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+}
+
+void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+}
+
+rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+}
+
 PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     PNSLR_StackAllocatorPayload* payload = PNSLR_Allocate(
