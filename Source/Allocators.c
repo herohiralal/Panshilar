@@ -537,11 +537,13 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
     PNSLR_StackAllocatorPayload* payload = (PNSLR_StackAllocatorPayload*) allocator.data;
 
     // Free all pages in the stack allocator
-    for (PNSLR_StackAllocatorPage* page = payload->currentPage; page; page = page->previousPage)
+    for (PNSLR_StackAllocatorPage* page = payload->currentPage; page;)
     {
         // Free the current page
+        PNSLR_StackAllocatorPage* nextPageToFree = page->previousPage;
         PNSLR_Free(payload->backingAllocator, page, location, error);
         if (error && *error != PNSLR_AllocatorError_None) { return; } // Stop on error
+        page = nextPageToFree;
     }
 
     // Free the payload itself
