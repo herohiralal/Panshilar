@@ -80,7 +80,7 @@ void PNSLR_Free(PNSLR_Allocator allocator, rawptr memory, PNSLR_SourceCodeLocati
         allocator.data,
         PNSLR_AllocatorMode_Free,
         0,
-        0,
+        1,
         memory,
         0,
         location,
@@ -100,7 +100,7 @@ void PNSLR_FreeAll(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location,
         allocator.data,
         PNSLR_AllocatorMode_FreeAll,
         0,
-        0,
+        1,
         nil,
         0,
         location,
@@ -120,7 +120,7 @@ u64 PNSLR_QueryAllocatorCapabilities(PNSLR_Allocator allocator, PNSLR_SourceCode
         allocator.data,
         PNSLR_AllocatorMode_QueryCapabilities,
         0,
-        0,
+        1,
         nil,
         0,
         location,
@@ -138,6 +138,9 @@ PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void)
 
 rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    // clear error by default
+    if (error) { *error = PNSLR_AllocatorError_None; }
+
     if (size < 0 )
     {
         if (error) { *error = PNSLR_AllocatorError_InvalidSize; }
@@ -402,6 +405,9 @@ void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
 
 rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    // clear error by default
+    if (error) { *error = PNSLR_AllocatorError_None; }
+
     if (size < 0 )
     {
         if (error) { *error = PNSLR_AllocatorError_InvalidSize; }
@@ -545,6 +551,9 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
 
 rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    // clear error by default
+    if (error) { *error = PNSLR_AllocatorError_None; }
+
     if (size < 0 )
     {
         if (error) { *error = PNSLR_AllocatorError_InvalidSize; }

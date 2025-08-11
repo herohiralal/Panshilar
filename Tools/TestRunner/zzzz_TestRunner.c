@@ -35,7 +35,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     data.paths = PNSLR_MakeSlice(utf8str, 2048, false, PNSLR_DEFAULT_HEAP_ALLOCATOR, nil);
     PNSLR_IterateDirectory(PNSLR_STRING_LITERAL("D:/Projects/Panshilar/Source"), true, &data, DirectoryStuffLister);
 
-    for (i32 i = 0; i < (i32) data.pathsCount; ++i)
+    for (i32 i = (i32) data.pathsCount - 1; i >= 0; --i)
     {
         utf8str path = data.paths.data[i];
         printf("Collected path %d (len: %d): %.*s\n", i, (i32) path.count, (i32) path.count, path.data);

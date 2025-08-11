@@ -46,7 +46,7 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
         case PNSLR_PathsInternalAllocatorState_Uninitialised:
             ; // fall through to initialisation
-            PNSLR_AllocatorError err;
+            PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
             G_PathsInternalAllocator   = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &err);
             if (err != PNSLR_AllocatorError_None)
             {
