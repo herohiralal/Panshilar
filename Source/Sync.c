@@ -331,7 +331,7 @@ void PNSLR_WaitConditionVariable(PNSLR_ConditionVariable* condVar, PNSLR_Mutex* 
     #endif
 }
 
-b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable *condvar, PNSLR_Mutex *mutex, i32 timeoutNs)
+b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable* condvar, PNSLR_Mutex* mutex, i32 timeoutNs)
 {
     #if PNSLR_WINDOWS
         DWORD result = SleepConditionVariableCS((CONDITION_VARIABLE*) condvar, (CRITICAL_SECTION*) mutex, timeoutNs / 1000000);
@@ -361,7 +361,7 @@ b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable *condvar, PNSLR_Mu
     #endif
 }
 
-void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable *condVar)
+void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condVar)
 {
     #if PNSLR_WINDOWS
         WakeConditionVariable((CONDITION_VARIABLE*) condVar);

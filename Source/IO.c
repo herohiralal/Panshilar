@@ -407,10 +407,10 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
 
     #elif PNSLR_UNIX
 
-        DIR *dir = opendir(tempBuffer2.data);
+        DIR* dir = opendir(tempBuffer2.data);
         if (dir != NULL)
         {
-            struct dirent *entry;
+            struct dirent* entry;
             while ((entry = readdir(dir)) != NULL)
             {
                 char* nextFileName = entry->d_name;
