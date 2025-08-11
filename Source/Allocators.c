@@ -1,5 +1,17 @@
 #include "Allocators.h"
 
+static inline u64 AlignU64Forward(u64 value, u64 alignment)
+{
+    u64 modulo = value & (alignment - 1);
+    if (modulo != 0) { value += (alignment - modulo); }
+    return value;
+}
+
+static inline rawptr AlignRawptrForward(rawptr ptr, u64 alignment)
+{
+    return (rawptr) AlignU64Forward((u64) ptr, alignment);
+}
+
 rawptr PNSLR_Allocate(PNSLR_Allocator allocator, b8 zeroed, i32 size, i32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     if (!allocator.procedure)
@@ -124,7 +136,7 @@ PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void)
     return (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_DefaultHeap, .data = nil};
 }
 
-rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     if (size < 0 )
     {
@@ -235,6 +247,104 @@ static void DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_S
     }
 }
 
+static ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, u32 minSize, u32 alignment, PNSLR_AllocatorError* error)
+{
+    if (!block)
+    {
+        if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
+        return (ArraySlice(u8)) {0};
+    }
+
+    u64 alignmentOffset = 0;
+    {
+        u64 ptr = (((u64) block->memory) + block->used);
+        u64 mask = (u64)(alignment - 1);
+        u64 ptrAndMask = (u64) (ptr & mask);
+        if (ptrAndMask != 0) { alignmentOffset = ((u64) alignment) - ptrAndMask; }
+    }
+
+    u64 size = minSize + alignmentOffset;
+    if (size < minSize || size < alignmentOffset)
+    {
+        if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
+        return (ArraySlice(u8)) {0};
+    }
+
+    u64 toBeUsed = block->used + size;
+    if (toBeUsed > block->capacity || toBeUsed < block->used || toBeUsed < size)
+    {
+        if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
+        return (ArraySlice(u8)) {0};
+    }
+
+    ArraySlice(u8) output = (ArraySlice(u8)) { .data = ((u8*) block->memory) + block->used + alignmentOffset, .count = (i64) minSize };
+    block->used += size;
+    return output;
+}
+
+static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, u32 size, u32 alignment, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* error)
+{
+    u64 needed = AlignU64Forward((u64) size, (u64) alignment);
+    b8 createNewBlock = false;
+    if (!data->currentBlock)
+    {
+        createNewBlock = true;
+    }
+    else
+    {
+        u64 maxNeeded = data->currentBlock->used + needed;
+        maxNeeded = ((maxNeeded < data->currentBlock->used) || maxNeeded < needed) ? 0 : maxNeeded;
+        if (maxNeeded > data->currentBlock->capacity)
+        {
+            createNewBlock = true;
+        }
+    }
+
+    if (createNewBlock)
+    {
+        if (data->minimumBlockSize == 0) { data->minimumBlockSize = 8 * 1024 * 1024; } // 8 MiB
+        u32 blockSize = (data->minimumBlockSize < needed) ? needed : data->minimumBlockSize; // pick larger
+        if (!data->backingAllocator.procedure) { data->backingAllocator = PNSLR_DEFAULT_HEAP_ALLOCATOR; } // fallback allocator
+
+        PNSLR_AllocatorError err2 = PNSLR_AllocatorError_None;
+        PNSLR_ArenaAllocatorBlock* newBlock = NewArenaAllocatorBlock(data->backingAllocator, blockSize, alignment, loc, &err2);
+        if (err2 != PNSLR_AllocatorError_None)
+        {
+            if (error) { *error = err2; }
+            return (ArraySlice(u8)) {0};
+        }
+
+        newBlock->previous = data->currentBlock;
+        data->currentBlock = newBlock;
+        data->totalCapacity += newBlock->capacity;
+    }
+
+    u32 previousUsed = data->currentBlock->used;
+    ArraySlice(u8) output = AllocateFromArenaAllocatorBlock(data->currentBlock, (u32) size, (u32) alignment, error);
+    data->totalUsed += data->currentBlock->used - previousUsed;
+    return output;
+}
+
+static ArraySlice(u8) FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_SourceCodeLocation loc)
+{
+    while (data->currentBlock && data->currentBlock->previous)
+    {
+        PNSLR_ArenaAllocatorBlock* freeBlock = data->currentBlock;
+        data->currentBlock = freeBlock->previous;
+
+        data->totalCapacity -= freeBlock->capacity;
+        DestroyArenaAllocatorBlock(freeBlock, loc);
+    }
+
+    if (data->currentBlock != nil)
+    {
+        PNSLR_Intrinsic_MemSet(data->currentBlock->memory, 0, (i32) data->currentBlock->used);
+        data->currentBlock->used = 0;
+    }
+
+    data->totalUsed = 0;
+}
+
 PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     PNSLR_ArenaAllocatorPayload* payload = PNSLR_Allocate(
@@ -290,8 +400,93 @@ void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
     PNSLR_Free(payload->backingAllocator, payload, location, error);
 }
 
-rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
+    if (size < 0 )
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidSize; }
+        return nil; // Invalid size or alignment
+    }
+
+    // check alignment
+    if ((alignment < 1) || (alignment & (alignment - 1))) // if alignment is not a power of two
+    {
+        if (error) { *error = PNSLR_AllocatorError_InvalidAlignment; }
+        return nil;
+    }
+
+    PNSLR_ArenaAllocatorPayload* payload = (PNSLR_ArenaAllocatorPayload*) allocatorData;
+
+    switch (mode)
+    {
+        case PNSLR_AllocatorMode_Allocate:
+        case PNSLR_AllocatorMode_AllocateNoZero:
+        {
+            return AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+        }
+        case PNSLR_AllocatorMode_Free:
+        {
+            if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
+            return nil;
+        }
+        case PNSLR_AllocatorMode_FreeAll:
+        {
+            FreeAllFromArenaAllocator(payload, location);
+            return nil;
+        }
+        case PNSLR_AllocatorMode_Resize:
+        case PNSLR_AllocatorMode_ResizeNoZero:
+        {
+            u8* oldData = (u8*) oldMemory;
+
+            if (!oldData)
+            {
+                return AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+            }
+            else if (size == oldSize)
+            {
+                // return old memory
+                if (oldMemory && mode == PNSLR_AllocatorMode_Resize) { PNSLR_Intrinsic_MemSet(oldMemory, 0, oldSize); }
+                return oldMemory;
+            }
+            else if ((((u64) oldData) & ((u64) (alignment - 1))) == 0)
+            {
+                // shrink in place
+                if (size < oldSize) { return oldMemory; }
+
+                PNSLR_ArenaAllocatorBlock* block = payload->currentBlock;
+                if (block)
+                {
+                    u64 start = (u64) oldData - (u64) block->memory;
+                    u64 oldEnd = start + oldSize;
+                    u64 newEnd = start + size;
+                    if (start < oldEnd && oldEnd == block->used && newEnd <= block->capacity)
+                    {
+                        // grow output in-place, adjust for next allocation
+                        block->used = newEnd;
+                        return (rawptr) (((u8*) block->memory) + start);
+                    }
+                }
+            }
+
+            rawptr newMemory = AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+            if (!newMemory) { return nil; }
+            PNSLR_Intrinsic_MemCopy(newMemory, oldMemory, oldSize < size ? oldSize : size);
+            return newMemory;
+        }
+        case PNSLR_AllocatorMode_QueryCapabilities:
+        {
+            return (rawptr)(
+                PNSLR_AllocatorCapability_Resize |
+                PNSLR_AllocatorCapability_FreeAll |
+                PNSLR_AllocatorCapability_HintBump |
+                PNSLR_AllocatorCapability_HintTemp
+            );
+        }
+        default:
+            if (error) { *error = PNSLR_AllocatorError_InvalidMode; }
+            return nil; // Unsupported mode.
+    }
 }
 
 PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
@@ -348,7 +543,7 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
     if (error && *error != PNSLR_AllocatorError_None) { return; } // Stop on error
 }
 
-rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, u8 mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     if (size < 0 )
     {

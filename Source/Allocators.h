@@ -57,7 +57,7 @@ ENUM_END
  */
 typedef rawptr (*PNSLR_AllocatorProcedure)(
     rawptr                   allocatorData,
-    u8                       mode,
+    PNSLR_AllocatorMode      mode,
     i32                      size,
     i32                      alignment,
     rawptr                   oldMemory,
@@ -158,12 +158,12 @@ PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void);
  * Main allocator function for the default heap allocator.
  */
 rawptr PNSLR_AllocatorFn_DefaultHeap(
-    rawptr allocatorData,
-    u8     mode,
-    i32    size,
-    i32    alignment,
-    rawptr oldMemory,
-    i32    oldSize,
+    rawptr                   allocatorData,
+    PNSLR_AllocatorMode      mode,
+    i32                      size,
+    i32                      alignment,
+    rawptr                   oldMemory,
+    i32                      oldSize,
     PNSLR_SourceCodeLocation location,
     PNSLR_AllocatorError*    error
 );
@@ -211,12 +211,12 @@ void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
  * Main allocator function for the arena allocator.
  */
 rawptr PNSLR_AllocatorFn_Arena(
-    rawptr allocatorData,
-    u8     mode,
-    i32    size,
-    i32    alignment,
-    rawptr oldMemory,
-    i32    oldSize,
+    rawptr                   allocatorData,
+    PNSLR_AllocatorMode      mode,
+    i32                      size,
+    i32                      alignment,
+    rawptr                   oldMemory,
+    i32                      oldSize,
     PNSLR_SourceCodeLocation location,
     PNSLR_AllocatorError*    error
 );
@@ -272,12 +272,12 @@ void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
  * Main allocator function for the stack allocator.
  */
 rawptr PNSLR_AllocatorFn_Stack(
-    rawptr allocatorData,
-    u8     mode,
-    i32    size,
-    i32    alignment,
-    rawptr oldMemory,
-    i32    oldSize,
+    rawptr                   allocatorData,
+    PNSLR_AllocatorMode      mode,
+    i32                      size,
+    i32                      alignment,
+    rawptr                   oldMemory,
+    i32                      oldSize,
     PNSLR_SourceCodeLocation location,
     PNSLR_AllocatorError*    error
 );
