@@ -4,9 +4,11 @@ PRAGMA_SUPPRESS_WARNINGS
 
 #if PNSLR_CLANG || PNSLR_GCC
     #include <cstdlib>
+    #define aligned_free(block)            free(block)
 #elif PNSLR_MSVC
     #include <malloc.h>
     #define aligned_alloc(alignment, size) _aligned_malloc(size, alignment)
+    #define aligned_free(block)            _aligned_free(block)
 #else
     #error "Unsupported compiler. Please define the appropriate headers for memory allocation."
 #endif
@@ -59,7 +61,7 @@ rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size)
 void PNSLR_Intrinsic_Free(rawptr memory)
 {
     if (memory == nil) { return; }
-    free(memory);
+    aligned_free(memory);
 }
 
 void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size)
