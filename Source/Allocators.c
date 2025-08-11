@@ -216,22 +216,22 @@ static PNSLR_ArenaAllocatorBlock* NewArenaAllocatorBlock(PNSLR_Allocator backing
     u32 baseOffset = (alignment > sizeof(PNSLR_ArenaAllocatorBlock) ? alignment : sizeof(PNSLR_ArenaAllocatorBlock));
     u32 totalSize  = capacity + baseOffset;
 
-    i32 minAlignment = (alignof(PNSLR_ArenaAllocatorBlock) > alignment ? alignof(PNSLR_ArenaAllocatorBlock) : alignment);
+    i32 minAlignment = (alignof(PNSLR_ArenaAllocatorBlock) > alignment ? alignof(PNSLR_ArenaAllocatorBlock) : (i32) alignment);
     minAlignment     = (16 > minAlignment ? 16 : minAlignment);
 
-    rawptr output = PNSLR_Allocate(backingAllocator, true, totalSize, minAlignment, location, error);
+    rawptr output = PNSLR_Allocate(backingAllocator, true, (i32) totalSize, minAlignment, location, error);
     if (output == nil) { return nil; }
 
     PNSLR_ArenaAllocatorBlock* block    = (PNSLR_ArenaAllocatorBlock*) output;
     u64                        end      = (u64) block + totalSize;
     rawptr                     memory   = (rawptr)((u8*) block + baseOffset);
-    u32                        capacity = end - (u64) memory;
+    u32                        realCap  = (u32) (end - (u64) memory);
 
     *block = (PNSLR_ArenaAllocatorBlock)
     {
         .allocator = backingAllocator,
         .memory    = memory,
-        .capacity  = capacity,
+        .capacity  = realCap,
         .used      = 0,
         .previous  = nil
     };
@@ -278,7 +278,7 @@ static ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock*
     }
 
     ArraySlice(u8) output = (ArraySlice(u8)) { .data = ((u8*) block->memory) + block->used + alignmentOffset, .count = (i64) minSize };
-    block->used += size;
+    block->used += (u32) size;
     return output;
 }
 
@@ -303,7 +303,7 @@ static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* da
     if (createNewBlock)
     {
         if (data->minimumBlockSize == 0) { data->minimumBlockSize = 8 * 1024 * 1024; } // 8 MiB
-        u32 blockSize = (data->minimumBlockSize < needed) ? needed : data->minimumBlockSize; // pick larger
+        u32 blockSize = (data->minimumBlockSize < (u32) needed) ? (u32) needed : data->minimumBlockSize; // pick larger
         if (!data->backingAllocator.procedure) { data->backingAllocator = PNSLR_DEFAULT_HEAP_ALLOCATOR; } // fallback allocator
 
         PNSLR_AllocatorError err2 = PNSLR_AllocatorError_None;
@@ -325,7 +325,7 @@ static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* da
     return output;
 }
 
-static ArraySlice(u8) FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_SourceCodeLocation loc)
+static void FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_SourceCodeLocation loc)
 {
     while (data->currentBlock && data->currentBlock->previous)
     {
@@ -458,12 +458,12 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
                 if (block)
                 {
                     u64 start = (u64) oldData - (u64) block->memory;
-                    u64 oldEnd = start + oldSize;
-                    u64 newEnd = start + size;
+                    u64 oldEnd = start + (u64) oldSize;
+                    u64 newEnd = start + (u64) size;
                     if (start < oldEnd && oldEnd == block->used && newEnd <= block->capacity)
                     {
                         // grow output in-place, adjust for next allocation
-                        block->used = newEnd;
+                        block->used = (u32) newEnd;
                         return (rawptr) (((u8*) block->memory) + start);
                     }
                 }
