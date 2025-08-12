@@ -7,7 +7,10 @@
 
 u64 ZZZZ_GetTestsCount(void) { return 1; }
 
-void ZZZZ_GetAllTests(ArraySlice(TestFunction) fns)
+void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)
 {
-    fns.data[0] = ZZZZ_Test_DefaultHeapTest;
+    fns.data[0].name = PNSLR_STRING_LITERAL("DefaultHeapTest");
+    fns.data[0].fn   = ZZZZ_Test_DefaultHeapTest;
+
+    // done
 }

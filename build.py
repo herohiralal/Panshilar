@@ -339,14 +339,16 @@ def main():
                 outputFile.write('#undef MAIN_TEST_FN\n\n')
 
             outputFile.write(f'u64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}; }}\n\n')
-            outputFile.write('void ZZZZ_GetAllTests(ArraySlice(TestFunction) fns)\n')
+            outputFile.write('void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)\n')
             outputFile.write('{\n')
 
             i: int = 0
             for test in tests:
-                outputFile.write(f'    fns.data[{i}] = ZZZZ_Test_{test};\n')
+                outputFile.write(f'    fns.data[{i}].name = PNSLR_STRING_LITERAL("{test}");\n')
+                outputFile.write(f'    fns.data[{i}].fn   = ZZZZ_Test_{test};\n\n')
                 i += 1
 
+            outputFile.write('    // done\n')
             outputFile.write('}\n')
 
     # endregion

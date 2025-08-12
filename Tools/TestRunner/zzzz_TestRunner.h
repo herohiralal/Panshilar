@@ -18,7 +18,12 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 
 typedef void (*TestFunction)(const TestContext* ctx);
 
-DECLARE_ARRAY_SLICE(TestFunction);
+typedef struct {
+    utf8str      name;
+    TestFunction fn;
+} TestFunctionInfo;
+
+DECLARE_ARRAY_SLICE(TestFunctionInfo);
 
 #endif // PNSLR_TEST_RUNNER_H ======================================================
 
