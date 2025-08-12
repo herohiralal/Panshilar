@@ -143,6 +143,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     }
 
     ZZZZ_GetAllTests(tests);
+    b8 success = true;
 
     G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
 
@@ -175,6 +176,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
                     passCount++;
                     break;
                 case BufferedMessageType_AssertFail:
+                    success = false;
                     checkCount++;
                     printf("ERROR : %.*s\n", (i32) msg->msg.count, msg->msg.data);
                     printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
@@ -195,6 +197,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     }
 
     PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, CURRENT_LOC(), nil);
+
+    if (!success) { PNSLR_ExitProcess(1); }
 }
 
 PNSLR_EXECUTABLE_ENTRY_POINT(TestRunnerMain)
