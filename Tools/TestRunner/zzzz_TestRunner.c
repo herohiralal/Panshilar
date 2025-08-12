@@ -126,6 +126,8 @@ inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation
 // TODO: make the test runner multi-threaded
 void TestRunnerMain(ArraySlice(utf8str) args)
 {
+    setvbuf(stdout, NULL, _IONBF, 0); // disable stdout buffering
+
     ArraySlice(TestFunctionInfo) tests = {0};
     {
         u64                          testsCount = ZZZZ_GetTestsCount();
