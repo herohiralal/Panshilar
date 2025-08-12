@@ -16,6 +16,10 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 #define AssertMsg(cond, msg) \
     AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
 
+typedef void (*TestFunction)(const TestContext* ctx);
+
+DECLARE_ARRAY_SLICE(TestFunction);
+
 #endif // PNSLR_TEST_RUNNER_H ======================================================
 
 /**

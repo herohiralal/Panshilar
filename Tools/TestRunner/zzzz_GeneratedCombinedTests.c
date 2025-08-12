@@ -4,3 +4,10 @@
 #define MAIN_TEST_FN(ctxArgName) void ZZZZ_Test_DefaultHeapTest(const TestContext* ctxArgName)
 #include "DefaultHeapTest.c"
 #undef MAIN_TEST_FN
+
+u64 ZZZZ_GetTestsCount(void) { return 1; }
+
+void ZZZZ_GetAllTests(ArraySlice(TestFunction) fns)
+{
+    fns.data[0] = ZZZZ_Test_DefaultHeapTest;
+}
