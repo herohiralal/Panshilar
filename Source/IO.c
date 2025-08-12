@@ -4,64 +4,50 @@
 
 // internal allocator stuff ========================================================
 
-/**
- * The way all of this internal allocator stuff works is that we have some thread-local
- * variables that store some state for the allocators. Initially, it's set to uninitialised.
- * In this state, the system will attempt to create a new stack allocator using the default heap allocator.
- * Upon failure, it will mark itself as cleared, and fall back to the default heap allocator.
- * Any subsequent calls will return the default heap allocator.
- * If the stack allocator instead is created, it'll mark itself as ready and return the stack allocator.
- * When the thread exits, the cleanup function will be called, which will destroy the stack allocator
- * and mark the state as cleared.
- */
-
-ENUM_START(PNSLR_PathsInternalAllocatorState, u8)
-    #define PNSLR_PathsInternalAllocatorState_Uninitialised ((PNSLR_PathsInternalAllocatorState) 0)
-    #define PNSLR_PathsInternalAllocatorState_Ready         ((PNSLR_PathsInternalAllocatorState) 1)
-    #define PNSLR_PathsInternalAllocatorState_Cleared       ((PNSLR_PathsInternalAllocatorState) 2)
-ENUM_END
-
-static thread_local PNSLR_PathsInternalAllocatorState G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Uninitialised;
-static thread_local PNSLR_Allocator                   G_PathsInternalAllocator      = {0};
-
-static void ReleasePathsInternalAllocator(void)
+typedef struct alignas(16) PNSLR_PathsInternalAllocatorBuffer
 {
-    if (G_PathsInternalAllocatorState == PNSLR_PathsInternalAllocatorState_Ready)
-    {
-        PNSLR_DestroyAllocator_Stack(G_PathsInternalAllocator, CURRENT_LOC(), nil);
-        G_PathsInternalAllocator = (PNSLR_Allocator) {0};
-        G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
-    }
-}
+    u8 data[512 * 1024]; // 0.5 MiB
+} PNSLR_PathsInternalAllocatorBuffer;
+
+typedef struct PNSLR_PathsInternalAllocatorInfo
+{
+    b8                                 initialised;
+    PNSLR_ArenaAllocatorPayload        arenaPayload;
+    PNSLR_ArenaAllocatorBlock          arenaBlock;
+    PNSLR_PathsInternalAllocatorBuffer buffer;
+} PNSLR_PathsInternalAllocatorInfo;
+
+static thread_local PNSLR_PathsInternalAllocatorInfo G_PathsInternalAllocatorInfo = {0};
 
 static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 {
-    switch (G_PathsInternalAllocatorState)
+    if (!G_PathsInternalAllocatorInfo.initialised)
     {
-        case PNSLR_PathsInternalAllocatorState_Cleared:
-            return PNSLR_DEFAULT_HEAP_ALLOCATOR; // if cleared, fall back to default heap allocator
+        G_PathsInternalAllocatorInfo.initialised = true;
 
-        case PNSLR_PathsInternalAllocatorState_Ready:
-            return G_PathsInternalAllocator;
+        G_PathsInternalAllocatorInfo.buffer = (PNSLR_PathsInternalAllocatorBuffer) {0};
 
-        case PNSLR_PathsInternalAllocatorState_Uninitialised:
-            ; // fall through to initialisation
-            PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-            G_PathsInternalAllocator   = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), &err);
-            if (err != PNSLR_AllocatorError_None)
-            {
-                G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Cleared;
-                return PNSLR_DEFAULT_HEAP_ALLOCATOR; // if initialisation fails, fall back to default heap allocator
-            }
+        G_PathsInternalAllocatorInfo.arenaBlock = (PNSLR_ArenaAllocatorBlock)
+        {
+            .previous  = nil,
+            .allocator = PNSLR_NIL_ALLOCATOR,
+            .memory    = (rawptr) &G_PathsInternalAllocatorInfo.buffer.data,
+            .capacity  = sizeof(G_PathsInternalAllocatorInfo.buffer.data),
+            .used      = 0,
+        };
 
-            G_PathsInternalAllocatorState = PNSLR_PathsInternalAllocatorState_Ready;
-            PNSLR_Intrinsic_RegisterThreadCleanup(ReleasePathsInternalAllocator);
-            return G_PathsInternalAllocator;
-
-        default:
-            // should never reach here, but just in case
-            return PNSLR_DEFAULT_HEAP_ALLOCATOR;
+        G_PathsInternalAllocatorInfo.arenaPayload = (PNSLR_ArenaAllocatorPayload)
+        {
+            .backingAllocator    = PNSLR_NIL_ALLOCATOR,
+            .currentBlock        = &G_PathsInternalAllocatorInfo.arenaBlock,
+            .totalUsed           = 0,
+            .totalCapacity       = sizeof(G_PathsInternalAllocatorInfo.buffer.data),
+            .minimumBlockSize    = 0,
+            .numSnapshots        = 0,
+        };
     }
+
+    return (PNSLR_Allocator) {.data = &G_PathsInternalAllocatorInfo.arenaPayload, .procedure = PNSLR_AllocatorFn_Arena};
 }
 
 // some bs internal stuff ==========================================================
@@ -336,10 +322,8 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
         exitFunction:
         ;
         DisposeLazyPathBuffer(&outputBuffer);
-        PNSLR_FreeString(tempFullPath, internalAllocator, nil);
 
-        PNSLR_FreeSlice(buf, internalAllocator, nil);
-        PNSLR_FreeSlice(p,   internalAllocator, nil);
+        PNSLR_FreeAll(internalAllocator, CURRENT_LOC(), nil);
 
         return (PNSLR_NormalisedPath) { .path = resultPath };
     }
@@ -347,7 +331,8 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
     {
         cstring relCstr = PNSLR_CStringFromString(path, internalAllocator);
         cstring pathPtr = realpath(relCstr, nil);
-        PNSLR_FreeCString(relCstr, internalAllocator, nil);
+
+        PNSLR_FreeAll(internalAllocator, CURRENT_LOC(), nil);
 
         if (pathPtr == nil)
         {
@@ -478,7 +463,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
 
     #endif
 
-    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
+    PNSLR_FreeAll(internalAllocator, CURRENT_LOC(), nil);
 }
 
 b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type)
@@ -529,7 +514,7 @@ b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type)
 
     #endif
 
-    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
+    PNSLR_FreeAll(internalAllocator, CURRENT_LOC(), nil);
     return result;
 }
 
@@ -571,6 +556,6 @@ i64 PNSLR_GetFileTimestamp(utf8str path)
 
     #endif
 
-    PNSLR_FreeSlice(tempBuffer2, internalAllocator, nil);
+    PNSLR_FreeAll(internalAllocator, CURRENT_LOC(), nil);
     return timestamp;
 }

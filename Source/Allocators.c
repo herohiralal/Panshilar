@@ -307,7 +307,6 @@ static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* da
     {
         if (data->minimumBlockSize == 0) { data->minimumBlockSize = 8 * 1024 * 1024; } // 8 MiB
         u32 blockSize = (data->minimumBlockSize < (u32) needed) ? (u32) needed : data->minimumBlockSize; // pick larger
-        if (!data->backingAllocator.procedure) { data->backingAllocator = PNSLR_DEFAULT_HEAP_ALLOCATOR; } // fallback allocator
 
         PNSLR_AllocatorError err2 = PNSLR_AllocatorError_None;
         PNSLR_ArenaAllocatorBlock* newBlock = NewArenaAllocatorBlock(data->backingAllocator, blockSize, alignment, loc, &err2);
