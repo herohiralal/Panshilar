@@ -142,6 +142,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         return;
     }
 
+    ZZZZ_GetAllTests(tests);
+
     G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
 
     for (i32 i = 0; i < (i32) tests.count; ++i)
@@ -150,7 +152,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         TestFunctionInfo info = tests.data[i];
 
         PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nil);
-        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 1024, true, G_CurrentTestRunnerAllocator, nil);
+        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, nil);
         G_NumBufferedMessages = 0;
 
         info.fn(&ctx);

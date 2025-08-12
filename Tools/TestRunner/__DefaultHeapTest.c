@@ -13,7 +13,7 @@ MAIN_TEST_FN(ctx)
 
     // ensure zeroed and set to max
     // if this code throws a null ref, then the allocator is broken
-    for (i32 i = 0; i < (i32) intsCount; ++i)
+    for (i32 i = 0; i < (i32) bytesCount; ++i)
     {
         Assert((data.data[i] == 0));
 
