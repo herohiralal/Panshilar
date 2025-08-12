@@ -81,7 +81,7 @@ static thread_local ArraySlice(BufferedMessage) G_BufferedMessages          = {0
 static thread_local u64                         G_NumBufferedMessages       = {0};
 static thread_local PNSLR_Allocator             G_BufferedMessagesAllocator = {0};
 
-void BufferMessage(const BufferedMessage* msg)
+static inline void BufferMessage(const BufferedMessage* msg)
 {
     if (G_NumBufferedMessages >= G_BufferedMessages.count)
     {
@@ -100,7 +100,7 @@ void BufferMessage(const BufferedMessage* msg)
     G_NumBufferedMessages++;
 }
 
-void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
+inline void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {
@@ -112,7 +112,7 @@ void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
     BufferMessage(&msg);
 }
 
-b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location)
+inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {
