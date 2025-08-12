@@ -28,7 +28,7 @@ MAIN_TEST_FN(ctx)
 
         #if PNSLR_WINDOWS
         {
-            executableName = PNSLR_STRING_LITERAL("Binaries/TestRunner-windows-x64.exe");
+            executableName = PNSLR_STRING_LITERAL("Binaries\\TestRunner-windows-x64.exe");
         }
         #elif PNSLR_LINUX && PNSLR_X64
         {
@@ -50,7 +50,7 @@ MAIN_TEST_FN(ctx)
 
         if (!AssertMsg(ctx->args.count, "Need at least one arg to extract location.")) { return; }
 
-        b8 firstArgIsExecutable = PNSLR_StringEndsWith(ctx->args.data[0], executableName, PNSLR_StringComparisonType_CaseSensitive);
+        b8 firstArgIsExecutable = PNSLR_StringEndsWith(ctx->args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
         if (!AssertMsg(firstArgIsExecutable, "First argument must be the executable name.")) { return; }
 
         utf8str dir = ctx->args.data[0];
@@ -68,12 +68,12 @@ MAIN_TEST_FN(ctx)
 
             if (!pnslrHeaderFound)
             {
-                pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseSensitive);
+                pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseInsensitive);
             }
 
             if (!pnslrUnityFound)
             {
-                pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseSensitive);
+                pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseInsensitive);
             }
 
             PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
