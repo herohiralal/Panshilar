@@ -61,11 +61,9 @@ PRAGMA_REENABLE_WARNINGS
 
 ENUM_START(BufferedMessageType, u8)
     #define BufferedMessageType_Invalid     ((BufferedMessageType) 0)
-    #define BufferedMessageType_TestFnStart ((BufferedMessageType) 1)
-    #define BufferedMessageType_TestFnEnd   ((BufferedMessageType) 2)
-    #define BufferedMessageType_TestFnLog   ((BufferedMessageType) 3)
-    #define BufferedMessageType_AssertPass  ((BufferedMessageType) 4)
-    #define BufferedMessageType_AssertFail  ((BufferedMessageType) 5)
+    #define BufferedMessageType_TestFnLog   ((BufferedMessageType) 1)
+    #define BufferedMessageType_AssertPass  ((BufferedMessageType) 2)
+    #define BufferedMessageType_AssertFail  ((BufferedMessageType) 3)
 ENUM_END
 
 typedef struct
@@ -77,16 +75,16 @@ typedef struct
 
 DECLARE_ARRAY_SLICE(BufferedMessage);
 
-static thread_local ArraySlice(BufferedMessage) G_BufferedMessages          = {0};
-static thread_local u64                         G_NumBufferedMessages       = {0};
-static thread_local PNSLR_Allocator             G_BufferedMessagesAllocator = {0};
+static thread_local ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
+static thread_local u64                         G_NumBufferedMessages        = {0};
+static thread_local PNSLR_Allocator             G_CurrentTestRunnerAllocator = {0};
 
 static inline void BufferMessage(const BufferedMessage* msg)
 {
     if (G_NumBufferedMessages >= G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_ResizeSlice(BufferedMessage, G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_BufferedMessagesAllocator, &err);
+        PNSLR_ResizeSlice(BufferedMessage, G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, &err);
 
         if (err != PNSLR_AllocatorError_None)
         {
@@ -105,7 +103,7 @@ inline void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
     BufferedMessage msg =
     {
         .type = BufferedMessageType_TestFnLog,
-        .msg  = PNSLR_CloneString(message, G_BufferedMessagesAllocator),
+        .msg  = message,
         .loc  = location,
     };
 
@@ -117,11 +115,9 @@ inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation
     BufferedMessage msg =
     {
         .type = condition ? BufferedMessageType_AssertPass : BufferedMessageType_AssertFail,
-        .msg = {0},
-        .loc = location,
+        .msg  = message,
+        .loc  = location,
     };
-
-    if (!condition) { msg.msg = PNSLR_CloneString(message, G_BufferedMessagesAllocator); }
 
     BufferMessage(&msg);
     return condition;
@@ -146,29 +142,56 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         return;
     }
 
-    PNSLR_Allocator testAllocator = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
-    G_BufferedMessagesAllocator   = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
-    G_BufferedMessages            = PNSLR_MakeSlice(BufferedMessage, 1024, true, G_BufferedMessagesAllocator, nil);
-    G_NumBufferedMessages         = 0;
+    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
 
     for (i32 i = 0; i < (i32) tests.count; ++i)
     {
-        TestContext      ctx  = {.testAllocator = testAllocator, .args = args};
+        TestContext      ctx  = {.testAllocator = G_CurrentTestRunnerAllocator, .args = args};
         TestFunctionInfo info = tests.data[i];
 
         PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nil);
-
-        BufferedMessage startMsg = {.loc = {0}, .type = BufferedMessageType_TestFnStart, .msg = info.name};
-        BufferMessage(&startMsg);
+        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 1024, true, G_CurrentTestRunnerAllocator, nil);
+        G_NumBufferedMessages = 0;
 
         info.fn(&ctx);
 
-        BufferedMessage endMsg = {.loc = {0}, .type = BufferedMessageType_TestFnEnd, .msg = info.name};
-        BufferMessage(&endMsg);
+        printf("==== [%.*s] ====\n", info.name.count, info.name.data);
+
+        i32 checkCount = 0, passCount = 0;
+        for (i32 j = 0; j < (i32) G_NumBufferedMessages; ++j)
+        {
+            BufferedMessage* msg = &G_BufferedMessages.data[j];
+
+            switch (msg->type)
+            {
+                case BufferedMessageType_TestFnLog:
+                    printf("INFO  : %.*s\n", msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    break;
+                case BufferedMessageType_AssertPass:
+                    checkCount++;
+                    passCount++;
+                    break;
+                case BufferedMessageType_AssertFail:
+                    checkCount++;
+                    printf("ERROR : %.*s\n", msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    break;
+                default:
+                    printf("ERROR_UNKNOWN_MESSAGE\n");
+                    break;
+            }
+        }
+
+        printf("RESULT: (%d/%d).\n", passCount, checkCount);
+        printf((checkCount - passCount) ? "One or more tests failed. (>_<)\n" : "All tests passed. (^_^)\n");
+
+        printf("======");
+        for (i32 j = 0; j < (i32) info.name.count; ++j) { printf("="); }
+        printf("======\n\n");
     }
 
-    PNSLR_DestroyAllocator_Arena(G_BufferedMessagesAllocator, CURRENT_LOC(), nil);
-    PNSLR_DestroyAllocator_Arena(testAllocator,               CURRENT_LOC(), nil);
+    PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, CURRENT_LOC(), nil);
 }
 
 PNSLR_EXECUTABLE_ENTRY_POINT(TestRunnerMain)
