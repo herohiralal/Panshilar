@@ -7,12 +7,32 @@ typedef struct
     u64                 pathsCount;
 } DirectoryStuffListerForFilePresentTestPayload;
 
-b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 directory)
+b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 directory, b8* exploreCurrentDirectory)
 {
     DirectoryStuffListerForFilePresentTestPayload* data = (DirectoryStuffListerForFilePresentTestPayload*) payload;
 
-    if (!AssertMsg(data->pathsCount > (u64) data->paths.count, "Too many paths collected, stopping iteration."))
-    { return false; }
+    if (data->pathsCount >= (u64) data->paths.count)
+    {
+        AssertMsg(false, "Too many paths found.");
+        return false;
+    }
+
+    #define SKIP_DIR(x) \
+        if (directory && PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("/" x), PNSLR_StringComparisonType_CaseInsensitive)) \
+        { \
+            *exploreCurrentDirectory = false; \
+            return true; \
+        }
+
+    SKIP_DIR(".git");
+    SKIP_DIR("Binaries");
+    SKIP_DIR("Libraries");
+    SKIP_DIR("Prebuilt");
+    SKIP_DIR("Temp");
+
+    #undef SKIP_DIR
+
+    if (directory) { return true; } // only care about files from this point on
 
     utf8str clonedStr = PNSLR_CloneString(path, data->allocator);
     data->paths.data[data->pathsCount] = clonedStr;
