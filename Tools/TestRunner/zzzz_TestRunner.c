@@ -81,7 +81,7 @@ static thread_local PNSLR_Allocator             G_CurrentTestRunnerAllocator = {
 
 static inline void BufferMessage(const BufferedMessage* msg)
 {
-    if (G_NumBufferedMessages >= G_BufferedMessages.count)
+    if (G_NumBufferedMessages >= (u64) G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
         PNSLR_ResizeSlice(BufferedMessage, G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, &err);
@@ -155,7 +155,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
 
         info.fn(&ctx);
 
-        printf("==== [%.*s] ====\n", info.name.count, info.name.data);
+        printf("==== [%.*s] ====\n", (i32) info.name.count, info.name.data);
 
         i32 checkCount = 0, passCount = 0;
         for (i32 j = 0; j < (i32) G_NumBufferedMessages; ++j)
@@ -165,8 +165,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
             switch (msg->type)
             {
                 case BufferedMessageType_TestFnLog:
-                    printf("INFO  : %.*s\n", msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    printf("INFO  : %.*s\n", (i32) msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 case BufferedMessageType_AssertPass:
                     checkCount++;
@@ -174,8 +174,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
                     break;
                 case BufferedMessageType_AssertFail:
                     checkCount++;
-                    printf("ERROR : %.*s\n", msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    printf("ERROR : %.*s\n", (i32) msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 default:
                     printf("ERROR_UNKNOWN_MESSAGE\n");
@@ -184,7 +184,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         }
 
         printf("RESULT: (%d/%d).\n", passCount, checkCount);
-        printf((checkCount - passCount) ? "One or more tests failed. (>_<)\n" : "All tests passed. (^_^)\n");
+        if (checkCount == passCount) { printf("All tests passed. (^_^)        \n"); }
+        else                         { printf("One or more tests failed. (>_<)\n"); }
 
         printf("======");
         for (i32 j = 0; j < (i32) info.name.count; ++j) { printf("="); }

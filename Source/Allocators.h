@@ -316,6 +316,7 @@ rawptr PNSLR_AllocatorFn_Stack(
 
 /**
  * Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator.
+ * Expects a reassignable variable.
  */
 #define PNSLR_FreeSlice(slice, allocator, error__) \
     do \
