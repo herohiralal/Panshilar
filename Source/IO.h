@@ -12,7 +12,8 @@ EXTERN_C_BEGIN
  * It's always an absolute path, and the path separators are always forward slashes ('/').
  * For directories, it always ends with a trailing slash.
  */
-typedef struct PNSLR_NormalisedPath {
+typedef struct PNSLR_NormalisedPath
+{
     utf8str path;
 } PNSLR_NormalisedPath;
 
@@ -62,7 +63,8 @@ i64 PNSLR_GetFileTimestamp(utf8str path);
 /**
  * Represents a file handle. Used with a size buffer to ensure cross-platform compatibility.
  */
-typedef struct alignas(8) PNSLR_FileHandle {
+typedef struct alignas(8) PNSLR_FileHandle
+{
     u8 buffer[PNSLR_PTR_SIZE];
 } PNSLR_FileHandle;
 

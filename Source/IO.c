@@ -105,7 +105,8 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
      * When appending, compares stuff to original str.
      * Creates a new buffer only if required.
      */
-    typedef struct LazyPathBuffer {
+    typedef struct LazyPathBuffer
+    {
         PNSLR_Allocator    allocator;
         utf8str            originalString;
         ArraySlice(utf8ch) buffer;

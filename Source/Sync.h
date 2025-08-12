@@ -10,7 +10,8 @@ EXTERN_C_BEGIN
 /**
  * The most basic synchronization primitive.
  */
-typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex
+{
     u8 buffer[6 * 8];
 }  PNSLR_Mutex;
 
@@ -47,7 +48,8 @@ b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
  * This is a synchronization primitive that allows multiple readers or a single writer.
  * It is useful for scenarios where reads are more frequent than writes.
  */
-typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex
+{
     u8 buffer[7 * 8];
 } PNSLR_RWMutex;
 
@@ -103,7 +105,8 @@ b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
  * A semaphore synchronization primitive.
  * It allows a certain number of threads to access a resource concurrently.
  */
-typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Semaphore {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Semaphore
+{
     u8 buffer[4 * 8];
 } PNSLR_Semaphore;
 
@@ -143,7 +146,8 @@ void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count);
  * A condition variable for signaling between threads.
  * It allows threads to wait for a condition to be signaled.
  */
-typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_ConditionVariable {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_ConditionVariable
+{
     u8 buffer[6 * 8];
 } PNSLR_ConditionVariable;
 
