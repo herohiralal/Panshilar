@@ -5,12 +5,20 @@
 #include "0010_DefaultHeapTest.c"
 #undef MAIN_TEST_FN
 
-u64 ZZZZ_GetTestsCount(void) { return 1; }
+#undef MAIN_TEST_FN
+#define MAIN_TEST_FN(ctxArgName) void ZZZZ_Test_0020_FilePresentTest(const TestContext* ctxArgName)
+#include "0020_FilePresentTest.c"
+#undef MAIN_TEST_FN
+
+u64 ZZZZ_GetTestsCount(void) { return 2; }
 
 void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)
 {
     fns.data[0].name = PNSLR_STRING_LITERAL("0010_DefaultHeapTest");
     fns.data[0].fn   = ZZZZ_Test_0010_DefaultHeapTest;
+
+    fns.data[1].name = PNSLR_STRING_LITERAL("0020_FilePresentTest");
+    fns.data[1].fn   = ZZZZ_Test_0020_FilePresentTest;
 
     // done
 }
