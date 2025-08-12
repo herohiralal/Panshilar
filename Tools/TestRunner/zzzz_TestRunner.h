@@ -3,7 +3,8 @@
 
 #include "Panshilar.h"
 
-typedef struct {
+typedef struct
+{
     PNSLR_Allocator     testAllocator;
     ArraySlice(utf8str) args;
 } TestContext;
@@ -16,9 +17,15 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 #define AssertMsg(cond, msg) \
     AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
 
+void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
+
+#define Log(msg) \
+    LogInternal(PNSLR_STRING_LITERAL(msg), CURRENT_LOC())
+
 typedef void (*TestFunction)(const TestContext* ctx);
 
-typedef struct {
+typedef struct
+{
     utf8str      name;
     TestFunction fn;
 } TestFunctionInfo;
