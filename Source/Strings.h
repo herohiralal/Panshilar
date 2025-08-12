@@ -30,6 +30,14 @@ cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator);
  */
 utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator);
 
+// Basic/Manipulation ==============================================================
+
+/**
+ * Concatenates two UTF-8 strings into a new allocated string.
+ * The returned string is allocated using the specified allocator.
+ */
+utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator allocator);
+
 // Casing ==========================================================================
 
 /**

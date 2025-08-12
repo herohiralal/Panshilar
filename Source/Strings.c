@@ -41,6 +41,16 @@ utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
     return result;
 }
 
+utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator allocator)
+{
+    utf8str result = PNSLR_MakeString(str1.count + str2.count, false, allocator, nil);
+    if (result.data == nil) { return (utf8str) {0}; } // allocation failed
+
+    PNSLR_Intrinsic_MemCopy(result.data,              str1.data, (i32) str1.count);
+    PNSLR_Intrinsic_MemCopy(result.data + str1.count, str2.data, (i32) str2.count);
+    return result;
+}
+
 utf8str PNSLR_UpperString(utf8str str, PNSLR_Allocator allocator)
 {
     utf8str copy = PNSLR_CloneString(str, allocator);
