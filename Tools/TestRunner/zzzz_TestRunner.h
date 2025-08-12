@@ -9,7 +9,7 @@ typedef struct
     ArraySlice(utf8str) args;
 } TestContext;
 
-inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
+b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Assert(cond) \
     AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " #cond), CURRENT_LOC())
@@ -17,7 +17,7 @@ inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation
 #define AssertMsg(cond, msg) \
     AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
 
-inline void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
+void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Log(msg) \
     LogInternal(PNSLR_STRING_LITERAL(msg), CURRENT_LOC())

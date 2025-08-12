@@ -98,7 +98,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
     G_NumBufferedMessages++;
 }
 
-inline void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
+void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {
@@ -110,7 +110,7 @@ inline void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
     BufferMessage(&msg);
 }
 
-inline b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location)
+b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {

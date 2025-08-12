@@ -129,6 +129,9 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
         return [
             inputFile,
             getLibraryPath(tgt, arch),
+            '-lstdc++',
+            '-lpthread',
+            '-lrt',
             '-o',
             outputFile,
             f'-ISource/',
