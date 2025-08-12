@@ -190,19 +190,6 @@ DECLARE_ARRAY_SLICE(utf8str);
 EXTERN_C_BEGIN
 
 /**
- * Delegate type for thread cleanup functions.
- * This is used to register cleanup functions that will be called when the thread exits.
- */
-typedef void (*PNSLR_Intrinsic_ThreadCleanupDelegate)(void);
-
-/**
- * Register a thread cleanup function.
- * This function will be called when the thread exits.
- * There's a hard-limit of 8 thread cleanup functions that can be registered.
- */
-void PNSLR_Intrinsic_RegisterThreadCleanup(PNSLR_Intrinsic_ThreadCleanupDelegate delegate);
-
-/**
  * Allocate memory with the specified alignment and size.
  */
 rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);

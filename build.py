@@ -58,7 +58,7 @@ def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
     return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
 
 def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.cpp'
+    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.c'
     outputFile = getIntrinsicsObjectPath(tgt, arch)
 
     if tgt == 'windows':
@@ -129,9 +129,7 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
         return [
             inputFile,
             getLibraryPath(tgt, arch),
-            '-lstdc++',
             '-lpthread',
-            '-lrt',
             '-o',
             outputFile,
             f'-ISource/',
@@ -265,7 +263,7 @@ def buildPlatform(
     intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
         intrinsicsCompiled = (not actuallyBuild2) or \
-                             (True and runCommand([cxxCompiler] + intrinsicsCompileArgs + cxxStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
+                             (True and runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
 
     libraryCompiled    = True
     libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs

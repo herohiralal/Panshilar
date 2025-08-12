@@ -562,7 +562,7 @@ PNSLR_ArenaSnapshotError PNSLR_RestoreArenaAllocatorSnapshot(PNSLR_ArenaAllocato
             }
 
             u32 amountToZero = block->used - snapshot->used;
-            PNSLR_Intrinsic_MemSet(((u8*) block->memory) + snapshot->used, 0, amountToZero);
+            PNSLR_Intrinsic_MemSet(((u8*) block->memory) + snapshot->used, 0, (i32) amountToZero);
             block->used = snapshot->used;
             snapshot->payload->totalUsed -= amountToZero;
         }
