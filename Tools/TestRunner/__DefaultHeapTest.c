@@ -29,6 +29,18 @@ MAIN_TEST_FN(ctx)
     }
 
     err = PNSLR_AllocatorError_None;
+    PNSLR_ResizeSlice(u8, data, bytesCount * 2, true, PNSLR_DEFAULT_HEAP_ALLOCATOR, &err);
+    if (!Assert(err == PNSLR_AllocatorError_None)) return;
+
+    // ensure allocated memory is read-write accessible
+    for (i32 i = (i32) bytesCount; i < (i32) (bytesCount * 2); ++i)
+    {
+        Assert((data.data[i] == 0));
+
+        data.data[i] = 170; // 0b10101010
+    }
+
+    err = PNSLR_AllocatorError_None;
     PNSLR_FreeSlice(data, PNSLR_DEFAULT_HEAP_ALLOCATOR, &err);
     Assert(err == PNSLR_AllocatorError_None);
 }
