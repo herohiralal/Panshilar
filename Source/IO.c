@@ -374,10 +374,20 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
     #if PNSLR_WINDOWS
     {
-        tempBuffer2.data[path.count] = '/'; // use backslash for Windows paths
-        tempBuffer2.data[path.count + 1] = '*'; // add wildcard for file matching
-        tempBuffer2.data[path.count + 2] = '\0'; // null-terminate
-        tempBuffer2.count = path.count + 2;
+        u32 iterator = path.count - 1;
+        if (tempBuffer2.data[iterator] == '/' || tempBuffer2.data[iterator] == '\\') // has trailing slash
+        {
+            iterator = path.count;
+        }
+        else
+        {
+            tempBuffer2.data[path.count] = '/'; // add slash at the end
+            iterator = path.count + 1;
+        }
+
+        tempBuffer2.data[iterator    ] = '*';  // add wildcard for file matching
+        tempBuffer2.data[iterator + 1] = '\0'; // null-terminate
+        tempBuffer2.count = iterator + 1;
     }
     #elif PNSLR_UNIX
     {
@@ -395,7 +405,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
         {
             do
             {
-                char* nextFileName = findData.cFileName;
+                cstring nextFileName = findData.cFileName;
 
     #elif PNSLR_UNIX
 
@@ -405,7 +415,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
             struct dirent* entry;
             while ((entry = readdir(dir)) != NULL)
             {
-                char* nextFileName = entry->d_name;
+                cstring nextFileName = entry->d_name;
 
     #endif
                 i32 fileNameLen = PNSLR_GetCStringLength(nextFileName);
@@ -414,12 +424,16 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 if (fileNameLen == 2 && nextFileName[0] == '.' && nextFileName[1] == '.') { continue; } // skip parent directory
 
                 PNSLR_ArenaAllocatorSnapshot currentIterSnapshot = PNSLR_CaptureArenaAllocatorSnapshot(internalAllocator);
-                utf8str foundPath = PNSLR_MakeString((path.count + fileNameLen + 1 + 1), false, internalAllocator, nil);
-                PNSLR_Intrinsic_MemCopy(foundPath.data, path.data, (i32) path.count);
-                foundPath.data[path.count] = '/'; // add path separator
+
+                utf8str foundPath = PNSLR_MakeString((path.count + fileNameLen + 3), false, internalAllocator, nil);
+
+                PNSLR_Intrinsic_MemCopy(foundPath.data,                  path.data,    (i32) path.count);
                 PNSLR_Intrinsic_MemCopy(foundPath.data + path.count + 1, nextFileName, fileNameLen);
+
+                foundPath.data[path.count                  ] = '/';  // add path separator
                 foundPath.data[path.count + 1 + fileNameLen] = '\0'; // null-terminate the string, just in case
-                foundPath.count = path.count + fileNameLen + 1; // update count
+
+                foundPath.count = path.count + 1 + fileNameLen; // update count
 
                 #if PNSLR_WINDOWS
                 {
@@ -439,12 +453,20 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 #elif PNSLR_UNIX
                 {
                     struct stat statBuf;
-                    if (stat((char*) foundPath.data, &statBuf) == 0)
+                    if (stat((cstring) foundPath.data, &statBuf) == 0)
                     {
                         isDirectory = S_ISDIR(statBuf.st_mode);
                     }
                 }
                 #endif
+
+                if (isDirectory)
+                {
+                    foundPath.data[path.count + 1 + fileNameLen    ] = '/';  // ensure directory paths end with a slash
+                    foundPath.data[path.count + 1 + fileNameLen + 1] = '\0'; // null-terminate the string, just in case
+
+                    foundPath.count = path.count + 1 + fileNameLen + 1; // update count
+                }
 
                 b8 exploreCurrentDirectory = recursive;
                 b8 iterateFurther = visitorFunc(visitorPayload, foundPath, isDirectory, &exploreCurrentDirectory);

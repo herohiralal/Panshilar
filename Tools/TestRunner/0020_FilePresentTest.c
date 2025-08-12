@@ -17,11 +17,12 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 direct
         return false;
     }
 
+    b8 skippedDirectory = false;
+
     #define SKIP_DIR(x) \
-        if (directory && PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("/" x), PNSLR_StringComparisonType_CaseInsensitive)) \
+        if (!skippedDirectory && directory && PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("/" x "/"), PNSLR_StringComparisonType_CaseInsensitive)) \
         { \
-            *exploreCurrentDirectory = false; \
-            return true; \
+            skippedDirectory = true; \
         }
 
     SKIP_DIR(".git");
@@ -32,7 +33,15 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 direct
 
     #undef SKIP_DIR
 
-    if (directory) { return true; } // only care about files from this point on
+    if (skippedDirectory)
+    {
+        *exploreCurrentDirectory = false;
+    }
+
+    if (directory)
+    {
+        return true;
+    }
 
     utf8str clonedStr = PNSLR_CloneString(path, data->allocator);
     data->paths.data[data->pathsCount] = clonedStr;
