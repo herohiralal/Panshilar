@@ -310,8 +310,8 @@ rawptr PNSLR_AllocatorFn_Stack(
 #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
     (ArraySlice(ty)) \
     { \
-        .count = (i64)(count__), \
-        .data = (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        .count = (i64) (count__), \
+        .data  = (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
     }
 
 /**
@@ -326,6 +326,20 @@ rawptr PNSLR_AllocatorFn_Stack(
             (slice).data = nil; \
             (slice).count = 0; \
         } \
+    } while (false);
+
+/**
+ * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+ * Expects a reassignable variable.
+ */
+#define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
+    do \
+    { \
+        slice = (ArraySlice(ty)) \
+        { \
+            .count = (i64) (newCount__), \
+            .data  = (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        }; \
     } while (false);
 
 /**

@@ -86,15 +86,7 @@ void BufferMessage(const BufferedMessage* msg)
     if (G_NumBufferedMessages >= G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        G_BufferedMessages.data = PNSLR_Resize(
-            G_BufferedMessagesAllocator,
-            false,
-            G_BufferedMessages.data,
-            sizeof(BufferedMessage) * (i32) (G_BufferedMessages.count),
-            sizeof(BufferedMessage) * (i32) (G_BufferedMessages.count * 2),
-            alignof(BufferedMessage),
-            CURRENT_LOC(),
-            &err);
+        PNSLR_ResizeSlice(BufferedMessage, G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_BufferedMessagesAllocator, &err);
 
         if (err != PNSLR_AllocatorError_None)
         {
@@ -102,8 +94,6 @@ void BufferMessage(const BufferedMessage* msg)
             PNSLR_ExitProcess(1);
             return;
         }
-
-        G_BufferedMessages.count *= 2;
     }
 
     G_BufferedMessages.data[G_NumBufferedMessages] = *msg;
@@ -167,7 +157,14 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         TestFunctionInfo info = tests.data[i];
 
         PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nil);
+
+        BufferedMessage startMsg = {.loc = {0}, .type = BufferedMessageType_TestFnStart, .msg = info.name};
+        BufferMessage(&startMsg);
+
         info.fn(&ctx);
+
+        BufferedMessage endMsg = {.loc = {0}, .type = BufferedMessageType_TestFnEnd, .msg = info.name};
+        BufferMessage(&endMsg);
     }
 
     PNSLR_DestroyAllocator_Arena(G_BufferedMessagesAllocator, CURRENT_LOC(), nil);
