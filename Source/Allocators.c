@@ -494,6 +494,104 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
     }
 }
 
+b8 PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Allocator allocator)
+{
+    if (allocator.procedure != PNSLR_AllocatorFn_Arena || !allocator.data) { return true; }
+
+    return (((PNSLR_ArenaAllocatorPayload*) allocator.data)->numSnapshots == 0);
+}
+
+PNSLR_ArenaAllocatorSnapshot PNSLR_CaptureArenaAllocatorSnapshot(PNSLR_Allocator allocator)
+{
+    if (allocator.procedure != PNSLR_AllocatorFn_Arena || !allocator.data) { return (PNSLR_ArenaAllocatorSnapshot) {0}; }
+
+    PNSLR_ArenaAllocatorSnapshot snapshot = {0};
+    snapshot.valid   = true;
+    snapshot.payload = ((PNSLR_ArenaAllocatorPayload*) allocator.data);
+    snapshot.block   = snapshot.payload->currentBlock;
+
+    if (snapshot.block) snapshot.used = snapshot.block->used;
+
+    snapshot.payload->numSnapshots++;
+
+    return snapshot;
+}
+
+PNSLR_ArenaSnapshotError PNSLR_RestoreArenaAllocatorSnapshot(PNSLR_ArenaAllocatorSnapshot* snapshot, PNSLR_SourceCodeLocation loc)
+{
+    if (!snapshot) { return PNSLR_ArenaSnapshotError_InvalidData; }
+
+    PNSLR_ArenaSnapshotError output = PNSLR_ArenaSnapshotError_None;
+    if (!snapshot->valid) { return output; }
+
+    if (snapshot->block)
+    {
+        b8 memoryBlockFound = false;
+
+        for (PNSLR_ArenaAllocatorBlock* block = snapshot->payload->currentBlock; block; block = block->previous)
+        {
+            if (block == snapshot->block)
+            {
+                memoryBlockFound = true;
+                break;
+            }
+        }
+
+        if (!memoryBlockFound)
+        {
+            output = PNSLR_ArenaSnapshotError_MemoryBlockNotOwned;
+            goto exitFunction;
+        }
+
+        while (snapshot->payload->currentBlock != snapshot->block)
+        {
+            PNSLR_ArenaAllocatorBlock* tempBlock = snapshot->payload->currentBlock;
+            snapshot->payload->currentBlock      = tempBlock->previous;
+
+            snapshot->payload->totalCapacity -= tempBlock->capacity;
+            DestroyArenaAllocatorBlock(tempBlock, loc);
+        }
+
+        PNSLR_ArenaAllocatorBlock* block = snapshot->payload->currentBlock;
+        if (block)
+        {
+            if (block->used < snapshot->used)
+            {
+                output = PNSLR_ArenaSnapshotError_OutOfOrderRestoreUsage;
+                goto exitFunction;
+            }
+
+            u32 amountToZero = block->used - snapshot->used;
+            PNSLR_Intrinsic_MemSet(((u8*) block->memory) + snapshot->used, 0, amountToZero);
+            block->used = snapshot->used;
+            snapshot->payload->totalUsed -= amountToZero;
+        }
+    }
+
+    if (!snapshot->payload->numSnapshots) { output = PNSLR_ArenaSnapshotError_DoubleRestoreOrDiscardUsage; }
+    snapshot->payload->numSnapshots--;
+
+    exitFunction:
+    ;
+    *snapshot = (PNSLR_ArenaAllocatorSnapshot) {0};
+    return output;
+}
+
+PNSLR_ArenaSnapshotError PNSLR_DiscardArenaAllocatorSnapshot(PNSLR_ArenaAllocatorSnapshot* snapshot)
+{
+    if (!snapshot) { return PNSLR_ArenaSnapshotError_InvalidData; }
+
+    PNSLR_ArenaSnapshotError output = PNSLR_ArenaSnapshotError_None;
+    if (!snapshot->valid) { return output; }
+
+    if (!snapshot->payload->numSnapshots) { output = PNSLR_ArenaSnapshotError_DoubleRestoreOrDiscardUsage; }
+    snapshot->payload->numSnapshots--;
+
+    *snapshot = (PNSLR_ArenaAllocatorSnapshot) {0};
+    return output;
+}
+
+
 PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     PNSLR_StackAllocatorPayload* payload = PNSLR_Allocate(

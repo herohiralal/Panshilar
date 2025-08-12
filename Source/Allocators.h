@@ -173,7 +173,8 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
 /**
  * A block of memory used by the arena allocator.
  */
-typedef struct PNSLR_ArenaAllocatorBlock {
+typedef struct PNSLR_ArenaAllocatorBlock
+{
     struct PNSLR_ArenaAllocatorBlock* previous;
     PNSLR_Allocator                   allocator;
     rawptr                            memory;
@@ -184,7 +185,8 @@ typedef struct PNSLR_ArenaAllocatorBlock {
 /**
  * The payload used by the arena allocator.
  */
-typedef struct PNSLR_ArenaAllocatorPayload {
+typedef struct PNSLR_ArenaAllocatorPayload
+{
     PNSLR_Allocator            backingAllocator;
     PNSLR_ArenaAllocatorBlock* currentBlock;
     u32                        totalUsed;
@@ -221,12 +223,56 @@ rawptr PNSLR_AllocatorFn_Arena(
     PNSLR_AllocatorError*    error
 );
 
+ENUM_START(PNSLR_ArenaSnapshotError, u8)
+    #define PNSLR_ArenaSnapshotError_None                        ((PNSLR_ArenaSnapshotError) 0)
+    #define PNSLR_ArenaSnapshotError_InvalidData                 ((PNSLR_ArenaSnapshotError) 1)
+    #define PNSLR_ArenaSnapshotError_MemoryBlockNotOwned         ((PNSLR_ArenaSnapshotError) 2)
+    #define PNSLR_ArenaSnapshotError_OutOfOrderRestoreUsage      ((PNSLR_ArenaSnapshotError) 3)
+    #define PNSLR_ArenaSnapshotError_DoubleRestoreOrDiscardUsage ((PNSLR_ArenaSnapshotError) 4)
+ENUM_END
+
+/**
+ * A snapshot of the arena allocator, recording its state at a specific point in time.
+ * Can be saved/loaded/discarded as needed.
+ */
+typedef struct PNSLR_ArenaAllocatorSnapshot
+{
+    b8                           valid;
+    PNSLR_ArenaAllocatorPayload* payload;
+    PNSLR_ArenaAllocatorBlock*   block;
+    u32                          used;
+} PNSLR_ArenaAllocatorSnapshot;
+
+/**
+ * Ensures that the arena allocator has either restored/discarded all the
+ * snapshots that were taken.
+ */
+b8 PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Allocator allocator);
+
+/**
+ * Captures a snapshot of the arena allocator.
+ * The returned value can be used to load back the existing state at this point.
+ */
+PNSLR_ArenaAllocatorSnapshot PNSLR_CaptureArenaAllocatorSnapshot(PNSLR_Allocator allocator);
+
+/**
+ * Restores the state of the arena allocator from a snapshot.
+ * Upon success, the snapshot is marked as invalid.
+ */
+PNSLR_ArenaSnapshotError PNSLR_RestoreArenaAllocatorSnapshot(PNSLR_ArenaAllocatorSnapshot* snapshot, PNSLR_SourceCodeLocation loc);
+
+/**
+ * Discards a snapshot of the arena allocator.
+ */
+PNSLR_ArenaSnapshotError PNSLR_DiscardArenaAllocatorSnapshot(PNSLR_ArenaAllocatorSnapshot* snapshot);
+
 // Stack Allocator =================================================================
 
 /**
  * A page of a stack allocator.
  */
-typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_StackAllocatorPage {
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_StackAllocatorPage
+{
     struct PNSLR_StackAllocatorPage* previousPage;
     u64                              usedBytes;
     u8                               buffer[8192]; // 8KB page size
@@ -236,7 +282,8 @@ typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_StackAllocatorPage {
  * The header used for every separate stack allocation.
  * This is used to store metadata about the allocation and deallocate appropriately.
  */
-typedef struct PNSLR_StackAllocationHeader {
+typedef struct PNSLR_StackAllocationHeader
+{
     PNSLR_StackAllocatorPage* page;
     i32                       size;
     i32                       alignment;
@@ -247,7 +294,8 @@ typedef struct PNSLR_StackAllocationHeader {
 /**
  * The payload used by the stack allocator.
  */
-typedef struct PNSLR_StackAllocatorPayload {
+typedef struct PNSLR_StackAllocatorPayload
+{
     PNSLR_Allocator              backingAllocator;
     PNSLR_StackAllocatorPage*    currentPage;
     rawptr                       lastAllocation; // to debug double frees or skipped frees
