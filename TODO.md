@@ -7,15 +7,15 @@ This file contains todo items for Panshilar library.
 - [ ] String Functionality
   - [ ] UTF-8 encoding/decoding
   - [ ] UTF-16 encoding/decoding/conversions
-  - [ ] Join
+  - [x] Join
   - [ ] Compare*
-  - [ ] Equal*
+  - [x] Equal*
   - [ ] Contains*
-  - [ ] BeginsWith*
-  - [ ] EndsWith*
+  - [x] BeginsWith*
+  - [x] EndsWith*
   - [ ] Replace*
-  - [ ] ToLower*
-  - [ ] ToUpper*
+  - [x] ToLower*
+  - [x] ToUpper*
   - [ ] FindFromStart*
   - [ ] FindFromEnd*
   - [ ] SplitFromStart
@@ -33,7 +33,7 @@ This file contains todo items for Panshilar library.
   - [ ] String <-> Float
   - [ ] String <-> Int
 - [ ] Disk I/O Functionality
-  - [ ] Iterate
+  - [x] Iterate
   - [ ] WriteStream
   - [ ] ReadStream
   - [ ] Ensure File/Dir
@@ -43,9 +43,9 @@ This file contains todo items for Panshilar library.
 - [ ] Threading
   - [ ] Atomics
   - [ ] Start/Sleep/WaitFor Thread
-  - [ ] CriticalSection
-  - [ ] RWMutex
-  - [ ] Semaphore
+  - [x] CriticalSection
+  - [x] RWMutex
+  - [x] Semaphore
   - [ ] Channels
 - [ ] Process
   - [ ] Run/WaitOn/Kill
@@ -60,15 +60,16 @@ This file contains todo items for Panshilar library.
   - [ ] Linear Algebra
   - [ ] Trigonometry
 - [ ] Allocators
-  - [ ] Arena
+  - [x] Arena
+  - [x] Stack
   - [ ] Pool
   - [ ] Buddy
 - [ ] Time
-  - [ ] GetCurrent
+  - [x] GetCurrent
   - [ ] Unix Epoch conv
   - [ ] Apollo(?)
 - [ ] Environment
-  - [ ] Exit with code
+  - [x] Exit with code
   - [ ] Get Cmdline
 - [ ] Tokenizer
 
