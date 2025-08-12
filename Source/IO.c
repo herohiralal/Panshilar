@@ -446,10 +446,11 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 }
                 #endif
 
-                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, isDirectory);
+                b8 exploreCurrentDirectory = recursive;
+                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, isDirectory, &exploreCurrentDirectory);
 
                 // handle recursion
-                if (iterateFurther && recursive && isDirectory) { PNSLR_IterateDirectory(foundPath, recursive, visitorPayload, visitorFunc); }
+                if (iterateFurther && isDirectory && exploreCurrentDirectory) { PNSLR_IterateDirectory(foundPath, recursive, visitorPayload, visitorFunc); }
 
                 PNSLR_ArenaSnapshotError restoreError = PNSLR_RestoreArenaAllocatorSnapshot(&currentIterSnapshot, CURRENT_LOC());
                 if (PNSLR_ArenaSnapshotError_None != restoreError) { FORCE_TRAP; }

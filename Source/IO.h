@@ -33,7 +33,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 /**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
-typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, utf8str path, b8 isDirectory);
+typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, utf8str path, b8 isDirectory, b8* exploreCurrentDirectory);
 
 /**
  * Iterates over a directory and calls the visitor function for each file/directory found.
