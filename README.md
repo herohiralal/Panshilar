@@ -80,7 +80,7 @@ Build Depndencies:
 - Python 3.
 - Visual Studio Build Tools + Windows SDK
 - Android NDK (something that can build API level 28, it'll pick the first one available)
-- Linux cross-compilers ([get here](https://dev.epicgames.com/documentation/en-us/unreal-engine/cross-compiling-for-linux?application_version=4.27))
+- Linux cross-compilers ([get here](https://dev.epicgames.com/documentation/en-us/unreal-engine/linux-development-requirements-for-unreal-engine#version-history))
   - Thanks Epic Games!
 - Xcode Build Tools
 - OSX toolchain
