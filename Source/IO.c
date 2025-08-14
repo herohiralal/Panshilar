@@ -176,6 +176,46 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 #endif // PNSLR_WINDOWS
 
+typedef struct
+{
+    PNSLR_Allocator        allocator;
+    b8                     failedAtSomething;
+} DeleteAllContentsWhileIteratingDirectoryPayload;
+
+static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
+{
+    DeleteAllContentsWhileIteratingDirectoryPayload* data = (DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
+    cstring path2 = PNSLR_CStringFromString(path.path, data->allocator);
+
+    if (isDirectory)
+    {
+        /**
+         * The reason for doing things weirdly like this is because of how the directory iterator function works
+         * it performs a top-down approach where the callback is given for the directory before its contents.
+         * But we cannot delete the directory before its contents. So we kind of hack it by recursing the directory
+         * iterator function ourselves.
+         */
+        *exploreCurrentDirectory = false;
+
+        PNSLR_IterateDirectory(path, false, payload, DeleteAllContentsWhileIteratingDirectory);
+        #if PNSLR_WINDOWS
+            data->failedAtSomething = (RemoveDirectoryA(path2) == 0);
+        #elif PNSLR_UNIX
+            data->failedAtSomething = (rmdir(path2)            != 0);
+        #endif
+    }
+    else
+    {
+        #if PNSLR_WINDOWS
+            data->failedAtSomething = (DeleteFileA(path2) == 0);
+        #elif PNSLR_UNIX
+            data->failedAtSomething = (unlink(path2)      != 0);
+        #endif
+    }
+
+    return true;
+}
+
 // actual function implementations =================================================
 
 #define PATHS_INTERNAL_ALLOCATOR_INIT \
@@ -566,6 +606,45 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 
     PATHS_INTERNAL_ALLOCATOR_RESET
     return result;
+}
+
+b8 PNSLR_DeletePath(PNSLR_Path path)
+{
+    PATHS_INTERNAL_ALLOCATOR_INIT
+
+    // copy the filename to a temporary buffer
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
+
+    b8 throwawayB8 = false;
+    DeleteAllContentsWhileIteratingDirectoryPayload payload = {.failedAtSomething = false, .allocator = internalAllocator};
+    #if PNSLR_WINDOWS
+
+        DWORD fileAttributes = GetFileAttributesA(tempBuffer2.data);
+        if (fileAttributes != INVALID_FILE_ATTRIBUTES)
+        {
+            b8 isDir = (fileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+            DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
+        }
+
+    #elif PNSLR_UNIX
+
+        struct stat fileStat;
+        if (stat(tempBuffer2.data, &fileStat) == 0)
+        {
+            b8 isFile = S_ISREG(fileStat.st_mode), isDir = S_ISDIR(fileStat.st_mode);
+            if (isFile || isDir)
+            {
+                DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
+            }
+        }
+
+    #endif
+
+    PATHS_INTERNAL_ALLOCATOR_RESET
+
+    return !payload.failedAtSomething;
 }
 
 i64 PNSLR_GetFileTimestamp(PNSLR_Path path)

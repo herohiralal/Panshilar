@@ -54,6 +54,11 @@ ENUM_END
 b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type);
 
 /**
+ * Deletes a file/directory at a path, if it exists.
+ */
+b8 PNSLR_DeletePath(PNSLR_Path path);
+
+/**
  * Get the timestamp of a file at the specified path as nanoseconds since unix epoch.
  */
 i64 PNSLR_GetFileTimestamp(PNSLR_Path path);
