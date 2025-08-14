@@ -3,8 +3,6 @@
 
 #include "__Prelude.h"
 
-EXTERN_C_BEGIN
-
 /**
  * Defines the platforms supported by the library.
  */
@@ -38,7 +36,5 @@ PNSLR_Platform PNSLR_GetPlatform(void);
  * Get the current architecture.
  */
 PNSLR_Architecture PNSLR_GetArchitecture(void);
-
-EXTERN_C_END
 
 #endif // PNSLR_ENVIRONMENT_H ======================================================

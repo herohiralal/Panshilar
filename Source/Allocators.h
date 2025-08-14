@@ -4,8 +4,6 @@
 #include "__Prelude.h"
 #include "Runtime.h"
 
-EXTERN_C_BEGIN
-
 // Allocator Declaration ===========================================================
 
 /**
@@ -435,7 +433,5 @@ rawptr PNSLR_AllocatorFn_Stack(
     PNSLR_GetAllocator_DefaultHeap()
 
 //-skipreflect
-
-EXTERN_C_END
 
 #endif // PNSLR_ALLOCATORS_H =======================================================

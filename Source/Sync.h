@@ -3,8 +3,6 @@
 
 #include "__Prelude.h"
 
-EXTERN_C_BEGIN
-
 // Mutex ===========================================================================
 
 /**
@@ -187,7 +185,5 @@ void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
  * If no threads are waiting, this has no effect.
  */
 void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
-
-EXTERN_C_END
 
 #endif // PNSLR_SYNC_PRIMITIVES_H ==================================================

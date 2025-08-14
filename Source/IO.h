@@ -3,8 +3,6 @@
 
 #include "__Prelude.h"
 
-EXTERN_C_BEGIN
-
 /**
  * Represents a normalised path.
  * This is used to ensure that paths are in a consistent format across different platforms.
@@ -67,7 +65,5 @@ typedef struct alignas(8) PNSLR_FileHandle
 {
     u8 buffer[PNSLR_PTR_SIZE];
 } PNSLR_FileHandle;
-
-EXTERN_C_END
 
 #endif // PNSLR_IO_H ===============================================================
