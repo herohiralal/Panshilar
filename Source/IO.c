@@ -601,13 +601,51 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
         if (stat(tempBuffer2.data, &fileStat) == 0)
         {
             // Convert to nanoseconds since epoch
-            timestamp = (i64)fileStat.st_mtime * 1000000000LL; // Convert seconds to nanoseconds
+            timestamp = (i64) fileStat.st_mtime * 1000000000LL; // Convert seconds to nanoseconds
         }
 
     #endif
 
     PATHS_INTERNAL_ALLOCATOR_RESET
     return timestamp;
+}
+
+i64 PNSLR_GetFileSize(PNSLR_Path path)
+{
+    PATHS_INTERNAL_ALLOCATOR_INIT
+
+    // copy the filename to a temporary buffer
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
+
+    i64 sizeInBytes = 0;
+    #if PNSLR_WINDOWS
+
+        HANDLE fileHandle = CreateFileA(tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (fileHandle != INVALID_HANDLE_VALUE)
+        {
+            BY_HANDLE_FILE_INFORMATION fileInfo;
+            if (GetFileInformationByHandle(fileHandle, &fileInfo))
+            {
+                sizeInBytes = ((i64)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
+            }
+            CloseHandle(fileHandle);
+        }
+
+    #elif PNSLR_UNIX
+
+        struct stat fileStat;
+        if (stat(tempBuffer2.data, &fileStat) == 0)
+        {
+            sizeInBytes = (i64) fileStat.st_size;
+        }
+
+    #endif
+
+    PATHS_INTERNAL_ALLOCATOR_RESET
+
+    return sizeInBytes;
 }
 
 #undef PATHS_INTERNAL_ALLOCATOR_RESET

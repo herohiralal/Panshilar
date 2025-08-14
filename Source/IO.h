@@ -59,6 +59,11 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type);
 i64 PNSLR_GetFileTimestamp(PNSLR_Path path);
 
 /**
+ * Gets the size of a file at the specified path in bytes.
+ */
+i64 PNSLR_GetFileSize(PNSLR_Path path);
+
+/**
  * Represents a file handle. Used with a size buffer to ensure cross-platform compatibility.
  */
 typedef struct PNSLR_FileHandle
