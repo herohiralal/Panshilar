@@ -7,7 +7,7 @@ typedef struct
     u64                 pathsCount;
 } DirectoryStuffListerForFilePresentTestPayload;
 
-b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 directory, b8* exploreCurrentDirectory)
+b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 directory, b8* exploreCurrentDirectory)
 {
     DirectoryStuffListerForFilePresentTestPayload* data = (DirectoryStuffListerForFilePresentTestPayload*) payload;
 
@@ -20,7 +20,7 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 direct
     b8 skippedDirectory = false;
 
     #define SKIP_DIR(x) \
-        if (!skippedDirectory && directory && PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("/" x "/"), PNSLR_StringComparisonType_CaseInsensitive)) \
+        if (!skippedDirectory && directory && PNSLR_StringEndsWith(path.path, PNSLR_STRING_LITERAL("/" x "/"), PNSLR_StringComparisonType_CaseInsensitive)) \
         { \
             skippedDirectory = true; \
         }
@@ -43,7 +43,7 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, utf8str path, b8 direct
         return true;
     }
 
-    utf8str clonedStr = PNSLR_CloneString(path, data->allocator);
+    utf8str clonedStr = PNSLR_CloneString(path.path, data->allocator);
     data->paths.data[data->pathsCount] = clonedStr;
     data->pathsCount++;
     return true;
@@ -82,8 +82,9 @@ MAIN_TEST_FN(ctx)
         b8 firstArgIsExecutable = PNSLR_StringEndsWith(ctx->args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
         if (!AssertMsg(firstArgIsExecutable, "First argument must be the executable name.")) { return; }
 
-        utf8str dir = ctx->args.data[0];
-        dir.count -= executableName.count;
+        utf8str dirRaw = ctx->args.data[0];
+        dirRaw.count -= executableName.count;
+        PNSLR_Path dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, ctx->testAllocator);
 
         DirectoryStuffListerForFilePresentTestPayload data = {0};
         data.allocator = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), nil);

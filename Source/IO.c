@@ -2,6 +2,8 @@
 #include "Allocators.h"
 #include "Strings.h"
 
+// platform-specific implementations ===============================================
+
 // internal allocator stuff ========================================================
 
 typedef struct alignas(16) PNSLR_PathsInternalAllocatorBuffer
@@ -186,7 +188,7 @@ static PNSLR_Allocator AcquirePathsInternalAllocator(void)
 
 // TODO: use UTF-16 strings on Windows for better compatibility
 
-PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
+PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
 {
     if (!path.data || !path.count)
     {
@@ -322,7 +324,7 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
             utf8str tempResultPath = StringFromLazyPathBuffer(&outputBuffer);
             for (i32 i = 0; i < tempResultPath.count; ++i)
             {
-                if (tempResultPath.data[i] == '\\') { tempResultPath.data[i] = '/'; } // normalize path separators
+                if (tempResultPath.data[i] == '\\') { tempResultPath.data[i] = '/'; } // normalise path separators
             }
 
             resultPath = tempResultPath;
@@ -360,29 +362,29 @@ PNSLR_NormalisedPath PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationTy
 
     PATHS_INTERNAL_ALLOCATOR_RESET
 
-    return (PNSLR_NormalisedPath) { .path = resultPath };
+    return (PNSLR_Path) { .path = resultPath };
 }
 
 // TODO: phase out manual string->cstring conversions
 
-void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
+void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {
     PATHS_INTERNAL_ALLOCATOR_INIT
 
     // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 3), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 3), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
     #if PNSLR_WINDOWS
     {
-        u32 iterator = (u32) path.count - 1;
+        u32 iterator = (u32) path.path.count - 1;
         if (tempBuffer2.data[iterator] == '/' || tempBuffer2.data[iterator] == '\\') // has trailing slash
         {
-            iterator = (u32) path.count;
+            iterator = (u32) path.path.count;
         }
         else
         {
-            tempBuffer2.data[path.count] = '/'; // add slash at the end
-            iterator = (u32) path.count + 1;
+            tempBuffer2.data[path.path.count] = '/'; // add slash at the end
+            iterator = (u32) path.path.count + 1;
         }
 
         tempBuffer2.data[iterator    ] = '*';  // add wildcard for file matching
@@ -391,8 +393,8 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     }
     #elif PNSLR_UNIX
     {
-        tempBuffer2.data[path.count] = '\0'; // null-terminate
-        tempBuffer2.count = path.count;
+        tempBuffer2.data[path.path.count] = '\0'; // null-terminate
+        tempBuffer2.count = path.path.count;
     }
     #endif
 
@@ -425,10 +427,10 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
 
                 PNSLR_ArenaAllocatorSnapshot currentIterSnapshot = PNSLR_CaptureArenaAllocatorSnapshot(internalAllocator);
 
-                utf8str foundPath = PNSLR_MakeString((path.count + fileNameLen + 3), false, internalAllocator, nil);
+                utf8str foundPath = PNSLR_MakeString((path.path.count + fileNameLen + 3), false, internalAllocator, nil);
 
-                PNSLR_Intrinsic_MemCopy(foundPath.data, path.data, (i32) path.count);
-                u32 iterator = (u32) path.count - 1;
+                PNSLR_Intrinsic_MemCopy(foundPath.data, path.path.data, (i32) path.path.count);
+                u32 iterator = (u32) path.path.count - 1;
                 if (foundPath.data[iterator] == '/' || foundPath.data[iterator] == '\\')
                 {
                     foundPath.data[iterator] = '/';
@@ -451,7 +453,7 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                 {
                     for (i32 i = 0; i < foundPath.count; ++i)
                     {
-                        if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalize path separators
+                        if (foundPath.data[i] == '\\') { foundPath.data[i] = '/'; } // normalise path separators
                     }
                 }
                 #endif
@@ -482,11 +484,13 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
                     iterator++;
                 }
 
+                PNSLR_Path foundPath2 = {.path = foundPath};
+
                 b8 exploreCurrentDirectory = recursive;
-                b8 iterateFurther = visitorFunc(visitorPayload, foundPath, isDirectory, &exploreCurrentDirectory);
+                b8 iterateFurther = visitorFunc(visitorPayload, foundPath2, isDirectory, &exploreCurrentDirectory);
 
                 // handle recursion
-                if (iterateFurther && isDirectory && exploreCurrentDirectory) { PNSLR_IterateDirectory(foundPath, recursive, visitorPayload, visitorFunc); }
+                if (iterateFurther && isDirectory && exploreCurrentDirectory) { PNSLR_IterateDirectory(foundPath2, recursive, visitorPayload, visitorFunc); }
 
                 PNSLR_ArenaSnapshotError restoreError = PNSLR_RestoreArenaAllocatorSnapshot(&currentIterSnapshot, CURRENT_LOC());
                 if (PNSLR_ArenaSnapshotError_None != restoreError) { FORCE_TRAP; }
@@ -512,14 +516,14 @@ void PNSLR_IterateDirectory(utf8str path, b8 recursive, rawptr visitorPayload, P
     PATHS_INTERNAL_ALLOCATOR_RESET
 }
 
-b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type)
+b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 {
     PATHS_INTERNAL_ALLOCATOR_INIT
 
     // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
-    tempBuffer2.data[path.count] = '\0';
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
 
     b8 canBeFile      = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_File);
     b8 canBeDirectory = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_Directory);
@@ -564,14 +568,14 @@ b8 PNSLR_PathExists(utf8str path, PNSLR_PathExistsCheckType type)
     return result;
 }
 
-i64 PNSLR_GetFileTimestamp(utf8str path)
+i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
 {
     PATHS_INTERNAL_ALLOCATOR_INIT
 
     // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.data, (i32) path.count);
-    tempBuffer2.data[path.count] = '\0';
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
 
     i64 timestamp = 0;
     #if PNSLR_WINDOWS
