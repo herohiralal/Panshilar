@@ -727,5 +727,51 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
     return sizeInBytes;
 }
 
+PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
+{
+    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
+}
+
+PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
+{
+    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
+}
+
+i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
+{
+    if (!handle.handle) { return 0; }
+}
+
+b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
+{
+    if (!handle.handle || newPos < 0) { return false; }
+}
+
+b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
+{
+    if (!handle.handle || !dst.data || !dst.count) { return false; }
+}
+
+b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
+{
+    if (!handle.handle || !src.data || !src.count) { return false; }
+}
+
+b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
+{
+    if (!handle.handle || newSize < 0) { return false; }
+}
+
+b8 PNSLR_FlushFile(PNSLR_File handle)
+{
+    if (!handle.handle) { return false; }
+}
+
+void PNSLR_CloseFileHandle(PNSLR_File handle)
+{
+    if (!handle.handle) { return; }
+}
+
+
 #undef PATHS_INTERNAL_ALLOCATOR_RESET
 #undef PATHS_INTERNAL_ALLOCATOR_INIT
