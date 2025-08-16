@@ -10,10 +10,7 @@
  * It's always an absolute path, and the path separators are always forward slashes ('/').
  * For directories, it always ends with a trailing slash.
  */
-typedef struct PNSLR_Path
-{
-    utf8str path;
-} PNSLR_Path;
+typedef struct PNSLR_Path { utf8str path; } PNSLR_Path;
 
 /**
  * Represents the type of path normalisation to perform.
@@ -71,10 +68,7 @@ i64 PNSLR_GetFileSize(PNSLR_Path path);
 /**
  * Represents an opened file.
  */
-typedef struct PNSLR_File
-{
-    rawptr handle;
-} PNSLR_File;
+typedef struct PNSLR_File { rawptr handle; } PNSLR_File;
 
 /**
  * Opens a file for reading, optionally allow writing to the stream.

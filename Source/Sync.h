@@ -10,7 +10,7 @@
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex
 {
-    u8 buffer[6 * 8];
+    u8 buffer[6 * PNSLR_PTR_SIZE];
 }  PNSLR_Mutex;
 
 /**
@@ -48,7 +48,7 @@ b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex
 {
-    u8 buffer[7 * 8];
+    u8 buffer[7 * PNSLR_PTR_SIZE];
 } PNSLR_RWMutex;
 
 /**
@@ -105,7 +105,7 @@ b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Semaphore
 {
-    u8 buffer[4 * 8];
+    u8 buffer[4 * PNSLR_PTR_SIZE];
 } PNSLR_Semaphore;
 
 /**
@@ -146,7 +146,7 @@ void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count);
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_ConditionVariable
 {
-    u8 buffer[6 * 8];
+    u8 buffer[6 * PNSLR_PTR_SIZE];
 } PNSLR_ConditionVariable;
 
 /**
