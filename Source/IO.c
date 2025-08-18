@@ -139,7 +139,11 @@ typedef struct
 static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
 {
     DeleteAllContentsWhileIteratingDirectoryPayload* data = (DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
-    cstring path2 = PNSLR_CStringFromString(path.path, data->allocator);
+    #if PNSLR_WINDOWS
+        ArraySlice(utf16ch) path2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, data->allocator);
+    #elif PNSLR_UNIX
+        cstring path2 = PNSLR_CStringFromString(path.path, data->allocator);
+    #endif
 
     if (isDirectory)
     {
@@ -153,7 +157,7 @@ static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path pat
 
         PNSLR_IterateDirectory(path, false, payload, DeleteAllContentsWhileIteratingDirectory);
         #if PNSLR_WINDOWS
-            data->failedAtSomething = (RemoveDirectoryA(path2) == 0);
+            data->failedAtSomething = (RemoveDirectoryW((LPCWSTR) path2.data) == 0);
         #elif PNSLR_UNIX
             data->failedAtSomething = (rmdir(path2)            != 0);
         #endif
@@ -161,7 +165,7 @@ static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path pat
     else
     {
         #if PNSLR_WINDOWS
-            data->failedAtSomething = (DeleteFileA(path2) == 0);
+            data->failedAtSomething = (DeleteFileW((LPCWSTR) path2.data) == 0);
         #elif PNSLR_UNIX
             data->failedAtSomething = (unlink(path2)      != 0);
         #endif
@@ -171,8 +175,6 @@ static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path pat
 }
 
 // actual function implementations =================================================
-
-// TODO: use UTF-16 strings on Windows for better compatibility
 
 PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
 {
@@ -351,8 +353,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
     return (PNSLR_Path) { .path = resultPath };
 }
 
-// TODO: phase out manual string->cstring conversions
-
+// TODO: replace ANSI string usage for windows with UTF-16 strings; the specific complexity here is how the code has been reused
 void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
@@ -506,11 +507,6 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
-
     b8 canBeFile      = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_File);
     b8 canBeDirectory = (type == PNSLR_PathExistsCheckType_Either || type == PNSLR_PathExistsCheckType_Directory);
 
@@ -518,7 +514,9 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 
     #if PNSLR_WINDOWS
 
-        DWORD fileAttributes = GetFileAttributesA(tempBuffer2.data); // TODO: switch to UTF-16 strings for better compatibility
+        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+
+        DWORD fileAttributes = GetFileAttributesW((LPCWSTR) tempBuffer2.data);
         if (fileAttributes == INVALID_FILE_ATTRIBUTES)
         {
             result = false; // File does not exist
@@ -534,8 +532,10 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 
     #elif PNSLR_UNIX
 
+        cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
+
         struct stat fileStat;
-        if (stat(tempBuffer2.data, &fileStat) != 0)
+        if (stat(tempBuffer2, &fileStat) != 0)
         {
             result = false; // File does not exist
         }
@@ -558,16 +558,13 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     b8 throwawayB8 = false;
     DeleteAllContentsWhileIteratingDirectoryPayload payload = {.failedAtSomething = false, .allocator = internalAllocator};
     #if PNSLR_WINDOWS
 
-        DWORD fileAttributes = GetFileAttributesA(tempBuffer2.data);
+        DWORD fileAttributes = GetFileAttributesA(tempBuffer2);
         if (fileAttributes != INVALID_FILE_ATTRIBUTES)
         {
             b8 isDir = (fileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
@@ -577,7 +574,7 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
     #elif PNSLR_UNIX
 
         struct stat fileStat;
-        if (stat(tempBuffer2.data, &fileStat) == 0)
+        if (stat(tempBuffer2, &fileStat) == 0)
         {
             b8 isFile = S_ISREG(fileStat.st_mode), isDir = S_ISDIR(fileStat.st_mode);
             if (isFile || isDir)
@@ -597,15 +594,12 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     i64 timestamp = 0;
     #if PNSLR_WINDOWS
 
-        HANDLE fileHandle = CreateFileA(tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE fileHandle = CreateFileA(tempBuffer2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fileHandle != INVALID_HANDLE_VALUE)
         {
             FILETIME fileTime;
@@ -623,7 +617,7 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
     #elif PNSLR_UNIX
 
         struct stat fileStat;
-        if (stat(tempBuffer2.data, &fileStat) == 0)
+        if (stat(tempBuffer2, &fileStat) == 0)
         {
             // Convert to nanoseconds since epoch
             timestamp = (i64) fileStat.st_mtime * 1000000000LL; // Convert seconds to nanoseconds
@@ -639,15 +633,12 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     i64 sizeInBytes = 0;
     #if PNSLR_WINDOWS
 
-        HANDLE fileHandle = CreateFileA(tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE fileHandle = CreateFileA(tempBuffer2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fileHandle != INVALID_HANDLE_VALUE)
         {
             BY_HANDLE_FILE_INFORMATION fileInfo;
@@ -661,7 +652,7 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
     #elif PNSLR_UNIX
 
         struct stat fileStat;
-        if (stat(tempBuffer2.data, &fileStat) == 0)
+        if (stat(tempBuffer2, &fileStat) == 0)
         {
             sizeInBytes = (i64) fileStat.st_size;
         }
@@ -679,29 +670,27 @@ b8 PNSLR_CreateDirectoryTree(PNSLR_Path path)
 
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    ArraySlice(char) tempBuffer = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer.data, path.path.data, (i32) path.path.count);
-    tempBuffer.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     b8 success = true;
     for (i32 i = 1; success && i < (i32) path.path.count; i++)
     {
-        if (tempBuffer.data[i] == '/')
+        if (tempBuffer2[i] == '/')
         {
-            tempBuffer.data[i] = '\0';
+            tempBuffer2[i] = '\0';
             #if PNSLR_WINDOWS
-                if (!CreateDirectoryA(tempBuffer.data, NULL))
+                if (!CreateDirectoryA(tempBuffer2, NULL))
                 {
                     DWORD err = GetLastError();
                     if (err != ERROR_ALREADY_EXISTS) { success = false; }
                 }
             #elif PNSLR_UNIX
-                if (mkdir(tempBuffer.data, 0777) != 0)
+                if (mkdir(tempBuffer2, 0777) != 0)
                 {
                     if (errno != EEXIST) { success = false; }
                 }
             #endif
-            tempBuffer.data[i] = '/';
+            tempBuffer2[i] = '/';
         }
     }
 
@@ -715,14 +704,12 @@ PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
 
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     PNSLR_File output = {0};
     #if PNSLR_WINDOWS
 
-        HANDLE fileHandle = CreateFileA(tempBuffer2.data,
+        HANDLE fileHandle = CreateFileA(tempBuffer2,
                                    GENERIC_READ | (allowWrite ? GENERIC_WRITE : 0),
                                    FILE_SHARE_READ | (allowWrite ? FILE_SHARE_WRITE : 0),
                                    NULL,
@@ -734,7 +721,7 @@ PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
 
     #elif PNSLR_UNIX
 
-        i32 fd = open(tempBuffer2.data, allowWrite ? O_RDWR : O_RDONLY);
+        i32 fd = open(tempBuffer2, allowWrite ? O_RDWR : O_RDONLY);
         if (fd != -1) { output.handle = (rawptr) (i64) fd; }
 
     #endif
@@ -749,14 +736,12 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
 
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
-    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
-    tempBuffer2.data[path.path.count] = '\0';
+    cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
 
     PNSLR_File output = {0};
     #if PNSLR_WINDOWS
 
-        HANDLE fileHandle = CreateFileA(tempBuffer2.data,
+        HANDLE fileHandle = CreateFileA(tempBuffer2,
                                    GENERIC_WRITE | (allowRead ? GENERIC_READ : 0),
                                    FILE_SHARE_READ | (allowRead ? FILE_SHARE_WRITE : 0),
                                    NULL,
@@ -774,7 +759,7 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
         } else {
             flags |= O_CREAT | O_TRUNC;
         }
-        i32 fd = open(tempBuffer2.data, flags, 0666);
+        i32 fd = open(tempBuffer2, flags, 0666);
         if (fd != -1) { output.handle = (rawptr) (i64) fd; }
 
     #endif
