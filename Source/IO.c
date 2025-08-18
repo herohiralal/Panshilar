@@ -395,6 +395,31 @@ b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWith
     return true;
 }
 
+PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, utf8str fileNameWithExtension, PNSLR_Allocator allocator)
+{
+    utf8str output = PNSLR_MakeString((dir.path.count + fileNameWithExtension.count + 1), false, allocator, nil); // +1 for joining slash
+    if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
+
+    PNSLR_Intrinsic_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
+    output.data[dir.path.count] = '/';
+    PNSLR_Intrinsic_MemCopy(output.data + dir.path.count + 1, fileNameWithExtension.data, (i32) fileNameWithExtension.count);
+
+    return (PNSLR_Path) { .path = output };
+}
+
+PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, utf8str dirName, PNSLR_Allocator allocator)
+{
+    utf8str output = PNSLR_MakeString((dir.path.count + dirName.count + 2), false, allocator, nil); // +1 for joining slash; +1 for trailing slash
+    if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
+
+    PNSLR_Intrinsic_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
+    output.data[dir.path.count] = '/';
+    PNSLR_Intrinsic_MemCopy(output.data + dir.path.count + 1, dirName.data, (i32) dirName.count);
+    output.data[output.count - 1] = '/';
+
+    return (PNSLR_Path) { .path = output };
+}
+
 // TODO: replace ANSI string usage for windows with UTF-16 strings; the specific complexity here is how the code has been reused
 void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {

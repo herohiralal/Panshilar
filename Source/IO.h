@@ -31,6 +31,16 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWithExtension, PNSLR_Path* selfName, PNSLR_Path* extension);
 
 /**
+ * Returns a normalised path for a file inside a given directory.
+ */
+PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, utf8str fileNameWithExtension, PNSLR_Allocator allocator);
+
+/**
+ * Returns a normalised path for a subdirectory inside a given directory.
+ */
+PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, utf8str dirName, PNSLR_Allocator allocator);
+
+/**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
 typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory);
