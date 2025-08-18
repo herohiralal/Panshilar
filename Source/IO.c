@@ -673,6 +673,42 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
     return sizeInBytes;
 }
 
+b8 PNSLR_CreateDirectoryTree(PNSLR_Path path)
+{
+    if (!path.path.data || !path.path.count) { return false; }
+
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    ArraySlice(char) tempBuffer = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer.data, path.path.data, (i32) path.path.count);
+    tempBuffer.data[path.path.count] = '\0';
+
+    b8 success = true;
+    for (i32 i = 1; success && i < (i32) path.path.count; i++)
+    {
+        if (tempBuffer.data[i] == '/')
+        {
+            tempBuffer.data[i] = '\0';
+            #if PNSLR_WINDOWS
+                if (!CreateDirectoryA(tempBuffer.data, NULL))
+                {
+                    DWORD err = GetLastError();
+                    if (err != ERROR_ALREADY_EXISTS) { success = false; }
+                }
+            #elif PNSLR_UNIX
+                if (mkdir(tempBuffer.data, 0777) != 0)
+                {
+                    if (errno != EEXIST) { success = false; }
+                }
+            #endif
+            tempBuffer.data[i] = '/';
+        }
+    }
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
+}
+
 PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
 {
     if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }

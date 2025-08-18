@@ -66,6 +66,13 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path);
 i64 PNSLR_GetFileSize(PNSLR_Path path);
 
 /**
+ * Creates a directory tree, if it doesn't exist.
+ * Note that if the path doesn't have a trailing slash, it'll assume it's a file.
+ * So, the last component of the path (if is a directory) will not be created.
+ */
+b8 PNSLR_CreateDirectoryTree(PNSLR_Path path);
+
+/**
  * Represents an opened file.
  */
 typedef struct PNSLR_File { rawptr handle; } PNSLR_File;
