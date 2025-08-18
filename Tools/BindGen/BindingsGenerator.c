@@ -1,3 +1,7 @@
+#include "Dependencies/PNSLR_Intrinsics/Compiler.h"
+PRAGMA_SUPPRESS_WARNINGS
+#include <stdio.h>
+PRAGMA_REENABLE_WARNINGS
 #include "Panshilar.h"
 
 void BindGenMain(ArraySlice(utf8str) args)
@@ -29,11 +33,11 @@ void BindGenMain(ArraySlice(utf8str) args)
         }
         #endif
 
-        if (!args.count) { return; }
+        if (!args.count) { PNSLR_ExitProcess(1); return; }
 
         utf8str dirRaw = args.data[0];
         b8 firstArgIsExecutable = PNSLR_StringEndsWith(dirRaw, executableName, PNSLR_StringComparisonType_CaseInsensitive);
-        if (!firstArgIsExecutable) { return; }
+        if (!firstArgIsExecutable) { PNSLR_ExitProcess(1); return; }
 
         dirRaw.count -= executableName.count;
         dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_DEFAULT_HEAP_ALLOCATOR);
@@ -45,6 +49,14 @@ void BindGenMain(ArraySlice(utf8str) args)
         appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 16 * 1024 * 1024 /* 16 MiB */, CURRENT_LOC(), nil);
         if (!appArena.data || !appArena.procedure) { PNSLR_ExitProcess(1); return; }
     }
+
+    PNSLR_Path srcDir    = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
+    PNSLR_Path pnslrFile = PNSLR_GetPathForChildFile(srcDir, PNSLR_STRING_LITERAL("Panshilar.h"), appArena);
+
+    ArraySlice(u8) pnslrFileContents;
+    if (!PNSLR_ReadAllContentsFromFile(pnslrFile, &pnslrFileContents, appArena)) { PNSLR_ExitProcess(1); return; }
+
+    printf("contents: %.*s\n", (i32) pnslrFileContents.count, pnslrFileContents.data);
 }
 
 PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)

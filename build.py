@@ -154,6 +154,7 @@ def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
         return [
             inputFile,
             getLibraryPath(tgt, arch),
+            '-lpthread',
             '-o',
             outputFile,
             f'-ISource/',
