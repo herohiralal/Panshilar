@@ -673,47 +673,153 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
     return sizeInBytes;
 }
 
-// PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
-// {
-//     if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
-// }
+PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
+{
+    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
 
-// PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
-// {
-//     if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
-// }
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
-// i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
-// {
-//     if (!handle.handle) { return 0; }
-// }
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
 
-// b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
-// {
-//     if (!handle.handle || newPos < 0) { return false; }
-// }
+    PNSLR_File output = {0};
+    #if PNSLR_WINDOWS
 
-// b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
-// {
-//     if (!handle.handle || !dst.data || !dst.count) { return false; }
-// }
+        HANDLE fileHandle = CreateFileA(tempBuffer2.data,
+                                   GENERIC_READ | (allowWrite ? GENERIC_WRITE : 0),
+                                   FILE_SHARE_READ | (allowWrite ? FILE_SHARE_WRITE : 0),
+                                   NULL,
+                                   OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL,
+                                   NULL);
 
-// b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
-// {
-//     if (!handle.handle || !src.data || !src.count) { return false; }
-// }
+        if (INVALID_HANDLE_VALUE != fileHandle) { output.handle = fileHandle; }
 
-// b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
-// {
-//     if (!handle.handle || newSize < 0) { return false; }
-// }
+    #elif PNSLR_UNIX
 
-// b8 PNSLR_FlushFile(PNSLR_File handle)
-// {
-//     if (!handle.handle) { return false; }
-// }
+        i32 fd = open(tempBuffer2.data, allowWrite ? O_RDWR : O_RDONLY);
+        if (fd != -1) { output.handle = (rawptr) (i64) fd; }
 
-// void PNSLR_CloseFileHandle(PNSLR_File handle)
-// {
-//     if (!handle.handle) { return; }
-// }
+    #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return output;
+}
+
+PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
+{
+    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
+
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
+    PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
+    tempBuffer2.data[path.path.count] = '\0';
+
+    PNSLR_File output = {0};
+    #if PNSLR_WINDOWS
+
+        HANDLE fileHandle = CreateFileA(tempBuffer2.data,
+                                   GENERIC_WRITE | (allowRead ? GENERIC_READ : 0),
+                                   FILE_SHARE_READ | (allowRead ? FILE_SHARE_WRITE : 0),
+                                   NULL,
+                                   append ? OPEN_ALWAYS : CREATE_ALWAYS,
+                                   FILE_ATTRIBUTE_NORMAL,
+                                   NULL);
+
+        if (INVALID_HANDLE_VALUE != fileHandle) { output.handle = fileHandle; }
+
+    #elif PNSLR_UNIX
+
+        i32 flags = allowRead ? O_RDWR : O_WRONLY;
+        if (append) {
+            flags |= O_CREAT | O_APPEND;
+        } else {
+            flags |= O_CREAT | O_TRUNC;
+        }
+        i32 fd = open(tempBuffer2.data, flags, 0666);
+        if (fd != -1) { output.handle = (rawptr) (i64) fd; }
+
+    #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return output;
+}
+
+i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
+{
+    if (!handle.handle) { return 0; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
+{
+    if (!handle.handle || newPos < 0) { return false; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
+{
+    if (!handle.handle || !dst.data || !dst.count) { return false; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
+{
+    if (!handle.handle || !src.data || !src.count) { return false; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
+{
+    if (!handle.handle || newSize < 0) { return false; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+b8 PNSLR_FlushFile(PNSLR_File handle)
+{
+    if (!handle.handle) { return false; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
+
+void PNSLR_CloseFileHandle(PNSLR_File handle)
+{
+    if (!handle.handle) { return; }
+
+    #if PNSLR_WINDOWS
+
+    #elif PNSLR_UNIX
+
+    #endif
+}
