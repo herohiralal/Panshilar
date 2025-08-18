@@ -166,11 +166,8 @@ i32 PNSLR_GetRuneLength(u32 r);
 PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
 
 /**
- * Decodes a UTF-8 byte sequence into a rune.
+ * Decodes a UTF-8 byte sequence into a rune and returns the structure containing the rune/length.
  * Returns error rune (U+FFFD) for invalid sequences.
- *
- * @param s Slice of UTF-8 bytes to decode
- * @return Structure containing the decoded rune and bytes consumed
  */
 PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
 

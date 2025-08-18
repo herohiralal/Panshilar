@@ -363,28 +363,26 @@ i32 PNSLR_GetRuneLength(u32 r) {
 PNSLR_EncodedRune PNSLR_EncodeRune(u32 c) {
     u32 r = c;
     PNSLR_EncodedRune result = {0};
-    u32 i = r;
     u8 mask = 0x3f;
 
-    if (i <= (1 << 7) - 1) {
+    if (r <= (1 << 7) - 1) {
         result.data[0] = (u8)r;
         result.length = 1;
         return result;
     }
 
-    if (i <= (1 << 11) - 1) {
+    if (r <= (1 << 11) - 1) {
         result.data[0] = 0xc0 | (u8)(r >> 6);
         result.data[1] = 0x80 | ((u8)r & mask);
         result.length = 2;
         return result;
     }
 
-    // invalid or surrogate range
-    if (i > 0x0010ffff || (PNSLR_SURROGATE_MIN <= i && i <= PNSLR_SURROGATE_MAX)) {
+    if (r > 0x0010ffff || (PNSLR_SURROGATE_MIN <= r && r <= PNSLR_SURROGATE_MAX)) {
         r = PNSLR_RUNE_ERROR;
     }
 
-    if (i <= (1 << 16) - 1) {
+    if (r <= (1 << 16) - 1) {
         result.data[0] = 0xe0 | (u8)(r >> 12);
         result.data[1] = 0x80 | ((u8)(r >> 6) & mask);
         result.data[2] = 0x80 | ((u8)r & mask);
