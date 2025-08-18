@@ -643,7 +643,7 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
             BY_HANDLE_FILE_INFORMATION fileInfo;
             if (GetFileInformationByHandle(fileHandle, &fileInfo))
             {
-                sizeInBytes = ((i64)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
+                sizeInBytes = ((i64) fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
             }
             CloseHandle(fileHandle);
         }
@@ -788,7 +788,7 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
 
         struct stat st;
         if (fstat((i32) (i64) handle.handle, &st) == 0) {
-            size = (i64)st.st_size;
+            size = (i64) st.st_size;
         }
 
     #endif
@@ -827,7 +827,7 @@ b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
     #if PNSLR_WINDOWS
 
         DWORD bytesRead = 0;
-        success = ReadFile((HANDLE)handle.handle, dst.data, (DWORD)dst.count, &bytesRead, NULL);
+        success = ReadFile((HANDLE) handle.handle, dst.data, (DWORD) dst.count, &bytesRead, NULL);
 
     #elif PNSLR_UNIX
 
@@ -847,7 +847,7 @@ b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
     #if PNSLR_WINDOWS
 
         DWORD bytesWritten = 0;
-        success = WriteFile((HANDLE) handle.handle, src.data, (DWORD)src.count, &bytesWritten, NULL);
+        success = WriteFile((HANDLE) handle.handle, src.data, (DWORD) src.count, &bytesWritten, NULL);
 
     #elif PNSLR_UNIX
 
@@ -911,8 +911,39 @@ void PNSLR_CloseFileHandle(PNSLR_File handle)
 
     #elif PNSLR_UNIX
 
-        close((i32)(i64)handle.handle);
+        close((i32) (i64) handle.handle);
 
     #endif
 }
 
+b8 PNSLR_ReadFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator)
+{
+    if (!path.path.data || !path.path.count || !dst) { return false; }
+    *dst = (ArraySlice(u8)) {0};
+
+    PNSLR_File file = PNSLR_OpenFileToRead(path, false);
+    if (!file.handle) { return false; }
+
+    i64 size = PNSLR_GetSizeOfFile(file);
+    if (size <= 0) { PNSLR_CloseFileHandle(file); return false; }
+
+    *dst = PNSLR_MakeSlice(u8, size, false, allocator, nil);
+    if (!dst->data || !dst->count) { PNSLR_CloseFileHandle(file); return false; }
+
+    b8 success = PNSLR_ReadFromFile(file, *dst);
+    PNSLR_CloseFileHandle(file);
+    return success;
+}
+
+b8 PNSLR_WriteToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append)
+{
+    if (!path.path.data || !path.path.count || !src.data || !src.count) { return false; }
+
+    PNSLR_File file = PNSLR_OpenFileToWrite(path, append, false);
+    if (!file.handle) { return false; }
+
+    b8 success = PNSLR_WriteToFile(file, src);
+    success = success && PNSLR_TruncateFile(file, src.count); // truncate to the size of the written data
+    PNSLR_CloseFileHandle(file);
+    return success;
+}
