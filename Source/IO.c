@@ -787,16 +787,23 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
 {
     if (!handle.handle) { return 0; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     i64 size = 0;
     #if PNSLR_WINDOWS
 
+        LARGE_INTEGER fileSize;
+        if (GetFileSizeEx((HANDLE) handle.handle, &fileSize)) {
+            size = fileSize.QuadPart;
+        }
+
     #elif PNSLR_UNIX
+
+        struct stat st;
+        if (fstat((i32) (i64) handle.handle, &st) == 0) {
+            size = (i64)st.st_size;
+        }
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return size;
 }
 
@@ -804,16 +811,19 @@ b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
 {
     if (!handle.handle || newPos < 0) { return false; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     b8 success = true;
     #if PNSLR_WINDOWS
 
+        LARGE_INTEGER li;
+        li.QuadPart = newPos;
+        success = SetFilePointerEx((HANDLE) handle.handle, li, NULL, FILE_BEGIN);
+
     #elif PNSLR_UNIX
+
+        success = (lseek((i32) (i64) handle.handle, newPos, SEEK_SET) != -1);
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 
@@ -821,16 +831,19 @@ b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
 {
     if (!handle.handle || !dst.data || !dst.count) { return false; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     b8 success = true;
     #if PNSLR_WINDOWS
 
+        DWORD bytesRead = 0;
+        success = ReadFile((HANDLE)handle.handle, dst.data, (DWORD)dst.count, &bytesRead, NULL);
+
     #elif PNSLR_UNIX
+
+        ssize_t res = read((i32) (i64) handle.handle, dst.data, dst.count);
+        success = (res == (ssize_t) dst.count);
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 
@@ -838,16 +851,19 @@ b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
 {
     if (!handle.handle || !src.data || !src.count) { return false; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     b8 success = true;
     #if PNSLR_WINDOWS
 
+        DWORD bytesWritten = 0;
+        success = WriteFile((HANDLE) handle.handle, src.data, (DWORD)src.count, &bytesWritten, NULL);
+
     #elif PNSLR_UNIX
+
+        ssize_t res = write((i32) (i64) handle.handle, src.data, src.count);
+        success = (res == (ssize_t) src.count);
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 
@@ -855,16 +871,23 @@ b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
 {
     if (!handle.handle || newSize < 0) { return false; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     b8 success = true;
     #if PNSLR_WINDOWS
 
+        LARGE_INTEGER li;
+        li.QuadPart = newSize;
+        if (SetFilePointerEx((HANDLE) handle.handle, li, NULL, FILE_BEGIN)) {
+            success = SetEndOfFile((HANDLE) handle.handle);
+        } else {
+            success = false;
+        }
+
     #elif PNSLR_UNIX
+
+        success = (ftruncate((i32) (i64) handle.handle, newSize) == 0);
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 
@@ -872,16 +895,17 @@ b8 PNSLR_FlushFile(PNSLR_File handle)
 {
     if (!handle.handle) { return false; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     b8 success = true;
     #if PNSLR_WINDOWS
 
+        success = FlushFileBuffers((HANDLE) handle.handle);
+
     #elif PNSLR_UNIX
+
+        success = (fsync((i32) (i64) handle.handle) == 0);
 
     #endif
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 
@@ -889,13 +913,14 @@ void PNSLR_CloseFileHandle(PNSLR_File handle)
 {
     if (!handle.handle) { return; }
 
-    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
-
     #if PNSLR_WINDOWS
+
+        CloseHandle((HANDLE) handle.handle);
 
     #elif PNSLR_UNIX
 
-    #endif
+        close((i32)(i64)handle.handle);
 
-    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    #endif
 }
+
