@@ -353,6 +353,48 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
     return (PNSLR_Path) { .path = resultPath };
 }
 
+b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWithExtension, PNSLR_Path* selfName, PNSLR_Path* extension)
+{
+    if (parent)                { *parent                = (PNSLR_Path) {0}; }
+    if (selfNameWithExtension) { *selfNameWithExtension = (PNSLR_Path) {0}; }
+    if (selfName)              { *selfName              = (PNSLR_Path) {0}; }
+    if (extension)             { *extension             = (PNSLR_Path) {0}; }
+
+    if (!path.path.data || !path.path.count) { return false; }
+
+    b8 isDirectory = PNSLR_StringEndsWith(path.path, PNSLR_STRING_LITERAL("/"), PNSLR_StringComparisonType_CaseSensitive);
+    if (path.path.count == 1 && isDirectory) { return true; } // root directory case
+
+    utf8str parentTemp = {0}, selfNameWithExtensionTemp = {0}, selfNameTemp = {0}, extensionTemp = {0};
+
+    i32 searchLength = path.path.count - (isDirectory ? 1 : 0);
+    i32 lastSlashIdx = PNSLR_SearchLastIndexInString((utf8str){.count = searchLength, .data = path.path.data}, PNSLR_STRING_LITERAL("/"), PNSLR_StringComparisonType_CaseSensitive);
+
+    if (lastSlashIdx != -1)
+    {
+        parentTemp                = (utf8str) { .count = lastSlashIdx + 1,                .data = path.path.data                    };
+        selfNameWithExtensionTemp = (utf8str) { .count = searchLength - lastSlashIdx - 1, .data = path.path.data + lastSlashIdx + 1 };
+
+        selfNameTemp = selfNameWithExtensionTemp;
+        if (!isDirectory)
+        {
+            i32 extensionIdx = PNSLR_SearchLastIndexInString(selfNameWithExtensionTemp, PNSLR_STRING_LITERAL("."), PNSLR_StringComparisonType_CaseSensitive);
+            if (extensionIdx != -1)
+            {
+                selfNameTemp  = (utf8str) { .count = extensionIdx,                                       .data = selfNameWithExtensionTemp.data                    };
+                extensionTemp = (utf8str) { .count = selfNameWithExtensionTemp.count - extensionIdx - 1, .data = selfNameWithExtensionTemp.data + extensionIdx + 1 };
+            }
+        }
+    }
+
+    if (parent)                { *parent                = (PNSLR_Path) {.path = parentTemp};                }
+    if (selfNameWithExtension) { *selfNameWithExtension = (PNSLR_Path) {.path = selfNameWithExtensionTemp}; }
+    if (selfName)              { *selfName              = (PNSLR_Path) {.path = selfNameTemp};              }
+    if (extension)             { *extension             = (PNSLR_Path) {.path = extensionTemp};             }
+
+    return true;
+}
+
 // TODO: replace ANSI string usage for windows with UTF-16 strings; the specific complexity here is how the code has been reused
 void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {

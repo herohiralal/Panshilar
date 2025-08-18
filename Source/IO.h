@@ -26,6 +26,11 @@ ENUM_END
 PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator);
 
 /**
+ * Split a path into its components. Assumes that the path is a valid normalised path in Panshilar conventions.
+ */
+b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWithExtension, PNSLR_Path* selfName, PNSLR_Path* extension);
+
+/**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
 typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory);
