@@ -2,55 +2,9 @@
 #include "Allocators.h"
 #include "Strings.h"
 
-// platform-specific implementations ===============================================
-
 // internal allocator stuff ========================================================
 
-typedef struct alignas(16) PNSLR_PathsInternalAllocatorBuffer
-{
-    u8 data[512 * 1024]; // 0.5 MiB
-} PNSLR_PathsInternalAllocatorBuffer;
-
-typedef struct PNSLR_PathsInternalAllocatorInfo
-{
-    b8                                 initialised;
-    PNSLR_ArenaAllocatorPayload        arenaPayload;
-    PNSLR_ArenaAllocatorBlock          arenaBlock;
-    PNSLR_PathsInternalAllocatorBuffer buffer;
-} PNSLR_PathsInternalAllocatorInfo;
-
-static thread_local PNSLR_PathsInternalAllocatorInfo G_PathsInternalAllocatorInfo = {0};
-
-static PNSLR_Allocator AcquirePathsInternalAllocator(void)
-{
-    if (!G_PathsInternalAllocatorInfo.initialised)
-    {
-        G_PathsInternalAllocatorInfo.initialised = true;
-
-        G_PathsInternalAllocatorInfo.buffer = (PNSLR_PathsInternalAllocatorBuffer) {0};
-
-        G_PathsInternalAllocatorInfo.arenaBlock = (PNSLR_ArenaAllocatorBlock)
-        {
-            .previous  = nil,
-            .allocator = PNSLR_NIL_ALLOCATOR,
-            .memory    = (rawptr) &G_PathsInternalAllocatorInfo.buffer.data,
-            .capacity  = sizeof(G_PathsInternalAllocatorInfo.buffer.data),
-            .used      = 0,
-        };
-
-        G_PathsInternalAllocatorInfo.arenaPayload = (PNSLR_ArenaAllocatorPayload)
-        {
-            .backingAllocator    = PNSLR_NIL_ALLOCATOR,
-            .currentBlock        = &G_PathsInternalAllocatorInfo.arenaBlock,
-            .totalUsed           = 0,
-            .totalCapacity       = sizeof(G_PathsInternalAllocatorInfo.buffer.data),
-            .minimumBlockSize    = 0,
-            .numSnapshots        = 0,
-        };
-    }
-
-    return (PNSLR_Allocator) {.data = &G_PathsInternalAllocatorInfo.arenaPayload, .procedure = PNSLR_AllocatorFn_Arena};
-}
+PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
 
 // some bs internal stuff ==========================================================
 
@@ -218,14 +172,6 @@ static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path pat
 
 // actual function implementations =================================================
 
-#define PATHS_INTERNAL_ALLOCATOR_INIT \
-    PNSLR_Allocator internalAllocator = AcquirePathsInternalAllocator(); \
-    PNSLR_ArenaAllocatorSnapshot internalAllocSnapshot = PNSLR_CaptureArenaAllocatorSnapshot(internalAllocator);
-
-#define PATHS_INTERNAL_ALLOCATOR_RESET \
-    PNSLR_ArenaSnapshotError snapshotError = PNSLR_RestoreArenaAllocatorSnapshot(&internalAllocSnapshot, CURRENT_LOC()); \
-    if (PNSLR_ArenaSnapshotError_None != snapshotError) { FORCE_DBG_TRAP; }
-
 // TODO: use UTF-16 strings on Windows for better compatibility
 
 PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator)
@@ -235,7 +181,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
         path = PNSLR_STRING_LITERAL(".");
     }
 
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     utf8str resultPath = (utf8str) {0};
 
@@ -400,7 +346,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
     }
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
 
     return (PNSLR_Path) { .path = resultPath };
 }
@@ -409,7 +355,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 
 void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc)
 {
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
     ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 3), false, internalAllocator, nil);
@@ -553,12 +499,12 @@ void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload
 
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
 }
 
 b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 {
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
     ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
@@ -604,13 +550,13 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return result;
 }
 
 b8 PNSLR_DeletePath(PNSLR_Path path)
 {
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
     ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
@@ -642,14 +588,14 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
 
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
 
     return !payload.failedAtSomething;
 }
 
 i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
 {
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
     ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
@@ -685,13 +631,13 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
 
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return timestamp;
 }
 
 i64 PNSLR_GetFileSize(PNSLR_Path path)
 {
-    PATHS_INTERNAL_ALLOCATOR_INIT
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
     ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 1), false, internalAllocator, nil);
@@ -722,56 +668,52 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
 
     #endif
 
-    PATHS_INTERNAL_ALLOCATOR_RESET
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
 
     return sizeInBytes;
 }
 
-PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
-{
-    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
-}
+// PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
+// {
+//     if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
+// }
 
-PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
-{
-    if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
-}
+// PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
+// {
+//     if (!path.path.data || !path.path.count) { return (PNSLR_File) {0}; }
+// }
 
-i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
-{
-    if (!handle.handle) { return 0; }
-}
+// i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
+// {
+//     if (!handle.handle) { return 0; }
+// }
 
-b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
-{
-    if (!handle.handle || newPos < 0) { return false; }
-}
+// b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
+// {
+//     if (!handle.handle || newPos < 0) { return false; }
+// }
 
-b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
-{
-    if (!handle.handle || !dst.data || !dst.count) { return false; }
-}
+// b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
+// {
+//     if (!handle.handle || !dst.data || !dst.count) { return false; }
+// }
 
-b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
-{
-    if (!handle.handle || !src.data || !src.count) { return false; }
-}
+// b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
+// {
+//     if (!handle.handle || !src.data || !src.count) { return false; }
+// }
 
-b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
-{
-    if (!handle.handle || newSize < 0) { return false; }
-}
+// b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
+// {
+//     if (!handle.handle || newSize < 0) { return false; }
+// }
 
-b8 PNSLR_FlushFile(PNSLR_File handle)
-{
-    if (!handle.handle) { return false; }
-}
+// b8 PNSLR_FlushFile(PNSLR_File handle)
+// {
+//     if (!handle.handle) { return false; }
+// }
 
-void PNSLR_CloseFileHandle(PNSLR_File handle)
-{
-    if (!handle.handle) { return; }
-}
-
-
-#undef PATHS_INTERNAL_ALLOCATOR_RESET
-#undef PATHS_INTERNAL_ALLOCATOR_INIT
+// void PNSLR_CloseFileHandle(PNSLR_File handle)
+// {
+//     if (!handle.handle) { return; }
+// }

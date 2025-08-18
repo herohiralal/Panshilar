@@ -70,49 +70,49 @@ i64 PNSLR_GetFileSize(PNSLR_Path path);
  */
 typedef struct PNSLR_File { rawptr handle; } PNSLR_File;
 
-/**
- * Opens a file for reading, optionally allow writing to the stream.
- */
-PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite);
+// /**
+//  * Opens a file for reading, optionally allow writing to the stream.
+//  */
+// PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite);
 
-/**
- * Opens a file for writing (or appending), optionally allow reading from the stream.
- */
-PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
+// /**
+//  * Opens a file for writing (or appending), optionally allow reading from the stream.
+//  */
+// PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
 
-/**
- * Gets the size of an opened file.
- */
-i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
+// /**
+//  * Gets the size of an opened file.
+//  */
+// i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
 
-/**
- * Seeks to a specific position in an opened file.
- */
-b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos);
+// /**
+//  * Seeks to a specific position in an opened file.
+//  */
+// b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos);
 
-/**
- * Reads data from an opened file at the current position.
- */
-b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst);
+// /**
+//  * Reads data from an opened file at the current position.
+//  */
+// b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst);
 
-/**
- * Writes data to an opened file at the current position.
- */
-b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src);
+// /**
+//  * Writes data to an opened file at the current position.
+//  */
+// b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src);
 
-/**
- * Truncates an opened file to a specific size.
- */
-b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize);
+// /**
+//  * Truncates an opened file to a specific size.
+//  */
+// b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize);
 
-/**
- * Flushes any buffered data to the file.
- */
-b8 PNSLR_FlushFile(PNSLR_File handle);
+// /**
+//  * Flushes any buffered data to the file.
+//  */
+// b8 PNSLR_FlushFile(PNSLR_File handle);
 
-/**
- * Closes an opened file.
- */
-void PNSLR_CloseFileHandle(PNSLR_File handle);
+// /**
+//  * Closes an opened file.
+//  */
+// void PNSLR_CloseFileHandle(PNSLR_File handle);
 
 #endif // PNSLR_IO_H ===============================================================

@@ -40,7 +40,7 @@ utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator all
  * Replaces all occurrences of a substring within a string with a new value.
  * The returned string is allocated using the specified allocator.
  */
-utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator);
+// utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator);
 
 // Casing ==========================================================================
 

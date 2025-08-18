@@ -51,6 +51,10 @@ utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator all
     return result;
 }
 
+// utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator)
+// {
+// }
+
 utf8str PNSLR_UpperString(utf8str str, PNSLR_Allocator allocator)
 {
     utf8str copy = PNSLR_CloneString(str, allocator);
@@ -210,6 +214,48 @@ b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringCompa
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
     return StringEndsWithInternal((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
+}
+
+i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType)
+{
+    if (str.data == nil || str.count == 0 || substring.data == nil || substring.count == 0)
+    {
+        return -1; // invalid input
+    }
+
+    i32 strLen = (i32) str.count;
+    i32 subLen = (i32) substring.count;
+
+    for (i32 i = 0; i <= strLen - subLen; ++i)
+    {
+        if (AreStringsEqualInternal((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
+        {
+            return i; // found at index i
+        }
+    }
+
+    return -1; // not found
+}
+
+i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType)
+{
+    if (str.data == nil || str.count == 0 || substring.data == nil || substring.count == 0)
+    {
+        return -1; // invalid input
+    }
+
+    i32 strLen = (i32) str.count;
+    i32 subLen = (i32) substring.count;
+
+    for (i32 i = strLen - subLen; i >= 0; --i)
+    {
+        if (AreStringsEqualInternal((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
+        {
+            return i; // found at index i
+        }
+    }
+
+    return -1; // not found
 }
 
 #if PNSLR_WINDOWS

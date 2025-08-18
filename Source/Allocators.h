@@ -479,6 +479,14 @@ rawptr PNSLR_AllocatorFn_Stack(
         return (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_Arena, .data = &G_##name##InternalAllocatorInfo.arenaPayload}; \
     }
 
+#define PNSLR_INTERNAL_ALLOCATOR_INIT(name, varName) \
+    PNSLR_Allocator              varName           = Acquire##name##InternalAllocator(); \
+    PNSLR_ArenaAllocatorSnapshot varName##Snapshot = PNSLR_CaptureArenaAllocatorSnapshot(varName);
+
+#define PNSLR_INTERNAL_ALLOCATOR_RESET(name, varName) \
+    PNSLR_ArenaSnapshotError varName##SnapshotErr = PNSLR_RestoreArenaAllocatorSnapshot(&varName##Snapshot, CURRENT_LOC()); \
+    if (PNSLR_ArenaSnapshotError_None != varName##SnapshotErr) { FORCE_DBG_TRAP; } else { }
+
 //-skipreflect
 
 #endif // PNSLR_ALLOCATORS_H =======================================================
