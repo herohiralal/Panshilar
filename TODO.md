@@ -5,38 +5,39 @@ This file contains todo items for Panshilar library.
 ## Standard Library
 
 - [ ] String Functionality
-  - [ ] UTF-8 encoding/decoding
-  - [ ] UTF-16 encoding/decoding/conversions
+  - [x] UTF-8 encoding/decoding
+  - [x] UTF-16 conversions (windows-only)
+  - [ ] UTF-16 encoding/decoding
   - [x] Join
   - [ ] Compare*
   - [x] Equal*
-  - [ ] Contains*
+  - [x] Contains*
   - [x] BeginsWith*
   - [x] EndsWith*
-  - [ ] Replace*
+  - [x] Replace*
   - [x] ToLower*
   - [x] ToUpper*
-  - [ ] FindFromStart*
-  - [ ] FindFromEnd*
+  - [x] FindFromStart*
+  - [x] FindFromEnd*
   - [ ] SplitFromStart
   - [ ] SplitFromEnd
   - [ ] TrimFromStart
   - [ ] TrimFromEnd
 - [ ] Paths Functionality
-  - [ ] Join
-  - [ ] GetParent
-  - [ ] GetFileName
-  - [ ] GetExtension
+  - [x] Join
+  - [x] GetParent
+  - [x] GetFileName
+  - [x] GetExtension
 - [ ] StrConv
   - [ ] String <-> Boolean
   - [ ] String <-> Enum
   - [ ] String <-> Float
   - [ ] String <-> Int
-- [ ] Disk I/O Functionality
+- [x] Disk I/O Functionality
   - [x] Iterate
-  - [ ] WriteStream
-  - [ ] ReadStream
-  - [ ] Ensure File/Dir
+  - [x] WriteStream
+  - [x] ReadStream
+  - [x] Ensure File/Dir
 - [ ] Console Logging Functionality
   - [ ] Basic logging
   - [ ] Colors
@@ -48,7 +49,9 @@ This file contains todo items for Panshilar library.
   - [x] Semaphore
   - [ ] Channels
 - [ ] Process
-  - [ ] Run/WaitOn/Kill
+  - [ ] Run
+  - [ ] WaitOn
+  - [ ] Kill
 - [ ] Math functions
   - [ ] Vector Library
     - [ ] float2
