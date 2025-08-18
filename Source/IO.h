@@ -79,11 +79,13 @@ typedef struct PNSLR_File { rawptr handle; } PNSLR_File;
 
 /**
  * Opens a file for reading, optionally allow writing to the stream.
+ * If the file does not exist, this function will fail.
  */
 PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite);
 
 /**
  * Opens a file for writing (or appending), optionally allow reading from the stream.
+ * If the file does not exist, it will be created.
  */
 PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
 

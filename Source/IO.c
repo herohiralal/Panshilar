@@ -787,75 +787,115 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
 {
     if (!handle.handle) { return 0; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    i64 size = 0;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return size;
 }
 
 b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
 {
     if (!handle.handle || newPos < 0) { return false; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    b8 success = true;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
 }
 
 b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
 {
     if (!handle.handle || !dst.data || !dst.count) { return false; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    b8 success = true;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
 }
 
 b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
 {
     if (!handle.handle || !src.data || !src.count) { return false; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    b8 success = true;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
 }
 
 b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)
 {
     if (!handle.handle || newSize < 0) { return false; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    b8 success = true;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
 }
 
 b8 PNSLR_FlushFile(PNSLR_File handle)
 {
     if (!handle.handle) { return false; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    b8 success = true;
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
 }
 
 void PNSLR_CloseFileHandle(PNSLR_File handle)
 {
     if (!handle.handle) { return; }
 
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
     #if PNSLR_WINDOWS
 
     #elif PNSLR_UNIX
 
     #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
 }
