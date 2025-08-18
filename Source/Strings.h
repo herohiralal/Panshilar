@@ -140,6 +140,40 @@ i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringCo
  */
 utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType);
 
+// UTF-8 functionalities ===========================================================
+
+/**
+ * Result structure for UTF-8 rune encoding.
+ * Contains the encoded bytes and the number of bytes used.
+ */
+typedef struct PNSLR_EncodedRune { u8 data[4]; i32 length; } PNSLR_EncodedRune;
+
+/**
+ * Result structure for UTF-8 rune decoding.
+ * Contains the decoded rune and the number of bytes consumed.
+ */
+typedef struct PNSLR_DecodedRune { u32 rune; i32 length; } PNSLR_DecodedRune;
+
+/**
+ * Returns the number of bytes required to encode the given rune in UTF-8.
+ */
+i32 PNSLR_GetRuneLength(u32 r);
+
+/**
+ * Encodes a rune into UTF-8 byte sequence and returns the structure containing encoded bytes/length.
+ * Invalid runes or surrogates are replaced with the error rune (U+FFFD).
+ */
+PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
+
+/**
+ * Decodes a UTF-8 byte sequence into a rune.
+ * Returns error rune (U+FFFD) for invalid sequences.
+ *
+ * @param s Slice of UTF-8 bytes to decode
+ * @return Structure containing the decoded rune and bytes consumed
+ */
+PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
+
 // Windows-specific bs for UTF-16 conversions ======================================
 
 //+skipreflect
