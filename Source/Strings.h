@@ -36,12 +36,6 @@ utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator);
  */
 utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator allocator);
 
-/**
- * Replaces all occurrences of a substring within a string with a new value.
- * The returned string is allocated using the specified allocator.
- */
-// utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator);
-
 // Casing ==========================================================================
 
 /**
@@ -126,7 +120,7 @@ b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringCompa
  */
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType);
 
-// Search ==========================================================================
+// Advanced comparisons ============================================================
 
 /**
  * Searches for the first occurrence of a substring within a string.
@@ -139,6 +133,12 @@ i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringC
  * Returns the index of the last occurrence, or -1 if not found.
  */
 i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType);
+
+/**
+ * Replaces all occurrences of a substring within a string with a new value.
+ * The returned string is allocated using the specified allocator.
+ */
+utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType);
 
 // Windows-specific bs for UTF-16 conversions ======================================
 

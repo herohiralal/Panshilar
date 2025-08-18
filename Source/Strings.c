@@ -1,5 +1,7 @@
 #include "Strings.h"
 
+PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 1024);
+
 i32 PNSLR_GetCStringLength(cstring str)
 {
     if (str == nil) { return 0; }
@@ -50,10 +52,6 @@ utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator all
     PNSLR_Intrinsic_MemCopy(result.data + str1.count, str2.data, (i32) str2.count);
     return result;
 }
-
-// utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator)
-// {
-// }
 
 utf8str PNSLR_UpperString(utf8str str, PNSLR_Allocator allocator)
 {
@@ -256,6 +254,66 @@ i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringCo
     }
 
     return -1; // not found
+}
+
+utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType)
+{
+    if (!str.data || !str.count || !oldValue.data || !oldValue.count) { return (utf8str) {0}; }
+
+    utf8str output = {0};
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+
+    ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, nil);
+    i64             numReplacementIndices = 0;
+
+    i64 searchSpaceOffset = 0;
+    while (true)
+    {
+        utf8str searchSpace = (utf8str) {.count = (str.count - searchSpaceOffset), .data = (str.data + searchSpaceOffset)};
+        i32 idx = PNSLR_SearchFirstIndexInString(searchSpace, oldValue, comparisonType);
+        if (idx < 0 || (searchSpaceOffset + (i64) idx) >= str.count) { break; }
+
+        if (numReplacementIndices >= replacementIndices.count)
+        {
+            PNSLR_ResizeSlice(u32, replacementIndices, (numReplacementIndices + 64), false, internalAllocator, nil);
+        }
+
+        replacementIndices.data[numReplacementIndices] = (u32) (searchSpaceOffset + idx);
+        numReplacementIndices++;
+
+        searchSpaceOffset += (i64) idx + oldValue.count; // move past the found substring
+    }
+
+    if (numReplacementIndices == 0)
+    {
+        output = PNSLR_CloneString(str, allocator);
+    }
+    else
+    {
+        i64 newSize = str.count + ((newValue.count - oldValue.count) * numReplacementIndices);
+        output = PNSLR_MakeString(newSize, false, allocator, nil);
+        if (output.data && output.count)
+        {
+            i64 srcIndex = 0;
+            i64 dstIndex = 0;
+            for (i64 r = 0; r < numReplacementIndices; r++)
+            {
+                i64 repIndex = replacementIndices.data[r];
+                i64 chunkSize = repIndex - srcIndex;
+                for (i64 i = 0; i < chunkSize; i++) { output.data[dstIndex + i] = str.data[srcIndex + i]; }
+                dstIndex += chunkSize;
+                srcIndex += chunkSize;
+                for (i64 i = 0; i < newValue.count; i++) { output.data[dstIndex + i] = newValue.data[i]; }
+                dstIndex += newValue.count;
+                srcIndex += oldValue.count;
+            }
+            i64 remaining = str.count - srcIndex;
+            for (i64 i = 0; i < remaining; i++) { output.data[dstIndex + i] = str.data[srcIndex + i]; }
+        }
+    }
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    return output;
 }
 
 #if PNSLR_WINDOWS
