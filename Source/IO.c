@@ -367,7 +367,7 @@ b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWith
 
     utf8str parentTemp = {0}, selfNameWithExtensionTemp = {0}, selfNameTemp = {0}, extensionTemp = {0};
 
-    i32 searchLength = path.path.count - (isDirectory ? 1 : 0);
+    i32 searchLength = (i32) path.path.count - (isDirectory ? 1 : 0);
     i32 lastSlashIdx = PNSLR_SearchLastIndexInString((utf8str){.count = searchLength, .data = path.path.data}, PNSLR_STRING_LITERAL("/"), PNSLR_StringComparisonType_CaseSensitive);
 
     if (lastSlashIdx != -1)
@@ -873,7 +873,7 @@ b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst)
 
     #elif PNSLR_UNIX
 
-        ssize_t res = read((i32) (i64) handle.handle, dst.data, dst.count);
+        ssize_t res = read((i32) (i64) handle.handle, dst.data, (size_t) dst.count);
         success = (res == (ssize_t) dst.count);
 
     #endif
@@ -893,7 +893,7 @@ b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src)
 
     #elif PNSLR_UNIX
 
-        ssize_t res = write((i32) (i64) handle.handle, src.data, src.count);
+        ssize_t res = write((i32) (i64) handle.handle, src.data, (size_t) src.count);
         success = (res == (ssize_t) src.count);
 
     #endif
@@ -958,7 +958,7 @@ void PNSLR_CloseFileHandle(PNSLR_File handle)
     #endif
 }
 
-b8 PNSLR_ReadFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator)
+b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator)
 {
     if (!path.path.data || !path.path.count || !dst) { return false; }
     *dst = (ArraySlice(u8)) {0};
@@ -977,7 +977,7 @@ b8 PNSLR_ReadFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allo
     return success;
 }
 
-b8 PNSLR_WriteToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append)
+b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append)
 {
     if (!path.path.data || !path.path.count || !src.data || !src.count) { return false; }
 

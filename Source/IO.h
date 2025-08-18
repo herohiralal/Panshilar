@@ -134,11 +134,11 @@ void PNSLR_CloseFileHandle(PNSLR_File handle);
  * Reads a file fully end-to-end and stores in a buffer. Won't work if dst is nil.
  * Provided allocator is used for creating the buffer.
  */
-b8 PNSLR_ReadFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator);
+b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator);
 
 /**
  * Dump a bunch of data into a file. Optionally append it instead of overwriting.
  */
-b8 PNSLR_WriteToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append);
+b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append);
 
 #endif // PNSLR_IO_H ===============================================================
