@@ -807,23 +807,26 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
     return size;
 }
 
-b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos)
+b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative)
 {
-    if (!handle.handle || newPos < 0) { return false; }
+    if (!handle.handle) { return false; }
+
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     b8 success = true;
     #if PNSLR_WINDOWS
 
         LARGE_INTEGER li;
         li.QuadPart = newPos;
-        success = SetFilePointerEx((HANDLE) handle.handle, li, NULL, FILE_BEGIN);
+        success = SetFilePointerEx((HANDLE) handle.handle, li, NULL, relative ? FILE_CURRENT : FILE_BEGIN);
 
     #elif PNSLR_UNIX
 
-        success = (lseek((i32) (i64) handle.handle, newPos, SEEK_SET) != -1);
+        success = (lseek((i32) (i64) handle.handle, newPos, relative ? SEEK_CUR : SEEK_SET) != -1);
 
     #endif
 
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
     return success;
 }
 

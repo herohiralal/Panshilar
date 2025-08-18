@@ -96,8 +96,9 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
 
 /**
  * Seeks to a specific position in an opened file.
+ * If not relative, it's absolute from the start.
  */
-b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos);
+b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
 
 /**
  * Reads data from an opened file at the current position.
