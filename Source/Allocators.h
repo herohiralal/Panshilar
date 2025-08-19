@@ -356,8 +356,8 @@ rawptr PNSLR_AllocatorFn_Stack(
 #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
     (ArraySlice(ty)) \
     { \
-        (i64) (count__), \
-        (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        PNSLR_ARG_ASSIGN(count) (i64) (count__), \
+        PNSLR_ARG_ASSIGN(data ) (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
     }
 
 /**
@@ -384,8 +384,8 @@ rawptr PNSLR_AllocatorFn_Stack(
     { \
         slice = (ArraySlice(ty)) \
         { \
-            (i64) (newCount__), \
-            (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+            PNSLR_ARG_ASSIGN(count) (i64) (newCount__), \
+            PNSLR_ARG_ASSIGN(data ) (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
         }; \
     } while (false);
 

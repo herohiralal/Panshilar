@@ -25,10 +25,10 @@ typedef struct PNSLR_SourceCodeLocation
  */
 #define CURRENT_LOC() (PNSLR_SourceCodeLocation) \
 { \
-    PNSLR_STRING_LITERAL(__FILE__), \
-    __LINE__, \
-    0, /* not available but might get forwarded from somewhere */ \
-    PNSLR_STRING_LITERAL(__FUNCTION__) \
+    PNSLR_ARG_ASSIGN(file    )  PNSLR_STRING_LITERAL(__FILE__), \
+    PNSLR_ARG_ASSIGN(line    )  __LINE__, \
+    PNSLR_ARG_ASSIGN(column  )  0, /* not available but might get forwarded from somewhere */ \
+    PNSLR_ARG_ASSIGN(function) PNSLR_STRING_LITERAL(__FUNCTION__) \
 }
 
 //-skipreflect
