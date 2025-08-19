@@ -112,7 +112,7 @@ b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, TokenSpa
         startOfToken = tokenSpanInfo.newStartOfToken;
 
         b8 success = false;
-        if (tokenSpanInfo.span.type == TokenType_Invalid)
+        if (tokenSpanInfo.span.type != TokenType_Invalid)
         {
             if (outTokenSpan) *outTokenSpan = tokenSpanInfo.span;
             success = true;

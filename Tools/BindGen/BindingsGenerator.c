@@ -78,12 +78,11 @@ void BindGenMain(ArraySlice(utf8str) args)
 
     // b8        skipping  = false;
     TokenSpan tokenSpan = {0};
-    while (DequeueNextTokenSpan(&pnslrFileIterator, true, &tokenSpan))
+    while (DequeueNextTokenSpan(&pnslrFileIterator, false, &tokenSpan))
     {
         utf8str tokenStr     = (utf8str) {.count = tokenSpan.end - tokenSpan.start, .data = pnslrFileContents.data + tokenSpan.start};
-        if (!tokenStr.count || !tokenStr.data) continue;
         utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
-        printf("token: [%.*s]\n", (i32) tokenTypeStr.count, tokenTypeStr.data);
+        printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
         for (i32 i = 0; i < (32 - (i32) tokenTypeStr.count); ++i) { printf(" "); }
         printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
     }
