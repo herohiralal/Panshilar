@@ -1,7 +1,7 @@
 #ifndef PNSLR_SYNC_PRIMITIVES_H // =================================================
 #define PNSLR_SYNC_PRIMITIVES_H
-
 #include "__Prelude.h"
+EXTERN_C_BEGIN
 
 // Mutex ===========================================================================
 
@@ -186,4 +186,5 @@ void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
  */
 void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
 
+EXTERN_C_END
 #endif // PNSLR_SYNC_PRIMITIVES_H ==================================================

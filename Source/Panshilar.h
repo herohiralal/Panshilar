@@ -1,6 +1,5 @@
 #ifndef PNSLR_MAIN_HEADER_H // =====================================================
 #define PNSLR_MAIN_HEADER_H
-
 #include "__Prelude.h"
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"   // technically included by prelude
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h" // technically included by prelude
@@ -13,6 +12,7 @@
 #include "IO.h"
 #include "Console.h"
 #include "Process.h"
+EXTERN_C_BEGIN
 
 //+skipreflect
 
@@ -39,4 +39,5 @@
 
 //-skipreflect
 
+EXTERN_C_END
 #endif // PNSLR_MAIN_HEADER_H ======================================================

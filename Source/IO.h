@@ -1,7 +1,7 @@
 #ifndef PNSLR_IO_H // ==============================================================
 #define PNSLR_IO_H
-
 #include "__Prelude.h"
+EXTERN_C_BEGIN
 
 /**
  * Represents a normalised path.
@@ -151,4 +151,5 @@ b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_All
  */
 b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append);
 
+EXTERN_C_END
 #endif // PNSLR_IO_H ===============================================================

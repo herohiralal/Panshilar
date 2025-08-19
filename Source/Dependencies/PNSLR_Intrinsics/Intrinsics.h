@@ -1,7 +1,3 @@
-#ifdef __cplusplus
-    #error "C++ is not supported for these headers. Please use one of the auto-generated headers."
-#endif
-
 /**
  * The goal of this file is to provide a set of intrinsic functions that are yoinked
  * from the standard library, so that we do not have to directly include the
@@ -14,7 +10,12 @@
 //+skipreflect
 // Primitives ======================================================================
 
-typedef _Bool               b8;
+#if !defined(__cplusplus)
+    typedef _Bool           b8;
+#else
+    typedef bool            b8;
+#endif
+
 typedef unsigned int        b32; // mainly for interop purposes with certain other libraries
 typedef unsigned char       u8;
 typedef unsigned short int  u16;
@@ -32,9 +33,11 @@ typedef char*               cstring;
 typedef void*               rawptr;
 
 #undef nil
-#undef bool
-#undef false
-#undef true
+#if !defined(__cplusplus)
+    #undef bool
+    #undef false
+    #undef true
+#endif
 
 #define nil   ((rawptr) 0)
 #define false ((b8)     0)
@@ -124,36 +127,67 @@ DECLARE_ARRAY_SLICE(utf8str);
     #error "Required features not supported by this compiler."
 #endif
 
-#if PNSLR_MSVC
+#ifdef __cplusplus
 
-    #define inline                  __inline
-    #define alignas(x)              __declspec(align(x))
-    #define alignof(type)           __alignof(type)
-    #define deprecated              __declspec(deprecated)
-    #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
+    #if (PNSLR_CLANG || PNSLR_GCC)
+        #define thread_local           thread_local
+    #endif
 
-#elif (PNSLR_CLANG || PNSLR_GCC)
+    #define inline                     inline
+    #define alignas(x)                 alignas(x)
+    #define alignof(type)              alignof(type)
+    #define deprecated                 [[deprecated]]
 
-    #define thread_local            __thread
-    #define inline                  __inline__
-    #define alignas(x)              __attribute__((aligned(x)))
-    #define alignof(type)           __alignof__(type)
-    #define deprecated              __attribute__((deprecated))
+    #if PNSLR_MSVC
+        #define offsetof(type, member) ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+    #endif
+
+    #define static_assert              static_assert
 
 #else
-    #error "Required features not supported by this compiler."
-#endif
 
-#define static_assert _Static_assert
+    #if PNSLR_MSVC
+
+        #define inline                  __inline
+        #define alignas(x)              __declspec(align(x))
+        #define alignof(type)           __alignof(type)
+        #define deprecated              __declspec(deprecated)
+        #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
+
+    #elif (PNSLR_CLANG || PNSLR_GCC)
+
+        #define thread_local            __thread
+        #define inline                  __inline__
+        #define alignas(x)              __attribute__((aligned(x)))
+        #define alignof(type)           __alignof__(type)
+        #define deprecated              __attribute__((deprecated))
+
+    #else
+        #error "Required features not supported by this compiler."
+    #endif
+
+    #define static_assert _Static_assert
+
+#endif
 
 #define ENUM_START(name, backingType)       typedef backingType name;
 #define ENUM_FLAGS_START(name, backingType) typedef backingType name;
 #define ENUM_END
 #define PNSLR_PTR_SIZE                      8
 
+#ifdef __cplusplus
+    #define EXTERN_C_BEGIN extern "C" {
+    #define EXTERN_C_END   }
+#else
+    #define EXTERN_C_BEGIN
+    #define EXTERN_C_END
+#endif
+
 //-skipreflect
 
 // Memory Management ===============================================================
+
+EXTERN_C_BEGIN
 
 /**
  * Allocate memory with the specified alignment and size.
@@ -179,5 +213,7 @@ void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size);
  * Copy a block of memory from source to destination, handling overlapping regions.
  */
 void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size);
+
+EXTERN_C_END
 
 #endif // PNSLR_INTRINSICS_H =======================================================

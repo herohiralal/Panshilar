@@ -1,8 +1,8 @@
 #ifndef PNSLR_STRINGS_H // =========================================================
 #define PNSLR_STRINGS_H
-
 #include "__Prelude.h"
 #include "Allocators.h"
+EXTERN_C_BEGIN
 
 // Basics/Conversions ==============================================================
 
@@ -195,4 +195,5 @@ utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(utf16ch) utf16str, PNSLR_Alloc
 
 //-skipreflect
 
+EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================

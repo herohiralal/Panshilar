@@ -1,7 +1,7 @@
 #ifndef PNSLR_RUNTIME_H // =========================================================
 #define PNSLR_RUNTIME_H
-
 #include "__Prelude.h"
+EXTERN_C_BEGIN
 
 /**
  * Defines the source code location for debugging purposes.
@@ -29,4 +29,5 @@ typedef struct PNSLR_SourceCodeLocation
 
 //-skipreflect
 
+EXTERN_C_END
 #endif // PNSLR_RUNTIME_H ==========================================================

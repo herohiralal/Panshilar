@@ -1,7 +1,3 @@
-#ifdef __cplusplus
-    #error "C++ is not supported for these headers. Please use one of the auto-generated headers."
-#endif
-
 #ifndef PNSLR_COMPILER_INTRINSICS_H // =============================================
 #define PNSLR_COMPILER_INTRINSICS_H
 

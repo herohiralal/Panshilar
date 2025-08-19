@@ -1,8 +1,8 @@
 #ifndef PNSLR_ALLOCATORS_H // ======================================================
 #define PNSLR_ALLOCATORS_H
-
 #include "__Prelude.h"
 #include "Runtime.h"
+EXTERN_C_BEGIN
 
 // Allocator Declaration ===========================================================
 
@@ -489,4 +489,5 @@ rawptr PNSLR_AllocatorFn_Stack(
 
 //-skipreflect
 
+EXTERN_C_END
 #endif // PNSLR_ALLOCATORS_H =======================================================
