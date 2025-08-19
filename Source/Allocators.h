@@ -350,15 +350,27 @@ rawptr PNSLR_AllocatorFn_Stack(
         } \
     } while (false);
 
-/**
- * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
- */
-#define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
-    (ArraySlice(ty)) \
-    { \
-        PNSLR_ARG_ASSIGN(count) (i64) (count__), \
-        PNSLR_ARG_ASSIGN(data ) (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
-    }
+#ifdef __cplusplus
+    /**
+     * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
+        ArraySlice(ty) \
+        { \
+            (i64) (count__), \
+            (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        }
+#else
+    /**
+     * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
+        (ArraySlice(ty)) \
+        { \
+            .count = (i64) (count__), \
+            .data  = (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+        }
+#endif
 
 /**
  * Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator.
@@ -375,19 +387,36 @@ rawptr PNSLR_AllocatorFn_Stack(
         } \
     } while (false);
 
-/**
- * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
- * Expects a reassignable variable.
- */
-#define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
-    do \
-    { \
-        slice = (ArraySlice(ty)) \
+
+#ifdef __cplusplus
+    /**
+     * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     * Expects a reassignable variable.
+     */
+    #define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
+        do \
         { \
-            PNSLR_ARG_ASSIGN(count) (i64) (newCount__), \
-            PNSLR_ARG_ASSIGN(data ) (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
-        }; \
-    } while (false);
+            slice = ArraySlice(ty) \
+            { \
+                (i64) (newCount__), \
+                (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+            }; \
+        } while (false);
+#else
+    /**
+     * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     * Expects a reassignable variable.
+     */
+    #define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
+        do \
+        { \
+            slice = (ArraySlice(ty)) \
+            { \
+                .count = (i64) (newCount__), \
+                .data  = (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__) \
+            }; \
+        } while (false);
+#endif
 
 /**
  * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.

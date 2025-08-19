@@ -20,16 +20,33 @@ typedef struct PNSLR_SourceCodeLocation
 
 //+skipreflect
 
-/**
- * Get the current source code location.
- */
-#define CURRENT_LOC() (PNSLR_SourceCodeLocation) \
-{ \
-    PNSLR_ARG_ASSIGN(file    )  PNSLR_STRING_LITERAL(__FILE__), \
-    PNSLR_ARG_ASSIGN(line    )  __LINE__, \
-    PNSLR_ARG_ASSIGN(column  )  0, /* not available but might get forwarded from somewhere */ \
-    PNSLR_ARG_ASSIGN(function) PNSLR_STRING_LITERAL(__FUNCTION__) \
-}
+#ifdef __cplusplus
+
+    /**
+     * Get the current source code location.
+     */
+    #define CURRENT_LOC() PNSLR_SourceCodeLocation \
+    { \
+        PNSLR_STRING_LITERAL(__FILE__), \
+        __LINE__, \
+        0, /* not available but might get forwarded from somewhere */ \
+        PNSLR_STRING_LITERAL(__FUNCTION__) \
+    }
+
+#else
+
+    /**
+     * Get the current source code location.
+     */
+    #define CURRENT_LOC() (PNSLR_SourceCodeLocation) \
+    { \
+        .file     = PNSLR_STRING_LITERAL(__FILE__), \
+        .line     = __LINE__, \
+        .column   = 0, /* not available but might get forwarded from somewhere */ \
+        .function = PNSLR_STRING_LITERAL(__FUNCTION__) \
+    }
+
+#endif
 
 //-skipreflect
 
