@@ -33,11 +33,11 @@ void BindGenMain(ArraySlice(utf8str) args)
         }
         #endif
 
-        if (!args.count) { printf("No args to extract dir path from."); PNSLR_ExitProcess(1); return; }
+        if (!args.count) { printf("No args to extract dir path from."); FORCE_DBG_TRAP; }
 
         utf8str dirRaw = args.data[0];
         b8 firstArgIsExecutable = PNSLR_StringEndsWith(dirRaw, executableName, PNSLR_StringComparisonType_CaseInsensitive);
-        if (!firstArgIsExecutable) { printf("First argument is not the executable name."); PNSLR_ExitProcess(1); return; }
+        if (!firstArgIsExecutable) { printf("First argument is not the executable name."); FORCE_DBG_TRAP; }
 
         dirRaw.count -= executableName.count;
         dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_DEFAULT_HEAP_ALLOCATOR);
@@ -47,7 +47,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     PNSLR_Allocator appArena = {0};
     {
         appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 64 * 1024 * 1024 /* 64 MiB */, CURRENT_LOC(), nil);
-        if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); PNSLR_ExitProcess(1); return; }
+        if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
     PNSLR_Path srcDir    = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
@@ -56,16 +56,14 @@ void BindGenMain(ArraySlice(utf8str) args)
     if (!PNSLR_PathExists(pnslrFile, PNSLR_PathExistsCheckType_File))
     {
         printf("Entry file doesn't exist.");
-        PNSLR_ExitProcess(1);
-        return;
+        FORCE_DBG_TRAP;
     }
 
     ArraySlice(u8) pnslrFileContents;
     if (!PNSLR_ReadAllContentsFromFile(pnslrFile, &pnslrFileContents, appArena))
     {
         printf("Failed to read entry file.");
-        PNSLR_ExitProcess(1);
-        return;
+        FORCE_DBG_TRAP;
     }
 
     printf("contents: %.*s\n", (i32) pnslrFileContents.count, pnslrFileContents.data);
