@@ -156,7 +156,7 @@ typedef void*               rawptr;
     template <typename T> struct ArraySlice { i64 count; T* data; };
 
     #define DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice_##ty; \
+        typedef struct { i64 count; ty* data; } ArraySlice(ty); \
 
     #define DECLARE_ARRAY_SLICE(ty) \
         DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
@@ -175,7 +175,7 @@ typedef void*               rawptr;
 #else
 
     #define DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice_##ty;
+        typedef struct { i64 count; ty* data; } ArraySlice(ty);
 
     #define DECLARE_ARRAY_SLICE(ty) \
         DECLARE_ARRAY_SLICE_TYPEDEF(ty)
