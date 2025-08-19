@@ -1,8 +1,8 @@
 #include "Lexer.h"
 
-static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
+static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
 
-b8 PNSLR_DequeueNextLineSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd)
+b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd)
 {
     i32 outLineStartAlt = 0, outLineEndAlt = 0;
     outLineStart = (outLineStart) ? outLineStart : &outLineStartAlt;
@@ -39,15 +39,15 @@ b8 PNSLR_DequeueNextLineSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, i32* outL
     return false;
 }
 
-b8 PNSLR_DequeueNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan)
 {
-    return PNSLR_IterateNextTokenSpan(file, true, ignoreSpace, outTokenSpan);
+    return IterateNextTokenSpan(file, true, ignoreSpace, outTokenSpan);
 }
 
-b8 PNSLR_PeekNextToken(PNSLR_FileIterInfo* file, b8 ignoreSpace, utf8str* outToken)
+b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken)
 {
-    PNSLR_TokenSpan span = {0};
-    if (!PNSLR_PeekNextTokenSpan(file, ignoreSpace, &span))
+    TokenSpan span = {0};
+    if (!PeekNextTokenSpan(file, ignoreSpace, &span))
     {
         if (outToken) *outToken = (utf8str) {0};
         return false;
@@ -57,31 +57,31 @@ b8 PNSLR_PeekNextToken(PNSLR_FileIterInfo* file, b8 ignoreSpace, utf8str* outTok
     return true;
 }
 
-b8 PNSLR_PeekNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+b8 PeekNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan)
 {
-    return PNSLR_IterateNextTokenSpan(file, false, ignoreSpace, outTokenSpan);
+    return IterateNextTokenSpan(file, false, ignoreSpace, outTokenSpan);
 }
 
-b8 PNSLR_IterateNextTokenSpan(PNSLR_FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, TokenSpan* outTokenSpan)
 {
     i32 i = file->i;
     i32 startOfToken = file->startOfToken;
 
     while (true)
     {
-        PNSLR_TokenSpanInfo tokenSpanInfo = PNSLR_GetCurrentTokenSpanInfo(file->contents, i, startOfToken, ignoreSpace);
+        TokenSpanInfo tokenSpanInfo = GetCurrentTokenSpanInfo(file->contents, i, startOfToken, ignoreSpace);
         i += tokenSpanInfo.iterateFwd;
         startOfToken = tokenSpanInfo.newStartOfToken;
 
         b8 success = false;
-        if (tokenSpanInfo.span.type == PNSLR_TokenType_Invalid)
+        if (tokenSpanInfo.span.type == TokenType_Invalid)
         {
             if (outTokenSpan) *outTokenSpan = tokenSpanInfo.span;
             success = true;
         }
         else if (i >= file->contents.count)
         {
-            if (outTokenSpan) *outTokenSpan = (PNSLR_TokenSpan) {.start = file->contents.count - 1, .end = file->contents.count, .type = PNSLR_TokenType_Invalid};
+            if (outTokenSpan) *outTokenSpan = (TokenSpan) {.start = (i32) file->contents.count - 1, .end = (i32) file->contents.count, .type = TokenType_Invalid};
             success = false;
         }
         else { continue; }
@@ -104,9 +104,9 @@ b8 PNSLR_IterateNextTokenSpan(PNSLR_FileIterInfo* file, b8 moveFwd, b8 ignoreSpa
         widthVarName = tempXXX##__LINE__.length; \
     } while (false); \
 
-static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace)
+static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace)
 {
-    PNSLR_TokenSpanInfo retOut = {0};
+    TokenSpanInfo retOut = {0};
 
     i32 fileSize = (i32) fileContents.count;
     u32 r; i32 width;
@@ -121,14 +121,14 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         _unused -= _unused;
     }
 
-    if (PNSLR_IsSpace(r))
+    if (IsSpace(r))
     {
         if (!ignoreSpace)
         {
             // ignore carriage return
             if (r == '\r')
             {
-                retOut.span.type       = PNSLR_TokenType_Invalid;
+                retOut.span.type       = TokenType_Invalid;
                 retOut.iterateFwd      = width;
                 retOut.newStartOfToken = startOfToken + width;
                 return retOut;
@@ -137,8 +137,8 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             // send new line or tab as individuala tokens
             if (r == '\n' || r == '\t')
             {
-                if (r == '\n')      { retOut.span.type = PNSLR_TokenType_NewLine; }
-                else if (r == '\t') { retOut.span.type = PNSLR_TokenType_Tab;     }
+                if (r == '\n')      { retOut.span.type = TokenType_NewLine; }
+                else if (r == '\t') { retOut.span.type = TokenType_Tab;     }
                 else                { printf("unimplemented"); FORCE_DBG_TRAP;    }
 
                 retOut.span.start      = startOfToken;
@@ -156,7 +156,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
                     LEXER_DECODE_RUNE(r2, w2, fileContents, j);
                     if (r2 != ' ')
                     {
-                        retOut.span.type       = PNSLR_TokenType_Spaces;
+                        retOut.span.type       = TokenType_Spaces;
                         retOut.span.start      = startOfToken;
                         retOut.span.end        = j;
                         retOut.iterateFwd      = j - i;
@@ -166,7 +166,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
                 }
 
                 // reached end of file but space didn't finish
-                retOut.span.type       = PNSLR_TokenType_Spaces;
+                retOut.span.type       = TokenType_Spaces;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = fileSize;
                 retOut.iterateFwd      = fileSize - i;
@@ -175,7 +175,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             }
         }
 
-        retOut.span.type       = PNSLR_TokenType_Invalid;
+        retOut.span.type       = TokenType_Invalid;
         retOut.iterateFwd      = width;
         retOut.newStartOfToken = startOfToken + width;
         return retOut;
@@ -190,7 +190,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             if (r2 == '\n')
             {
-                retOut.span.type       = PNSLR_TokenType_Comment;
+                retOut.span.type       = TokenType_Comment;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2;
                 retOut.iterateFwd      = j + w2 - i;
@@ -200,7 +200,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         }
 
         // reached the end of file but comment didn't finish
-        retOut.span.type       = PNSLR_TokenType_Comment;
+        retOut.span.type       = TokenType_Comment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -227,7 +227,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
 
             if (r2 == '*' && !r2IsLastRune && r3 == '/')
             {
-                retOut.span.type       = PNSLR_TokenType_Comment;
+                retOut.span.type       = TokenType_Comment;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2 + PNSLR_GetRuneLength('/');
                 retOut.iterateFwd      = j + w2 + PNSLR_GetRuneLength('/') - i;
@@ -237,7 +237,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         }
 
         // reached end of file but comment didn't finish
-        retOut.span.type       = PNSLR_TokenType_IncompleteComment;
+        retOut.span.type       = TokenType_IncompleteComment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -255,7 +255,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             if (r2 == '"' && prevRune != '\\')
             {
-                retOut.span.type       = PNSLR_TokenType_String;
+                retOut.span.type       = TokenType_String;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2;
                 retOut.iterateFwd      = j + w2 - i;
@@ -267,21 +267,21 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         }
 
         // reaached end of file but string didn't finish
-        retOut.span.type        = PNSLR_TokenType_IncompleteString;
-        retOut.span.start       = startOfToken;
-        retOut.span.end         = fileSize;
+        retOut.span.type       = TokenType_IncompleteString;
+        retOut.span.start      = startOfToken;
+        retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
         retOut.newStartOfToken = fileSize;
         return retOut;
     }
 
-    if (PNSLR_IsSymbol(r))
+    if (IsSymbol(r))
     {
         if (r == '-')
         {
-            u32 nextRune = 0;
-            { i32 _unused; LEXER_DECODE_RUNE(nextRune, _unused, fileContents, (i + width)); _unused -= _unused; }
-            if (nextRune < '0' || nextRune > '9')
+            u32 nextRune2 = 0;
+            { i32 _unused; LEXER_DECODE_RUNE(nextRune2, _unused, fileContents, (i + width)); _unused -= _unused; }
+            if (nextRune2 < '0' || nextRune2 > '9')
             {
                 // do nothing, '-' will be returned as a single token
             }
@@ -300,7 +300,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
                     {
                         if (hasDecimalPoint) // multiple decimal pts??
                         {
-                            retOut.span.type       = PNSLR_TokenType_Float;
+                            retOut.span.type       = TokenType_Float;
                             retOut.span.start      = startOfToken;
                             retOut.span.end        = j;
                             retOut.iterateFwd      = (j - i);
@@ -314,7 +314,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
 
                     if (!((r2 >= '0' && r2 <= '9') || splCharValid))
                     {
-                        retOut.span.type       = hasDecimalPoint ? PNSLR_TokenType_Float : PNSLR_TokenType_Integer;
+                        retOut.span.type       = hasDecimalPoint ? TokenType_Float : TokenType_Integer;
                         retOut.span.start      = startOfToken;
                         retOut.span.end        = j;
                         retOut.iterateFwd      = (j - i);
@@ -324,7 +324,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
                 }
 
                 // reached end of file but number didn't finish
-                retOut.span.type       = hasDecimalPoint ? PNSLR_TokenType_Float : PNSLR_TokenType_Integer;
+                retOut.span.type       = hasDecimalPoint ? TokenType_Float : TokenType_Integer;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = fileSize;
                 retOut.iterateFwd      = (fileSize - i);
@@ -335,15 +335,15 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
 
         switch (r)
         {
-            case '+': retOut.span.type = PNSLR_TokenType_PlusSymbol;     break;
-            case '-': retOut.span.type = PNSLR_TokenType_MinusSymbol;    break;
-            case '*': retOut.span.type = PNSLR_TokenType_AsteriskSymbol; break;
-            case '$': retOut.span.type = PNSLR_TokenType_DollarSymbol;   break;
-            case '~': retOut.span.type = PNSLR_TokenType_TildeSymbol;    break;
-            case ':': retOut.span.type = PNSLR_TokenType_ColonSymbol;    break;
-            case ',': retOut.span.type = PNSLR_TokenType_CommaSymbol;    break;
-            case '.': retOut.span.type = PNSLR_TokenType_DotSymbol;      break;
-            default:  retOut.span.type = PNSLR_TokenType_Invalid;        break;
+            case '+': retOut.span.type = TokenType_PlusSymbol;     break;
+            case '-': retOut.span.type = TokenType_MinusSymbol;    break;
+            case '*': retOut.span.type = TokenType_AsteriskSymbol; break;
+            case '$': retOut.span.type = TokenType_DollarSymbol;   break;
+            case '~': retOut.span.type = TokenType_TildeSymbol;    break;
+            case ':': retOut.span.type = TokenType_ColonSymbol;    break;
+            case ',': retOut.span.type = TokenType_CommaSymbol;    break;
+            case '.': retOut.span.type = TokenType_DotSymbol;      break;
+            default:  retOut.span.type = TokenType_Invalid;        break;
         }
 
         retOut.span.start      = startOfToken;
@@ -368,7 +368,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             {
                 if (hasDecimalPt)
                 {
-                    retOut.span.type       = PNSLR_TokenType_Float;
+                    retOut.span.type       = TokenType_Float;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -384,7 +384,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             {
                 if (isHex)
                 {
-                    retOut.span.type      = PNSLR_TokenType_HexNumber;
+                    retOut.span.type       = TokenType_HexNumber;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -394,7 +394,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
 
                 if (hasDecimalPt) // multiple decimal pts ??
                 {
-                    retOut.span.type       = PNSLR_TokenType_Float;
+                    retOut.span.type       = TokenType_Float;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -410,15 +410,15 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
             {
                 if (isHex)
                 {
-                    retOut.span.type   = PNSLR_TokenType_HexNumber;
+                    retOut.span.type   = TokenType_HexNumber;
                 }
                 else if (hasDecimalPt)
                 {
-                    retOut.span.type   = PNSLR_TokenType_Float;
+                    retOut.span.type   = TokenType_Float;
                 }
                 else
                 {
-                    retOut.span.type   = PNSLR_TokenType_Integer;
+                    retOut.span.type   = TokenType_Integer;
                 }
 
                 retOut.span.start      = startOfToken;
@@ -432,15 +432,15 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         // reached end of file but number didn't finish
         if (isHex)
         {
-            retOut.span.type   = PNSLR_TokenType_HexNumber;
+            retOut.span.type   = TokenType_HexNumber;
         }
         else if (hasDecimalPt)
         {
-            retOut.span.type   = PNSLR_TokenType_Float;
+            retOut.span.type   = TokenType_Float;
         }
         else
         {
-            retOut.span.type   = PNSLR_TokenType_Integer;
+            retOut.span.type   = TokenType_Integer;
         }
 
         retOut.span.start      = startOfToken;
@@ -450,29 +450,29 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         return retOut;
     }
 
-    if (!isLastRune && (PNSLR_IsSymbol(nextRune) || PNSLR_IsSpace(nextRune)))
+    if (!isLastRune && (IsSymbol(nextRune) || IsSpace(nextRune)))
     {
         utf8str currentSpanStr = (utf8str) {.data = fileContents.data + startOfToken, .count = (i64) (i + width - startOfToken)};
 
         if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("true"), PNSLR_StringComparisonType_CaseSensitive))
         {
-            retOut.span.type = PNSLR_TokenType_BooleanTrue;
+            retOut.span.type = TokenType_BooleanTrue;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("false"), PNSLR_StringComparisonType_CaseSensitive))
         {
-            retOut.span.type = PNSLR_TokenType_BooleanFalse;
+            retOut.span.type = TokenType_BooleanFalse;
         }
-        else if (PNSLR_IsValidHexNumber(currentSpanStr))
+        else if (IsValidHexNumber(currentSpanStr))
         {
-            retOut.span.type = PNSLR_TokenType_IdentifierButCouldBeHexNumber;
+            retOut.span.type = TokenType_IdentifierButCouldBeHexNumber;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("_"), PNSLR_StringComparisonType_CaseSensitive))
         {
-            retOut.span.type = PNSLR_TokenType_UnderscoreSymbol;
+            retOut.span.type = TokenType_UnderscoreSymbol;
         }
         else
         {
-            retOut.span.type = PNSLR_TokenType_Identifier;
+            retOut.span.type = TokenType_Identifier;
         }
 
         retOut.span.start      = startOfToken;
@@ -482,7 +482,7 @@ static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileCont
         return retOut;
     }
 
-    retOut.span.type       = PNSLR_TokenType_Invalid;
+    retOut.span.type       = TokenType_Invalid;
     retOut.iterateFwd      = width;
     retOut.newStartOfToken = startOfToken;
     return retOut;

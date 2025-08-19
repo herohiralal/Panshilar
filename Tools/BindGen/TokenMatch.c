@@ -1,6 +1,6 @@
 #include "TokenMatch.h"
 
-b8 PNSLR_IsSpace(u32 r)
+b8 IsSpace(u32 r)
 {
     if (r <= 0xFF)
     {
@@ -36,7 +36,7 @@ b8 PNSLR_IsSpace(u32 r)
     }
 }
 
-b8 PNSLR_IsSymbol(u32 r)
+b8 IsSymbol(u32 r)
 {
     if (r <= 0xFF)
     {
@@ -82,7 +82,7 @@ b8 PNSLR_IsSymbol(u32 r)
     return false;
 }
 
-b8 PNSLR_IsValidName(utf8str str)
+b8 IsValidName(utf8str str)
 {
     if (str.count == 0) { return false; }
 
@@ -111,7 +111,7 @@ b8 PNSLR_IsValidName(utf8str str)
     return true;
 }
 
-b8 PNSLR_IsValidString(utf8str str)
+b8 IsValidStringToken(utf8str str)
 {
     if (str.count < 2) { return false; }
 
@@ -120,7 +120,7 @@ b8 PNSLR_IsValidString(utf8str str)
     return true;
 }
 
-b8 PNSLR_IsValidNumber(utf8str str)
+b8 IsValidNumber(utf8str str)
 {
     if (str.count == 0) { return false; }
 
@@ -176,7 +176,7 @@ b8 PNSLR_IsValidNumber(utf8str str)
     return hasAtLeastOneDigitBeforeDot && (!hasDot || hasAtLeastOneDigitAfterDot);
 }
 
-b8 PNSLR_IsValidHexNumber(utf8str str)
+b8 IsValidHexNumber(utf8str str)
 {
     i64 pos = 0;
     while (pos < str.count)
