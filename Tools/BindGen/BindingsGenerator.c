@@ -72,7 +72,21 @@ void BindGenMain(ArraySlice(utf8str) args)
         FORCE_DBG_TRAP;
     }
 
-    printf("contents: %.*s\n", (i32) pnslrFileContents.count, pnslrFileContents.data);
+    FileIterInfo pnslrFileIterator = {0};
+    pnslrFileIterator.pathRel      = pnslrFileName;
+    pnslrFileIterator.contents     = pnslrFileContents;
+
+    // b8        skipping  = false;
+    TokenSpan tokenSpan = {0};
+    while (DequeueNextTokenSpan(&pnslrFileIterator, true, &tokenSpan))
+    {
+        utf8str tokenStr     = (utf8str) {.count = tokenSpan.end - tokenSpan.start, .data = pnslrFileContents.data + tokenSpan.start};
+        if (!tokenStr.count || !tokenStr.data) continue;
+        utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
+        printf("token: [%.*s]\n", (i32) tokenTypeStr.count, tokenTypeStr.data);
+        for (i32 i = 0; i < (32 - (i32) tokenTypeStr.count); ++i) { printf(" "); }
+        printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+    }
 }
 
 PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
