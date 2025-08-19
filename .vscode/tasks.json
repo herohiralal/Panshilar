@@ -26,7 +26,8 @@
                 "command": "${workspaceFolder}/build.sh"
             },
             "args": [
-                "-tests"
+                "-tests",
+                "-rebind"
             ],
             "problemMatcher": [],
             "group": {

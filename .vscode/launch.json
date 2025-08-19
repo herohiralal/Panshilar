@@ -18,6 +18,24 @@
                 "programOutput": true,
                 "threadExit": true
             }
+        },
+        {
+            "name": "Launch Bindings Generator",
+            "preLaunchTask": "Build All Tools (All Platforms)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Binaries/BindingsGenerator-Windows-X64",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "logging": {
+                "engineLogging": false,
+                "moduleLoad": false,
+                "exceptions": true,
+                "processExit": true,
+                "programOutput": true,
+                "threadExit": true
+            }
         }
     ]
 }
