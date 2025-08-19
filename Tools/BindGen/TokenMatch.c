@@ -91,7 +91,7 @@ b8 PNSLR_IsValidName(utf8str str)
 
     while (pos < str.count)
     {
-        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){str.data + pos, str.count - pos});
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
         u32 r = decoded.rune;
@@ -134,7 +134,7 @@ b8 PNSLR_IsValidNumber(utf8str str)
 
     while (pos < str.count)
     {
-        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){str.data + pos, str.count - pos});
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
         u32 r = decoded.rune;
