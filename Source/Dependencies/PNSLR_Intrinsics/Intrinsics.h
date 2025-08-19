@@ -33,15 +33,18 @@ typedef char*               cstring;
 typedef void*               rawptr;
 
 #undef nil
-#if !defined(__cplusplus)
+#ifndef __cplusplus
+
     #undef bool
     #undef false
     #undef true
+
+    #define false ((b8)     0)
+    #define true  ((b8)     1)
+
 #endif
 
-#define nil   ((rawptr) 0)
-#define false ((b8)     0)
-#define true  ((b8)     1)
+#define     nil   ((rawptr) 0)
 
 #define U8_MIN  ((u8)  (0))
 #define U8_MAX  ((u8)  (255))
@@ -114,12 +117,29 @@ typedef ArraySlice(utf8ch) utf8str;
 DECLARE_ARRAY_SLICE(utf8str);
 
 // Create a utf8str from a string literal.
-#define PNSLR_STRING_LITERAL(str) \
-    (utf8str) \
-    { \
-        .count = sizeof(str) - 1, \
-        .data = (utf8ch*) str \
+#ifndef __cplusplus
+
+    #define PNSLR_STRING_LITERAL(str) \
+        (utf8str) \
+        { \
+            .count = sizeof(str) - 1, \
+            .data = (utf8ch*) str \
+        }
+
+#else
+
+    inline utf8str PNSLR_MakeStringLiteral(const char* str, i64 length)
+    {
+        utf8str output;
+        output.count = length;
+        output.data = reinterpret_cast<utf8ch*>(const_cast<char*>(str));
+        return output;
     }
+
+    #define PNSLR_STRING_LITERAL(str) \
+        PNSLR_MakeStringLiteral(str, sizeof(str) - 1)
+
+#endif
 
 // Macros ==========================================================================
 
@@ -148,19 +168,19 @@ DECLARE_ARRAY_SLICE(utf8str);
 #ifdef __cplusplus
 
     #if (PNSLR_CLANG || PNSLR_GCC)
-        #define thread_local           thread_local
+        // thread_local is used as-is
     #endif
 
-    #define inline                     inline
-    #define alignas(x)                 alignas(x)
-    #define alignof(type)              alignof(type)
+    // inline is used as-is
+    // alignas is used as-is
+    // alignof is used as-is
     #define deprecated                 [[deprecated]]
 
     #if PNSLR_MSVC
         #define offsetof(type, member) ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
     #endif
 
-    #define static_assert              static_assert
+    // static_assert is used as-is
 
 #else
 
