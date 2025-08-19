@@ -226,13 +226,23 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         {
             u32 r2 = 0;
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
-            if (r2 == '\n')
+            b8 r2IsLastRune = ((j + w2) >= fileSize);
+
+            u32 r3 = 0;
+            if (!r2IsLastRune)
+            {
+                i32 _unused;
+                LEXER_DECODE_RUNE(r3, _unused, fileContents, (j + w2));
+                _unused -= _unused;
+            }
+
+            if (!r2IsLastRune && r3 == '\n')
             {
                 retOut.span.type       = TokenType_Comment;
                 retOut.span.start      = startOfToken;
-                retOut.span.end        = j + w2;
-                retOut.iterateFwd      = j + w2 - i;
-                retOut.newStartOfToken = j + w2;
+                retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
+                retOut.iterateFwd      = j + (r2 == '\r' ? 0 : w2) - i;
+                retOut.newStartOfToken = j + (r2 == '\r' ? 0 : w2);
                 return retOut;
             }
         }
