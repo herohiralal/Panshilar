@@ -1,3 +1,4 @@
+//+skipreflect
 #ifndef PNSLR_COMPILER_INTRINSICS_H // =============================================
 #define PNSLR_COMPILER_INTRINSICS_H
 
@@ -48,3 +49,4 @@
 #endif
 
 #endif // PNSLR_COMPILER_INTRINSICS_H ==============================================
+//-skipreflect
