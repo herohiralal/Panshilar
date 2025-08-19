@@ -191,7 +191,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
     {
         ArraySlice(utf16ch) p = PNSLR_UTF16FromUTF8WindowsOnly(path, internalAllocator);
         i32 n = GetFullPathNameW((LPCWSTR) p.data, 0, nil, nil);
-        ArraySlice(utf16ch) buf = EMPTY_ARRAY_SLICE(utf16ch);
+        ArraySlice(utf16ch) buf = {0};
         utf8str tempFullPath = (utf8str) {0};
         if (n > 0)
         {
@@ -235,7 +235,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
                 .volAndPath     = originalPath,
                 .volumeLength   = volumeLength,
                 .allocator      = allocator,
-                .buffer         = EMPTY_ARRAY_SLICE(utf8ch),
+                .buffer         = {0},
                 .writeIdx       = 0,
             };
 

@@ -66,13 +66,31 @@ typedef void*               rawptr;
 
 // Collections =====================================================================
 
-#define ArraySlice(ty)  ArraySlice_##ty
+#ifdef __cplusplus
 
-#define DECLARE_ARRAY_SLICE(ty) \
-    typedef struct { i64 count; ty* data; } ArraySlice(ty);
+    template <typename T> struct ArraySlice { i64 count; T* data; };
 
-#define EMPTY_ARRAY_SLICE(ty) \
-    (ArraySlice(ty)) { .count = 0, .data = nil }
+    #define DECLARE_ARRAY_SLICE(ty) \
+        typedef struct { i64 count; ty* data; } ArraySlice_##ty; \
+        template<> struct ArraySlice<ty> \
+        { \
+            i64 count; \
+            ty* data; \
+            ArraySlice() = default; \
+            ArraySlice(const ArraySlice_##ty& other) : count(other.count), data(other.data) { } \
+            operator ArraySlice_##ty() const { return {count, data}; } \
+        };
+
+    #define ArraySlice(ty) ArraySlice_##ty
+
+#else
+
+    #define DECLARE_ARRAY_SLICE(ty) \
+        typedef struct { i64 count; ty* data; } ArraySlice_##ty;
+
+    #define ArraySlice(ty) ArraySlice_##ty
+
+#endif
 
 DECLARE_ARRAY_SLICE(     b8);
 DECLARE_ARRAY_SLICE(    b32);

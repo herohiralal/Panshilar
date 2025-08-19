@@ -490,11 +490,11 @@ ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator 
 {
     if (!str.data || !str.count)
     {
-        return EMPTY_ARRAY_SLICE(utf16ch);
+        return (ArraySlice(utf16ch)) {0};
     }
 
     i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
-    if (n <= 0) { return EMPTY_ARRAY_SLICE(utf16ch); } // conversion failed
+    if (n <= 0) { return (ArraySlice(utf16ch)) {0}; } // conversion failed
 
     ArraySlice(utf16ch) output = PNSLR_MakeSlice(utf16ch, (n + 1), false, allocator, nil);
 
@@ -502,7 +502,7 @@ ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator 
     if (n1 == 0)
     {
         PNSLR_FreeSlice(output, allocator, nil);
-        return EMPTY_ARRAY_SLICE(utf16ch); // conversion failed
+        return (ArraySlice(utf16ch)) {0}; // conversion failed
     }
 
     output.data[n] = 0; // null-terminate the UTF-16 string
