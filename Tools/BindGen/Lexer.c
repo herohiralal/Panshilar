@@ -1,5 +1,101 @@
 #include "Lexer.h"
 
+static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
+
+b8 PNSLR_DequeueNextLineSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd)
+{
+    i32 outLineStartAlt = 0, outLineEndAlt = 0;
+    outLineStart = (outLineStart) ? outLineStart : &outLineStartAlt;
+    outLineEnd   = (outLineEnd)   ? outLineEnd   : &outLineEndAlt  ;
+
+    i32 fileSize = (i32) file->contents.count;
+    for (i32 i = file->startOfToken, w = 0; i < fileSize; i += w)
+    {
+        PNSLR_DecodedRune decodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - i, .data = file->contents.data + i});
+
+        b8 isLastRune = ((i + w) == fileSize);
+
+        if (decodedRune.rune == '\n')
+        {
+            *outLineStart      = file->startOfToken;
+            *outLineEnd        = i;
+            file->startOfToken = (i + w);
+            file->i            = (i + w);
+            return true;
+        }
+
+        if (isLastRune)
+        {
+            *outLineStart      = file->startOfToken;
+            *outLineEnd        = fileSize;
+            file->startOfToken = fileSize;
+            file->i            = fileSize;
+            return true;
+        }
+    }
+
+    *outLineStart = file->startOfToken;
+    *outLineEnd   = fileSize;
+    return false;
+}
+
+b8 PNSLR_DequeueNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+{
+    return PNSLR_IterateNextTokenSpan(file, true, ignoreSpace, outTokenSpan);
+}
+
+b8 PNSLR_PeekNextToken(PNSLR_FileIterInfo* file, b8 ignoreSpace, utf8str* outToken)
+{
+    PNSLR_TokenSpan span = {0};
+    if (!PNSLR_PeekNextTokenSpan(file, ignoreSpace, &span))
+    {
+        if (outToken) *outToken = (utf8str) {0};
+        return false;
+    }
+
+    if (outToken) *outToken = (utf8str) {.data = file->contents.data + span.start, .count = span.end - span.start};
+    return true;
+}
+
+b8 PNSLR_PeekNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+{
+    return PNSLR_IterateNextTokenSpan(file, false, ignoreSpace, outTokenSpan);
+}
+
+b8 PNSLR_IterateNextTokenSpan(PNSLR_FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan)
+{
+    i32 i = file->i;
+    i32 startOfToken = file->startOfToken;
+
+    while (true)
+    {
+        PNSLR_TokenSpanInfo tokenSpanInfo = PNSLR_GetCurrentTokenSpanInfo(file->contents, i, startOfToken, ignoreSpace);
+        i += tokenSpanInfo.iterateFwd;
+        startOfToken = tokenSpanInfo.newStartOfToken;
+
+        b8 success = false;
+        if (tokenSpanInfo.span.type == PNSLR_TokenType_Invalid)
+        {
+            if (outTokenSpan) *outTokenSpan = tokenSpanInfo.span;
+            success = true;
+        }
+        else if (i >= file->contents.count)
+        {
+            if (outTokenSpan) *outTokenSpan = (PNSLR_TokenSpan) {.start = file->contents.count - 1, .end = file->contents.count, .type = PNSLR_TokenType_Invalid};
+            success = false;
+        }
+        else { continue; }
+
+        if (moveFwd)
+        {
+            file->i = i;
+            file->startOfToken = startOfToken;
+        }
+
+        return success;
+    }
+}
+
 #define LEXER_DECODE_RUNE(runeVarName, widthVarName, contents, contentsStart) \
     do \
     { \
@@ -8,7 +104,7 @@
         widthVarName = tempXXX##__LINE__.length; \
     } while (false); \
 
-PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace)
+static PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace)
 {
     PNSLR_TokenSpanInfo retOut = {0};
 

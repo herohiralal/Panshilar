@@ -55,6 +55,10 @@ typedef struct
     i32             newStartOfToken;
 } PNSLR_TokenSpanInfo;
 
-PNSLR_TokenSpanInfo PNSLR_GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
+b8 PNSLR_DequeueNextLineSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd);
+b8 PNSLR_DequeueNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan);
+b8 PNSLR_PeekNextToken(PNSLR_FileIterInfo* file, b8 ignoreSpace, utf8str* outToken);
+b8 PNSLR_PeekNextTokenSpan(PNSLR_FileIterInfo* file, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan);
+b8 PNSLR_IterateNextTokenSpan(PNSLR_FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, PNSLR_TokenSpan* outTokenSpan);
 
 #endif
