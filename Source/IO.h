@@ -28,7 +28,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 /**
  * Split a path into its components. Assumes that the path is a valid normalised path in Panshilar conventions.
  */
-b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWithExtension, PNSLR_Path* selfName, PNSLR_Path* extension);
+b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, utf8str* selfNameWithExtension, utf8str* selfName, utf8str* extension);
 
 /**
  * Returns a normalised path for a file inside a given directory.

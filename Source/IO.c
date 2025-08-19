@@ -354,12 +354,12 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
     return (PNSLR_Path) { .path = resultPath };
 }
 
-b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWithExtension, PNSLR_Path* selfName, PNSLR_Path* extension)
+b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, utf8str* selfNameWithExtension, utf8str* selfName, utf8str* extension)
 {
     if (parent)                { *parent                = (PNSLR_Path) {0}; }
-    if (selfNameWithExtension) { *selfNameWithExtension = (PNSLR_Path) {0}; }
-    if (selfName)              { *selfName              = (PNSLR_Path) {0}; }
-    if (extension)             { *extension             = (PNSLR_Path) {0}; }
+    if (selfNameWithExtension) { *selfNameWithExtension = (utf8str)    {0}; }
+    if (selfName)              { *selfName              = (utf8str)    {0}; }
+    if (extension)             { *extension             = (utf8str)    {0}; }
 
     if (!path.path.data || !path.path.count) { return false; }
 
@@ -388,10 +388,10 @@ b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_Path* selfNameWith
         }
     }
 
-    if (parent)                { *parent                = (PNSLR_Path) {.path = parentTemp};                }
-    if (selfNameWithExtension) { *selfNameWithExtension = (PNSLR_Path) {.path = selfNameWithExtensionTemp}; }
-    if (selfName)              { *selfName              = (PNSLR_Path) {.path = selfNameTemp};              }
-    if (extension)             { *extension             = (PNSLR_Path) {.path = extensionTemp};             }
+    if (parent)                { *parent                = (PNSLR_Path) {.path = parentTemp}; }
+    if (selfNameWithExtension) { *selfNameWithExtension = selfNameWithExtensionTemp;         }
+    if (selfName)              { *selfName              = selfNameTemp;                      }
+    if (extension)             { *extension             = extensionTemp;                     }
 
     return true;
 }
