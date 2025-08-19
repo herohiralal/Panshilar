@@ -7,7 +7,8 @@ PRAGMA_REENABLE_WARNINGS
 void BindGenMain(ArraySlice(utf8str) args)
 {
     // get target path
-    PNSLR_Path dir = {0};
+    PNSLR_Path dir     = {0};
+    utf8str    dirName = {0};
     {
         utf8str executableName = {0};
 
@@ -41,6 +42,8 @@ void BindGenMain(ArraySlice(utf8str) args)
 
         dirRaw.count -= executableName.count;
         dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_DEFAULT_HEAP_ALLOCATOR);
+
+        if (!PNSLR_SplitPath(dir, nil, nil, &dirName, nil)) { printf("Failed to split path."); FORCE_DBG_TRAP; }
     }
 
     // initialise global main thread allocator
@@ -50,8 +53,9 @@ void BindGenMain(ArraySlice(utf8str) args)
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
-    PNSLR_Path srcDir    = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
-    PNSLR_Path pnslrFile = PNSLR_GetPathForChildFile(srcDir, PNSLR_STRING_LITERAL("Panshilar.h"), appArena);
+    PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
+    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_STRING_LITERAL(".h"), appArena);
+    PNSLR_Path pnslrFile     = PNSLR_GetPathForChildFile(srcDir, pnslrFileName, appArena);
 
     if (!PNSLR_PathExists(pnslrFile, PNSLR_PathExistsCheckType_File))
     {
