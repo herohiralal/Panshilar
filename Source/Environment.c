@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Environment.h"
 
 PNSLR_Platform PNSLR_GetPlatform(void)

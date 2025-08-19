@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Chrono.h"
 
 i64 PNSLR_NanosecondsSinceUnixEpoch(void)

@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Allocators.h"
 
 static inline u64 AlignU64Forward(u64 value, u64 alignment)

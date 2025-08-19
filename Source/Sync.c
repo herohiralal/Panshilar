@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Sync.h"
 
 #if PNSLR_WINDOWS

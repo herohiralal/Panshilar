@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Console.h"
 
 i32 PNSLR_PrintToStdOut(utf8str message) {

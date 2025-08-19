@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Process.h"
 
 void PNSLR_ExitProcess(i32 exitCode)

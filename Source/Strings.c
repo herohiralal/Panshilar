@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "Strings.h"
 
 PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 1024);

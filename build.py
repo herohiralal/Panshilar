@@ -402,7 +402,7 @@ def main():
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
+            defines          = ['PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
             compilerArgs     = commonArgs
         ))
 
@@ -432,7 +432,7 @@ def main():
                 '${workspaceFolder}/Source',
                 f'{linuxX64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_X64=1'],
+            defines          = ['PNSLR_LINUX=1', 'PNSLR_X64=1'],
             compilerArgs     = commonArgs,
         ))
 
@@ -461,7 +461,7 @@ def main():
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_OSX=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
 
@@ -491,7 +491,7 @@ def main():
                 '${workspaceFolder}/Source',
                 f'{linuxArm64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
 
@@ -521,7 +521,7 @@ def main():
                 '${workspaceFolder}/Source',
                 f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
 
@@ -550,7 +550,7 @@ def main():
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
 
@@ -578,7 +578,7 @@ def main():
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
-            defines          = ['PNSLR_IMPLEMENTATION', 'PNSLR_IOS=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
 

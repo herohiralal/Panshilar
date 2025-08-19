@@ -1,3 +1,4 @@
+#define PNSLR_IMPLEMENTATION
 #include "IO.h"
 #include "Allocators.h"
 #include "Strings.h"
