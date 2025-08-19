@@ -3,6 +3,8 @@ PRAGMA_SUPPRESS_WARNINGS
 #include <stdio.h>
 PRAGMA_REENABLE_WARNINGS
 #include "Panshilar.h"
+#include "TokenMatch.c"
+#include "Lexer.c"
 
 void BindGenMain(ArraySlice(utf8str) args)
 {

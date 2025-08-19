@@ -1,6 +1,5 @@
 #ifndef PNSLR_TOKEN_MATCH_H
 #define PNSLR_TOKEN_MATCH_H
-
 #include "Panshilar.h"
 
 b8 PNSLR_IsSpace(u32 r);
