@@ -1,5 +1,43 @@
 #include "Lexer.h"
 
+utf8str GetTokenTypeString(TokenType type)
+{
+    #define TOKEN_VALUE(x) case TokenType_##x: return PNSLR_STRING_LITERAL(#x);
+    switch (type)
+    {
+        TOKEN_VALUE(Invalid                       )
+        TOKEN_VALUE(Identifier                    )
+        TOKEN_VALUE(IdentifierButCouldBeHexNumber )
+        TOKEN_VALUE(Integer                       )
+        TOKEN_VALUE(Float                         )
+        TOKEN_VALUE(HexNumber                     )
+        TOKEN_VALUE(String                        )
+        TOKEN_VALUE(BooleanTrue                   )
+        TOKEN_VALUE(BooleanFalse                  )
+        TOKEN_VALUE(IncompleteString              )
+        TOKEN_VALUE(PlusSymbol                    )
+        TOKEN_VALUE(MinusSymbol                   )
+        TOKEN_VALUE(AsteriskSymbol                )
+        TOKEN_VALUE(DollarSymbol                  )
+        TOKEN_VALUE(TildeSymbol                   )
+        TOKEN_VALUE(ColonSymbol                   )
+        TOKEN_VALUE(CommaSymbol                   )
+        TOKEN_VALUE(DotSymbol                     )
+        TOKEN_VALUE(UnderscoreSymbol              )
+        TOKEN_VALUE(UnknownSymbol                 )
+        TOKEN_VALUE(Spaces                        )
+        TOKEN_VALUE(NewLine                       )
+        TOKEN_VALUE(Tab                           )
+        TOKEN_VALUE(Comment                       )
+        TOKEN_VALUE(IncompleteComment             )
+        TOKEN_VALUE(SkipReflectStart              )
+        TOKEN_VALUE(SkipReflectEnd                )
+    }
+    #undef TOKEN_VALUE
+
+    return PNSLR_STRING_LITERAL("__UNKNOWN_TOKEN_TYPE__");
+}
+
 static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
 
 b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd)
