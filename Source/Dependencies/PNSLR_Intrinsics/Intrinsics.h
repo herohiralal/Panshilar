@@ -10,10 +10,10 @@
 //+skipreflect
 // Primitives ======================================================================
 
-#if !defined(__cplusplus)
-    typedef _Bool           b8;
-#else
+#ifdef __cplusplus
     typedef bool            b8;
+#else
+    typedef _Bool           b8;
 #endif
 
 typedef unsigned int        b32; // mainly for interop purposes with certain other libraries
@@ -32,18 +32,19 @@ typedef unsigned short int  utf16ch;
 typedef char*               cstring;
 typedef void*               rawptr;
 
-#undef nil
-#ifndef __cplusplus
+#ifdef __cplusplus
+#else
 
-    #undef bool
-    #undef false
-    #undef true
+    #undef  bool
+    #undef  false
+    #undef  true
 
     #define false ((b8)     0)
     #define true  ((b8)     1)
 
 #endif
 
+#undef      nil
 #define     nil   ((rawptr) 0)
 
 #define U8_MIN  ((u8)  (0))
@@ -84,16 +85,14 @@ typedef void*               rawptr;
             operator ArraySlice_##ty() const { return {count, data}; } \
         };
 
-    #define ArraySlice(ty) ArraySlice_##ty
-
 #else
 
     #define DECLARE_ARRAY_SLICE(ty) \
         typedef struct { i64 count; ty* data; } ArraySlice_##ty;
 
-    #define ArraySlice(ty) ArraySlice_##ty
-
 #endif
+
+#define ArraySlice(ty) ArraySlice_##ty
 
 DECLARE_ARRAY_SLICE(     b8);
 DECLARE_ARRAY_SLICE(    b32);
@@ -117,29 +116,12 @@ typedef ArraySlice(utf8ch) utf8str;
 DECLARE_ARRAY_SLICE(utf8str);
 
 // Create a utf8str from a string literal.
-#ifndef __cplusplus
-
-    #define PNSLR_STRING_LITERAL(str) \
-        (utf8str) \
-        { \
-            .count = sizeof(str) - 1, \
-            .data = (utf8ch*) str \
-        }
-
-#else
-
-    inline utf8str PNSLR_MakeStringLiteral(const char* str, i64 length)
-    {
-        utf8str output;
-        output.count = length;
-        output.data = reinterpret_cast<utf8ch*>(const_cast<char*>(str));
-        return output;
+#define PNSLR_STRING_LITERAL(str) \
+    (utf8str) \
+    { \
+        sizeof(str) - 1, \
+        (utf8ch*) str \
     }
-
-    #define PNSLR_STRING_LITERAL(str) \
-        PNSLR_MakeStringLiteral(str, sizeof(str) - 1)
-
-#endif
 
 // Macros ==========================================================================
 
