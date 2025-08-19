@@ -175,3 +175,23 @@ b8 PNSLR_IsValidNumber(utf8str str)
 
     return hasAtLeastOneDigitBeforeDot && (!hasDot || hasAtLeastOneDigitAfterDot);
 }
+
+b8 PNSLR_IsValidHexNumber(utf8str str)
+{
+    i64 pos = 0;
+    while (pos < str.count)
+    {
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
+        if (decoded.length <= 0) { return false; }
+
+        u32 r = decoded.rune;
+        b8 isNumeric = (r >= '0' && r <= '9');
+        b8 isAlpha = (r >= 'A' && r <= 'F');
+
+        if (!isNumeric && !isAlpha) { return false; }
+
+        pos += decoded.length;
+    }
+
+    return true;
+}
