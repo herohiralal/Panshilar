@@ -163,6 +163,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
             #if PNSLR_APPLE
                 // on apple platforms, we use posix_memalign to ensure proper alignment
                 // linux/windows work fine, but apple being apple, it doesn't
+                alignment = alignment > PNSLR_PTR_SIZE ? alignment : PNSLR_PTR_SIZE;
                 size = (size + (alignment - 1)) & ~(alignment - 1);
             #endif
 
@@ -182,6 +183,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
             #if PNSLR_APPLE
                 // on apple platforms, we use posix_memalign to ensure proper alignment
                 // linux/windows work fine, but apple being apple, it doesn't
+                alignment = alignment > PNSLR_PTR_SIZE ? alignment : PNSLR_PTR_SIZE;
                 size = (size + (alignment - 1)) & ~(alignment - 1);
             #endif
 
