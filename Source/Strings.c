@@ -162,7 +162,7 @@ static b8 StringEndsWithInternal(cstring str, i32 strLen, cstring suffix, i32 su
 
 b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, (cstring) str1.data, (i32) str2.count, comparisonType);
+    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, (cstring) str2.data, (i32) str2.count, comparisonType);
 }
 
 b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType)

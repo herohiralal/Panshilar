@@ -84,7 +84,8 @@ void BindGenMain(ArraySlice(utf8str) args)
         utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
         printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
         for (i32 i = 0; i < (32 - (i32) tokenTypeStr.count); ++i) { printf(" "); }
-        printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+        if (tokenSpan.type != TokenType_NewLine) printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+        else                                     printf("new line\n");
     }
 }
 

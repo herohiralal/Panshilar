@@ -183,6 +183,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                 retOut.span.end        = i + width;
                 retOut.iterateFwd      = width;
                 retOut.newStartOfToken = i + width;
+                return retOut;
             }
 
             // batch all ' ' characters
@@ -391,7 +392,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             case ':': retOut.span.type = TokenType_ColonSymbol;    break;
             case ',': retOut.span.type = TokenType_CommaSymbol;    break;
             case '.': retOut.span.type = TokenType_DotSymbol;      break;
-            default:  retOut.span.type = TokenType_Invalid;        break;
+            default:  retOut.span.type = TokenType_UnknownSymbol;  break;
         }
 
         retOut.span.start      = startOfToken;

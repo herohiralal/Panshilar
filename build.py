@@ -83,13 +83,13 @@ def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
             '/c',
             inputFile,
             f'/Fo{outputFile}',
-        ]
+        ] # + MSVC_DEBUG_ARGS
     else:
         return [
             '-c',
             inputFile,
             f'-o{outputFile}',
-        ]
+        ] # + CLANG_DEBUG_ARGS
 
 def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
     intrinsicsObjFile = getIntrinsicsObjectPath(tgt, arch)
