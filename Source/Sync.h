@@ -10,7 +10,7 @@ EXTERN_C_BEGIN
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_Mutex
 {
-    u8 buffer[6 * PNSLR_PTR_SIZE];
+    u8 buffer[8 * PNSLR_PTR_SIZE];
 }  PNSLR_Mutex;
 
 /**
@@ -48,7 +48,7 @@ b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_RWMutex
 {
-    u8 buffer[7 * PNSLR_PTR_SIZE];
+    u8 buffer[25 * PNSLR_PTR_SIZE];
 } PNSLR_RWMutex;
 
 /**

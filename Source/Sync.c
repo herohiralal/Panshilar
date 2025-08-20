@@ -23,8 +23,13 @@
     static_assert(sizeof  (PNSLR_RWMutex) >= sizeof (pthread_rwlock_t)      , "PNSLR_RWMutex must be at least as ""large as pthread_rwlock_t.");
     static_assert((alignof(PNSLR_RWMutex) %  alignof(pthread_rwlock_t)) == 0, "PNSLR_RWMutex must be at least as aligned as pthread_rwlock_t.");
 
-    static_assert(sizeof  (PNSLR_Semaphore) >= sizeof (sem_t)      , "PNSLR_Semaphore must be at least as ""large as sem_t.");
-    static_assert((alignof(PNSLR_Semaphore) %  alignof(sem_t)) == 0, "PNSLR_Semaphore must be at least as aligned as sem_t.");
+    #if PNSLR_APPLE
+        static_assert(sizeof  (PNSLR_Semaphore) >= sizeof (dispatch_semaphore_t)      , "PNSLR_Semaphore must be at least as ""large as dispatch_semaphore_t.");
+        static_assert((alignof(PNSLR_Semaphore) %  alignof(dispatch_semaphore_t)) == 0, "PNSLR_Semaphore must be at least as aligned as dispatch_semaphore_t.");
+    #else
+        static_assert(sizeof  (PNSLR_Semaphore) >= sizeof (sem_t)      , "PNSLR_Semaphore must be at least as ""large as sem_t.");
+        static_assert((alignof(PNSLR_Semaphore) %  alignof(sem_t)) == 0, "PNSLR_Semaphore must be at least as aligned as sem_t.");
+    #endif
 
     static_assert(sizeof  (PNSLR_ConditionVariable) >= sizeof (pthread_cond_t)      , "PNSLR_ConditionVariable must be at least as ""large as pthread_cond_t.");
     static_assert((alignof(PNSLR_ConditionVariable) %  alignof(pthread_cond_t)) == 0, "PNSLR_ConditionVariable must be at least as aligned as pthread_cond_t.");
@@ -204,6 +209,12 @@ PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount)
         if (tempSemaphore == nil) {
             // Handle error
         }
+    #elif PNSLR_APPLE
+        dispatch_semaphore_t tempSemaphore = dispatch_semaphore_create(initialCount);
+        *((dispatch_semaphore_t*) semaphore) = tempSemaphore;
+        if (tempSemaphore == nil) {
+            // Handle error
+        }
     #elif PNSLR_UNIX
         sem_init((sem_t*) semaphore, 0, (u32) initialCount);
     #else
@@ -219,6 +230,8 @@ void PNSLR_DestroySemaphore(PNSLR_Semaphore* semaphore)
         if (!CloseHandle(*(HANDLE*) semaphore)) {
             // Handle error
         }
+    #elif PNSLR_APPLE
+        dispatch_release(*(dispatch_semaphore_t*) semaphore);
     #elif PNSLR_UNIX
         sem_destroy((sem_t*) semaphore);
     #else
@@ -233,6 +246,8 @@ void PNSLR_WaitSemaphore(PNSLR_Semaphore* semaphore)
         if (result != WAIT_OBJECT_0) {
             // Handle error
         }
+    #elif PNSLR_APPLE
+        dispatch_semaphore_wait(*(dispatch_semaphore_t*) semaphore, DISPATCH_TIME_FOREVER);
     #elif PNSLR_UNIX
         if (sem_wait((sem_t*) semaphore) != 0) {
             // Handle error
@@ -253,6 +268,13 @@ b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs)
         } else {
             // Handle error
             return false;
+        }
+    #elif PNSLR_APPLE
+        dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, timeoutNs);
+        if (dispatch_semaphore_wait(*(dispatch_semaphore_t*) semaphore, timeout) == 0) {
+            return true; // Semaphore acquired
+        } else {
+            return false; // Timeout expired
         }
     #elif PNSLR_UNIX
         struct timespec ts;
@@ -278,6 +300,10 @@ void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count)
         LONG previousCount;
         if (!ReleaseSemaphore(*(HANDLE*) semaphore, count, &previousCount)) {
             // Handle error
+        }
+    #elif PNSLR_APPLE
+        for (i32 i = 0; i < count; ++i) {
+            dispatch_semaphore_signal(*(dispatch_semaphore_t*) semaphore);
         }
     #elif PNSLR_UNIX
         for (i32 i = 0; i < count; ++i) {

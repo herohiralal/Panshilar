@@ -43,6 +43,7 @@
 // derived
 
 #define PNSLR_UNIX    (PNSLR_LINUX || PNSLR_OSX || PNSLR_ANDROID || PNSLR_IOS)
+#define PNSLR_APPLE   (PNSLR_OSX || PNSLR_IOS)
 #define PNSLR_DESKTOP (PNSLR_WINDOWS || PNSLR_LINUX || PNSLR_OSX)
 #define PNSLR_MOBILE  (PNSLR_ANDROID || PNSLR_IOS)
 #define PNSLR_CONSOLE (PNSLR_PS5 || PNSLR_XSERIES || PNSLR_SWITCH)
@@ -81,6 +82,10 @@
         #include <signal.h>
         #include <time.h>
         #include <semaphore.h>
+    #endif
+
+    #if PNSLR_APPLE
+        #include <dispatch/dispatch.h>
     #endif
 
     #if PNSLR_ANDROID
