@@ -19,11 +19,20 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(MinusSymbol                   )
         TOKEN_VALUE(AsteriskSymbol                )
         TOKEN_VALUE(DollarSymbol                  )
+        TOKEN_VALUE(HashSymbol                    )
         TOKEN_VALUE(TildeSymbol                   )
         TOKEN_VALUE(ColonSymbol                   )
         TOKEN_VALUE(CommaSymbol                   )
         TOKEN_VALUE(DotSymbol                     )
         TOKEN_VALUE(UnderscoreSymbol              )
+        TOKEN_VALUE(QuestionSymbol                )
+        TOKEN_VALUE(ExclamationSymbol             )
+        TOKEN_VALUE(ParenthesesOpenSymbol         )
+        TOKEN_VALUE(ParenthesesCloseSymbol        )
+        TOKEN_VALUE(BracesOpenSymbol              )
+        TOKEN_VALUE(BracesCloseSymbol             )
+        TOKEN_VALUE(BracketOpenSymbol             )
+        TOKEN_VALUE(BracketCloseSymbol            )
         TOKEN_VALUE(UnknownSymbol                 )
         TOKEN_VALUE(Spaces                        )
         TOKEN_VALUE(NewLine                       )
@@ -32,6 +41,12 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(IncompleteComment             )
         TOKEN_VALUE(SkipReflectStart              )
         TOKEN_VALUE(SkipReflectEnd                )
+        TOKEN_VALUE(KeywordDefine                 )
+        TOKEN_VALUE(KeywordIfdef                  )
+        TOKEN_VALUE(KeywordIfndef                 )
+        TOKEN_VALUE(KeywordIf                     )
+        TOKEN_VALUE(KeywordExternCBegin           )
+        TOKEN_VALUE(KeywordExternCEnd             )
     }
     #undef TOKEN_VALUE
 
@@ -392,6 +407,15 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             case ':': retOut.span.type = TokenType_ColonSymbol;    break;
             case ',': retOut.span.type = TokenType_CommaSymbol;    break;
             case '.': retOut.span.type = TokenType_DotSymbol;      break;
+            case '#': retOut.span.type = TokenType_HashSymbol;     break;
+            case '?': retOut.span.type = TokenType_QuestionSymbol; break;
+            case '!': retOut.span.type = TokenType_ExclamationSymbol; break;
+            case '(': retOut.span.type = TokenType_ParenthesesOpenSymbol; break;
+            case ')': retOut.span.type = TokenType_ParenthesesCloseSymbol; break;
+            case '{': retOut.span.type = TokenType_BracesOpenSymbol; break;
+            case '}': retOut.span.type = TokenType_BracesCloseSymbol; break;
+            case '[': retOut.span.type = TokenType_BracketOpenSymbol; break;
+            case ']': retOut.span.type = TokenType_BracketCloseSymbol; break;
             default:  retOut.span.type = TokenType_UnknownSymbol;  break;
         }
 
@@ -503,19 +527,43 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
     {
         utf8str currentSpanStr = (utf8str) {.data = fileContents.data + startOfToken, .count = (i64) (i + width - startOfToken)};
 
-        if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("true"), PNSLR_StringComparisonType_CaseSensitive))
+        if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("true"), 0))
         {
             retOut.span.type = TokenType_BooleanTrue;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("false"), PNSLR_StringComparisonType_CaseSensitive))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("false"), 0))
         {
             retOut.span.type = TokenType_BooleanFalse;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("define"), 0))
+        {
+            retOut.span.type = TokenType_KeywordDefine;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("ifdef"), 0))
+        {
+            retOut.span.type = TokenType_KeywordIfdef;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("ifndef"), 0))
+        {
+            retOut.span.type = TokenType_KeywordIfndef;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("if"), 0))
+        {
+            retOut.span.type = TokenType_KeywordIf;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_BEGIN"), 0))
+        {
+            retOut.span.type = TokenType_KeywordExternCBegin;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_END"), 0))
+        {
+            retOut.span.type = TokenType_KeywordExternCEnd;
         }
         else if (IsValidHexNumber(currentSpanStr))
         {
             retOut.span.type = TokenType_IdentifierButCouldBeHexNumber;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("_"), PNSLR_StringComparisonType_CaseSensitive))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("_"), 0))
         {
             retOut.span.type = TokenType_UnderscoreSymbol;
         }
