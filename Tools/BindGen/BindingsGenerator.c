@@ -6,6 +6,8 @@ PRAGMA_REENABLE_WARNINGS
 #include "TokenMatch.c"
 #include "Lexer.c"
 
+// Gathering files ========================================================================================================================================================
+
 typedef struct
 {
     utf8str        pathRel;
@@ -108,6 +110,8 @@ ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingP
     return collectedFiles;
 }
 
+// ========================================================================================================================================================================
+
 void BindGenMain(ArraySlice(utf8str) args)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -155,7 +159,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     // initialise global main thread allocator
     PNSLR_Allocator appArena = {0};
     {
-        appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 64 * 1024 * 1024 /* 64 MiB */, CURRENT_LOC(), nil);
+        appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 16 * 1024 * 1024 /* 64 MiB */, CURRENT_LOC(), nil);
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
@@ -202,6 +206,9 @@ void BindGenMain(ArraySlice(utf8str) args)
             else                                printf("new line\n");
         }
     }
+
+    PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
+    printf("used mem: %u / %u\n", pl->totalUsed, pl->totalCapacity);
 }
 
 PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
