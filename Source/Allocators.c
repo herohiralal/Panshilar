@@ -160,6 +160,12 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
         case PNSLR_AllocatorMode_Allocate:
         case PNSLR_AllocatorMode_AllocateNoZero:
         {
+            #if PNSLR_APPLE
+                // on apple platforms, we use posix_memalign to ensure proper alignment
+                // linux/windows work fine, but apple being apple, it doesn't
+                size = (size + (alignment - 1)) & ~(alignment - 1);
+            #endif
+
             rawptr memory = PNSLR_Intrinsic_Malloc(alignment, size);
             if (!memory)
             {
@@ -173,6 +179,12 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
         case PNSLR_AllocatorMode_Resize:
         case PNSLR_AllocatorMode_ResizeNoZero:
         {
+            #if PNSLR_APPLE
+                // on apple platforms, we use posix_memalign to ensure proper alignment
+                // linux/windows work fine, but apple being apple, it doesn't
+                size = (size + (alignment - 1)) & ~(alignment - 1);
+            #endif
+
             return PNSLR_DefaultResize(
                 (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_DefaultHeap, .data = allocatorData},
                 mode == PNSLR_AllocatorMode_Resize,
