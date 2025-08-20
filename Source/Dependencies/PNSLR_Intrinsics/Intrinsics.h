@@ -29,6 +29,7 @@ typedef float               f32;
 typedef double              f64;
 typedef unsigned char       utf8ch;
 typedef unsigned short int  utf16ch;
+typedef unsigned int        rune;
 typedef char*               cstring;
 typedef void*               rawptr;
 
@@ -198,6 +199,7 @@ DECLARE_ARRAY_SLICE        (    f64);
 DECLARE_ARRAY_SLICE        (   char);
 DECLARE_ARRAY_SLICE_TYPEDEF( utf8ch);
 DECLARE_ARRAY_SLICE_TYPEDEF(utf16ch);
+DECLARE_ARRAY_SLICE_TYPEDEF(   rune);
 DECLARE_ARRAY_SLICE        (cstring);
 EXTERN_C_END
 

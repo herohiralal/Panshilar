@@ -352,7 +352,7 @@ static u8 PNSLR_GetAcceptSize(u8 byte) {
     return 0xf1;
 }
 
-i32 PNSLR_GetRuneLength(u32 r) {
+i32 PNSLR_GetRuneLength(rune r) {
     if (r <= PNSLR_RUNE1_MAX)                                 { return 1;  }
     if (r <= PNSLR_RUNE2_MAX)                                 { return 2;  }
     if (PNSLR_SURROGATE_MIN <= r && r <= PNSLR_SURROGATE_MAX) { return -1; }
@@ -361,8 +361,8 @@ i32 PNSLR_GetRuneLength(u32 r) {
     return -1;
 }
 
-PNSLR_EncodedRune PNSLR_EncodeRune(u32 c) {
-    u32 r = c;
+PNSLR_EncodedRune PNSLR_EncodeRune(rune c) {
+    rune r = c;
     PNSLR_EncodedRune result = {0};
     u8 mask = 0x3f;
 
@@ -413,8 +413,8 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     u8 x = PNSLR_GetAcceptSize(s0);
 
     if (x >= 0xf0) {
-        u32 mask = (u32)x << 31 >> 31;
-        result.rune = ((u32)s.data[0] & ~mask) | (PNSLR_RUNE_ERROR & mask);
+        rune mask = (rune)x << 31 >> 31;
+        result.rune = ((rune)s.data[0] & ~mask) | (PNSLR_RUNE_ERROR & mask);
         result.length = 1;
         return result;
     }
@@ -436,7 +436,7 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     }
 
     if (sz == 2) {
-        result.rune = ((u32)(s0 & PNSLR_MASK2) << 6) | (u32)(b1 & PNSLR_MASKX);
+        result.rune = ((rune)(s0 & PNSLR_MASK2) << 6) | (rune)(b1 & PNSLR_MASKX);
         result.length = 2;
         return result;
     }
@@ -449,9 +449,9 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     }
 
     if (sz == 3) {
-        result.rune = ((u32)(s0 & PNSLR_MASK3) << 12) |
-                      ((u32)(b1 & PNSLR_MASKX) << 6) |
-                      (u32)(b2 & PNSLR_MASKX);
+        result.rune = ((rune)(s0 & PNSLR_MASK3) << 12) |
+                      ((rune)(b1 & PNSLR_MASKX) << 6) |
+                      (rune)(b2 & PNSLR_MASKX);
         result.length = 3;
         return result;
     }
@@ -463,10 +463,10 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
         return result;
     }
 
-    result.rune = ((u32)(s0 & PNSLR_MASK4) << 18) |
-                  ((u32)(b1 & PNSLR_MASKX) << 12) |
-                  ((u32)(b2 & PNSLR_MASKX) << 6) |
-                  (u32)(b3 & PNSLR_MASKX);
+    result.rune = ((rune)(s0 & PNSLR_MASK4) << 18) |
+                  ((rune)(b1 & PNSLR_MASKX) << 12) |
+                  ((rune)(b2 & PNSLR_MASKX) << 6) |
+                  (rune)(b3 & PNSLR_MASKX);
     result.length = 4;
     return result;
 }

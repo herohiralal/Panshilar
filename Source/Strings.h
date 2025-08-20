@@ -152,18 +152,18 @@ typedef struct PNSLR_EncodedRune { u8 data[4]; i32 length; } PNSLR_EncodedRune;
  * Result structure for UTF-8 rune decoding.
  * Contains the decoded rune and the number of bytes consumed.
  */
-typedef struct PNSLR_DecodedRune { u32 rune; i32 length; } PNSLR_DecodedRune;
+typedef struct PNSLR_DecodedRune { rune rune; i32 length; } PNSLR_DecodedRune;
 
 /**
  * Returns the number of bytes required to encode the given rune in UTF-8.
  */
-i32 PNSLR_GetRuneLength(u32 r);
+i32 PNSLR_GetRuneLength(rune r);
 
 /**
  * Encodes a rune into UTF-8 byte sequence and returns the structure containing encoded bytes/length.
  * Invalid runes or surrogates are replaced with the error rune (U+FFFD).
  */
-PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
+PNSLR_EncodedRune PNSLR_EncodeRune(rune c);
 
 /**
  * Decodes a UTF-8 byte sequence into a rune and returns the structure containing the rune/length.

@@ -2,8 +2,8 @@
 #define PNSLR_TOKEN_MATCH_H
 #include "Panshilar.h"
 
-b8 IsSpace(u32 r);
-b8 IsSymbol(u32 r);
+b8 IsSpace(rune r);
+b8 IsSymbol(rune r);
 b8 IsValidName(utf8str str);
 b8 IsValidStringToken(utf8str str);
 b8 IsValidNumber(utf8str str);

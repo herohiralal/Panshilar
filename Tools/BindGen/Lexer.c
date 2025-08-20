@@ -77,7 +77,7 @@ b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
 
         b8 isLastRune = ((i + w) == fileSize);
 
-        u32 r2 = 0;
+        rune r2 = 0;
         if (!isLastRune)
         {
             PNSLR_DecodedRune nextDecodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - (i + w), .data = file->contents.data + (i + w)});
@@ -187,11 +187,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
     TokenSpanInfo retOut = {0};
 
     i32 fileSize = (i32) fileContents.count;
-    u32 r; i32 width;
+    rune r; i32 width;
     LEXER_DECODE_RUNE(r, width, fileContents, i);
     b8 isLastRune = ((i + width) >= fileSize);
 
-    u32 nextRune = 0;
+    rune nextRune = 0;
     if (!isLastRune)
     {
         i32 _unused;
@@ -231,7 +231,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             {
                 for (i32 j = (i + width), w2 = 0; j < fileSize; j += w2)
                 {
-                    u32 r2;
+                    rune r2;
                     LEXER_DECODE_RUNE(r2, w2, fileContents, j);
                     if (r2 != ' ')
                     {
@@ -265,11 +265,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         // skip to the end of the line
         for (i32 j = (i + width + PNSLR_GetRuneLength('/')), w2 = 0; j < fileSize; j += w2)
         {
-            u32 r2 = 0;
+            rune r2 = 0;
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             b8 r2IsLastRune = ((j + w2) >= fileSize);
 
-            u32 r3 = 0;
+            rune r3 = 0;
             if (!r2IsLastRune)
             {
                 i32 _unused;
@@ -314,11 +314,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         // skip to the end of the comment
         for (i32 j = (i + width + PNSLR_GetRuneLength('*')), w2 = 0; j < fileSize; j += w2)
         {
-            u32 r2 = 0;
+            rune r2 = 0;
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             b8 r2IsLastRune = ((j + w2) >= fileSize);
 
-            u32 r3 = 0;
+            rune r3 = 0;
             if (!r2IsLastRune)
             {
                 i32 _unused;
@@ -349,10 +349,10 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
     if (r == '"')
     {
         // skip to the end of the string
-        u32 prevRune = r;
+        rune prevRune = r;
         for (i32 j = (i + width), w2 = 0; j < fileSize; j+= w2)
         {
-            u32 r2;
+            rune r2;
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             if (r2 == '"' && prevRune != '\\')
             {
@@ -380,7 +380,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
     {
         if (r == '-')
         {
-            u32 nextRune2 = 0;
+            rune nextRune2 = 0;
             { i32 _unused; LEXER_DECODE_RUNE(nextRune2, _unused, fileContents, (i + width)); _unused -= _unused; }
             if (nextRune2 < '0' || nextRune2 > '9')
             {
@@ -392,7 +392,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                 b8 hasDecimalPoint = false;
                 for (i32 j = (i + width), w2 = 0; j < fileSize; j += w2)
                 {
-                    u32 r2;
+                    rune r2;
                     LEXER_DECODE_RUNE(r2, w2, fileContents, j);
 
                     b8 splCharValid = false;
@@ -472,7 +472,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         b8 isHex = false, hasDecimalPt = false;
         for (i32 j = i + width, w2 = 0; j < fileSize; j += w2)
         {
-            u32 r2;
+            rune r2;
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
 
             b8 splCharValid = false;
