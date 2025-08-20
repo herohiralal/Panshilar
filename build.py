@@ -208,7 +208,7 @@ def printFailure(message: str):
 def runCommand(command: list[str], name: str) -> bool:
     printSectionStart()
     printInfo(f'Running: {name}')
-    # printDebug(f'Command: {' '.join(command)}')
+    printDebug(f'Command: {' '.join(command)}')
     if CMD_ARG_VERY_SILENT:
         result = subprocess.run(command, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
     else:
@@ -437,7 +437,7 @@ def main():
         ))
 
     if osxTools and osxToolchain:
-        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'x86_64-apple-macos11.0']
+        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'arm64-apple-macos11.0']
 
         buildPlatform(
             'MacOS',
