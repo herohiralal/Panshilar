@@ -6,8 +6,112 @@ PRAGMA_REENABLE_WARNINGS
 #include "TokenMatch.c"
 #include "Lexer.c"
 
+typedef struct
+{
+    utf8str        pathRel;
+    ArraySlice(u8) contents;
+} CollectedFile;
+
+DECLARE_ARRAY_SLICE(CollectedFile);
+
+void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* numCollectedFiles, PNSLR_Path srcDir, utf8str pathRel, PNSLR_Allocator globalAllocator)
+{
+    b8 collected = false;
+    for (i64 i = 0; i < *numCollectedFiles; i++)
+    {
+        if (PNSLR_AreStringsEqual(collectedFiles->data[i].pathRel, pathRel, PNSLR_StringComparisonType_CaseInsensitive))
+        {
+            collected = true;
+            break;
+        }
+    }
+    if (collected) return;
+
+    PNSLR_Path srcFile = PNSLR_GetPathForChildFile(srcDir, pathRel, globalAllocator);
+    if (!PNSLR_PathExists(srcFile, PNSLR_PathExistsCheckType_File))
+    {
+        printf("Source file '%.*s' doesn't exist.\n", (i32) pathRel.count, pathRel.data);
+        FORCE_DBG_TRAP;
+    }
+
+    ArraySlice(u8) contents;
+    if (!PNSLR_ReadAllContentsFromFile(srcFile, &contents, globalAllocator))
+    {
+        printf("Failed to read source file '%.*s'.\n", (i32) pathRel.count, pathRel.data);
+        FORCE_DBG_TRAP;
+    }
+
+    FileIterInfo iter = {0};
+    iter.contents     = contents;
+
+    i32 lineStart = 0, lineEnd = 0;
+    while (DequeueNextLineSpan(&iter, &lineStart, &lineEnd))
+    {
+        ArraySlice(u8) line = (ArraySlice(u8)) {.data = contents.data + lineStart, .count = lineEnd - lineStart};
+
+        FileIterInfo lineIterInfo = {0};
+        lineIterInfo.contents     = line;
+
+        b8 hasHash = false, hasInclude = false, hasSpace = false;
+
+        TokenSpan nextTokenInCurrentLine = {0};
+        while (DequeueNextTokenSpan(&lineIterInfo, false, &nextTokenInCurrentLine))
+        {
+            if (!hasHash)
+            {
+                if (nextTokenInCurrentLine.type == TokenType_HashSymbol) { hasHash = true; continue; }
+                else                                                     {                 break;    }
+            }
+
+            if (!hasInclude)
+            {
+                if (nextTokenInCurrentLine.type == TokenType_KeywordInclude) { hasInclude = true; continue; }
+                else                                                         {                    break;    }
+            }
+
+            if (!hasSpace)
+            {
+                if (nextTokenInCurrentLine.type == TokenType_Spaces) { hasSpace = true; continue; }
+                else                                                 {                  break;    }
+            }
+
+            if (nextTokenInCurrentLine.type == TokenType_String)
+            {
+                utf8str fileNameStr = (utf8str) {.data = line.data + nextTokenInCurrentLine.start + 1, .count = nextTokenInCurrentLine.end - nextTokenInCurrentLine.start - 2};
+                GatherSourceFilesInternal(collectedFiles, numCollectedFiles, srcDir, fileNameStr, globalAllocator);
+            }
+            else break;
+        }
+    }
+
+    if (*numCollectedFiles >= collectedFiles->count)
+    {
+        PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
+        PNSLR_ResizeSlice(CollectedFile, (*collectedFiles), (*numCollectedFiles) + 16, true, globalAllocator, &err);
+        if (err != PNSLR_AllocatorError_None)
+        {
+            printf("Failed to resize collected files array.\n");
+            FORCE_DBG_TRAP;
+        }
+    }
+
+    collectedFiles->data[*numCollectedFiles] = (CollectedFile) {.pathRel = pathRel, .contents = contents};
+    (*numCollectedFiles)++;
+}
+
+ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator)
+{
+    ArraySlice(CollectedFile) collectedFiles    = PNSLR_MakeSlice(CollectedFile, 64, true, globalAllocator, nil);
+    i64                       numCollectedFiles = 0;
+    GatherSourceFilesInternal(&collectedFiles, &numCollectedFiles, srcDir, startingPath, globalAllocator);
+    collectedFiles.count = numCollectedFiles;
+    return collectedFiles;
+}
+
 void BindGenMain(ArraySlice(utf8str) args)
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     // get target path
     PNSLR_Path dir     = {0};
     utf8str    dirName = {0};
@@ -57,53 +161,46 @@ void BindGenMain(ArraySlice(utf8str) args)
 
     PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
     utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_STRING_LITERAL(".h"), appArena);
-    PNSLR_Path pnslrFile     = PNSLR_GetPathForChildFile(srcDir, pnslrFileName, appArena);
 
-    if (!PNSLR_PathExists(pnslrFile, PNSLR_PathExistsCheckType_File))
+    ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
+
+    for (i64 i = 0; i < files.count; i++)
     {
-        printf("Entry file doesn't exist.");
-        FORCE_DBG_TRAP;
-    }
+        CollectedFile file = files.data[i];
+        printf("Processing file: %.*s ===============================\n", (i32) file.pathRel.count, file.pathRel.data);
 
-    ArraySlice(u8) pnslrFileContents;
-    if (!PNSLR_ReadAllContentsFromFile(pnslrFile, &pnslrFileContents, appArena))
-    {
-        printf("Failed to read entry file.");
-        FORCE_DBG_TRAP;
-    }
+        FileIterInfo iter = {0};
+        iter.contents     = file.contents;
 
-    FileIterInfo pnslrFileIterator = {0};
-    pnslrFileIterator.pathRel      = pnslrFileName;
-    pnslrFileIterator.contents     = pnslrFileContents;
-
-    i32        skipping  = 0;
-    TokenSpan tokenSpan = {0};
-    while (DequeueNextTokenSpan(&pnslrFileIterator, false, &tokenSpan))
-    {
-        utf8str tokenStr     = (utf8str) {.count = tokenSpan.end - tokenSpan.start, .data = pnslrFileContents.data + tokenSpan.start};
-
-        // skipping handling
+        i32       skipping = 0;
+        TokenSpan span     = {0};
+        while (DequeueNextTokenSpan(&iter, false, &span))
         {
-            b8 justStoppedSkipping = false;
-            if (!skipping && tokenSpan.type == TokenType_MetaSkipReflectBegin)
+            utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = file.contents.data + span.start};
+
+            // skipping handling
             {
-                skipping++;
+                b8 justStoppedSkipping = false;
+                if (!skipping && span.type == TokenType_MetaSkipReflectBegin)
+                {
+                    skipping++;
+                }
+
+                if (skipping && span.type == TokenType_MetaSkipReflectEnd)
+                {
+                    skipping--;
+                    justStoppedSkipping = true;
+                }
+
+                if (skipping || justStoppedSkipping) continue;
             }
 
-            if (skipping && tokenSpan.type == TokenType_MetaSkipReflectEnd)
-            {
-                skipping--;
-                justStoppedSkipping = true;
-            }
-
-            if (skipping || justStoppedSkipping) continue;
+            utf8str tokenTypeStr = GetTokenTypeString(span.type);
+            printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
+            for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
+            if (span.type != TokenType_NewLine) printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+            else                                printf("new line\n");
         }
-
-        utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
-        printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
-        for (i32 i = 0; i < (32 - (i32) tokenTypeStr.count); ++i) { printf(" "); }
-        if (tokenSpan.type != TokenType_NewLine) printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
-        else                                     printf("new line\n");
     }
 }
 

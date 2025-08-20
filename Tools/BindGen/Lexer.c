@@ -47,6 +47,7 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(KeywordIf                     )
         TOKEN_VALUE(KeywordExternCBegin           )
         TOKEN_VALUE(KeywordExternCEnd             )
+        TOKEN_VALUE(KeywordInclude                )
         TOKEN_VALUE(MetaSkipReflectBegin          )
         TOKEN_VALUE(MetaSkipReflectEnd            )
     }
@@ -57,7 +58,7 @@ utf8str GetTokenTypeString(TokenType type)
 
 static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
 
-b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd)
+b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
 {
     i32 outLineStartAlt = 0, outLineEndAlt = 0;
     outLineStart = (outLineStart) ? outLineStart : &outLineStartAlt;
@@ -67,6 +68,7 @@ b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i3
     for (i32 i = file->startOfToken, w = 0; i < fileSize; i += w)
     {
         PNSLR_DecodedRune decodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - i, .data = file->contents.data + i});
+        w = decodedRune.length;
 
         b8 isLastRune = ((i + w) == fileSize);
 
@@ -588,6 +590,10 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_END"), 0))
         {
             retOut.span.type = TokenType_KeywordExternCEnd;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("include"), 0))
+        {
+            retOut.span.type = TokenType_KeywordInclude;
         }
         else if (IsValidHexNumber(currentSpanStr))
         {

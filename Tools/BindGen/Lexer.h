@@ -5,7 +5,6 @@
 
 typedef struct
 {
-    utf8str        pathRel;
     ArraySlice(u8) contents;
     i32            i;
     i32            startOfToken;
@@ -54,8 +53,9 @@ ENUM_START(TokenType, u8)
     #define TokenType_KeywordIf                     ((TokenType) 39)
     #define TokenType_KeywordExternCBegin           ((TokenType) 40)
     #define TokenType_KeywordExternCEnd             ((TokenType) 41)
-    #define TokenType_MetaSkipReflectBegin          ((TokenType) 42)
-    #define TokenType_MetaSkipReflectEnd            ((TokenType) 43)
+    #define TokenType_KeywordInclude                ((TokenType) 42)
+    #define TokenType_MetaSkipReflectBegin          ((TokenType) 43)
+    #define TokenType_MetaSkipReflectEnd            ((TokenType) 44)
 ENUM_END
 
 typedef struct
@@ -74,7 +74,7 @@ typedef struct
 
 utf8str GetTokenTypeString(TokenType type);
 
-b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i32* outLineEnd);
+b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd);
 b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
 b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken);
 b8 PeekNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
