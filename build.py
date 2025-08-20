@@ -104,6 +104,14 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             libraryObjFile,
             f'/OUT:{outputFile}',
         ]
+    elif tgt == 'osx':
+        return [
+            '-static',
+            '-o',
+            outputFile,
+            intrinsicsObjFile,
+            libraryObjFile,
+        ]
     else:
         return [
             'rcs',
@@ -437,6 +445,35 @@ def main():
         ))
 
     if osxTools and osxToolchain:
+        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'x86_64-apple-macos11.0']
+
+        buildPlatform(
+            'MacOS',
+            'Intel',
+            'osx',
+            'x64',
+            os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            os.path.join(osxTools, 'bin', 'clang++'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
+            os.path.join(osxTools, 'usr', 'bin', 'libtool'),
+            commonArgs,
+            ['-DPNSLR_OSX=1', '-DPNSLR_X64=1'],
+        )
+
+        properties.configurations.append(CCppPropertiesConfiguration(
+            name             = 'MacOS-X64',
+            compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
+            cStandard        = 'c11',
+            cppStandard      = 'c++14',
+            includePath      = [
+                '${workspaceFolder}/Source'
+            ],
+            defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
+            compilerArgs     = commonArgs,
+        ))
+
+    if osxTools and osxToolchain:
         commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'arm64-apple-macos11.0']
 
         buildPlatform(
@@ -448,7 +485,7 @@ def main():
             os.path.join(osxTools, 'bin', 'clang++'),
             CLANG_C_STD_ARGS,
             CLANG_CXX_STD_ARGS,
-            os.path.join(osxTools, 'usr', 'bin', 'ar'),
+            os.path.join(osxTools, 'usr', 'bin', 'libtool'),
             commonArgs,
             ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
         )
