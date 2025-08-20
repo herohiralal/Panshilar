@@ -70,6 +70,22 @@ b8 DequeueNextLineSpan(FileIterInfo* file, b8 ignoreSpace, i32* outLineStart, i3
 
         b8 isLastRune = ((i + w) == fileSize);
 
+        u32 r2 = 0;
+        if (!isLastRune)
+        {
+            PNSLR_DecodedRune nextDecodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - (i + w), .data = file->contents.data + (i + w)});
+            r2 = nextDecodedRune.rune;
+        }
+
+        if (decodedRune.rune == '\r' && !isLastRune && r2 == '\n')
+        {
+            *outLineStart      = file->startOfToken;
+            *outLineEnd        = i;
+            file->startOfToken = (i + w + PNSLR_GetRuneLength('\n'));
+            file->i            = (i + w + PNSLR_GetRuneLength('\n'));
+            return true;
+        }
+
         if (decodedRune.rune == '\n')
         {
             *outLineStart      = file->startOfToken;
