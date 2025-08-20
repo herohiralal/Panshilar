@@ -1,6 +1,6 @@
-//+skipreflect
 #ifndef PNSLR_ENTRY_H // ===========================================================
 #define PNSLR_ENTRY_H
+//+skipreflect
 
 // Environment setup ===============================================================
 
@@ -162,5 +162,5 @@ static_assert(PNSLR_PTR_SIZE == 8, "ptr must be 8 bytes"); // keep in sync with 
     #error "MSVC toolchain is required for Windows platform."
 #endif
 
-#endif // PNSLR_ENTRY_H ============================================================
 //-skipreflect
+#endif // PNSLR_ENTRY_H ============================================================

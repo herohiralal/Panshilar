@@ -1,6 +1,6 @@
-//+skipreflect
 #ifndef PNSLR_COMPILER_INTRINSICS_H // =============================================
 #define PNSLR_COMPILER_INTRINSICS_H
+//+skipreflect
 
 #if defined(__clang__)
 
@@ -48,5 +48,5 @@
     #define PNSLR_MSVC 0
 #endif
 
-#endif // PNSLR_COMPILER_INTRINSICS_H ==============================================
 //-skipreflect
+#endif // PNSLR_COMPILER_INTRINSICS_H ==============================================

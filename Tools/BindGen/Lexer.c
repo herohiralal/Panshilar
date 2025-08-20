@@ -45,6 +45,7 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(KeywordIfdef                  )
         TOKEN_VALUE(KeywordIfndef                 )
         TOKEN_VALUE(KeywordIf                     )
+        TOKEN_VALUE(KeywordEndif                  )
         TOKEN_VALUE(KeywordExternCBegin           )
         TOKEN_VALUE(KeywordExternCEnd             )
         TOKEN_VALUE(KeywordInclude                )
@@ -582,6 +583,10 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("if"), 0))
         {
             retOut.span.type = TokenType_KeywordIf;
+        }
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("endif"), 0))
+        {
+            retOut.span.type = TokenType_KeywordEndif;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_BEGIN"), 0))
         {

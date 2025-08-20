@@ -6,8 +6,8 @@
 
 #ifndef PNSLR_INTRINSICS_H // ======================================================
 #define PNSLR_INTRINSICS_H
-
 //+skipreflect
+
 // Primitives ======================================================================
 
 #ifdef __cplusplus
@@ -218,7 +218,6 @@ EXTERN_C_END
 #endif
 
 //-skipreflect
-
 // Memory Management ===============================================================
 
 EXTERN_C_BEGIN

@@ -51,11 +51,12 @@ ENUM_START(TokenType, u8)
     #define TokenType_KeywordIfdef                  ((TokenType) 37)
     #define TokenType_KeywordIfndef                 ((TokenType) 38)
     #define TokenType_KeywordIf                     ((TokenType) 39)
-    #define TokenType_KeywordExternCBegin           ((TokenType) 40)
-    #define TokenType_KeywordExternCEnd             ((TokenType) 41)
-    #define TokenType_KeywordInclude                ((TokenType) 42)
-    #define TokenType_MetaSkipReflectBegin          ((TokenType) 43)
-    #define TokenType_MetaSkipReflectEnd            ((TokenType) 44)
+    #define TokenType_KeywordEndif                  ((TokenType) 40)
+    #define TokenType_KeywordExternCBegin           ((TokenType) 41)
+    #define TokenType_KeywordExternCEnd             ((TokenType) 42)
+    #define TokenType_KeywordInclude                ((TokenType) 43)
+    #define TokenType_MetaSkipReflectBegin          ((TokenType) 44)
+    #define TokenType_MetaSkipReflectEnd            ((TokenType) 45)
 ENUM_END
 
 typedef struct

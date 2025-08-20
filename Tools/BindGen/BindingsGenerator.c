@@ -180,6 +180,8 @@ void BindGenMain(ArraySlice(utf8str) args)
         TokenSpan span     = {0};
         while (DequeueNextTokenSpan(&iter, false, &span))
         {
+            if (span.type == TokenType_Spaces) continue;
+
             utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = file.contents.data + span.start};
 
             // skipping handling
