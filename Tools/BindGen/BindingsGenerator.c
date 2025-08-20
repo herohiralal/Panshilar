@@ -76,11 +76,31 @@ void BindGenMain(ArraySlice(utf8str) args)
     pnslrFileIterator.pathRel      = pnslrFileName;
     pnslrFileIterator.contents     = pnslrFileContents;
 
-    // b8        skipping  = false;
+    i32        skipping  = 0;
     TokenSpan tokenSpan = {0};
     while (DequeueNextTokenSpan(&pnslrFileIterator, false, &tokenSpan))
     {
         utf8str tokenStr     = (utf8str) {.count = tokenSpan.end - tokenSpan.start, .data = pnslrFileContents.data + tokenSpan.start};
+
+        // skipping handling
+        {
+            b8 skippingJustEnded = false;
+            if (tokenSpan.type == TokenType_Comment)
+            {
+                if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("//+skipreflect"), 0))
+                {
+                    skipping++;
+                }
+                else if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("//-skipreflect"), 0))
+                {
+                    skipping--;
+                    skippingJustEnded = true;
+                }
+            }
+
+            if (skipping || skippingJustEnded) continue;
+        }
+
         utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
         printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
         for (i32 i = 0; i < (32 - (i32) tokenTypeStr.count); ++i) { printf(" "); }
