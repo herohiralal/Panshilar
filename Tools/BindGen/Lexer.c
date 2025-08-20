@@ -22,6 +22,7 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(HashSymbol                    )
         TOKEN_VALUE(TildeSymbol                   )
         TOKEN_VALUE(ColonSymbol                   )
+        TOKEN_VALUE(SemicolonSymbol               )
         TOKEN_VALUE(CommaSymbol                   )
         TOKEN_VALUE(DotSymbol                     )
         TOKEN_VALUE(UnderscoreSymbol              )
@@ -33,12 +34,15 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(BracesCloseSymbol             )
         TOKEN_VALUE(BracketOpenSymbol             )
         TOKEN_VALUE(BracketCloseSymbol            )
+        TOKEN_VALUE(LesserThanSymbol              )
+        TOKEN_VALUE(GreaterThanSymbol             )
         TOKEN_VALUE(UnknownSymbol                 )
         TOKEN_VALUE(Spaces                        )
         TOKEN_VALUE(NewLine                       )
         TOKEN_VALUE(Tab                           )
-        TOKEN_VALUE(Comment                       )
-        TOKEN_VALUE(IncompleteComment             )
+        TOKEN_VALUE(LineEndComment                )
+        TOKEN_VALUE(BlockComment                  )
+        TOKEN_VALUE(IncompleteBlockComment        )
         TOKEN_VALUE(SkipReflectStart              )
         TOKEN_VALUE(SkipReflectEnd                )
         TOKEN_VALUE(KeywordDefine                 )
@@ -275,7 +279,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (!r2IsLastRune && r3 == '\n')
             {
-                retOut.span.type       = TokenType_Comment;
+                retOut.span.type       = TokenType_LineEndComment;
                 // check for spl comments
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
@@ -297,7 +301,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         }
 
         // reached the end of file but comment didn't finish
-        retOut.span.type       = TokenType_Comment;
+        retOut.span.type       = TokenType_LineEndComment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -324,7 +328,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (r2 == '*' && !r2IsLastRune && r3 == '/')
             {
-                retOut.span.type       = TokenType_Comment;
+                retOut.span.type       = TokenType_BlockComment;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2 + PNSLR_GetRuneLength('/');
                 retOut.iterateFwd      = j + w2 + PNSLR_GetRuneLength('/') - i;
@@ -334,7 +338,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         }
 
         // reached end of file but comment didn't finish
-        retOut.span.type       = TokenType_IncompleteComment;
+        retOut.span.type       = TokenType_IncompleteBlockComment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -432,24 +436,27 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
         switch (r)
         {
-            case '+': retOut.span.type = TokenType_PlusSymbol;     break;
-            case '-': retOut.span.type = TokenType_MinusSymbol;    break;
-            case '*': retOut.span.type = TokenType_AsteriskSymbol; break;
-            case '$': retOut.span.type = TokenType_DollarSymbol;   break;
-            case '~': retOut.span.type = TokenType_TildeSymbol;    break;
-            case ':': retOut.span.type = TokenType_ColonSymbol;    break;
-            case ',': retOut.span.type = TokenType_CommaSymbol;    break;
-            case '.': retOut.span.type = TokenType_DotSymbol;      break;
-            case '#': retOut.span.type = TokenType_HashSymbol;     break;
-            case '?': retOut.span.type = TokenType_QuestionSymbol; break;
-            case '!': retOut.span.type = TokenType_ExclamationSymbol; break;
-            case '(': retOut.span.type = TokenType_ParenthesesOpenSymbol; break;
+            case '+': retOut.span.type = TokenType_PlusSymbol;             break;
+            case '-': retOut.span.type = TokenType_MinusSymbol;            break;
+            case '*': retOut.span.type = TokenType_AsteriskSymbol;         break;
+            case '$': retOut.span.type = TokenType_DollarSymbol;           break;
+            case '~': retOut.span.type = TokenType_TildeSymbol;            break;
+            case ':': retOut.span.type = TokenType_ColonSymbol;            break;
+            case ';': retOut.span.type = TokenType_SemicolonSymbol;        break;
+            case ',': retOut.span.type = TokenType_CommaSymbol;            break;
+            case '.': retOut.span.type = TokenType_DotSymbol;              break;
+            case '#': retOut.span.type = TokenType_HashSymbol;             break;
+            case '?': retOut.span.type = TokenType_QuestionSymbol;         break;
+            case '!': retOut.span.type = TokenType_ExclamationSymbol;      break;
+            case '(': retOut.span.type = TokenType_ParenthesesOpenSymbol;  break;
             case ')': retOut.span.type = TokenType_ParenthesesCloseSymbol; break;
-            case '{': retOut.span.type = TokenType_BracesOpenSymbol; break;
-            case '}': retOut.span.type = TokenType_BracesCloseSymbol; break;
-            case '[': retOut.span.type = TokenType_BracketOpenSymbol; break;
-            case ']': retOut.span.type = TokenType_BracketCloseSymbol; break;
-            default:  retOut.span.type = TokenType_UnknownSymbol;  break;
+            case '{': retOut.span.type = TokenType_BracesOpenSymbol;       break;
+            case '}': retOut.span.type = TokenType_BracesCloseSymbol;      break;
+            case '[': retOut.span.type = TokenType_BracketOpenSymbol;      break;
+            case ']': retOut.span.type = TokenType_BracketCloseSymbol;     break;
+            case '<': retOut.span.type = TokenType_LesserThanSymbol;       break;
+            case '>': retOut.span.type = TokenType_GreaterThanSymbol;      break;
+            default:  retOut.span.type = TokenType_UnknownSymbol;          break;
         }
 
         retOut.span.start      = startOfToken;

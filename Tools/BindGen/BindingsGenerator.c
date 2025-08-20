@@ -6,6 +6,7 @@ PRAGMA_REENABLE_WARNINGS
 #include "TokenMatch.c"
 #include "Lexer.c"
 
+// ========================================================================================================================================================================
 // Gathering files ========================================================================================================================================================
 
 typedef struct
@@ -111,6 +112,45 @@ ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingP
 }
 
 // ========================================================================================================================================================================
+// Parsing files ==========================================================================================================================================================
+
+void ProcessFile(utf8str pathRel, ArraySlice(u8) contents)
+{
+    FileIterInfo iter = {0};
+    iter.contents     = contents;
+
+    i32       skipping = 0;
+    TokenSpan span     = {0};
+    while (DequeueNextTokenSpan(&iter, true, &span))
+    {
+        utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
+
+        // skipping handling
+        {
+            b8 justStoppedSkipping = false;
+            if (!skipping && span.type == TokenType_MetaSkipReflectBegin)
+            {
+                skipping++;
+            }
+
+            if (skipping && span.type == TokenType_MetaSkipReflectEnd)
+            {
+                skipping--;
+                justStoppedSkipping = true;
+            }
+
+            if (skipping || justStoppedSkipping) continue;
+        }
+
+        utf8str tokenTypeStr = GetTokenTypeString(span.type);
+        printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
+        for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
+        printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+    }
+}
+
+// ========================================================================================================================================================================
+// Main ===================================================================================================================================================================
 
 void BindGenMain(ArraySlice(utf8str) args)
 {
@@ -172,41 +212,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     {
         CollectedFile file = files.data[i];
         printf("Processing file: %.*s ===============================\n", (i32) file.pathRel.count, file.pathRel.data);
-
-        FileIterInfo iter = {0};
-        iter.contents     = file.contents;
-
-        i32       skipping = 0;
-        TokenSpan span     = {0};
-        while (DequeueNextTokenSpan(&iter, false, &span))
-        {
-            if (span.type == TokenType_Spaces) continue;
-
-            utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = file.contents.data + span.start};
-
-            // skipping handling
-            {
-                b8 justStoppedSkipping = false;
-                if (!skipping && span.type == TokenType_MetaSkipReflectBegin)
-                {
-                    skipping++;
-                }
-
-                if (skipping && span.type == TokenType_MetaSkipReflectEnd)
-                {
-                    skipping--;
-                    justStoppedSkipping = true;
-                }
-
-                if (skipping || justStoppedSkipping) continue;
-            }
-
-            utf8str tokenTypeStr = GetTokenTypeString(span.type);
-            printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
-            for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
-            if (span.type != TokenType_NewLine) printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
-            else                                printf("new line\n");
-        }
+        ProcessFile(file.pathRel, file.contents);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
