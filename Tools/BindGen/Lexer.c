@@ -47,6 +47,8 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(KeywordIf                     )
         TOKEN_VALUE(KeywordExternCBegin           )
         TOKEN_VALUE(KeywordExternCEnd             )
+        TOKEN_VALUE(MetaSkipReflectBegin          )
+        TOKEN_VALUE(MetaSkipReflectEnd            )
     }
     #undef TOKEN_VALUE
 
@@ -255,8 +257,20 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             if (!r2IsLastRune && r3 == '\n')
             {
                 retOut.span.type       = TokenType_Comment;
+                // check for spl comments
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
+                {
+                    utf8str spanStr = (utf8str) {.count = retOut.span.end - retOut.span.start, .data = fileContents.data + retOut.span.start};
+                    if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//+skipreflect"), 0))
+                    {
+                        retOut.span.type = TokenType_MetaSkipReflectBegin;
+                    }
+                    else if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//-skipreflect"), 0))
+                    {
+                        retOut.span.type = TokenType_MetaSkipReflectEnd;
+                    }
+                }
                 retOut.iterateFwd      = j + (r2 == '\r' ? 0 : w2) - i;
                 retOut.newStartOfToken = j + (r2 == '\r' ? 0 : w2);
                 return retOut;

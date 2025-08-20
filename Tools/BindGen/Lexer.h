@@ -54,6 +54,8 @@ ENUM_START(TokenType, u8)
     #define TokenType_KeywordIf                     ((TokenType) 39)
     #define TokenType_KeywordExternCBegin           ((TokenType) 40)
     #define TokenType_KeywordExternCEnd             ((TokenType) 41)
+    #define TokenType_MetaSkipReflectBegin          ((TokenType) 42)
+    #define TokenType_MetaSkipReflectEnd            ((TokenType) 43)
 ENUM_END
 
 typedef struct

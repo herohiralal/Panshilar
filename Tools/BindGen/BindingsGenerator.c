@@ -84,21 +84,19 @@ void BindGenMain(ArraySlice(utf8str) args)
 
         // skipping handling
         {
-            b8 skippingJustEnded = false;
-            if (tokenSpan.type == TokenType_Comment)
+            b8 justStoppedSkipping = false;
+            if (!skipping && tokenSpan.type == TokenType_MetaSkipReflectBegin)
             {
-                if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("//+skipreflect"), 0))
-                {
-                    skipping++;
-                }
-                else if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("//-skipreflect"), 0))
-                {
-                    skipping--;
-                    skippingJustEnded = true;
-                }
+                skipping++;
             }
 
-            if (skipping || skippingJustEnded) continue;
+            if (skipping && tokenSpan.type == TokenType_MetaSkipReflectEnd)
+            {
+                skipping--;
+                justStoppedSkipping = true;
+            }
+
+            if (skipping || justStoppedSkipping) continue;
         }
 
         utf8str tokenTypeStr = GetTokenTypeString(tokenSpan.type);
