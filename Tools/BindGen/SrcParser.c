@@ -56,6 +56,34 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     }
 }
 
+TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, b8 ignoreSpace, TokenType typeMask, utf8str* tokenStr, PNSLR_Allocator allocator)
+{
+    // empty by default
+    if (tokenStr) *tokenStr = (utf8str) {0};
+
+    TokenSpan currSpan = {0};
+    if (!DequeueNextTokenSpan(&iter, ignoreSpace, &currSpan))
+    {
+        if (typeMask & TokenType_EOF) { return TokenType_EOF; } // user expecting EOF
+
+        // user not expecting EOF
+        PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, PNSLR_STRING_LITERAL("Not expecting EOF."));
+        return TokenType_Invalid;
+    }
+
+    if (tokenStr) *tokenStr = (utf8str) {.data = iter->contents.data + currSpan.start, .count = currSpan.end - currSpan.start};
+    if (!(currSpan.type & typeMask)) // an unexpected token type encountered
+    {
+        utf8str errorPrefix = PNSLR_STRING_LITERAL("Unexpected token encountered, expecting one of: ");
+        utf8str maskStr = GetTokenTypeMaskString(typeMask, PNSLR_STRING_LITERAL(", "), allocator);
+        utf8str errorFull = PNSLR_ConcatenateStrings(errorPrefix, maskStr, allocator);
+        PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, errorFull);
+        return TokenType_Invalid;
+    }
+
+    return currSpan.type;
+}
+
 void ProcessFile(utf8str pathRel, ArraySlice(u8) contents)
 {
     FileIterInfo iter = {0};
