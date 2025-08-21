@@ -55,21 +55,15 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
         FileIterInfo lineIterInfo = {0};
         lineIterInfo.contents     = line;
 
-        b8 hasHash = false, hasInclude = false, hasSpace = false;
+        b8 hasInclude = false, hasSpace = false;
 
         TokenSpan nextTokenInCurrentLine = {0};
         while (DequeueNextTokenSpan(&lineIterInfo, false, &nextTokenInCurrentLine))
         {
-            if (!hasHash)
-            {
-                if (nextTokenInCurrentLine.type == TokenType_HashSymbol) { hasHash = true; continue; }
-                else                                                     {                 break;    }
-            }
-
             if (!hasInclude)
             {
-                if (nextTokenInCurrentLine.type == TokenType_KeywordInclude) { hasInclude = true; continue; }
-                else                                                         {                    break;    }
+                if (nextTokenInCurrentLine.type == TokenType_PreprocessorInclude) { hasInclude = true; continue; }
+                else                                                              {                    break;    }
             }
 
             if (!hasSpace)
@@ -182,7 +176,7 @@ void ProcessFile(utf8str pathRel, ArraySlice(u8) contents)
     {
         if (span.type == TokenType_LineEndComment) continue;
 
-        // utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
+        utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
 
         // skipping handling
         {
@@ -199,17 +193,15 @@ void ProcessFile(utf8str pathRel, ArraySlice(u8) contents)
             //     else continue; // meaningless
             // }
 
-            if (span.type == TokenType_HashSymbol)
-            {
-                PrintParseError(pathRel, contents, span.start, span.end, PNSLR_STRING_LITERAL("COOL ERROR"));
-                break;
-            }
+            // if (span.type == TokenType_SymbolHash)
+            // {
+            // }
         }
 
-        // utf8str tokenTypeStr = GetTokenTypeString(span.type);
-        // printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
-        // for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
-        // printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+        utf8str tokenTypeStr = GetTokenTypeString(span.type);
+        printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
+        for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
+        printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
     }
 }
 
