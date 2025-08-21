@@ -469,7 +469,7 @@ def main():
             includePath      = [
                 '${workspaceFolder}/Source'
             ],
-            defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
+            defines          = ['PNSLR_OSX=1', 'PNSLR_X64=1'],
             compilerArgs     = commonArgs,
         ))
 
