@@ -78,6 +78,7 @@ typedef struct
     i32       newStartOfToken;
 } TokenSpanInfo;
 
+utf8str GetTokenTypeString(TokenType type);
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd);
 b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
 b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken);
