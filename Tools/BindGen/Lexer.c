@@ -37,6 +37,8 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(SymbolBracketClose            )
         TOKEN_VALUE(SymbolLesserThan              )
         TOKEN_VALUE(SymbolGreaterThan             )
+        TOKEN_VALUE(SymbolLeftShift               )
+        TOKEN_VALUE(SymbolRightShift              )
         TOKEN_VALUE(SymbolUnknown                 )
         TOKEN_VALUE(Spaces                        )
         TOKEN_VALUE(NewLine                       )
@@ -44,8 +46,6 @@ utf8str GetTokenTypeString(TokenType type)
         TOKEN_VALUE(LineEndComment                )
         TOKEN_VALUE(BlockComment                  )
         TOKEN_VALUE(IncompleteBlockComment        )
-        TOKEN_VALUE(Unused38_____________________ )
-        TOKEN_VALUE(Unused39_____________________ )
         TOKEN_VALUE(PreprocessorDefine            )
         TOKEN_VALUE(PreprocessorIfdef             )
         TOKEN_VALUE(PreprocessorIfndef            )
@@ -473,8 +473,20 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         retOut.iterateFwd      = width;
         retOut.newStartOfToken = i + width;
 
-        // check for preprocessors
-        if (retOut.span.type == TokenType_SymbolHash)
+        b8 isShiftOperator = false;
+        if (isLastRune)                                                              {                                                                        }
+        else if (r == '<' && nextRune == '<') { retOut.span.type = TokenType_SymbolLeftShift;  isShiftOperator = true; }
+        else if (r == '>' && nextRune == '>') { retOut.span.type = TokenType_SymbolRightShift; isShiftOperator = true; }
+
+        if (isShiftOperator)
+        {
+            i32 nextRuneWidth = PNSLR_GetRuneLength(r);
+
+            retOut.span.end        += nextRuneWidth;
+            retOut.iterateFwd      += nextRuneWidth;
+            retOut.newStartOfToken += nextRuneWidth;
+        }
+        else if (retOut.span.type == TokenType_SymbolHash) // check for preprocessors
         {
             FileIterInfo iterCpy = {.contents = fileContents, .i = i + width, .startOfToken = i + width};
             TokenSpan nextTokenSpan = {0};
@@ -484,11 +496,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
                 b8 successfulPreprocessorCheck = true;
                 if (nextTokenSpan.type != TokenType_Identifier)                                   { successfulPreprocessorCheck = false;              }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define"), 0))  { retOut.span.type = TokenType_PreprocessorDefine;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef"), 0))  { retOut.span.type = TokenType_PreprocessorIfndef;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"), 0))   { retOut.span.type = TokenType_PreprocessorIfdef;   }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"), 0))      { retOut.span.type = TokenType_PreprocessorIf;      }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"), 0))   { retOut.span.type = TokenType_PreprocessorEndif;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define" ), 0)) { retOut.span.type = TokenType_PreprocessorDefine;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef" ), 0)) { retOut.span.type = TokenType_PreprocessorIfndef;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"  ), 0)) { retOut.span.type = TokenType_PreprocessorIfdef;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"     ), 0)) { retOut.span.type = TokenType_PreprocessorIf;      }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"  ), 0)) { retOut.span.type = TokenType_PreprocessorEndif;   }
                 else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TokenType_PreprocessorInclude; }
                 else                                                                              { successfulPreprocessorCheck = false;              }
 
