@@ -476,24 +476,28 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         // check for preprocessors
         if (retOut.span.type == TokenType_SymbolHash)
         {
-            TokenSpanInfo nextTokenInfo = GetCurrentTokenSpanInfo(fileContents, i + width, i + width, false);
-            utf8str nextTokenStr = (utf8str){.data = fileContents.data + nextTokenInfo.span.start, .count = nextTokenInfo.span.end - nextTokenInfo.span.start};
-
-            b8 successfulPreprocessorCheck = true;
-            if (nextTokenInfo.span.type != TokenType_Identifier)                              { successfulPreprocessorCheck = false;              }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define"), 0))  { retOut.span.type = TokenType_PreprocessorDefine;  }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef"), 0))  { retOut.span.type = TokenType_PreprocessorIfndef;  }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"), 0))   { retOut.span.type = TokenType_PreprocessorIfdef;   }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"), 0))      { retOut.span.type = TokenType_PreprocessorIf;      }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"), 0))   { retOut.span.type = TokenType_PreprocessorEndif;   }
-            else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TokenType_PreprocessorInclude; }
-            else                                                                              { successfulPreprocessorCheck = false;              }
-
-            if (successfulPreprocessorCheck)
+            FileIterInfo iterCpy = {.contents = fileContents, .i = i + width, .startOfToken = i + width};
+            TokenSpan nextTokenSpan = {0};
+            if (DequeueNextTokenSpan(&iterCpy, false, &nextTokenSpan))
             {
-                retOut.span.end         = nextTokenInfo.span.end;
-                retOut.iterateFwd      += nextTokenInfo.iterateFwd;
-                retOut.newStartOfToken  = nextTokenInfo.newStartOfToken;
+                utf8str nextTokenStr = (utf8str){.data = fileContents.data + nextTokenSpan.start, .count = nextTokenSpan.end - nextTokenSpan.start};
+
+                b8 successfulPreprocessorCheck = true;
+                if (nextTokenSpan.type != TokenType_Identifier)                                   { successfulPreprocessorCheck = false;              }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define"), 0))  { retOut.span.type = TokenType_PreprocessorDefine;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef"), 0))  { retOut.span.type = TokenType_PreprocessorIfndef;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"), 0))   { retOut.span.type = TokenType_PreprocessorIfdef;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"), 0))      { retOut.span.type = TokenType_PreprocessorIf;      }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"), 0))   { retOut.span.type = TokenType_PreprocessorEndif;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TokenType_PreprocessorInclude; }
+                else                                                                              { successfulPreprocessorCheck = false;              }
+
+                if (successfulPreprocessorCheck)
+                {
+                    retOut.span.end         = nextTokenSpan.end;
+                    retOut.iterateFwd      += iterCpy.i - i - width;
+                    retOut.newStartOfToken  = iterCpy.startOfToken;
+                }
             }
         }
 
