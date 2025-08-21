@@ -62,6 +62,7 @@ ENUM_START(TokenType, u64)
     #define TokenType_MetaExternCEnd                ((TokenType) (1ULL << 47))
     #define TokenType_MetaSkipReflectBegin          ((TokenType) (1ULL << 48))
     #define TokenType_MetaSkipReflectEnd            ((TokenType) (1ULL << 49))
+    #define TokenType_EOF                           ((TokenType) (1ULL << 63))
 ENUM_END
 
 typedef struct
@@ -79,6 +80,7 @@ typedef struct
 } TokenSpanInfo;
 
 utf8str GetTokenTypeString(TokenType type);
+utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator allocator);
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd);
 b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
 b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken);

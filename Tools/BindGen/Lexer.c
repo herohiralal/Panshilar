@@ -62,6 +62,37 @@ utf8str GetTokenTypeString(TokenType type)
     return PNSLR_STRING_LITERAL("__UNKNOWN_TOKEN_TYPE__");
 }
 
+utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator allocator)
+{
+    i64 allocSize = 0;
+    {
+        for (u8 typeMaskShiftIt = 0; typeMaskShiftIt < 64; typeMaskShiftIt++)
+        {
+            TokenType typeMaskIt = (TokenType) (1ULL << typeMaskShiftIt);
+            if (type & typeMaskIt) { allocSize += GetTokenTypeString(typeMaskIt).count + joiner.count; }
+        }
+    }
+
+    allocSize -= joiner.count;
+    utf8str output = PNSLR_MakeString(allocSize, false, allocator, nil);
+    if (output.data && output.count)
+    {
+        i64 iterator = 0;
+        for (u8 typeMaskShiftIt = 0; typeMaskShiftIt < 64; typeMaskShiftIt++)
+        {
+            TokenType typeMaskIt = (TokenType) (1ULL << typeMaskShiftIt);
+            if (type & typeMaskIt)
+            {
+                utf8str tokenTypeStr = GetTokenTypeString(typeMaskIt);
+                for (i64 i = 0; i < tokenTypeStr.count; i++) { output.data[iterator++] = tokenTypeStr.data[i]; }
+                for (i64 i = 0; i <       joiner.count; i++) { output.data[iterator++] =       joiner.data[i]; }
+            }
+        }
+    }
+
+    return output;
+}
+
 static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
 
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
