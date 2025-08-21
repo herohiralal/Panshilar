@@ -57,7 +57,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     for (i64 i = 0; i < files.count; i++)
     {
         CollectedFile file = files.data[i];
-        ProcessFile(file.pathRel, file.contents);
+        ProcessFile(file.pathRel, file.contents, appArena);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;

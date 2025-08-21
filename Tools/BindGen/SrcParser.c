@@ -41,9 +41,9 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     );
 
     printf(">   ");
-    printf("\033[1;36m%.*s", errLineStart - start, contents.data + errLineStart);
-    printf("\033[31m%.*s",   end - start,          contents.data + start       );
-    printf("\033[36m%.*s",   errLineEnd - end,     contents.data + end         );
+    if ((start - errLineStart) > 0) printf("\033[1;36m%.*s", start - errLineStart, contents.data + errLineStart);
+    if ((end - start         ) > 0) printf("\033[31m%.*s",   end - start,          contents.data + start       );
+    if ((errLineEnd - end    ) > 0) printf("\033[36m%.*s",   errLineEnd - end,     contents.data + end         );
     printf("\033[0m\n");
 
     // highlight bad part
@@ -62,7 +62,7 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, b8 ignoreSpace,
     if (tokenStr) *tokenStr = (utf8str) {0};
 
     TokenSpan currSpan = {0};
-    if (!DequeueNextTokenSpan(&iter, ignoreSpace, &currSpan))
+    if (!DequeueNextTokenSpan(iter, ignoreSpace, &currSpan))
     {
         if (typeMask & TokenType_EOF) { return TokenType_EOF; } // user expecting EOF
 
@@ -71,7 +71,8 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, b8 ignoreSpace,
         return TokenType_Invalid;
     }
 
-    if (tokenStr) *tokenStr = (utf8str) {.data = iter->contents.data + currSpan.start, .count = currSpan.end - currSpan.start};
+    utf8str tokenStr2 = (utf8str) {.data = iter->contents.data + currSpan.start, .count = currSpan.end - currSpan.start};
+    if (tokenStr) *tokenStr = tokenStr2;
     if (!(currSpan.type & typeMask)) // an unexpected token type encountered
     {
         utf8str errorPrefix = PNSLR_STRING_LITERAL("Unexpected token encountered, expecting one of: ");
@@ -84,44 +85,78 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, b8 ignoreSpace,
     return currSpan.type;
 }
 
-void ProcessFile(utf8str pathRel, ArraySlice(u8) contents)
+b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
     FileIterInfo iter = {0};
     iter.contents     = contents;
 
-    // utf8str fileDoc = {0};
-
-    b8 skipping = false, isInIncludeGuard = false;
-    TokenSpan span = {0};
-    while (DequeueNextTokenSpan(&iter, true, &span))
+    utf8str fileDoc = {0};
     {
-        if (span.type == TokenType_LineEndComment) continue;
-
-        utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
-
-        // skipping handling
+        utf8str fileDocTemp = {0};
+        TokenType rec = ForceGetNextToken(pathRel, &iter, true, TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
+        if (rec == TokenType_Invalid) return false;
+        if (rec == TokenType_BlockComment)
         {
-            if (!skipping && span.type == TokenType_MetaSkipReflectBegin) { skipping = true;            }
-            if (skipping && span.type == TokenType_MetaSkipReflectEnd)    { skipping = false; continue; }
-            if (skipping)                                                 {                   continue; }
+            fileDoc = fileDocTemp;
+            if (!ForceGetNextToken(pathRel, &iter, true, TokenType_NewLine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, true, TokenType_NewLine, nil, allocator)) return false;
+            rec = ForceGetNextToken(pathRel, &iter, true, TokenType_PreprocessorIfndef, nil, allocator);
         }
 
-        if (!isInIncludeGuard)
+        if (rec != TokenType_PreprocessorIfndef)
         {
-            // if (span.type == TokenType_BlockComment)
-            // {
-            //     if (!fileDoc.count && !fileDoc.data) fileDoc = tokenStr;
-            //     else continue; // meaningless
-            // }
-
-            // if (span.type == TokenType_SymbolHash)
-            // {
-            // }
+            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("should've been an ifndef by now."));
+            return false;
         }
-
-        utf8str tokenTypeStr = GetTokenTypeString(span.type);
-        printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
-        for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
-        printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
     }
+
+    // i32 preprocessorConditionDepth = 1;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_LineEndComment, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_PreprocessorDefine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, nil, allocator)) return false;
+
+    // b8 skipping = false, isInIncludeGuard = false;
+    // TokenSpan span = {0};
+    // while (iter.i < contents.count)
+    // {
+    // }
+
+    return true;
+    // while (DequeueNextTokenSpan(&iter, true, &span))
+    // {
+    //     if (span.type == TokenType_LineEndComment) continue;
+
+    //     utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
+
+    //     // skipping handling
+    //     {
+    //         if (!skipping && span.type == TokenType_MetaSkipReflectBegin) { skipping = true;            }
+    //         if (skipping && span.type == TokenType_MetaSkipReflectEnd)    { skipping = false; continue; }
+    //         if (skipping)                                                 {                   continue; }
+    //     }
+
+    //     if (!isInIncludeGuard)
+    //     {
+    //         if (span.type == TokenType_BlockComment)
+    //         {
+    //             if (!fileDoc.count && !fileDoc.data) fileDoc = tokenStr;
+    //             else continue; // meaningless
+    //         }
+
+    //         if (span.type == TokenType_PreprocessorIfndef)
+    //         {
+    //         }
+    //     }
+
+    //     utf8str tokenTypeStr =
+    //     GetTokenTypeString(span.type);
+    //     printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
+    //     for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
+    //     printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
+    // }
 }
