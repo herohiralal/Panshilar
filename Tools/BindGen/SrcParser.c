@@ -104,33 +104,32 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
         if (!rec) return false;
     }
 
-    // i32 preprocessorConditionDepth = 1;
     utf8str includeGuardIdentifier = {0};
     {
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
         utf8str includeGuardIdentifierCheck = {0};
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, &includeGuardIdentifierCheck, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierCheck, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
 
         utf8str beginComment = {0};
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_LineEndComment, &beginComment, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_LineEndComment, &beginComment, allocator)) return false;
         i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifierCheck.count + 1 /*space*/));
         if (beginComment.count != expectedCommentLength)
         {
             PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
             return false;
         }
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_PreprocessorDefine, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
         utf8str includeGuardIdentifierDecl = {0};
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
         if (!PNSLR_AreStringsEqual(includeGuardIdentifierCheck, includeGuardIdentifierDecl, 0))
         {
             PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
             return false;
         }
-        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
 
         includeGuardIdentifier = includeGuardIdentifierCheck;
     }
@@ -138,18 +137,74 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     while (iter.i < contents.count)
     {
         utf8str tokenStr;
-        TokenType rec = ForceGetNextToken(pathRel, &iter, false,
-            TokenType_NewLine |
+        TokenType rec = ForceGetNextToken(pathRel, &iter,
+            TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces,
             TokenType_MetaSkipReflectBegin |
-            TokenType_MetaExternCBegin |
             TokenType_PreprocessorEndif |
+            TokenType_MetaExternCBegin |
+            TokenType_PreprocessorInclude |
             TokenType_Invalid,
             &tokenStr,
             allocator
         );
         if (!rec) return false;
 
-        if (rec == TokenType_NewLine) { continue; }
+        if (rec == TokenType_MetaSkipReflectBegin)
+        {
+            i32 skipReflectStart = iter.startOfToken - 1, skipReflectEnd = iter.i;
+
+            TokenSpan currSpan = {0};
+            b8 endFound = false;
+            while (DequeueNextTokenSpan(&iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, &currSpan))
+            {
+                if (currSpan.type == TokenType_MetaSkipReflectEnd)
+                {
+                    endFound = true;
+                    break;
+                }
+            }
+
+            if (endFound) continue;
+
+            // file finished but block didn't end
+            PrintParseError(pathRel, iter.contents, skipReflectStart, skipReflectEnd, PNSLR_STRING_LITERAL("skip reflect block not closed."));
+            return false;
+        }
+
+        if (rec == TokenType_PreprocessorInclude) // if #include, consume the whole line
+        {
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_String, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, TokenType_NewLine, nil, allocator)) return false;
+
+            continue;
+        }
+
+        if (rec == TokenType_PreprocessorEndif)
+        {
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+
+            utf8str endComment = {0};
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_LineEndComment, &endComment, allocator)) return false;
+            {
+                i64 expectedLength = (84 - (((i64) sizeof("#endif") - 1) + 1 /*space*/));
+                if (endComment.count != expectedLength)
+                {
+                    PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("End comment does not match expected length."));
+                    return false;
+                }
+
+                utf8str endCommentIncludeGuardIdentifierPart = (utf8str){.data = endComment.data + 3, .count = endComment.count - 3};
+                if (!PNSLR_StringStartsWith(endCommentIncludeGuardIdentifierPart, includeGuardIdentifier, 0))
+                {
+                    PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
+                    return false;
+                }
+            }
+
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_EOF, nil, allocator)) return false;
+            break;
+        }
     }
 
     return true;
