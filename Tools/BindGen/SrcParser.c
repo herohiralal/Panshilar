@@ -85,6 +85,54 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask
     return currSpan.type;
 }
 
+b8 ConsumeFileIntro(utf8str pathRel, FileIterInfo* iter, utf8str* includeGuardIdentifier, PNSLR_Allocator allocator)
+{
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    utf8str includeGuardIdentifierCheck = {0};
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierCheck, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+
+    utf8str beginComment = {0};
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_LineEndComment, &beginComment, allocator)) return false;
+    i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifierCheck.count + 1 /*space*/));
+    if (beginComment.count != expectedCommentLength)
+    {
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
+        return false;
+    }
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    utf8str includeGuardIdentifierDecl = {0};
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
+    if (!PNSLR_AreStringsEqual(includeGuardIdentifierCheck, includeGuardIdentifierDecl, 0))
+    {
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
+        return false;
+    }
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+
+    return true;
+}
+
+b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
+{
+    i32 skipReflectStart = iter->startOfToken - 1, skipReflectEnd = iter->i;
+
+    TokenSpan currSpan = {0};
+    while (DequeueNextTokenSpan(iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, &currSpan))
+    {
+        if (currSpan.type == TokenType_MetaSkipReflectEnd)
+        {
+            return true;
+        }
+    }
+
+    // file finished but block didn't end
+    PrintParseError(pathRel, iter->contents, skipReflectStart, skipReflectEnd, PNSLR_STRING_LITERAL("skip reflect block not closed."));
+    return false;
+}
+
 b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
     FileIterInfo iter = {0};
@@ -105,34 +153,7 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     }
 
     utf8str includeGuardIdentifier = {0};
-    {
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-        utf8str includeGuardIdentifierCheck = {0};
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierCheck, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-
-        utf8str beginComment = {0};
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_LineEndComment, &beginComment, allocator)) return false;
-        i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifierCheck.count + 1 /*space*/));
-        if (beginComment.count != expectedCommentLength)
-        {
-            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
-            return false;
-        }
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-        utf8str includeGuardIdentifierDecl = {0};
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
-        if (!PNSLR_AreStringsEqual(includeGuardIdentifierCheck, includeGuardIdentifierDecl, 0))
-        {
-            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
-            return false;
-        }
-        if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
-
-        includeGuardIdentifier = includeGuardIdentifierCheck;
-    }
+    if (!ConsumeFileIntro(pathRel, &iter, &includeGuardIdentifier, allocator)) return false;
 
     while (iter.i < contents.count)
     {
@@ -149,26 +170,11 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
         );
         if (!rec) return false;
 
-        if (rec == TokenType_MetaSkipReflectBegin)
+        if (rec == TokenType_MetaSkipReflectBegin) // if skipreflect, consume till end
         {
-            i32 skipReflectStart = iter.startOfToken - 1, skipReflectEnd = iter.i;
+            if (!ConsumeSkipReflectBlock(pathRel, &iter)) return false;
 
-            TokenSpan currSpan = {0};
-            b8 endFound = false;
-            while (DequeueNextTokenSpan(&iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, &currSpan))
-            {
-                if (currSpan.type == TokenType_MetaSkipReflectEnd)
-                {
-                    endFound = true;
-                    break;
-                }
-            }
-
-            if (endFound) continue;
-
-            // file finished but block didn't end
-            PrintParseError(pathRel, iter.contents, skipReflectStart, skipReflectEnd, PNSLR_STRING_LITERAL("skip reflect block not closed."));
-            return false;
+            continue;
         }
 
         if (rec == TokenType_PreprocessorInclude) // if #include, consume the whole line
@@ -180,7 +186,7 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
             continue;
         }
 
-        if (rec == TokenType_PreprocessorEndif)
+        if (rec == TokenType_PreprocessorEndif) // include guard ended
         {
             if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
 
