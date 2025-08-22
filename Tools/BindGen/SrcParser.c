@@ -94,7 +94,7 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     {
         utf8str fileDocTemp = {0};
         TokenType rec = ForceGetNextToken(pathRel, &iter, true, TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
-        if (rec == TokenType_Invalid) return false;
+        if (!rec) return false;
         if (rec == TokenType_BlockComment)
         {
             fileDoc = fileDocTemp;
@@ -111,34 +111,57 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     }
 
     // i32 preprocessorConditionDepth = 1;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_LineEndComment, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_PreprocessorDefine, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, nil, allocator)) return false;
+    utf8str includeGuardIdentifier = {0};
+    {
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+        utf8str includeGuardIdentifierCheck = {0};
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, &includeGuardIdentifierCheck, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
 
-    // b8 skipping = false, isInIncludeGuard = false;
-    // TokenSpan span = {0};
-    // while (iter.i < contents.count)
-    // {
-    // }
+        utf8str beginComment = {0};
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_LineEndComment, &beginComment, allocator)) return false;
+        i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifierCheck.count + 1 /*space*/));
+        if (beginComment.count != expectedCommentLength)
+        {
+            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
+            return false;
+        }
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_PreprocessorDefine, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Spaces, nil, allocator)) return false;
+        utf8str includeGuardIdentifierDecl = {0};
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
+        if (!PNSLR_AreStringsEqual(includeGuardIdentifierCheck, includeGuardIdentifierDecl, 0))
+        {
+            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
+            return false;
+        }
+        if (!ForceGetNextToken(pathRel, &iter, false, TokenType_NewLine, nil, allocator)) return false;
+
+        includeGuardIdentifier = includeGuardIdentifierCheck;
+    }
+
+    while (iter.i < contents.count)
+    {
+        utf8str tokenStr;
+        TokenType rec = ForceGetNextToken(pathRel, &iter, false,
+            TokenType_NewLine |
+            TokenType_MetaSkipReflectBegin |
+            TokenType_MetaExternCBegin |
+            TokenType_PreprocessorEndif |
+            TokenType_Invalid,
+            &tokenStr,
+            allocator
+        );
+        if (!rec) return false;
+
+        if (rec == TokenType_NewLine) { continue; }
+    }
 
     return true;
     // while (DequeueNextTokenSpan(&iter, true, &span))
     // {
-    //     if (span.type == TokenType_LineEndComment) continue;
 
-    //     utf8str tokenStr = (utf8str) {.count = span.end - span.start, .data = contents.data + span.start};
-
-    //     // skipping handling
-    //     {
-    //         if (!skipping && span.type == TokenType_MetaSkipReflectBegin) { skipping = true;            }
-    //         if (skipping && span.type == TokenType_MetaSkipReflectEnd)    { skipping = false; continue; }
-    //         if (skipping)                                                 {                   continue; }
-    //     }
 
     //     if (!isInIncludeGuard)
     //     {

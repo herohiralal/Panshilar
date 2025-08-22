@@ -220,9 +220,10 @@ EXTERN_C_END
 #endif
 
 //-skipreflect
+EXTERN_C_BEGIN
+
 // Memory Management ===============================================================
 
-EXTERN_C_BEGIN
 
 /**
  * Allocate memory with the specified alignment and size.
