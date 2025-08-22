@@ -205,6 +205,9 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
             if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_EOF, nil, allocator)) return false;
             break;
         }
+
+        // ONLY REACHES HERE IF THE CURRENT TOKEN IS EXTERN C BEGIN
+        if (rec != TokenType_MetaExternCBegin) { FORCE_DBG_TRAP; }
     }
 
     return true;
