@@ -42,7 +42,7 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
         b8 hasInclude = false, hasSpace = false;
 
         TokenSpan nextTokenInCurrentLine = {0};
-        while (DequeueNextTokenSpan(&lineIterInfo, false, &nextTokenInCurrentLine))
+        while (DequeueNextTokenSpan(&lineIterInfo, TokenIgnoreMask_None, &nextTokenInCurrentLine))
         {
             if (!hasInclude)
             {

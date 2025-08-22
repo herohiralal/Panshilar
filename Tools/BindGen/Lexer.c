@@ -93,7 +93,7 @@ utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator a
     return output;
 }
 
-static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace);
+static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask);
 
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
 {
@@ -149,15 +149,15 @@ b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
     return false;
 }
 
-b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan)
+b8 DequeueNextTokenSpan(FileIterInfo* file, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan)
 {
-    return IterateNextTokenSpan(file, true, ignoreSpace, outTokenSpan);
+    return IterateNextTokenSpan(file, true, ignoreMask, outTokenSpan);
 }
 
-b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken)
+b8 PeekNextToken(FileIterInfo* file, TokenIgnoreMask ignoreMask, utf8str* outToken)
 {
     TokenSpan span = {0};
-    if (!PeekNextTokenSpan(file, ignoreSpace, &span))
+    if (!PeekNextTokenSpan(file, ignoreMask, &span))
     {
         if (outToken) *outToken = (utf8str) {0};
         return false;
@@ -167,19 +167,19 @@ b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken)
     return true;
 }
 
-b8 PeekNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan)
+b8 PeekNextTokenSpan(FileIterInfo* file, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan)
 {
-    return IterateNextTokenSpan(file, false, ignoreSpace, outTokenSpan);
+    return IterateNextTokenSpan(file, false, ignoreMask, outTokenSpan);
 }
 
-b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, TokenSpan* outTokenSpan)
+b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan)
 {
     i32 i = file->i;
     i32 startOfToken = file->startOfToken;
 
     while (true)
     {
-        TokenSpanInfo tokenSpanInfo = GetCurrentTokenSpanInfo(file->contents, i, startOfToken, ignoreSpace);
+        TokenSpanInfo tokenSpanInfo = GetCurrentTokenSpanInfo(file->contents, i, startOfToken, ignoreMask);
         i += tokenSpanInfo.iterateFwd;
         startOfToken = tokenSpanInfo.newStartOfToken;
 
@@ -214,7 +214,7 @@ b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, TokenSpa
         widthVarName = tempXXX##__LINE__.length; \
     } while (false); \
 
-static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, b8 ignoreSpace)
+static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask)
 {
     TokenSpanInfo retOut = {0};
 
@@ -233,18 +233,21 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
     if (IsSpace(r))
     {
-        // send new line as individual token (even if ignore space)
-        if (r == '\n')
+        if (!(ignoreMask & TokenIgnoreMask_NewLine))
         {
-            retOut.span.type       = TokenType_NewLine;
-            retOut.span.start      = startOfToken;
-            retOut.span.end        = i + width;
-            retOut.iterateFwd      = width;
-            retOut.newStartOfToken = i + width;
-            return retOut;
+            // send new line as individual token
+            if (r == '\n')
+            {
+                retOut.span.type       = TokenType_NewLine;
+                retOut.span.start      = startOfToken;
+                retOut.span.end        = i + width;
+                retOut.iterateFwd      = width;
+                retOut.newStartOfToken = i + width;
+                return retOut;
+            }
         }
 
-        if (!ignoreSpace)
+        if (!(ignoreMask & TokenIgnoreMask_Spaces))
         {
             // ignore carriage return
             if (r == '\r')
@@ -319,7 +322,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (!r2IsLastRune && r3 == '\n')
             {
-                retOut.span.type       = TokenType_LineEndComment;
+                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TokenType_Invalid : TokenType_LineEndComment;
                 // check for spl comments
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
@@ -368,7 +371,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (r2 == '*' && !r2IsLastRune && r3 == '/')
             {
-                retOut.span.type       = TokenType_BlockComment;
+                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TokenType_Invalid : TokenType_BlockComment;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2 + PNSLR_GetRuneLength('/');
                 retOut.iterateFwd      = j + w2 + PNSLR_GetRuneLength('/') - i;
@@ -521,7 +524,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         {
             FileIterInfo iterCpy = {.contents = fileContents, .i = i + width, .startOfToken = i + width};
             TokenSpan nextTokenSpan = {0};
-            if (DequeueNextTokenSpan(&iterCpy, false, &nextTokenSpan))
+            if (DequeueNextTokenSpan(&iterCpy, TokenIgnoreMask_None, &nextTokenSpan))
             {
                 utf8str nextTokenStr = (utf8str){.data = fileContents.data + nextTokenSpan.start, .count = nextTokenSpan.end - nextTokenSpan.start};
 

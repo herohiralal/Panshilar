@@ -56,13 +56,13 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     }
 }
 
-TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, b8 ignoreSpace, TokenType typeMask, utf8str* tokenStr, PNSLR_Allocator allocator)
+TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask ignoreMask, TokenType typeMask, utf8str* tokenStr, PNSLR_Allocator allocator)
 {
     // empty by default
     if (tokenStr) *tokenStr = (utf8str) {0};
 
     TokenSpan currSpan = {0};
-    if (!DequeueNextTokenSpan(iter, ignoreSpace, &currSpan))
+    if (!DequeueNextTokenSpan(iter, ignoreMask, &currSpan))
     {
         if (typeMask & TokenType_EOF) { return TokenType_EOF; } // user expecting EOF
 
@@ -93,21 +93,15 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     utf8str fileDoc = {0};
     {
         utf8str fileDocTemp = {0};
-        TokenType rec = ForceGetNextToken(pathRel, &iter, true, TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
-        if (!rec) return false;
+        TokenType rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine,
+            TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
         if (rec == TokenType_BlockComment)
         {
             fileDoc = fileDocTemp;
-            if (!ForceGetNextToken(pathRel, &iter, true, TokenType_NewLine, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, &iter, true, TokenType_NewLine, nil, allocator)) return false;
-            rec = ForceGetNextToken(pathRel, &iter, true, TokenType_PreprocessorIfndef, nil, allocator);
+            rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments,
+                TokenType_PreprocessorIfndef, nil, allocator);
         }
-
-        if (rec != TokenType_PreprocessorIfndef)
-        {
-            PrintParseError(pathRel, iter.contents, iter.startOfToken - 1, iter.i, PNSLR_STRING_LITERAL("should've been an ifndef by now."));
-            return false;
-        }
+        if (!rec) return false;
     }
 
     // i32 preprocessorConditionDepth = 1;
@@ -159,27 +153,4 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
     }
 
     return true;
-    // while (DequeueNextTokenSpan(&iter, true, &span))
-    // {
-
-
-    //     if (!isInIncludeGuard)
-    //     {
-    //         if (span.type == TokenType_BlockComment)
-    //         {
-    //             if (!fileDoc.count && !fileDoc.data) fileDoc = tokenStr;
-    //             else continue; // meaningless
-    //         }
-
-    //         if (span.type == TokenType_PreprocessorIfndef)
-    //         {
-    //         }
-    //     }
-
-    //     utf8str tokenTypeStr =
-    //     GetTokenTypeString(span.type);
-    //     printf("[%.*s]", (i32) tokenTypeStr.count, tokenTypeStr.data);
-    //     for (i32 j = 0; j < (32 - (i32) tokenTypeStr.count); ++j) { printf(" "); }
-    //     printf("<%.*s>\n", (i32) tokenStr.count, tokenStr.data);
-    // }
 }

@@ -79,12 +79,19 @@ typedef struct
     i32       newStartOfToken;
 } TokenSpanInfo;
 
+ENUM_FLAGS_START(TokenIgnoreMask, u8)
+    #define TokenIgnoreMask_None         ((TokenIgnoreMask) (     0))
+    #define TokenIgnoreMask_Spaces       ((TokenIgnoreMask) (1 << 0))
+    #define TokenIgnoreMask_NewLine      ((TokenIgnoreMask) (1 << 1))
+    #define TokenIgnoreMask_Comments     ((TokenIgnoreMask) (1 << 2))
+ENUM_END
+
 utf8str GetTokenTypeString(TokenType type);
 utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator allocator);
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd);
-b8 DequeueNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
-b8 PeekNextToken(FileIterInfo* file, b8 ignoreSpace, utf8str* outToken);
-b8 PeekNextTokenSpan(FileIterInfo* file, b8 ignoreSpace, TokenSpan* outTokenSpan);
-b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, b8 ignoreSpace, TokenSpan* outTokenSpan);
+b8 DequeueNextTokenSpan(FileIterInfo* file, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan);
+b8 PeekNextToken(FileIterInfo* file, TokenIgnoreMask ignoreMask, utf8str* outToken);
+b8 PeekNextTokenSpan(FileIterInfo* file, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan);
+b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan);
 
 #endif
