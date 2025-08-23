@@ -2,8 +2,6 @@
 #define PNSLR_SRC_PARSER_H
 #include "Panshilar.h"
 
-DECLARE_ARRAY_SLICE(DeclTypeInfo);
-
 // base ============================================================================
 
 ENUM_START(DeclType, u8)
@@ -47,6 +45,8 @@ typedef struct
                          // this will hold the target index
                          // of the type; -1 otherwise
 } DeclTypeInfo;
+
+DECLARE_ARRAY_SLICE(DeclTypeInfo);
 
 typedef struct ParsedStructMember
 {
