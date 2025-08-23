@@ -6,9 +6,10 @@
 
 ENUM_START(DeclType, u8)
     #define DeclType_Invalid  ((DeclType) 0)
-    #define DeclType_Enum     ((DeclType) 1)
-    #define DeclType_Struct   ((DeclType) 2)
-    #define DeclType_Function ((DeclType) 3)
+    #define DeclType_Section  ((DeclType) 1)
+    #define DeclType_Enum     ((DeclType) 2)
+    #define DeclType_Struct   ((DeclType) 3)
+    #define DeclType_Function ((DeclType) 4)
 ENUM_END
 
 typedef struct DeclHeader
@@ -18,6 +19,13 @@ typedef struct DeclHeader
     utf8str            name;
     utf8str            doc;
 } DeclHeader;
+
+// section =========================================================================
+
+typedef struct
+{
+    DeclHeader header;
+} ParsedSection;
 
 // enums ===========================================================================
 
@@ -38,21 +46,31 @@ typedef struct
 
 // structs =========================================================================
 
+ENUM_START(PolymorphicTypeDeclType, u8)
+    #define PolymorphicDeclType_None   ((PolymorphicTypeDeclType) 0)
+    #define PolymorphicDeclType_Ptr    ((PolymorphicTypeDeclType) 1)
+    #define PolymorphicDeclType_Slice  ((PolymorphicTypeDeclType) 2)
+ENUM_END
+
 typedef struct
 {
-    utf8str name;
-    i64     sliceTgtIdx; // if the type is a slice,
-                         // this will hold the target index
-                         // of the type; -1 otherwise
+    PolymorphicTypeDeclType polyTy;
+    union
+    {
+        utf8str             name;
+        i64                 polyTgtIdx; // if the type is ptr/slice,
+                                        // this will hold the target index
+                                        // of the type; -1 otherwise
+    } u;
 } DeclTypeInfo;
 
 DECLARE_ARRAY_SLICE(DeclTypeInfo);
 
 typedef struct ParsedStructMember
 {
+    struct ParsedStructMember* next;
     DeclTypeInfo               ty;
     utf8str                    name;
-    struct ParsedStructMember* next;
 } ParsedStructMember;
 
 typedef struct
@@ -65,9 +83,9 @@ typedef struct
 
 typedef struct ParsedFnArg
 {
+    struct ParsedFnArg* next;
     DeclTypeInfo        ty;
     utf8str             name;
-    struct ParsedFnArg* next;
 } ParsedFnArg;
 
 typedef struct
@@ -80,16 +98,18 @@ typedef struct
 
 // overall =========================================================================
 
-typedef struct
+typedef struct ParsedFileContents
 {
-    utf8str     name;
-    utf8str     doc;
-    DeclHeader* declarations; // polymorphic linked list
+    struct ParsedFileContents* next;
+    utf8str                    name;
+    utf8str                    doc;
+    DeclHeader*                declarations; // polymorphic linked list
 } ParsedFileContents;
 
 typedef struct
 {
     ArraySlice(DeclTypeInfo) types;
+    i64                      typesCount;
     ParsedFileContents*      files; // linked list
 } ParsedContent;
 
@@ -103,6 +123,8 @@ typedef struct
     ParsedFnArg*        lastFnArg;
 } CachedLasts;
 
-b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator);
+ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count);
+
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator);
 
 #endif

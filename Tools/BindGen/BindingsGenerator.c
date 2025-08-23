@@ -54,10 +54,28 @@ void BindGenMain(ArraySlice(utf8str) args)
 
     ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 
-    for (i64 i = 0; i < files.count; i++)
+    b8 parsingSuccessful = true;
     {
-        CollectedFile file = files.data[i];
-        ProcessFile(file.pathRel, file.contents, appArena);
+        CachedLasts processingCache = {0};
+        ParsedContent parsedStuff = {0};
+        parsedStuff.types = BuildTypeTable(appArena, &parsedStuff.typesCount);
+
+        for (i64 i = 0; i < files.count; i++)
+        {
+            CollectedFile file = files.data[i];
+            if (!ProcessFile(&parsedStuff, &processingCache, file.pathRel, file.contents, appArena))
+            {
+                // TEMPORARILY TURNED OFF SO THAT CAN SEE ALL FILES AT ONCE
+                // parsingSuccessful = false;
+                // printf("Parsing failed. Quitting.");
+                // break;
+            }
+        }
+    }
+
+    if (parsingSuccessful)
+    {
+        // do something here
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;

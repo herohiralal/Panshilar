@@ -1,6 +1,45 @@
 #include "SrcParser.h"
 #include "Lexer.h"
 
+ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count)
+{
+    ArraySlice(DeclTypeInfo) output = PNSLR_MakeSlice(DeclTypeInfo, 256, false, allocator, nil);
+    if (!output.data || !output.count) FORCE_DBG_TRAP;
+
+    i64 countTemp = 0;
+
+    #define DECLARE_TYPE_TABLE_ENTRY(xxxx) \
+        i64 xxxx##Idx = countTemp; \
+        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_STRING_LITERAL(#xxxx)}; \
+        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx}; \
+        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = xxxx##Idx};
+
+    DECLARE_TYPE_TABLE_ENTRY(void   );
+    DECLARE_TYPE_TABLE_ENTRY(b8     );
+    DECLARE_TYPE_TABLE_ENTRY(b32    );
+    DECLARE_TYPE_TABLE_ENTRY(u8     );
+    DECLARE_TYPE_TABLE_ENTRY(u16    );
+    DECLARE_TYPE_TABLE_ENTRY(u32    );
+    DECLARE_TYPE_TABLE_ENTRY(u64    );
+    DECLARE_TYPE_TABLE_ENTRY(i8     );
+    DECLARE_TYPE_TABLE_ENTRY(i16    );
+    DECLARE_TYPE_TABLE_ENTRY(i32    );
+    DECLARE_TYPE_TABLE_ENTRY(i64    );
+    DECLARE_TYPE_TABLE_ENTRY(f32    );
+    DECLARE_TYPE_TABLE_ENTRY(f64    );
+    DECLARE_TYPE_TABLE_ENTRY(utf8ch );
+    DECLARE_TYPE_TABLE_ENTRY(utf16ch);
+    DECLARE_TYPE_TABLE_ENTRY(rune   );
+    DECLARE_TYPE_TABLE_ENTRY(cstring);
+    DECLARE_TYPE_TABLE_ENTRY(rawptr );
+    DECLARE_TYPE_TABLE_ENTRY(utf8str);
+
+    #undef DECLARE_TYPE_TABLE_ENTRY
+
+    *count = countTemp;
+    return output;
+}
+
 void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 end, utf8str err)
 {
     i32 errLineStart = -1, errLineEnd = -1;
@@ -133,19 +172,88 @@ b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
     return false;
 }
 
-b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
+b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, PNSLR_Allocator allocator)
 {
+    i32 externCStart = iter->startOfToken - 1, externCEnd = iter->i;
+
+    utf8str lastDoc = {0};
+    while (iter->i < iter->contents.count)
+    {
+        utf8str tokenStr;
+        TokenType rec = ForceGetNextToken(pathRel, iter,
+            TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces,
+            TokenType_MetaExternCEnd |
+            TokenType_MetaSkipReflectBegin |
+            TokenType_BlockComment |
+            TokenType_LineEndComment |
+            TokenType_Invalid,
+            &tokenStr,
+            allocator
+        );
+        if (!rec) return false;
+
+        if (rec == TokenType_MetaExternCEnd)
+        {
+            return true;
+        }
+
+        if (rec == TokenType_MetaSkipReflectBegin) // if skipreflect, consume till end
+        {
+            if (!ConsumeSkipReflectBlock(pathRel, iter)) return false;
+
+            continue;
+        }
+
+        if (rec == TokenType_LineEndComment)
+        {
+            if (tokenStr.count == 84 && PNSLR_StringEndsWith(tokenStr, PNSLR_STRING_LITERAL("======="), 0))
+            {
+                ParsedSection* sec = PNSLR_New(ParsedSection, allocator, nil);
+                if (!sec) FORCE_DBG_TRAP;
+
+                sec->header.type = DeclType_Section;
+                sec->header.name = tokenStr;
+
+                if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(sec->header);
+                else                       cachedLasts->lastFile->declarations = &(sec->header);
+                cachedLasts->lastDecl                                          = &(sec->header);
+            }
+
+            continue;
+        }
+
+        if (rec == TokenType_BlockComment)
+        {
+            lastDoc = tokenStr;
+            continue;
+        }
+    }
+
+    // file finished but block didn't end
+    PrintParseError(pathRel, iter->contents, externCStart, externCEnd, PNSLR_STRING_LITERAL("extern c block not closed."));
+    return false;
+}
+
+b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
+{
+    ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, nil);
+    if (!file) FORCE_DBG_TRAP;
+
+    if (cachedLasts->lastFile) cachedLasts->lastFile->next = file;
+    else                       parsedContent->files        = file;
+    cachedLasts->lastFile                                  = file;
+
     FileIterInfo iter = {0};
     iter.contents     = contents;
 
-    utf8str fileDoc = {0};
+    // extract file doc
     {
         utf8str fileDocTemp = {0};
         TokenType rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine,
             TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
         if (rec == TokenType_BlockComment)
         {
-            fileDoc = fileDocTemp;
+            file->doc = fileDocTemp;
             rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments,
                 TokenType_PreprocessorIfndef, nil, allocator);
         }
@@ -214,6 +322,8 @@ b8 ProcessFile(utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocat
 
         // ONLY REACHES HERE IF THE CURRENT TOKEN IS EXTERN C BEGIN
         if (rec != TokenType_MetaExternCBegin) { FORCE_DBG_TRAP; }
+        if (!ProcessExternCBlock(parsedContent, cachedLasts, pathRel, &iter, allocator)) return false;
+        break;
     }
 
     return true;
