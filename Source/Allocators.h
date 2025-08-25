@@ -22,7 +22,7 @@ ENUM_END
 /**
  * Defines the capabilities of an allocator.
  */
-ENUM_START(PNSLR_AllocatorCapability, u64)
+ENUM_FLAGS_START(PNSLR_AllocatorCapability, u64)
     #define PNSLR_AllocatorCapability_None       ((PNSLR_AllocatorCapability) (1 <<  0))
     #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1 <<  1))
     #define PNSLR_AllocatorCapability_Resize     ((PNSLR_AllocatorCapability) (1 <<  2))
