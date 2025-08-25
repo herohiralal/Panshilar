@@ -183,6 +183,12 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     }
     else // is not an array slice
     {
+        if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("struct"), 0))
+        {
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &tokenStr, allocator)) return false;
+        }
+
         b8 success = false;
         for (i64 i = 0; i < parsedContent->typesCount; i++)
         {
@@ -518,6 +524,14 @@ b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str p
 {
     ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, nil);
     if (!file) FORCE_DBG_TRAP;
+
+    // gather file name
+    {
+        i32 lastIdxOfSlash = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("/"), 0);
+        i32 lastIdxOfDot   = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("."), 0);
+        if (lastIdxOfDot < 0) lastIdxOfDot = pathRel.count;
+        file->name = (utf8str) {.data = pathRel.data + lastIdxOfSlash + 1, .count = (i64) (lastIdxOfDot - lastIdxOfSlash - 1)};
+    }
 
     if (cachedLasts->lastFile) cachedLasts->lastFile->next = file;
     else                       parsedContent->files        = file;
