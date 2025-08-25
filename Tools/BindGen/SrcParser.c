@@ -376,25 +376,29 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &mustBe1, allocator)) return false;
                 if (mustBe1.count != 1 || !mustBe1.data)
                 {
-                    if (mustBe1.data[0] == '0')
-                    {
-                        var->idx = 0;
-                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
-
-                        continue;
-                    }
-                    else if (mustBe1.data[0] != '1')
-                    {
-                        // continue as usual
-                    }
-                    else
-                    {
-                        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' for flags enum variant."));
-                        return false;
-                    }
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' or '0' for flags enum variant."));
+                    return false;
                 }
+
+                if (mustBe1.data[0] == '0')
+                {
+                    var->idx = 0;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
+
+                    continue;
+                }
+                else if (mustBe1.data[0] == '1')
+                {
+                    // continue as usual
+                }
+                else
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' or '0' for flags enum variant."));
+                    return false;
+                }
+
 
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolLeftShift, nil, allocator)) return false;
@@ -521,7 +525,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
             if (tt == TokenType_SymbolBracketOpen)
             {
                 utf8str arrCount = {0};
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &arrCount, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &arrCount, allocator)) return false;
                 mem->arrSize = (u32) strtoull(PNSLR_CStringFromString(arrCount, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
 
                 TokenType tt2 = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolBracketClose | TokenType_SymbolAsterisk, nil, allocator);

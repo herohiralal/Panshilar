@@ -70,7 +70,7 @@ DECLARE_ARRAY_SLICE(DeclTypeInfo);
 typedef struct ParsedStructMember
 {
     struct ParsedStructMember* next;
-    DeclTypeInfo               ty;
+    u32                        ty;
     utf8str                    name;
     i64                        arrSize;
 } ParsedStructMember;
@@ -87,7 +87,7 @@ typedef struct
 typedef struct ParsedFnArg
 {
     struct ParsedFnArg* next;
-    DeclTypeInfo        ty;
+    u32                 ty;
     utf8str             name;
 } ParsedFnArg;
 
@@ -95,7 +95,7 @@ typedef struct
 {
     DeclHeader   header;
     b8           isDelegate;
-    DeclTypeInfo retTy;
+    u32          retTy;
     ParsedFnArg* args; // linked list
 } ParsedFunction;
 
@@ -127,7 +127,6 @@ typedef struct
 } CachedLasts;
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator);
-ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count);
 
 b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator);
 
