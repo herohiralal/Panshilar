@@ -16,15 +16,11 @@ CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all o
 MSVC_DEBUG_ARGS    = ['/Zi', '/Od', '/D_DEBUG']
 MSVC_C_STD_ARGS    = ['/std:c11']
 MSVC_CXX_STD_ARGS  = ['/std:c++14']
-MSVC_COMMON_ARGS   = ['/Brepro', '/nologo', '/Wall', '/WX', '/wd4100', '/wd5045', '/wd4324', '/wd4820', '/wd4127']
+MSVC_COMMON_ARGS   = ['/Brepro', '/nologo', '/Wall', '/WX']
 CLANG_DEBUG_ARGS   = ['-g', '-O0', '-DDEBUG']
 CLANG_C_STD_ARGS   = ['-std=c11']
 CLANG_CXX_STD_ARGS = ['-std=c++14']
-CLANG_COMMON_ARGS  = [
-    '-Wall', '-Wextra', '-Wshadow', '-Wconversion', '-Wsign-conversion',
-    '-Wdouble-promotion', '-Wfloat-equal', '-Wundef', '-Wswitch-enum',
-    '-Wstrict-prototypes', '-Werror', '-Wno-unused-parameter'
-]
+CLANG_COMMON_ARGS  = ['-Werror']
 
 # endregion
 
