@@ -58,7 +58,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     {
         CachedLasts processingCache = {0};
         ParsedContent parsedStuff = {0};
-        parsedStuff.types = BuildTypeTable(appArena, &parsedStuff.typesCount);
+        InitialiseTypeTable(&parsedStuff, appArena);
 
         for (i64 i = 0; i < files.count; i++)
         {

@@ -1,18 +1,19 @@
 #include "SrcParser.h"
 #include "Lexer.h"
 
-ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count)
+void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
 {
-    ArraySlice(DeclTypeInfo) output = PNSLR_MakeSlice(DeclTypeInfo, 256, false, allocator, nil);
-    if (!output.data || !output.count) FORCE_DBG_TRAP;
+    ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, nil);
+    if (!tt.data || !tt.count) FORCE_DBG_TRAP;
 
-    i64 countTemp = 0;
+    i64 cnt = 0;
 
     #define DECLARE_TYPE_TABLE_ENTRY(xxxx) \
-        i64 xxxx##Idx = countTemp; \
-        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_STRING_LITERAL(#xxxx)}; \
-        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx}; \
-        output.data[countTemp++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = xxxx##Idx};
+        i64 xxxx##Idx = cnt; \
+        /*regular*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_STRING_LITERAL(#xxxx)}; \
+        /*ptr2reg*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx}; \
+        /*slice*/   tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = xxxx##Idx}; \
+        /*ptr2arr*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = (xxxx##Idx + 2)};
 
     DECLARE_TYPE_TABLE_ENTRY(void   );
     DECLARE_TYPE_TABLE_ENTRY(b8     );
@@ -36,8 +37,39 @@ ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count)
 
     #undef DECLARE_TYPE_TABLE_ENTRY
 
-    *count = countTemp;
-    return output;
+    if (content)
+    {
+        content->types      = tt;
+        content->typesCount = cnt;
+    }
+}
+
+void AddNewType(ParsedContent* content, utf8str name)
+{
+    if (!content) return;
+
+    i64 cnt = content->typesCount;
+    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return; }
+
+    i64 idx = cnt;
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None, .u.name       = name};
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,  .u.polyTgtIdx = idx };
+
+    content->typesCount = cnt;
+}
+
+void AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
+{
+    if (!content) return;
+
+    i64 cnt = content->typesCount;
+    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return; }
+
+    i64 idx = cnt;
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = (i64) baseTyIdx};
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = idx            };
+
+    content->typesCount = cnt;
 }
 
 void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 end, utf8str err)
@@ -124,6 +156,68 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask
     return currSpan.type;
 }
 
+// has an awkward signature, because if the user already 'got' the token and needs to now check if it is a type, then they can pass the string
+// as `tokenStr` and the function will evaluate if that string has any meaning; if passed with zero-values, then an identifier token will be
+// dequeued from the source, and used as if that was passed into the function as `tokenStr`
+b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, FileIterInfo* iter, utf8str tokenStr, u32* typeIdx,PNSLR_Allocator allocator)
+{
+    if (typeIdx) *typeIdx = U32_MAX;
+
+    // if the user didn't pass an actual string input, get the next identifier token from the source
+    if (!tokenStr.data || !tokenStr.count)
+    {
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &tokenStr, allocator))
+        {
+            return false;
+        }
+    }
+
+    u32 typeIdxTemp = U32_MAX;
+    if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ArraySlice"), 0)) // is an array slice
+    {
+        b8 success = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)
+                  && ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str) {0}, &typeIdxTemp, allocator)
+                  && ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator);
+
+        if (!success) return false;
+    }
+    else // is not an array slice
+    {
+        b8 success = false;
+        for (i64 i = 0; i < parsedContent->typesCount; i++)
+        {
+            DeclTypeInfo* typeEntry = &(parsedContent->types.data[i]);
+            if (typeEntry->polyTy != PolymorphicDeclType_None) continue; // only care about non-polymorphic types at this stage; pointers get resolved later
+
+            if (PNSLR_AreStringsEqual(typeEntry->u.name, tokenStr, 0)) // if name matches
+            {
+                typeIdxTemp = (u32) i;
+                success = true;
+                break;
+            }
+        }
+
+        if (!success) return false;
+    }
+
+    // check if type is a ptr
+    b8 isPtr = false;
+    {
+        // next token is an asterisk
+        utf8str nextToken = {0};
+        if (PeekNextToken(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, &nextToken)
+            && nextToken.count == 1 && nextToken.data[0] == '*')
+        {
+            isPtr = true;
+            DequeueNextTokenSpan(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, nil);
+        }
+    }
+
+    if (isPtr) typeIdxTemp++; // all ptr-types are always +1 of base type
+    if (typeIdx) *typeIdx = typeIdxTemp;
+    return true;
+}
+
 b8 ConsumeFileIntro(utf8str pathRel, FileIterInfo* iter, utf8str* includeGuardIdentifier, PNSLR_Allocator allocator)
 {
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
@@ -186,6 +280,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             TokenType_MetaSkipReflectBegin |
             TokenType_BlockComment |
             TokenType_LineEndComment |
+            TokenType_Identifier |
             TokenType_Invalid,
             &tokenStr,
             allocator
@@ -227,6 +322,31 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             lastDoc = tokenStr;
             continue;
         }
+
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
+        {
+
+        }
+
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct
+        {
+            utf8str nextToken = {0};
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &nextToken, allocator))
+                return false;
+
+            if (PNSLR_AreStringsEqual(nextToken, PNSLR_STRING_LITERAL("struct"), 0)) // struct
+            {
+
+            }
+            else // delegate
+            {
+
+            }
+
+            continue;
+        }
+
+        // function (or invalid)
     }
 
     // file finished but block didn't end

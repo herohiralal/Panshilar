@@ -123,6 +123,7 @@ typedef struct
     ParsedFnArg*        lastFnArg;
 } CachedLasts;
 
+void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator);
 ArraySlice(DeclTypeInfo) BuildTypeTable(PNSLR_Allocator allocator, i64* count);
 
 b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator);
