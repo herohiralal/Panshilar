@@ -1,6 +1,7 @@
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"
 PRAGMA_SUPPRESS_WARNINGS
 #include <stdio.h>
+#include <stdlib.h>
 PRAGMA_REENABLE_WARNINGS
 #include "Panshilar.h"
 #include "FilesGather.h"

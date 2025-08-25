@@ -266,6 +266,140 @@ b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
     return false;
 }
 
+b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, utf8str doc, b8 isFlags, PNSLR_Allocator allocator)
+{
+    i32 enumStart = iter->startOfToken - 1, enumEnd = iter->i;
+
+    ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, nil);
+    if (!enm) FORCE_DBG_TRAP;
+
+    enm->header.type = DeclType_Enum;
+
+    if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(enm->header);
+    else                       cachedLasts->lastFile->declarations = &(enm->header);
+    cachedLasts->lastDecl                                          = &(enm->header);
+
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &(enm->header.name), allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolComma, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    utf8str enumBacking = {0};
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &enumBacking, allocator)) return false;
+
+    if (false) { }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u8"),  0)) { enm->size =  8; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u16"), 0)) { enm->size = 16; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u32"), 0)) { enm->size = 32; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u64"), 0)) { enm->size = 64; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i8"),  0)) { enm->size =  8; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i16"), 0)) { enm->size = 16; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i32"), 0)) { enm->size = 32; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i64"), 0)) { enm->size = 64; enm->negative = true;  }
+    else
+    {
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Invalid enum backing type."));
+        return false;
+    }
+
+    if (isFlags && enm->negative)
+    {
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Negative flags enums are not allowed."));
+        return false;
+    }
+
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+
+    while (iter->i < iter->contents.count)
+    {
+        utf8str tokenStr;
+        TokenType rec = ForceGetNextToken(pathRel, iter,
+            TokenIgnoreMask_None,
+            TokenType_Spaces |
+            TokenType_Identifier |
+            TokenType_Invalid,
+            &tokenStr,
+            allocator
+        );
+        if (!rec) return false;
+
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_END"), 0)) // end
+        {
+            return true;
+        }
+
+        if (rec == TokenType_Spaces) // assumedly a variant
+        {
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+
+            ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, nil);
+            if (!var) FORCE_DBG_TRAP;
+
+            if (cachedLasts->lastVariant) cachedLasts->lastVariant->next = var;
+            else                          enm->variants                  = var;
+            cachedLasts->lastVariant                                     = var;
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &(var->name), allocator)) return false;
+            if (!PNSLR_StringStartsWith(var->name, enm->header.name, 0))
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Enum variant name does not start with enum name as prefix."));
+                return false;
+            }
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+            utf8str nameMatch = {0};
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &nameMatch, allocator)) return false;
+            if (!PNSLR_AreStringsEqual(nameMatch, enm->header.name, 0))
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Enum variant cast does not match enum name."));
+                return false;
+            }
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+
+            if (isFlags) // flags
+            {
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+                utf8str mustBe1 = {0};
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Integer, &mustBe1, allocator)) return false;
+                if (mustBe1.count != 1 || !mustBe1.data || mustBe1.data[0] != '1')
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' for flags enum variant."));
+                    return false;
+                }
+
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolLeftShift, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            }
+
+            utf8str idxToken = {0};
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &idxToken, allocator)) return false;
+            var->negative = (idxToken.count >= 1 && idxToken.data && idxToken.data[0] == '-');
+            if (var->negative) idxToken = (utf8str) {.data = idxToken.data + 1, .count = idxToken.count - 1}; // trim '-' sign
+            var->idx = (u64) strtoull(PNSLR_CStringFromString(idxToken, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+
+            if (isFlags) // flags
+            {
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+            }
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
+
+            continue;
+        }
+
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+        return false;
+    }
+
+    PrintParseError(pathRel, iter->contents, enumStart, enumEnd, PNSLR_STRING_LITERAL("Incomplete enum declaration."));
+    return false;
+}
+
 b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, PNSLR_Allocator allocator)
 {
     i32 externCStart = iter->startOfToken - 1, externCEnd = iter->i;
@@ -336,10 +470,16 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
         {
+            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, lastDoc, false, allocator)) return false;
+
+            continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum flags
         {
+            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, lastDoc, true, allocator)) return false;
+
+            continue;
         }
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct
@@ -348,18 +488,16 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &nextToken, allocator))
                 return false;
 
+            u32 delRetTyIdx = U32_MAX;
             if (PNSLR_AreStringsEqual(nextToken, PNSLR_STRING_LITERAL("struct"), 0)) // struct
             {
             }
-            else // delegate
+            else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &delRetTyIdx, allocator)) // delegate
             {
-                u32 retTyIdx = U32_MAX;
-                if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &retTyIdx, allocator)) // function
-                {
-                }
             }
 
-            continue;
+            PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+            return false;
         }
 
         u32 retTyIdx = U32_MAX;

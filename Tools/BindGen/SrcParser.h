@@ -31,9 +31,10 @@ typedef struct
 
 typedef struct ParsedEnumVariant
 {
-    utf8str name;
-    u64     idx;
-    b8      negative;
+    struct ParsedEnumVariant* next;
+    utf8str                   name;
+    u64                       idx;
+    b8                        negative;
 } ParsedEnumVariant;
 
 typedef struct
