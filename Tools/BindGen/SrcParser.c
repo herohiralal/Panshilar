@@ -323,9 +323,23 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
+        {
+            u32 dstType = U32_MAX;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+            if (!ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str){0}, &dstType, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+
+            AddNewArrayType(parsedContent, dstType);
+            continue;
+        }
+
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
         {
+        }
 
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum
+        {
         }
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct
@@ -336,17 +350,25 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
             if (PNSLR_AreStringsEqual(nextToken, PNSLR_STRING_LITERAL("struct"), 0)) // struct
             {
-
             }
             else // delegate
             {
-
+                u32 retTyIdx = U32_MAX;
+                if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &retTyIdx, allocator)) // function
+                {
+                }
             }
 
             continue;
         }
 
-        // function (or invalid)
+        u32 retTyIdx = U32_MAX;
+        if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &retTyIdx, allocator)) // function
+        {
+        }
+
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+        return false;
     }
 
     // file finished but block didn't end
@@ -442,8 +464,10 @@ b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str p
 
         // ONLY REACHES HERE IF THE CURRENT TOKEN IS EXTERN C BEGIN
         if (rec != TokenType_MetaExternCBegin) { FORCE_DBG_TRAP; }
-        if (!ProcessExternCBlock(parsedContent, cachedLasts, pathRel, &iter, allocator)) return false;
-        break;
+        if (ProcessExternCBlock(parsedContent, cachedLasts, pathRel, &iter, allocator)) continue;
+
+        // failed somewhere
+        return false;
     }
 
     return true;
