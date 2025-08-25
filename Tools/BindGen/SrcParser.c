@@ -272,7 +272,7 @@ b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
     return false;
 }
 
-b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, utf8str doc, b8 isFlags, PNSLR_Allocator allocator)
+b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, utf8str* doc, b8 isFlags, PNSLR_Allocator allocator)
 {
     i32 enumStart = iter->startOfToken - 1, enumEnd = iter->i;
 
@@ -280,6 +280,8 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     if (!enm) FORCE_DBG_TRAP;
 
     enm->header.type = DeclType_Enum;
+    enm->header.doc  = *doc;
+    *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(enm->header);
     else                       cachedLasts->lastFile->declarations = &(enm->header);
@@ -315,6 +317,8 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+
+    AddNewType(content, enm->header.name);
 
     while (iter->i < iter->contents.count)
     {
@@ -369,11 +373,27 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             {
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
                 utf8str mustBe1 = {0};
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Integer, &mustBe1, allocator)) return false;
-                if (mustBe1.count != 1 || !mustBe1.data || mustBe1.data[0] != '1')
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &mustBe1, allocator)) return false;
+                if (mustBe1.count != 1 || !mustBe1.data)
                 {
-                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' for flags enum variant."));
-                    return false;
+                    if (mustBe1.data[0] == '0')
+                    {
+                        var->idx = 0;
+                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+                        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
+
+                        continue;
+                    }
+                    else if (mustBe1.data[0] != '1')
+                    {
+                        // continue as usual
+                    }
+                    else
+                    {
+                        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Expected '1' for flags enum variant."));
+                        return false;
+                    }
                 }
 
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
@@ -386,6 +406,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             var->negative = (idxToken.count >= 1 && idxToken.data && idxToken.data[0] == '-');
             if (var->negative) idxToken = (utf8str) {.data = idxToken.data + 1, .count = idxToken.count - 1}; // trim '-' sign
             var->idx = (u64) strtoull(PNSLR_CStringFromString(idxToken, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+            if (isFlags) var->idx = (1ULL << var->idx);
 
             if (isFlags) // flags
             {
@@ -403,6 +424,129 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     }
 
     PrintParseError(pathRel, iter->contents, enumStart, enumEnd, PNSLR_STRING_LITERAL("Incomplete enum declaration."));
+    return false;
+}
+
+b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, utf8str* doc, PNSLR_Allocator allocator)
+{
+    i32 structStart = iter->startOfToken - 1, structEnd = iter->i;
+
+    ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, nil);
+    if (!strct) FORCE_DBG_TRAP;
+
+    strct->header.type = DeclType_Struct;
+    strct->header.doc  = *doc;
+    *doc = (utf8str) {0};
+
+    if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(strct->header);
+    else                       cachedLasts->lastFile->declarations = &(strct->header);
+    cachedLasts->lastDecl                                          = &(strct->header);
+
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(strct->header.name), allocator)) return false;
+    if (PNSLR_AreStringsEqual(strct->header.name, PNSLR_STRING_LITERAL("alignas"), 0))
+    {
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+        utf8str alignasVal = {0};
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier | TokenType_Integer, &alignasVal, allocator)) return false;
+        if (PNSLR_AreStringsEqual(alignasVal, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
+        {
+            strct->alignasVal = sizeof(rawptr);
+        }
+        else
+        {
+            strct->alignasVal = (i32) strtoull(PNSLR_CStringFromString(alignasVal, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+            if (!strct->alignasVal)
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Invalid alignas value."));
+                return false;
+            }
+        }
+
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &(strct->header.name), allocator)) return false;
+    }
+
+    AddNewType(content, strct->header.name);
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolBracesOpen, nil, allocator)) return false;
+
+    while (iter->i < iter->contents.count)
+    {
+        utf8str tokenStr;
+        TokenType rec = ForceGetNextToken(pathRel, iter,
+            TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments,
+            TokenType_Identifier |
+            TokenType_SymbolBracesClose |
+            TokenType_Invalid,
+            &tokenStr,
+            allocator
+        );
+        if (!rec) return false;
+
+        if (rec == TokenType_SymbolBracesClose)
+        {
+            utf8str nameCheck = {0};
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_Identifier, &nameCheck, allocator)) return false;
+            if (!PNSLR_AreStringsEqual(nameCheck, strct->header.name, 0))
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Struct name does not match."));
+                return false;
+            }
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
+
+            return true;
+        }
+
+        if (rec == TokenType_Identifier)
+        {
+            ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, nil);
+            if (!mem) FORCE_DBG_TRAP;
+
+            mem->arrSize = -1;
+
+            if (cachedLasts->lastMember) cachedLasts->lastMember->next = mem;
+            else                         strct->members                = mem;
+            cachedLasts->lastMember                                    = mem;
+
+            if (!ProcessIdentifierAsTypeName(content, pathRel, iter, tokenStr, &(mem->ty), allocator))
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("Invalid type name."));
+                return false;
+            }
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &(mem->name), allocator)) return false;
+            TokenType tt = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolBracketOpen | TokenType_SymbolSemicolon, nil, allocator);
+            if (!tt) return false;
+
+            if (tt == TokenType_SymbolBracketOpen)
+            {
+                utf8str arrCount = {0};
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &arrCount, allocator)) return false;
+                mem->arrSize = (u32) strtoull(PNSLR_CStringFromString(arrCount, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+
+                TokenType tt2 = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolBracketClose | TokenType_SymbolAsterisk, nil, allocator);
+                if (!tt2) return false;
+                if (tt2 == TokenType_SymbolAsterisk)
+                {
+                    utf8str secondPart = {0};
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &secondPart, allocator)) return false;
+                    if (!PNSLR_AreStringsEqual(secondPart, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
+                    {
+                        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("invalid multiplication syntax type thing"));
+                        return false;
+                    }
+
+                    mem->arrSize *= sizeof(rawptr);
+
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolBracketClose, nil, allocator)) return false;
+                }
+
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolSemicolon, nil, allocator)) return false;
+            }
+        }
+    }
+
+    PrintParseError(pathRel, iter->contents, structStart, structEnd, PNSLR_STRING_LITERAL("Incomplete struct declaration."));
     return false;
 }
 
@@ -471,19 +615,20 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
 
             AddNewArrayType(parsedContent, dstType);
+            lastDoc = (utf8str) {0};
             continue;
         }
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
         {
-            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, lastDoc, false, allocator)) return false;
+            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, false, allocator)) return false;
 
             continue;
         }
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum flags
         {
-            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, lastDoc, true, allocator)) return false;
+            if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, true, allocator)) return false;
 
             continue;
         }
@@ -497,6 +642,9 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             u32 delRetTyIdx = U32_MAX;
             if (PNSLR_AreStringsEqual(nextToken, PNSLR_STRING_LITERAL("struct"), 0)) // struct
             {
+                if (!ConsumeStructDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, allocator)) return false;
+
+                continue;
             }
             else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &delRetTyIdx, allocator)) // delegate
             {

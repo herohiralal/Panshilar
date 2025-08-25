@@ -72,11 +72,13 @@ typedef struct ParsedStructMember
     struct ParsedStructMember* next;
     DeclTypeInfo               ty;
     utf8str                    name;
+    i64                        arrSize;
 } ParsedStructMember;
 
 typedef struct
 {
     DeclHeader          header;
+    i32                 alignasVal;
     ParsedStructMember* members; // linked list
 } ParsedStruct;
 
