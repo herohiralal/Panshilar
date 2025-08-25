@@ -529,7 +529,7 @@ b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str p
     {
         i32 lastIdxOfSlash = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("/"), 0);
         i32 lastIdxOfDot   = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("."), 0);
-        if (lastIdxOfDot < 0) lastIdxOfDot = pathRel.count;
+        if (lastIdxOfDot < 0) lastIdxOfDot = (i32) pathRel.count;
         file->name = (utf8str) {.data = pathRel.data + lastIdxOfSlash + 1, .count = (i64) (lastIdxOfDot - lastIdxOfSlash - 1)};
     }
 
