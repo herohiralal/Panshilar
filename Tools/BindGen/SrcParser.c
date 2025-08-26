@@ -702,6 +702,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
             if (!ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str){0}, &dstType, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
 
             AddNewArrayType(parsedContent, dstType);
             lastDoc = (utf8str) {0};
