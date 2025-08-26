@@ -115,7 +115,7 @@ static b8 AreStringsEqualInternal(cstring str1, i32 len1, cstring str2, i32 len2
 static b8 StringStartsWithInternal(cstring str, i32 strLen, cstring prefix, i32 prefixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str    == nil) { str = "";    strLen = 0;    }
-    if (prefix == nil) { prefix = ""; prefixLen = 0; }
+    if (prefix == nil) { return false;               } // doesn't make sense to try for this case
 
     if (strLen < prefixLen) { return false; }
 
@@ -139,7 +139,7 @@ static b8 StringStartsWithInternal(cstring str, i32 strLen, cstring prefix, i32 
 static b8 StringEndsWithInternal(cstring str, i32 strLen, cstring suffix, i32 suffixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str    == nil) { str = "";    strLen = 0;    }
-    if (suffix == nil) { suffix = ""; suffixLen = 0; }
+    if (suffix == nil) { return false;               } // doesn't make sense to try for this case
 
     if (strLen < suffixLen) { return false; }
 
