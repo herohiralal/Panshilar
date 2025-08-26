@@ -15,7 +15,7 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
         /*slice*/   tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = xxxx##Idx}; \
         /*ptr2arr*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = (xxxx##Idx + 2)};
 
-    DECLARE_TYPE_TABLE_ENTRY(void   );
+    DECLARE_TYPE_TABLE_ENTRY(void   ); // void must be the 0th type
     DECLARE_TYPE_TABLE_ENTRY(b8     );
     DECLARE_TYPE_TABLE_ENTRY(b32    );
     DECLARE_TYPE_TABLE_ENTRY(u8     );
@@ -554,6 +554,105 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
     return false;
 }
 
+b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, utf8str* doc, u32 retTy, b8 isDelegate, PNSLR_Allocator allocator)
+{
+    i32 fnStart = iter->startOfToken - 1, fnEnd = iter->i;
+
+    ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, nil);
+    if (!fn) FORCE_DBG_TRAP;
+
+    fn->header.type = DeclType_Function;
+    fn->header.doc  = *doc;
+    fn->retTy       = retTy;
+    fn->isDelegate  = isDelegate;
+    *doc = (utf8str) {0};
+
+    if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(fn->header);
+    else                       cachedLasts->lastFile->declarations = &(fn->header);
+    cachedLasts->lastDecl                                          = &(fn->header);
+
+    if (isDelegate)
+    {
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolAsterisk, nil, allocator)) return false;
+    }
+
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(fn->header.name), allocator)) return false;
+
+    if (isDelegate)
+    {
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+    }
+
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+
+    {
+        utf8str noArgsCheck = {0};
+        if (PeekNextToken(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, &noArgsCheck)
+            && PNSLR_AreStringsEqual(noArgsCheck, PNSLR_STRING_LITERAL("void"), 0))
+        {
+            if (!DequeueNextTokenSpan(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, nil)) { FORCE_DBG_TRAP; /*shouldn't happen*/ return false; }
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
+
+            fn->args = nil;
+            return true;
+        }
+        else { /*if file ends here, it'll be captured afterwards anyway*/ }
+    }
+
+    while (iter->i < iter->contents.count)
+    {
+        u32 tyIdx = U32_MAX;
+        if (!ProcessIdentifierAsTypeName(content, pathRel, iter, (utf8str) {0}, &tyIdx, allocator)) return false;
+        if (tyIdx == 0) // is `void`, which means it must not have any real args and the fn must end
+        {
+            if (fn->args != nil) // there has been an arg before
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("there are already actual args, void not expected here."));
+                return false;
+            }
+
+            // keep going, expect only 'fn finished' after
+        }
+        else // is an actual arg and not just `void`
+        {
+            ParsedFnArg* arg = PNSLR_New(ParsedFnArg, allocator, nil);
+            if (!arg) FORCE_DBG_TRAP;
+
+            arg->ty = tyIdx;
+
+            if (cachedLasts->lastFnArg) cachedLasts->lastFnArg->next = arg;
+            else                        fn->args                     = arg;
+            cachedLasts->lastFnArg                                   = arg;
+
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(arg->name), allocator)) break;
+        }
+
+        TokenType rec = ForceGetNextToken(pathRel, iter,
+            TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments,
+            (tyIdx == 0 ? 0 : TokenType_SymbolComma) | TokenType_SymbolParenthesesClose, // if void input, don't accept any more args
+            nil,
+            allocator);
+
+        if (!rec) return false;
+
+        if (rec == TokenType_SymbolComma) continue; // onto next arg
+
+        if (rec == TokenType_SymbolParenthesesClose)
+        {
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
+
+            return true;
+        }
+
+        FORCE_DBG_TRAP; // shoulddn't reach
+    }
+
+    PrintParseError(pathRel, iter->contents, fnStart, fnEnd, PNSLR_STRING_LITERAL("Incomplete fn declaration."));
+    return false;
+}
+
 b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, FileIterInfo* iter, PNSLR_Allocator allocator)
 {
     i32 externCStart = iter->startOfToken - 1, externCEnd = iter->i;
@@ -652,6 +751,9 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             }
             else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &delRetTyIdx, allocator)) // delegate
             {
+                if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
+
+                continue;
             }
 
             PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
@@ -661,6 +763,9 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
         u32 retTyIdx = U32_MAX;
         if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &retTyIdx, allocator)) // function
         {
+            if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, retTyIdx, false, allocator)) return false;
+
+            continue;
         }
 
         PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
