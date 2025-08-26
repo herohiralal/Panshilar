@@ -58,8 +58,6 @@
 
     PRAGMA_SUPPRESS_WARNINGS
 
-    #include <stdio.h>
-
     #if PNSLR_WINDOWS
         #include <Windows.h>
         #include <intrin.h>
@@ -95,6 +93,8 @@
         #include <android/asset_manager.h>
         #include <android/native_activity.h>
     #endif
+
+    #include <stdio.h>
 
     PRAGMA_REENABLE_WARNINGS
 

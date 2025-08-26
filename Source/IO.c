@@ -1045,12 +1045,12 @@ b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst)
                 b8 fail = false;
                 ArraySlice(u8) buffer = PNSLR_MakeSlice(u8, 8192, false, internalAllocator, nil);
                 i64 n;
-                while ((n = read(input, buffer.data, buffer.count)) > 0)
+                while ((n = read(input, buffer.data, (u64) buffer.count)) > 0)
                 {
                     i64 off = 0;
                     while (off < n)
                     {
-                        i64 w = write(output, buffer.data + off, n - off);
+                        i64 w = write(output, buffer.data + off, (u64) (n - off));
                         if (w < 0) { fail = true; break; }
                         off += w;
                     }
