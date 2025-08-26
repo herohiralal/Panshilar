@@ -137,7 +137,7 @@ typedef struct
     b8                     failedAtSomething;
 } DeleteAllContentsWhileIteratingDirectoryPayload;
 
-static b8 DeleteAllContentsWhileIteratingDirectory(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
+static b8 DeleteAllContentsWhileIteratingDirectory(rawptr payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
 {
     DeleteAllContentsWhileIteratingDirectoryPayload* data = (DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
     #if PNSLR_WINDOWS

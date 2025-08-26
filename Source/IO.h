@@ -43,7 +43,7 @@ PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, utf8str dirName, PNSLR_A
 /**
  * The signature of the delegate that's supposed to be called for iterating over a directory.
  */
-typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory);
+typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(rawptr payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory);
 
 /**
  * Iterates over a directory and calls the visitor function for each file/directory found.

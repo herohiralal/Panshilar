@@ -7,7 +7,7 @@ typedef struct
     u64                 pathsCount;
 } DirectoryStuffListerForFilePresentTestPayload;
 
-b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 directory, b8* exploreCurrentDirectory)
+b8 DirectoryStuffListerForFilePresentTest(rawptr payload, PNSLR_Path path, b8 directory, b8* exploreCurrentDirectory)
 {
     DirectoryStuffListerForFilePresentTestPayload* data = (DirectoryStuffListerForFilePresentTestPayload*) payload;
 
