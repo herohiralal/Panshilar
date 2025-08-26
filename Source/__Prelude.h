@@ -58,6 +58,8 @@
 
     PRAGMA_SUPPRESS_WARNINGS
 
+    #include <stdio.h>
+
     #if PNSLR_WINDOWS
         #include <Windows.h>
         #include <intrin.h>

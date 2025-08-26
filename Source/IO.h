@@ -151,5 +151,15 @@ b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_All
  */
 b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append);
 
+/**
+ * Copies a file from src to dst. If dst exists, it will be overwritten.
+ */
+b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst);
+
+/**
+ * Moves a file from src to dst. If dst exists, it will be overwritten.
+ */
+b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
+
 EXTERN_C_END
 #endif // PNSLR_IO_H ===============================================================

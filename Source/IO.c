@@ -1015,3 +1015,89 @@ b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append)
     PNSLR_CloseFileHandle(file);
     return success;
 }
+
+b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst)
+{
+    if (!src.path.data || !src.path.count || !dst.path.data || !dst.path.count) { return false; }
+
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    #if PNSLR_WINDOWS
+        WCHAR* srcTemp = PNSLR_UTF16FromUTF8WindowsOnly(src.path, internalAllocator).data;
+        WCHAR* dstTemp = PNSLR_UTF16FromUTF8WindowsOnly(dst.path, internalAllocator).data;
+    #elif PNSLR_UNIX
+        cstring srcTemp = PNSLR_CStringFromString(src.path, internalAllocator);
+        cstring dstTemp = PNSLR_CStringFromString(dst.path, internalAllocator);
+    #endif
+
+    b8 success = false;
+
+    #if PNSLR_WINDOWS
+        success = CopyFileW(srcTemp, dstTemp, false);
+    #elif PNSLR_UNIX
+        int input = open(srcTemp, O_RDONLY);
+        if (input >= 0)
+        {
+            int output = open(dstTemp, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            if (output < 0) { close(input); }
+            else
+            {
+                b8 fail = false;
+                ArraySlice(u8) buffer = PNSLR_MakeSlice(u8, 8192, false, internalAllocator, nil);
+                i64 n;
+                while ((n = read(input, buffer.data, buffer.count)) > 0)
+                {
+                    i64 off = 0;
+                    while (off < n)
+                    {
+                        i64 w = write(output, buffer.data + off, n - off);
+                        if (w < 0) { fail = true; break; }
+                        off += w;
+                    }
+                }
+
+                close(input);
+                close(output);
+                success = (n >= 0) && !fail;
+            }
+        }
+    #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
+}
+
+b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst)
+{
+    if (!src.path.data || !src.path.count || !dst.path.data || !dst.path.count) { return false; }
+
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
+
+    #if PNSLR_WINDOWS
+        WCHAR* srcTemp = PNSLR_UTF16FromUTF8WindowsOnly(src.path, internalAllocator).data;
+        WCHAR* dstTemp = PNSLR_UTF16FromUTF8WindowsOnly(dst.path, internalAllocator).data;
+    #elif PNSLR_UNIX
+        cstring srcTemp = PNSLR_CStringFromString(src.path, internalAllocator);
+        cstring dstTemp = PNSLR_CStringFromString(dst.path, internalAllocator);
+    #endif
+
+    b8 success = false;
+
+    #if PNSLR_WINDOWS
+        success = MoveFileExW(srcTemp, dstTemp, MOVEFILE_REPLACE_EXISTING);
+    #elif PNSLR_UNIX
+        if (rename(srcTemp, dstTemp) == 0) { success = true; }
+        else  if (errno == EXDEV) // cross filesys
+        {
+            if (PNSLR_CopyFile(src, dst))
+            {
+                unlink(srcTemp);
+                success = true;
+            }
+        }
+
+    #endif
+
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Paths, internalAllocator);
+    return success;
+}
