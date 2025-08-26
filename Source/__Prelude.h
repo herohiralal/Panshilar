@@ -94,8 +94,6 @@
         #include <android/native_activity.h>
     #endif
 
-    #include <stdio.h>
-
     PRAGMA_REENABLE_WARNINGS
 
 #endif
