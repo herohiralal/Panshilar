@@ -581,25 +581,11 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 
     if (isDelegate)
     {
+        AddNewType(content, fn->header.name);
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
     }
 
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
-
-    {
-        utf8str noArgsCheck = {0};
-        if (PeekNextToken(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, &noArgsCheck)
-            && PNSLR_AreStringsEqual(noArgsCheck, PNSLR_STRING_LITERAL("void"), 0))
-        {
-            if (!DequeueNextTokenSpan(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, nil)) { FORCE_DBG_TRAP; /*shouldn't happen*/ return false; }
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
-
-            fn->args = nil;
-            return true;
-        }
-        else { /*if file ends here, it'll be captured afterwards anyway*/ }
-    }
 
     while (iter->i < iter->contents.count)
     {
@@ -749,7 +735,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
                 continue;
             }
-            else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, tokenStr, &delRetTyIdx, allocator)) // delegate
+            else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, nextToken, &delRetTyIdx, allocator)) // delegate
             {
                 if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
 
