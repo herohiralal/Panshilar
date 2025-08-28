@@ -6,6 +6,8 @@ PRAGMA_REENABLE_WARNINGS
 #include "Panshilar.h"
 #include "FilesGather.h"
 #include "SrcParser.h"
+#include "Generator.h"
+#include "Generator_C.h"
 
 void BindGenMain(ArraySlice(utf8str) args)
 {
@@ -46,7 +48,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     // initialise global main thread allocator
     PNSLR_Allocator appArena = {0};
     {
-        appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 16 * 1024 * 1024 /* 64 MiB */, CURRENT_LOC(), nil);
+        appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 16 * 1024 * 1024 /* 16 MiB */, CURRENT_LOC(), nil);
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
@@ -56,27 +58,30 @@ void BindGenMain(ArraySlice(utf8str) args)
     ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 
     b8 parsingSuccessful = true;
+    ParsedContent parsedStuff = {0};
     {
-        CachedLasts processingCache = {0};
-        ParsedContent parsedStuff = {0};
         InitialiseTypeTable(&parsedStuff, appArena);
 
+        CachedLasts processingCache = {0};
         for (i64 i = 0; i < files.count; i++)
         {
             CollectedFile file = files.data[i];
             if (!ProcessFile(&parsedStuff, &processingCache, file.pathRel, file.contents, appArena))
             {
-                // TEMPORARILY TURNED OFF SO THAT CAN SEE ALL FILES AT ONCE
-                // parsingSuccessful = false;
-                // printf("Parsing failed. Quitting.");
-                // break;
+                parsingSuccessful = false;
+                printf("Parsing failed. Stopping.");
+                break;
             }
         }
     }
 
-    if (parsingSuccessful)
+    if (parsingSuccessful) // TODO: make this multithreaded
     {
-        // do something here
+        // create main bindings dir
+        PNSLR_Path bindingsDir = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Bindings"), appArena);
+        if (!PNSLR_PathExists(bindingsDir, PNSLR_PathExistsCheckType_Directory)) { PNSLR_CreateDirectoryTree(bindingsDir); }
+
+        RunGenerator(GenerateCBindings, bindingsDir, PNSLR_STRING_LITERAL("C"), &parsedStuff, appArena);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
@@ -90,3 +95,5 @@ PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
 #include "Lexer.c"
 #include "FilesGather.c"
 #include "SrcParser.c"
+#include "Generator.c"
+#include "Generator_C.c"
