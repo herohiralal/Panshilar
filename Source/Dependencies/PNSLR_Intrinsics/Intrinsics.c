@@ -37,13 +37,13 @@ void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size)
     memset(memory, value, (u64) size);
 }
 
-void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size)
+void PNSLR_Intrinsic_MemCopy(rawptr destination, rawptr source, i32 size)
 {
     if (destination == nil || source == nil || size <= 0) { return; }
     memcpy(destination, source, (u64) size);
 }
 
-void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size)
+void PNSLR_Intrinsic_MemMove(rawptr destination, rawptr source, i32 size)
 {
     if (destination == nil || source == nil || size <= 0) { return; }
     memmove(destination, source, (u64) size);

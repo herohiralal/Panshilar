@@ -243,12 +243,12 @@ void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size);
 /**
  * Copy a block of memory from source to destination.
  */
-void PNSLR_Intrinsic_MemCopy(rawptr destination, const rawptr source, i32 size);
+void PNSLR_Intrinsic_MemCopy(rawptr destination, rawptr source, i32 size);
 
 /**
  * Copy a block of memory from source to destination, handling overlapping regions.
  */
-void PNSLR_Intrinsic_MemMove(rawptr destination, const rawptr source, i32 size);
+void PNSLR_Intrinsic_MemMove(rawptr destination, rawptr source, i32 size);
 
 EXTERN_C_END
 
