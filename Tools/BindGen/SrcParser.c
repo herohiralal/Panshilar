@@ -678,8 +678,13 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 ParsedSection* sec = PNSLR_New(ParsedSection, allocator, nil);
                 if (!sec) FORCE_DBG_TRAP;
 
+                i64 firstSpaceIdx = tokenStr.count - 1;
+                for (i64 i = 3; i < tokenStr.count; i++) { if (tokenStr.data[i] == ' ') { firstSpaceIdx = i; break; } }
+                // array iteration starts from 3 because first 3 chars are `// ` (last one is space)
+                utf8str sectionName = (utf8str){.data = tokenStr.data + 3, .count = firstSpaceIdx - 3};
+
                 sec->header.type = DeclType_Section;
-                sec->header.name = tokenStr;
+                sec->header.name = sectionName;
 
                 if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(sec->header);
                 else                       cachedLasts->lastFile->declarations = &(sec->header);
@@ -697,6 +702,16 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
         {
+            ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, nil);
+            if (!arr) FORCE_DBG_TRAP;
+
+            arr->header.type = DeclType_Array;
+            arr->header.name = (utf8str) {0};
+
+            if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(arr->header);
+            else                       cachedLasts->lastFile->declarations = &(arr->header);
+            cachedLasts->lastDecl                                          = &(arr->header);
+
             u32 dstType = U32_MAX;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
             if (!ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str){0}, &dstType, allocator)) return false;
@@ -704,6 +719,8 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
 
             AddNewArrayType(parsedContent, dstType);
+            arr->tgtTy       = dstType;
+
             lastDoc = (utf8str) {0};
             continue;
         }

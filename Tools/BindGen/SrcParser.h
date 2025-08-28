@@ -7,9 +7,10 @@
 ENUM_START(DeclType, u8)
     #define DeclType_Invalid  ((DeclType) 0)
     #define DeclType_Section  ((DeclType) 1)
-    #define DeclType_Enum     ((DeclType) 2)
-    #define DeclType_Struct   ((DeclType) 3)
-    #define DeclType_Function ((DeclType) 4)
+    #define DeclType_Array    ((DeclType) 2)
+    #define DeclType_Enum     ((DeclType) 3)
+    #define DeclType_Struct   ((DeclType) 4)
+    #define DeclType_Function ((DeclType) 5)
 ENUM_END
 
 typedef struct DeclHeader
@@ -26,6 +27,14 @@ typedef struct
 {
     DeclHeader header;
 } ParsedSection;
+
+// array ===========================================================================
+
+typedef struct
+{
+    DeclHeader header;
+    u32        tgtTy;
+} ParsedArrayDecl;
 
 // enums ===========================================================================
 
