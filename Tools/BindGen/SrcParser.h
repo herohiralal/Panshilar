@@ -51,6 +51,7 @@ typedef struct
     DeclHeader         header;
     u8                 size;
     b8                 negative;
+    b8                 flags;
     ParsedEnumVariant* variants; // linked list
 } ParsedEnum;
 

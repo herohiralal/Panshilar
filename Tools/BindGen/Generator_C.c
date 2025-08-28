@@ -1,5 +1,231 @@
 #include "Generator_C.h"
 
-void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent *content, PNSLR_Allocator allocator)
+cstring G_GenCPrefix = ""
+"#ifndef PANSHILAR_MAIN\n"
+"#define PANSHILAR_MAIN\n"
+"\n"
+"#if (_MSC_VER)\n"
+"    #define PNSLR_ALIGNAS(x) __declspec(align(x))\n"
+"#elif (__clang__) || (__GNUC__)\n"
+"    #define PNSLR_ALIGNAS(x) __attribute__((aligned(x)))\n"
+"#else\n"
+"    #error \"UNSUPPORTED COMPILER!\";\n"
+"#endif\n"
+"\n"
+"typedef unsigned char       PNSLR_B8;\n"
+"typedef unsigned char       PNSLR_U8;\n"
+"typedef unsigned short int  PNSLR_U16;\n"
+"typedef unsigned int        PNSLR_U32;\n"
+"typedef unsigned long long  PNSLR_U64;\n"
+"typedef signed char         PNSLR_I8;\n"
+"typedef signed short int    PNSLR_I16;\n"
+"typedef signed int          PNSLR_I32;\n"
+"typedef signed long long    PNSLR_I64;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_B8*  data; } PNSLR_ArraySlice_PNSLR_B8;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_U8*  data; } PNSLR_ArraySlice_PNSLR_U8;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_U16* data; } PNSLR_ArraySlice_PNSLR_U16;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_U32* data; } PNSLR_ArraySlice_PNSLR_U32;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_U64* data; } PNSLR_ArraySlice_PNSLR_U64;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_I8*  data; } PNSLR_ArraySlice_PNSLR_I8;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_I16* data; } PNSLR_ArraySlice_PNSLR_I16;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_I32* data; } PNSLR_ArraySlice_PNSLR_I32;\n"
+"typedef struct { PNSLR_I64 count; PNSLR_I64* data; } PNSLR_ArraySlice_PNSLR_I64;\n"
+"typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;\n"
+"\n"
+"";
+
+cstring G_GenCSuffix = ""
+"\n"
+"#undef PNSLR_ALIGNAS\n"
+"\n"
+"#endif//PANSHILAR_MAIN\n"
+"\n"
+"#ifndef PNSLR_STATIC_ASSERTS\n"
+"#define PNSLR_STATIC_ASSERTS\n"
+"    _Static_assert(sizeof(PNSLR_B8 ) == 1, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_U8 ) == 1, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_U16) == 2, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_U32) == 4, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_U64) == 8, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_I8 ) == 1, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_I16) == 2, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
+"    _Static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
+"#endif//PNSLR_STATIC_ASSERTS\n"
+"";
+
+#define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
+#define ARR_STR_LIT(str__) (ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
+
+void WriteCTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
 {
+    if (ty >= (u32) types.count) FORCE_DBG_TRAP;
+
+    DeclTypeInfo declTy = types.data[ty];
+
+    switch (declTy.polyTy)
+    {
+        case PolymorphicDeclType_None:
+        {
+            utf8str nameStr = declTy.u.name;
+            if (false) { }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("void"), nameStr, 0)) { }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_B8"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b32"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U8"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U16"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u32"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u64"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U64"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I8"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I16"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i32"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I32"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i64"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I64"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f32"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("float"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f64"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("double"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8ch"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U8"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf16ch"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U16"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rune"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("cstring"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("char*"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rawptr"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("void*"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8str"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_UTF8STR"); }
+            else { }
+
+            PNSLR_WriteToFile(file, ARR_FROM_STR(nameStr));
+            break;
+        }
+        case PolymorphicDeclType_Slice:
+        {
+            // WILL NOT WORK FOR `cstring` AND `rawptr` WHICH ARE TYPEDEF'D PTR TYPES
+            // but should be fine for now because we're not using arrays of them anyway
+            PNSLR_WriteToFile(file, ARR_STR_LIT("PNSLR_ArraySlice_"));
+            WriteCTypeName(file, types, (u32) declTy.u.polyTgtIdx);
+            break;
+        }
+        case PolymorphicDeclType_Ptr:
+        {
+            WriteCTypeName(file, types, (u32) declTy.u.polyTgtIdx);
+            PNSLR_WriteToFile(file, ARR_STR_LIT("*"));
+            break;
+        }
+        default: FORCE_DBG_TRAP; break;
+    }
 }
+
+void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
+{
+    PNSLR_Path headerPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_STRING_LITERAL("Panshilar.h"), allocator);
+    PNSLR_File headerFile = PNSLR_OpenFileToWrite(headerPath, false, false);
+
+    utf8str prefixStr = PNSLR_StringFromCString(G_GenCPrefix);
+    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(prefixStr));
+
+    for (ParsedFileContents* file = content->files; file != nil; file = file->next)
+    {
+        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
+        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// "));
+        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(file->name));
+        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
+        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+
+        for (DeclHeader* decl = file->declarations; decl != nil; decl = decl->next)
+        {
+            PNSLR_WriteToFile(headerFile, ARR_FROM_STR(decl->doc));
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+            switch (decl->type)
+            {
+                case DeclType_Section:
+                {
+                    ParsedSection* sec = (ParsedSection*) decl;
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// "));
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(sec->header.name));
+                    for (i64 i = (3 + sec->header.name.count); i < 60; i++) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("~")); }
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    break;
+                }
+                case DeclType_Array:
+                {
+                    ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
+                    u32 arrTyIdx = U32_MAX;
+                    {
+                        for (i64 i = content->typesCount - 1; i >= 0; i--) // likelier to be found from the end
+                        {
+                            DeclTypeInfo tyInfo = content->types.data[i];
+                            if (tyInfo.polyTy == PolymorphicDeclType_Slice && tyInfo.u.polyTgtIdx == arr->tgtTy)
+                            {
+                                arrTyIdx = (u32) i;
+                                break;
+                            }
+                        }
+                        if (arrTyIdx == U32_MAX) FORCE_DBG_TRAP;
+                    }
+
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef struct "));
+                    WriteCTypeName(headerFile, content->types, arrTyIdx);
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    PNSLR_I64 count;\n    "));
+                    WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n} "));
+                    WriteCTypeName(headerFile, content->types, arrTyIdx);
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+                    break;
+                }
+                case DeclType_Enum:
+                {
+                    ParsedEnum* enm = (ParsedEnum*) decl;
+                    utf8str backing = {0};
+                    {
+                        switch (enm->size)
+                        {
+                            case  8: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I8" ) : PNSLR_STRING_LITERAL("PNSLR_U8" ); break;
+                            case 16: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I16") : PNSLR_STRING_LITERAL("PNSLR_U16"); break;
+                            case 32: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I32") : PNSLR_STRING_LITERAL("PNSLR_U32"); break;
+                            case 64: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I64") : PNSLR_STRING_LITERAL("PNSLR_U64"); break;
+                            default: FORCE_DBG_TRAP; break;
+                        }
+                    }
+
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(backing));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(enm->header.name));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+                    for (ParsedEnumVariant* var = enm->variants; var != nil; var = var->next)
+                    {
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("#define "));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(var->name));
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" (("));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(enm->header.name));
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(") "));
+                        if (var->negative) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("-")); }
+                        char idxPrintBuff[16];
+                        i32 idxPrintFilled = snprintf(idxPrintBuff, sizeof(idxPrintBuff), "%llu", var->idx);
+                        PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(")\n"));
+                    }
+                    break;
+                }
+                // case DeclType_Struct:
+                // {
+                //     ParsedStruct* strct = (ParsedStruct*) decl;
+                //     break;
+                // }
+                // case DeclType_Function:
+                // {
+                //     ParsedFunction* fn = (ParsedFunction*) decl;
+                //     break;
+                // }
+                // default: FORCE_DBG_TRAP; break;
+            }
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+        }
+    }
+
+    utf8str suffixStr = PNSLR_StringFromCString(G_GenCSuffix);
+    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(suffixStr));
+
+    PNSLR_CloseFileHandle(headerFile);
+}
+
+#undef ARR_STR_LIT
+#undef ARR_FROM_STR

@@ -81,9 +81,9 @@ typedef struct
 
 ENUM_FLAGS_START(TokenIgnoreMask, u8)
     #define TokenIgnoreMask_None         ((TokenIgnoreMask) (     0))
-    #define TokenIgnoreMask_Spaces       ((TokenIgnoreMask) (1 << 0))
-    #define TokenIgnoreMask_NewLine      ((TokenIgnoreMask) (1 << 1))
-    #define TokenIgnoreMask_Comments     ((TokenIgnoreMask) (1 << 2))
+    #define TokenIgnoreMask_Spaces       ((TokenIgnoreMask) (1ULL << 0))
+    #define TokenIgnoreMask_NewLine      ((TokenIgnoreMask) (1ULL << 1))
+    #define TokenIgnoreMask_Comments     ((TokenIgnoreMask) (1ULL << 2))
 ENUM_END
 
 utf8str GetTokenTypeString(TokenType type);

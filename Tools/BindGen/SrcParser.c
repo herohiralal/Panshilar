@@ -280,6 +280,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 
     enm->header.type = DeclType_Enum;
     enm->header.doc  = *doc;
+    enm->flags       = isFlags;
     *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(enm->header);
@@ -398,7 +399,12 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                     return false;
                 }
 
-
+                utf8str mustBeULL = {0};
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &mustBeULL, allocator)) return false;
+                if (!PNSLR_AreStringsEqual(mustBeULL, PNSLR_STRING_LITERAL("ULL"), 0))
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBeULL.count, iter->i, PNSLR_STRING_LITERAL("Expected 'ULL' suffix for flags enum variant."));
+                }
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolLeftShift, nil, allocator)) return false;
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
@@ -689,6 +695,8 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(sec->header);
                 else                       cachedLasts->lastFile->declarations = &(sec->header);
                 cachedLasts->lastDecl                                          = &(sec->header);
+
+                lastDoc = (utf8str) {0};
             }
 
             continue;
@@ -729,6 +737,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, false, allocator)) return false;
 
+            cachedLasts->lastVariant = nil;
             continue;
         }
 
@@ -736,6 +745,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, true, allocator)) return false;
 
+            cachedLasts->lastVariant = nil;
             continue;
         }
 
@@ -750,12 +760,14 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             {
                 if (!ConsumeStructDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, allocator)) return false;
 
+                cachedLasts->lastMember = nil;
                 continue;
             }
             else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, nextToken, &delRetTyIdx, allocator)) // delegate
             {
                 if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
 
+                cachedLasts->lastFnArg = nil;
                 continue;
             }
 
@@ -768,6 +780,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
         {
             if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, retTyIdx, false, allocator)) return false;
 
+            cachedLasts->lastFnArg = nil;
             continue;
         }
 
@@ -780,7 +793,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
     return false;
 }
 
-b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
     ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, nil);
     if (!file) FORCE_DBG_TRAP;
@@ -882,5 +895,6 @@ b8 ProcessFile(ParsedContent *parsedContent, CachedLasts *cachedLasts, utf8str p
         return false;
     }
 
+    cachedLasts->lastDecl = nil;
     return true;
 }

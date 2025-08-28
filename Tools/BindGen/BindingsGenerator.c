@@ -69,7 +69,7 @@ void BindGenMain(ArraySlice(utf8str) args)
             if (!ProcessFile(&parsedStuff, &processingCache, file.pathRel, file.contents, appArena))
             {
                 parsingSuccessful = false;
-                printf("Parsing failed. Stopping.");
+                printf("Parsing failed. Stopping.\n");
                 break;
             }
         }

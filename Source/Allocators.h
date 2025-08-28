@@ -23,16 +23,16 @@ ENUM_END
  * Defines the capabilities of an allocator.
  */
 ENUM_FLAGS_START(PNSLR_AllocatorCapability, u64)
-    #define PNSLR_AllocatorCapability_None       ((PNSLR_AllocatorCapability) (      0))
-    #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1 <<  0))
-    #define PNSLR_AllocatorCapability_Resize     ((PNSLR_AllocatorCapability) (1 <<  1))
-    #define PNSLR_AllocatorCapability_Free       ((PNSLR_AllocatorCapability) (1 <<  2))
-    #define PNSLR_AllocatorCapability_FreeAll    ((PNSLR_AllocatorCapability) (1 <<  3))
-    #define PNSLR_AllocatorCapability_HintNil    ((PNSLR_AllocatorCapability) (1 << 26))
-    #define PNSLR_AllocatorCapability_HintBump   ((PNSLR_AllocatorCapability) (1 << 27))
-    #define PNSLR_AllocatorCapability_HintHeap   ((PNSLR_AllocatorCapability) (1 << 28))
-    #define PNSLR_AllocatorCapability_HintTemp   ((PNSLR_AllocatorCapability) (1 << 29))
-    #define PNSLR_AllocatorCapability_HintDebug  ((PNSLR_AllocatorCapability) (1 << 30))
+    #define PNSLR_AllocatorCapability_None       ((PNSLR_AllocatorCapability) (         0))
+    #define PNSLR_AllocatorCapability_ThreadSafe ((PNSLR_AllocatorCapability) (1ULL <<  0))
+    #define PNSLR_AllocatorCapability_Resize     ((PNSLR_AllocatorCapability) (1ULL <<  1))
+    #define PNSLR_AllocatorCapability_Free       ((PNSLR_AllocatorCapability) (1ULL <<  2))
+    #define PNSLR_AllocatorCapability_FreeAll    ((PNSLR_AllocatorCapability) (1ULL <<  3))
+    #define PNSLR_AllocatorCapability_HintNil    ((PNSLR_AllocatorCapability) (1ULL << 26))
+    #define PNSLR_AllocatorCapability_HintBump   ((PNSLR_AllocatorCapability) (1ULL << 27))
+    #define PNSLR_AllocatorCapability_HintHeap   ((PNSLR_AllocatorCapability) (1ULL << 28))
+    #define PNSLR_AllocatorCapability_HintTemp   ((PNSLR_AllocatorCapability) (1ULL << 29))
+    #define PNSLR_AllocatorCapability_HintDebug  ((PNSLR_AllocatorCapability) (1ULL << 30))
 ENUM_END
 
 /**
