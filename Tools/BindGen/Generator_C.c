@@ -40,8 +40,8 @@ cstring G_GenCSuffix = ""
 "\n"
 "#endif//PANSHILAR_MAIN\n"
 "\n"
-"#ifndef PNSLR_STATIC_ASSERTS\n"
-"#define PNSLR_STATIC_ASSERTS\n"
+"#ifndef PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
+"#define PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
 "    _Static_assert(sizeof(PNSLR_B8 ) == 1, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_U8 ) == 1, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_U16) == 2, \"Size mismatch.\");\n"
@@ -51,7 +51,7 @@ cstring G_GenCSuffix = ""
 "    _Static_assert(sizeof(PNSLR_I16) == 2, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
-"#endif//PNSLR_STATIC_ASSERTS\n"
+"#endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
 "";
 
 #define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
@@ -130,8 +130,12 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
 
         for (DeclHeader* decl = file->declarations; decl != nil; decl = decl->next)
         {
-            PNSLR_WriteToFile(headerFile, ARR_FROM_STR(decl->doc));
-            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+            if (decl->doc.count > 0)
+            {
+                PNSLR_WriteToFile(headerFile, ARR_FROM_STR(decl->doc));
+                PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+            }
+
             switch (decl->type)
             {
                 case DeclType_Section:
@@ -139,8 +143,8 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     ParsedSection* sec = (ParsedSection*) decl;
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// "));
                     PNSLR_WriteToFile(headerFile, ARR_FROM_STR(sec->header.name));
-                    for (i64 i = (3 + sec->header.name.count); i < 60; i++) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("~")); }
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+                    for (i64 i = (4 + sec->header.name.count); i < 90; i++) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("~")); }
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
                     break;
                 }
@@ -189,6 +193,8 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     PNSLR_WriteToFile(headerFile, ARR_FROM_STR(backing));
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
                     PNSLR_WriteToFile(headerFile, ARR_FROM_STR(enm->header.name));
+                    if (enm->flags) PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" /* use as flags */"));
+                    else            PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" /* use as value */"));
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     for (ParsedEnumVariant* var = enm->variants; var != nil; var = var->next)
                     {
@@ -205,17 +211,88 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     }
                     break;
                 }
-                // case DeclType_Struct:
-                // {
-                //     ParsedStruct* strct = (ParsedStruct*) decl;
-                //     break;
-                // }
-                // case DeclType_Function:
-                // {
-                //     ParsedFunction* fn = (ParsedFunction*) decl;
-                //     break;
-                // }
-                // default: FORCE_DBG_TRAP; break;
+                case DeclType_Struct:
+                {
+                    ParsedStruct* strct = (ParsedStruct*) decl;
+
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef struct "));
+                    if (strct->alignasVal != 0)
+                    {
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("PNSLR_ALIGNAS("));
+                        char alignPrintBuff[16];
+                        i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
+                        PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(") "));
+                    }
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(strct->header.name));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n"));
+                    for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
+                    {
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("    "));
+                        b8 addStructPrefix = false;
+                        {
+                            DeclTypeInfo ty = content->types.data[member->ty];
+                            if (ty.polyTy == PolymorphicDeclType_Ptr)
+                            {
+                                DeclTypeInfo pointedTy = content->types.data[ty.u.polyTgtIdx];
+                                if (pointedTy.polyTy == PolymorphicDeclType_None && PNSLR_AreStringsEqual(pointedTy.u.name, strct->header.name, 0))
+                                {
+                                    addStructPrefix = true; // is a pointer to self type
+                                }
+                            }
+                        }
+                        if (addStructPrefix) PNSLR_WriteToFile(headerFile, ARR_STR_LIT("struct "));
+                        WriteCTypeName(headerFile, content->types, member->ty);
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(member->name));
+                        if (member->arrSize > 0)
+                        {
+                            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("["));
+                            char arrSizePrintBuff[32];
+                            i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
+                            PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("]"));
+                        }
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+                    }
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("} "));
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(strct->header.name));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+
+                    break;
+                }
+                case DeclType_Function:
+                {
+                    ParsedFunction* fn = (ParsedFunction*) decl;
+                    if (fn->isDelegate)
+                    {
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
+                        WriteCTypeName(headerFile, content->types, fn->retTy);
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" (*"));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(fn->header.name));
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(")"));
+                    }
+                    else
+                    {
+                        WriteCTypeName(headerFile, content->types, fn->retTy);
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(fn->header.name));
+                    }
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("("));
+                    if (fn->args != nil) PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
+                    {
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("    "));
+                        WriteCTypeName(headerFile, content->types, arg->ty);
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(arg->name));
+                        if (arg->next != nil) PNSLR_WriteToFile(headerFile, ARR_STR_LIT(","));
+                        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    }
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(");\n"));
+                    break;
+                }
+                default: FORCE_DBG_TRAP; break;
             }
             PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
         }
