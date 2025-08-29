@@ -1,4 +1,4 @@
-#include "Generator_C.h"
+#include "Generator.h"
 
 cstring G_GenCPrefix = ""
 "#ifdef __cplusplus\n"

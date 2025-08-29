@@ -7,7 +7,6 @@ PRAGMA_REENABLE_WARNINGS
 #include "FilesGather.h"
 #include "SrcParser.h"
 #include "Generator.h"
-#include "Generator_C.h"
 
 void BindGenMain(ArraySlice(utf8str) args)
 {
