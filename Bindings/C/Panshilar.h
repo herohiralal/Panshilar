@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+    #error "Please use the C++ bibndings.";
+#else
 #ifndef PANSHILAR_MAIN
 #define PANSHILAR_MAIN
 
@@ -28,10 +31,6 @@ typedef struct { PNSLR_I64 count; PNSLR_I16* data; } PNSLR_ArraySlice_PNSLR_I16;
 typedef struct { PNSLR_I64 count; PNSLR_I32* data; } PNSLR_ArraySlice_PNSLR_I32;
 typedef struct { PNSLR_I64 count; PNSLR_I64* data; } PNSLR_ArraySlice_PNSLR_I64;
 typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
-
-// #######################################################################################
-// Compiler
-// #######################################################################################
 
 // #######################################################################################
 // Intrinsics
@@ -80,10 +79,6 @@ void PNSLR_Intrinsic_MemMove(
     void* source,
     PNSLR_I32 size
 );
-
-// #######################################################################################
-// __Prelude
-// #######################################################################################
 
 // #######################################################################################
 // Environment
@@ -1264,10 +1259,6 @@ void PNSLR_ExitProcess(
     PNSLR_I32 exitCode
 );
 
-// #######################################################################################
-// Panshilar
-// #######################################################################################
-
 
 #undef PNSLR_ALIGNAS
 
@@ -1285,3 +1276,4 @@ void PNSLR_ExitProcess(
     _Static_assert(sizeof(PNSLR_I32) == 4, "Size mismatch.");
     _Static_assert(sizeof(PNSLR_I64) == 8, "Size mismatch.");
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
+#endif//__cplusplus

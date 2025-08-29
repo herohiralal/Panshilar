@@ -1,6 +1,9 @@
 #include "Generator_C.h"
 
 cstring G_GenCPrefix = ""
+"#ifdef __cplusplus\n"
+"    #error \"Please use the C++ bibndings.\";\n"
+"#else\n"
 "#ifndef PANSHILAR_MAIN\n"
 "#define PANSHILAR_MAIN\n"
 "\n"
@@ -52,6 +55,7 @@ cstring G_GenCSuffix = ""
 "    _Static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
 "#endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
+"#endif//__cplusplus\n"
 "";
 
 #define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
@@ -121,12 +125,15 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
 
     for (ParsedFileContents* file = content->files; file != nil; file = file->next)
     {
-        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
-        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// "));
-        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(file->name));
-        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
-        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
-        PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+        if (file->declarations != nil)
+        {
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// "));
+            PNSLR_WriteToFile(headerFile, ARR_FROM_STR(file->name));
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("// #######################################################################################\n"));
+            PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+        }
 
         for (DeclHeader* decl = file->declarations; decl != nil; decl = decl->next)
         {
