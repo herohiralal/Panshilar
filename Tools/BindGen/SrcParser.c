@@ -180,6 +180,22 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
                   && ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator);
 
         if (!success) return false;
+
+        success = false;
+        for (i64 i = (i64) typeIdxTemp /* slice is probably after main decl */; i < parsedContent->typesCount; i++)
+        {
+            DeclTypeInfo* typeEntry = &(parsedContent->types.data[i]);
+            if (typeEntry->polyTy != PolymorphicDeclType_Slice) continue; // only care about slices
+
+            if (typeEntry->u.polyTgtIdx == (i64) typeIdxTemp)
+            {
+                typeIdxTemp = (u32) i;
+                success = true;
+                break;
+            }
+        }
+
+        if (!success) return false;
     }
     else // is not an array slice
     {

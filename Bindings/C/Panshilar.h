@@ -987,7 +987,7 @@ PNSLR_EncodedRune PNSLR_EncodeRune(
  * Returns error rune (U+FFFD) for invalid sequences.
  */
 PNSLR_DecodedRune PNSLR_DecodeRune(
-    PNSLR_U8 s
+    PNSLR_ArraySlice_PNSLR_U8 s
 );
 
 // Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1169,7 +1169,7 @@ PNSLR_B8 PNSLR_SeekPositionInFile(
  */
 PNSLR_B8 PNSLR_ReadFromFile(
     PNSLR_File handle,
-    PNSLR_U8 dst
+    PNSLR_ArraySlice_PNSLR_U8 dst
 );
 
 /**
@@ -1177,7 +1177,7 @@ PNSLR_B8 PNSLR_ReadFromFile(
  */
 PNSLR_B8 PNSLR_WriteToFile(
     PNSLR_File handle,
-    PNSLR_U8 src
+    PNSLR_ArraySlice_PNSLR_U8 src
 );
 
 /**
@@ -1208,7 +1208,7 @@ void PNSLR_CloseFileHandle(
  */
 PNSLR_B8 PNSLR_ReadAllContentsFromFile(
     PNSLR_Path path,
-    PNSLR_U8* dst,
+    PNSLR_ArraySlice_PNSLR_U8* dst,
     PNSLR_Allocator allocator
 );
 
@@ -1217,7 +1217,7 @@ PNSLR_B8 PNSLR_ReadAllContentsFromFile(
  */
 PNSLR_B8 PNSLR_WriteAllContentsToFile(
     PNSLR_Path path,
-    PNSLR_U8 src,
+    PNSLR_ArraySlice_PNSLR_U8 src,
     PNSLR_B8 append
 );
 

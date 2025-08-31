@@ -171,11 +171,11 @@ PNSLR_EncodedRune PNSLR_EncodeRune(rune c);
  */
 PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
 
-// Windows-specific bs for UTF-16 conversions ======================================
-
 //+skipreflect
 
 #if PNSLR_WINDOWS
+
+// Windows-specific bs for UTF-16 conversions ======================================
 
 /**
  * Converts a UTF-8 string to a UTF-16 string.
