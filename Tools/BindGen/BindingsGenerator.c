@@ -80,7 +80,8 @@ void BindGenMain(ArraySlice(utf8str) args)
         PNSLR_Path bindingsDir = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Bindings"), appArena);
         if (!PNSLR_PathExists(bindingsDir, PNSLR_PathExistsCheckType_Directory)) { PNSLR_CreateDirectoryTree(bindingsDir); }
 
-        RunGenerator(GenerateCBindings, bindingsDir, PNSLR_STRING_LITERAL("C"), &parsedStuff, appArena);
+        RunGenerator(GenerateCBindings,   bindingsDir, PNSLR_STRING_LITERAL("C"),   &parsedStuff, appArena);
+        RunGenerator(GenerateCxxBindings, bindingsDir, PNSLR_STRING_LITERAL("Cxx"), &parsedStuff, appArena);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
@@ -95,4 +96,5 @@ PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
 #include "FilesGather.c"
 #include "SrcParser.c"
 #include "Generator.c"
-#include "Generator_C.c"
+#include "GeneratorC.c"
+#include "GeneratorCxx.c"
