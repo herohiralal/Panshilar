@@ -17,11 +17,17 @@ namespace Panshilar
     typedef signed int          i32;
     typedef signed long long    i64;
     template <typename T> struct ArraySlice { i64 count; T* data; };
-    typedef ArraySlice<u8> utf8str;
 
     // #######################################################################################
     // Intrinsics
     // #######################################################################################
+
+    // Primitive ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * UTF-8 string type, with length info (not necessarily null-terminated).
+     */
+    typedef ArraySlice<u8> utf8str;
 
     // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1279,6 +1285,20 @@ namespace Panshilar
 
 #ifndef PNSLR_SKIP_IMPLEMENTATION
 #define PNSLR_SKIP_IMPLEMENTATION
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     void* Intrinsic_Malloc(
         i32 alignment,

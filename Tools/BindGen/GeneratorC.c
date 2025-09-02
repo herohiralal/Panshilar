@@ -24,16 +24,6 @@ cstring G_GenCPrefix = ""
 "typedef signed short int    PNSLR_I16;\n"
 "typedef signed int          PNSLR_I32;\n"
 "typedef signed long long    PNSLR_I64;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_B8*  data; } PNSLR_ArraySlice_PNSLR_B8;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_U8*  data; } PNSLR_ArraySlice_PNSLR_U8;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_U16* data; } PNSLR_ArraySlice_PNSLR_U16;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_U32* data; } PNSLR_ArraySlice_PNSLR_U32;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_U64* data; } PNSLR_ArraySlice_PNSLR_U64;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_I8*  data; } PNSLR_ArraySlice_PNSLR_I8;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_I16* data; } PNSLR_ArraySlice_PNSLR_I16;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_I32* data; } PNSLR_ArraySlice_PNSLR_I32;\n"
-"typedef struct { PNSLR_I64 count; PNSLR_I64* data; } PNSLR_ArraySlice_PNSLR_I64;\n"
-"typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;\n"
 "\n"
 "";
 
@@ -174,6 +164,21 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n} "));
                     WriteCTypeName(headerFile, content->types, arrTyIdx);
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+                    break;
+                }
+                case DeclType_TyAlias:
+                {
+                    ParsedTypeAlias* tyAl = (ParsedTypeAlias*) decl;
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
+                    WriteCTypeName(headerFile, content->types, tyAl->tgt);
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
+
+                    // currently, has a special case for utf8str
+                    b8 isUtf8Str = PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_STRING_LITERAL("utf8str"), 0);
+                    utf8str tyName = isUtf8Str ? PNSLR_STRING_LITERAL("PNSLR_UTF8STR") : tyAl->header.name;
+                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(tyName));
+                    
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;
                 }

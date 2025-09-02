@@ -21,20 +21,95 @@ typedef signed char         PNSLR_I8;
 typedef signed short int    PNSLR_I16;
 typedef signed int          PNSLR_I32;
 typedef signed long long    PNSLR_I64;
-typedef struct { PNSLR_I64 count; PNSLR_B8*  data; } PNSLR_ArraySlice_PNSLR_B8;
-typedef struct { PNSLR_I64 count; PNSLR_U8*  data; } PNSLR_ArraySlice_PNSLR_U8;
-typedef struct { PNSLR_I64 count; PNSLR_U16* data; } PNSLR_ArraySlice_PNSLR_U16;
-typedef struct { PNSLR_I64 count; PNSLR_U32* data; } PNSLR_ArraySlice_PNSLR_U32;
-typedef struct { PNSLR_I64 count; PNSLR_U64* data; } PNSLR_ArraySlice_PNSLR_U64;
-typedef struct { PNSLR_I64 count; PNSLR_I8*  data; } PNSLR_ArraySlice_PNSLR_I8;
-typedef struct { PNSLR_I64 count; PNSLR_I16* data; } PNSLR_ArraySlice_PNSLR_I16;
-typedef struct { PNSLR_I64 count; PNSLR_I32* data; } PNSLR_ArraySlice_PNSLR_I32;
-typedef struct { PNSLR_I64 count; PNSLR_I64* data; } PNSLR_ArraySlice_PNSLR_I64;
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
 
 // #######################################################################################
 // Intrinsics
 // #######################################################################################
+
+// Primitive ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+typedef struct PNSLR_ArraySlice_PNSLR_B8
+{
+    PNSLR_I64 count;
+    PNSLR_B8* data;
+} PNSLR_ArraySlice_PNSLR_B8;
+
+typedef struct PNSLR_ArraySlice_PNSLR_U8
+{
+    PNSLR_I64 count;
+    PNSLR_U8* data;
+} PNSLR_ArraySlice_PNSLR_U8;
+
+typedef struct PNSLR_ArraySlice_PNSLR_U16
+{
+    PNSLR_I64 count;
+    PNSLR_U16* data;
+} PNSLR_ArraySlice_PNSLR_U16;
+
+typedef struct PNSLR_ArraySlice_PNSLR_U32
+{
+    PNSLR_I64 count;
+    PNSLR_U32* data;
+} PNSLR_ArraySlice_PNSLR_U32;
+
+typedef struct PNSLR_ArraySlice_PNSLR_U64
+{
+    PNSLR_I64 count;
+    PNSLR_U64* data;
+} PNSLR_ArraySlice_PNSLR_U64;
+
+typedef struct PNSLR_ArraySlice_PNSLR_I8
+{
+    PNSLR_I64 count;
+    PNSLR_I8* data;
+} PNSLR_ArraySlice_PNSLR_I8;
+
+typedef struct PNSLR_ArraySlice_PNSLR_I16
+{
+    PNSLR_I64 count;
+    PNSLR_I16* data;
+} PNSLR_ArraySlice_PNSLR_I16;
+
+typedef struct PNSLR_ArraySlice_PNSLR_I32
+{
+    PNSLR_I64 count;
+    PNSLR_I32* data;
+} PNSLR_ArraySlice_PNSLR_I32;
+
+typedef struct PNSLR_ArraySlice_PNSLR_I64
+{
+    PNSLR_I64 count;
+    PNSLR_I64* data;
+} PNSLR_ArraySlice_PNSLR_I64;
+
+typedef struct PNSLR_ArraySlice_float
+{
+    PNSLR_I64 count;
+    float* data;
+} PNSLR_ArraySlice_float;
+
+typedef struct PNSLR_ArraySlice_double
+{
+    PNSLR_I64 count;
+    double* data;
+} PNSLR_ArraySlice_double;
+
+typedef struct PNSLR_ArraySlice_char
+{
+    PNSLR_I64 count;
+    char* data;
+} PNSLR_ArraySlice_char;
+
+/**
+ * UTF-8 string type, with length info (not necessarily null-terminated).
+ */
+typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
+
+typedef struct PNSLR_ArraySlice_PNSLR_UTF8STR
+{
+    PNSLR_I64 count;
+    PNSLR_UTF8STR* data;
+} PNSLR_ArraySlice_PNSLR_UTF8STR;
 
 // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

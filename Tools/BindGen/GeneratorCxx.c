@@ -21,7 +21,6 @@ cstring G_GenCxxHeaderPrefix = ""
 "    typedef signed int          i32;\n"
 "    typedef signed long long    i64;\n"
 "    template <typename T> struct ArraySlice { i64 count; T* data; };\n"
-"    typedef ArraySlice<u8> utf8str;\n"
 "\n"
 "";
 
@@ -93,6 +92,7 @@ void WriteCxxTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("cstring"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("char*"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rawptr"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("void*"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8str"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("utf8str"); }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("char"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("char"); }
             else { skipPrefix = true; }
 
             PNSLR_WriteToFile(file, ARR_FROM_STR_SKIP_PREFIX(nameStr, (skipPrefix ? 6 : 0)));
@@ -164,6 +164,16 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                     for (i64 i = (4 + sec->header.name.count); i < 90; i++) { PNSLR_WriteToFile(f, ARR_STR_LIT("~")); }
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
+                    break;
+                }
+                case DeclType_TyAlias:
+                {
+                    ParsedTypeAlias* tyAl = (ParsedTypeAlias*) decl;
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("    typedef "));
+                    WriteCxxTypeName(f, content->types, tyAl->tgt);
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                    PNSLR_WriteToFile(f, ARR_FROM_STR(tyAl->header.name));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
                     break;
                 }
                 case DeclType_Enum:
@@ -294,6 +304,10 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 case DeclType_Array:
                 {
                     // ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
+                    break;
+                }
+                case DeclType_TyAlias:
+                {
                     break;
                 }
                 case DeclType_Enum:

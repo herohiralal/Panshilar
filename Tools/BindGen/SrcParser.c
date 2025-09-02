@@ -11,11 +11,10 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
     #define DECLARE_TYPE_TABLE_ENTRY(xxxx) \
         i64 xxxx##Idx = cnt; \
         /*regular*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_STRING_LITERAL(#xxxx)}; \
-        /*ptr2reg*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx}; \
-        /*slice*/   tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = xxxx##Idx}; \
-        /*ptr2arr*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = (xxxx##Idx + 2)};
+        /*ptr2reg*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx};
 
     DECLARE_TYPE_TABLE_ENTRY(void   ); // void must be the 0th type
+    DECLARE_TYPE_TABLE_ENTRY(char   );
     DECLARE_TYPE_TABLE_ENTRY(b8     );
     DECLARE_TYPE_TABLE_ENTRY(u8     );
     DECLARE_TYPE_TABLE_ENTRY(u16    );
@@ -215,7 +214,11 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
             }
         }
 
-        if (!success) return false;
+        if (!success)
+        {
+            PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_STRING_LITERAL("Type name not found."));
+            return false;
+        }
     }
 
     // check if type is a ptr
@@ -778,7 +781,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, nextToken, &delRetTyIdx, allocator)) // delegate or type alias
             {
                 utf8str nextTokenAfterTypedef = {0};
-                if (!PeekNextToken(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, &nextTokenAfterTypedef, allocator))
+                if (!PeekNextToken(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, &nextTokenAfterTypedef))
                 {
                     PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("not expecting EOF"));
                     return false;
@@ -809,6 +812,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
 
                     AddNewType(parsedContent, tyAl->header.name);
+                    continue;
                 }
             }
 

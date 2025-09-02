@@ -26,8 +26,8 @@ typedef signed int          i32;
 typedef signed long long    i64;
 typedef float               f32;
 typedef double              f64;
-typedef char*               cstring;
 typedef void*               rawptr;
+typedef char*               cstring;
 
 #ifdef __cplusplus
     #undef  nil
@@ -173,7 +173,11 @@ typedef void*               rawptr;
 
 #endif
 
+//-skipreflect
 EXTERN_C_BEGIN
+
+// Primitive Collections  ==========================================================
+
 DECLARE_ARRAY_SLICE(     b8);
 DECLARE_ARRAY_SLICE(     u8);
 DECLARE_ARRAY_SLICE(    u16);
@@ -186,15 +190,14 @@ DECLARE_ARRAY_SLICE(    i64);
 DECLARE_ARRAY_SLICE(    f32);
 DECLARE_ARRAY_SLICE(    f64);
 DECLARE_ARRAY_SLICE(   char);
-DECLARE_ARRAY_SLICE(cstring);
-EXTERN_C_END
 
-// UTF-8 string type, with length info (not necessarily null-terminated).
+/**
+ * UTF-8 string type, with length info (not necessarily null-terminated).
+ */
 typedef ArraySlice(u8) utf8str;
-
-EXTERN_C_BEGIN
 DECLARE_ARRAY_SLICE(utf8str);
-EXTERN_C_END
+
+//+skipreflect
 
 #ifdef __cplusplus
     #define PNSLR_STRING_LITERAL(str) \
@@ -206,7 +209,6 @@ EXTERN_C_END
 #endif
 
 //-skipreflect
-EXTERN_C_BEGIN
 
 // Memory Management ===============================================================
 
