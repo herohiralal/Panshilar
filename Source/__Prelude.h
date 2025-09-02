@@ -143,7 +143,6 @@ static_assert(sizeof(u8)      == 1, "     u8 must be 1 byte ");
 static_assert(sizeof(i8)      == 1, "     i8 must be 1 byte ");
 static_assert(sizeof(u16)     == 2, "    u16 must be 2 bytes");
 static_assert(sizeof(i16)     == 2, "    i16 must be 2 bytes");
-static_assert(sizeof(b32)     == 4, "    b32 must be 4 bytes");
 static_assert(sizeof(u32)     == 4, "    u32 must be 4 bytes");
 static_assert(sizeof(i32)     == 4, "    i32 must be 4 bytes");
 static_assert(sizeof(f32)     == 4, "    f32 must be 4 bytes");
@@ -151,9 +150,6 @@ static_assert(sizeof(u64)     == 8, "    u64 must be 8 bytes");
 static_assert(sizeof(i64)     == 8, "    i64 must be 8 bytes");
 static_assert(sizeof(f64)     == 8, "    f64 must be 8 bytes");
 static_assert(sizeof(rawptr)  == 8, "    ptr must be 8 bytes");
-static_assert(sizeof(utf8ch)  == 1, " utf8ch must be 1 byte ");
-static_assert(sizeof(utf16ch) == 2, "utf16ch must be 2 bytes");
-static_assert(sizeof(rune)    == 4, "   rune must be 4 bytes");
 static_assert(PNSLR_PTR_SIZE  == 8, "    ptr must be 8 bytes"); // keep in sync with sizeof(rawptr)
 
 // assert msvc toolchain for windows

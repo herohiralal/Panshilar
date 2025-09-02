@@ -422,7 +422,7 @@ rawptr PNSLR_AllocatorFn_Stack(
  * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
  */
 #define PNSLR_MakeString(count__, zeroed, allocator, error__) \
-    PNSLR_MakeSlice(utf8ch, count__, zeroed, allocator, error__)
+    PNSLR_MakeSlice(u8, count__, zeroed, allocator, error__)
 
 /**
  * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.

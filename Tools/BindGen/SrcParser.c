@@ -17,7 +17,6 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
 
     DECLARE_TYPE_TABLE_ENTRY(void   ); // void must be the 0th type
     DECLARE_TYPE_TABLE_ENTRY(b8     );
-    DECLARE_TYPE_TABLE_ENTRY(b32    );
     DECLARE_TYPE_TABLE_ENTRY(u8     );
     DECLARE_TYPE_TABLE_ENTRY(u16    );
     DECLARE_TYPE_TABLE_ENTRY(u32    );
@@ -28,9 +27,6 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
     DECLARE_TYPE_TABLE_ENTRY(i64    );
     DECLARE_TYPE_TABLE_ENTRY(f32    );
     DECLARE_TYPE_TABLE_ENTRY(f64    );
-    DECLARE_TYPE_TABLE_ENTRY(utf8ch );
-    DECLARE_TYPE_TABLE_ENTRY(utf16ch);
-    DECLARE_TYPE_TABLE_ENTRY(rune   );
     DECLARE_TYPE_TABLE_ENTRY(cstring);
     DECLARE_TYPE_TABLE_ENTRY(rawptr );
     DECLARE_TYPE_TABLE_ENTRY(utf8str);
@@ -78,7 +74,7 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     i32 lineIdx = 0;
     for (i32 j = 0, w = 0; j < start; j += w)
     {
-        rune r;
+        u32 r;
         PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
         r = rDecoded.rune; w = rDecoded.length;
         if (r == '\n')
@@ -90,7 +86,7 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
 
     for (i32 j = start, w = 0; j < contents.count; j += w)
     {
-        rune r;
+        u32 r;
         PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
         r = rDecoded.rune; w = rDecoded.length;
         if (r == '\n')

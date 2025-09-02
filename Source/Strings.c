@@ -16,7 +16,7 @@ utf8str PNSLR_StringFromCString(cstring str)
 {
     if (str == nil) { str = ""; }
     i32 length = PNSLR_GetCStringLength(str);
-    return (utf8str) {.count = length, .data = (utf8ch*)str};
+    return (utf8str) {.count = length, .data = (u8*) str};
 }
 
 cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
@@ -352,7 +352,7 @@ static u8 PNSLR_GetAcceptSize(u8 byte) {
     return 0xf1;
 }
 
-i32 PNSLR_GetRuneLength(rune r) {
+i32 PNSLR_GetRuneLength(u32 r) {
     if (r <= PNSLR_RUNE1_MAX)                                 { return 1;  }
     if (r <= PNSLR_RUNE2_MAX)                                 { return 2;  }
     if (PNSLR_SURROGATE_MIN <= r && r <= PNSLR_SURROGATE_MAX) { return -1; }
@@ -361,8 +361,8 @@ i32 PNSLR_GetRuneLength(rune r) {
     return -1;
 }
 
-PNSLR_EncodedRune PNSLR_EncodeRune(rune c) {
-    rune r = c;
+PNSLR_EncodedRune PNSLR_EncodeRune(u32 c) {
+    u32 r = c;
     PNSLR_EncodedRune result = {0};
     u8 mask = 0x3f;
 
@@ -413,8 +413,8 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     u8 x = PNSLR_GetAcceptSize(s0);
 
     if (x >= 0xf0) {
-        rune mask = (rune)x << 31 >> 31;
-        result.rune = ((rune)s.data[0] & ~mask) | (PNSLR_RUNE_ERROR & mask);
+        u32 mask = (u32) x << 31 >> 31;
+        result.rune = ((u32) s.data[0] & ~mask) | (PNSLR_RUNE_ERROR & mask);
         result.length = 1;
         return result;
     }
@@ -436,7 +436,7 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     }
 
     if (sz == 2) {
-        result.rune = ((rune)(s0 & PNSLR_MASK2) << 6) | (rune)(b1 & PNSLR_MASKX);
+        result.rune = ((u32) (s0 & PNSLR_MASK2) << 6) | (u32) (b1 & PNSLR_MASKX);
         result.length = 2;
         return result;
     }
@@ -449,9 +449,9 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
     }
 
     if (sz == 3) {
-        result.rune = ((rune)(s0 & PNSLR_MASK3) << 12) |
-                      ((rune)(b1 & PNSLR_MASKX) << 6) |
-                      (rune)(b2 & PNSLR_MASKX);
+        result.rune = ((u32)(s0 & PNSLR_MASK3) << 12) |
+                      ((u32)(b1 & PNSLR_MASKX) << 6) |
+                      (u32)(b2 & PNSLR_MASKX);
         result.length = 3;
         return result;
     }
@@ -463,10 +463,10 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
         return result;
     }
 
-    result.rune = ((rune)(s0 & PNSLR_MASK4) << 18) |
-                  ((rune)(b1 & PNSLR_MASKX) << 12) |
-                  ((rune)(b2 & PNSLR_MASKX) << 6) |
-                  (rune)(b3 & PNSLR_MASKX);
+    result.rune = ((u32)(s0 & PNSLR_MASK4) << 18) |
+                  ((u32)(b1 & PNSLR_MASKX) << 12) |
+                  ((u32)(b2 & PNSLR_MASKX) << 6) |
+                  (u32)(b3 & PNSLR_MASKX);
     result.length = 4;
     return result;
 }
@@ -487,23 +487,23 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
 
 #if PNSLR_WINDOWS
 
-ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator)
+ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator)
 {
     if (!str.data || !str.count)
     {
-        return (ArraySlice(utf16ch)) {0};
+        return (ArraySlice(u16)) {0};
     }
 
     i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
-    if (n <= 0) { return (ArraySlice(utf16ch)) {0}; } // conversion failed
+    if (n <= 0) { return (ArraySlice(u16)) {0}; } // conversion failed
 
-    ArraySlice(utf16ch) output = PNSLR_MakeSlice(utf16ch, (n + 1), false, allocator, nil);
+    ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, nil);
 
     i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
     if (n1 == 0)
     {
         PNSLR_FreeSlice(output, allocator, nil);
-        return (ArraySlice(utf16ch)) {0}; // conversion failed
+        return (ArraySlice(u16)) {0}; // conversion failed
     }
 
     output.data[n] = 0; // null-terminate the UTF-16 string
@@ -517,7 +517,7 @@ ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator 
     return output;
 }
 
-utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(utf16ch) utf16str, PNSLR_Allocator allocator)
+utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator)
 {
     if (!utf16str.data || !utf16str.count)
     {

@@ -152,18 +152,18 @@ typedef struct PNSLR_EncodedRune { u8 data[4]; i32 length; } PNSLR_EncodedRune;
  * Result structure for UTF-8 rune decoding.
  * Contains the decoded rune and the number of bytes consumed.
  */
-typedef struct PNSLR_DecodedRune { rune rune; i32 length; } PNSLR_DecodedRune;
+typedef struct PNSLR_DecodedRune { u32 rune; i32 length; } PNSLR_DecodedRune;
 
 /**
  * Returns the number of bytes required to encode the given rune in UTF-8.
  */
-i32 PNSLR_GetRuneLength(rune r);
+i32 PNSLR_GetRuneLength(u32 r);
 
 /**
  * Encodes a rune into UTF-8 byte sequence and returns the structure containing encoded bytes/length.
  * Invalid runes or surrogates are replaced with the error rune (U+FFFD).
  */
-PNSLR_EncodedRune PNSLR_EncodeRune(rune c);
+PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
 
 /**
  * Decodes a UTF-8 byte sequence into a rune and returns the structure containing the rune/length.
@@ -182,14 +182,14 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
  */
-ArraySlice(utf16ch) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
+ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
 
 /**
  * Converts a UTF-16 string to a UTF-8 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
  */
-utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(utf16ch) utf16str, PNSLR_Allocator allocator);
+utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
 
 #endif
 

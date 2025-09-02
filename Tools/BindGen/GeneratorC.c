@@ -75,7 +75,6 @@ void WriteCTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
             if (false) { }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("void"), nameStr, 0)) { }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_B8"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b32"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U8"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U16"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u32"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
@@ -86,9 +85,6 @@ void WriteCTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i64"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I64"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f32"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("float"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f64"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("double"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8ch"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U8"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf16ch"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U16"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rune"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("cstring"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("char*"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rawptr"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("void*"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8str"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_UTF8STR"); }

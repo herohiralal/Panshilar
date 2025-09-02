@@ -7,7 +7,6 @@
 
 namespace Panshilar
 {
-
     typedef bool                b8;
     typedef unsigned char       u8;
     typedef unsigned short int  u16;
@@ -986,8 +985,6 @@ namespace Panshilar
         ArraySlice<u8> s
     );
 
-    // Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     // #######################################################################################
     // IO
     // #######################################################################################
@@ -1259,7 +1256,6 @@ namespace Panshilar
         i32 exitCode
     );
 
-
 }//namespace end
 
 #endif//PANSHILAR_MAIN
@@ -1279,7 +1275,7 @@ namespace Panshilar
 
 #ifndef PNSLR_IMPLEMENTATION
 #define PNSLR_SKIP_IMPLEMENTATION
-#endif
+#endif//PNSLR_IMPLEMENTATION
 
 #ifndef PNSLR_SKIP_IMPLEMENTATION
 #define PNSLR_SKIP_IMPLEMENTATION

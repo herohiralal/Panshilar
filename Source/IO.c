@@ -66,7 +66,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
     {
         PNSLR_Allocator    allocator;
         utf8str            originalString;
-        ArraySlice(utf8ch) buffer;
+        ArraySlice(u8)     buffer;
         i32                writeIdx;
         utf8str            volAndPath;
         i32                volumeLength;
@@ -82,7 +82,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
         return buff->originalString.data[idx];
     }
 
-    static b8 AppendToLazyPathBuffer(LazyPathBuffer* buff, utf8ch c)
+    static b8 AppendToLazyPathBuffer(LazyPathBuffer* buff, u8 c)
     {
         if (buff->buffer.data == nil)
         {
@@ -94,7 +94,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
 
             // need to create a new buffer
             PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-            buff->buffer = PNSLR_MakeSlice(utf8ch, (buff->originalString.count + 1), false, buff->allocator, &err);
+            buff->buffer = PNSLR_MakeSlice(u8, (buff->originalString.count + 1), false, buff->allocator, &err);
             if (err != PNSLR_AllocatorError_None) { return false; } // allocation failed
             PNSLR_Intrinsic_MemCopy(buff->buffer.data, buff->originalString.data, buff->writeIdx);
         }
@@ -141,7 +141,7 @@ static b8 DeleteAllContentsWhileIteratingDirectory(rawptr payload, PNSLR_Path pa
 {
     DeleteAllContentsWhileIteratingDirectoryPayload* data = (DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) path2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, data->allocator);
+        ArraySlice(u16) path2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, data->allocator);
     #elif PNSLR_UNIX
         cstring path2 = PNSLR_CStringFromString(path.path, data->allocator);
     #endif
@@ -190,13 +190,13 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 
     #if PNSLR_WINDOWS
     {
-        ArraySlice(utf16ch) p = PNSLR_UTF16FromUTF8WindowsOnly(path, internalAllocator);
+        ArraySlice(u16) p = PNSLR_UTF16FromUTF8WindowsOnly(path, internalAllocator);
         i32 n = GetFullPathNameW((LPCWSTR) p.data, 0, nil, nil);
-        ArraySlice(utf16ch) buf = {0};
+        ArraySlice(u16) buf = {0};
         utf8str tempFullPath = (utf8str) {0};
         if (n > 0)
         {
-            buf = PNSLR_MakeSlice(utf16ch, n, false, internalAllocator, nil);
+            buf = PNSLR_MakeSlice(u16, n, false, internalAllocator, nil);
             n = GetFullPathNameW((LPCWSTR) p.data, (DWORD) n, (LPWSTR) buf.data, nil);
             if (n > 0)
             {
@@ -582,7 +582,7 @@ b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type)
 
     #if PNSLR_WINDOWS
 
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         DWORD fileAttributes = GetFileAttributesW((LPCWSTR) tempBuffer2.data);
         if (fileAttributes == INVALID_FILE_ATTRIBUTES)
@@ -629,7 +629,7 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
     b8 throwawayB8 = false;
     DeleteAllContentsWhileIteratingDirectoryPayload payload = {.failedAtSomething = false, .allocator = internalAllocator};
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         DWORD fileAttributes = GetFileAttributesW((LPCWSTR) tempBuffer2.data);
         if (fileAttributes != INVALID_FILE_ATTRIBUTES)
@@ -664,7 +664,7 @@ i64 PNSLR_GetFileTimestamp(PNSLR_Path path)
 
     i64 timestamp = 0;
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         HANDLE fileHandle = CreateFileW((LPCWSTR) tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fileHandle != INVALID_HANDLE_VALUE)
@@ -703,7 +703,7 @@ i64 PNSLR_GetFileSize(PNSLR_Path path)
 
     i64 sizeInBytes = 0;
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         HANDLE fileHandle = CreateFileW((LPCWSTR) tempBuffer2.data, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (fileHandle != INVALID_HANDLE_VALUE)
@@ -778,7 +778,7 @@ PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite)
 
     PNSLR_File output = {0};
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         HANDLE fileHandle = CreateFileW((LPCWSTR) tempBuffer2.data,
                                    GENERIC_READ | (allowWrite ? GENERIC_WRITE : 0),
@@ -810,7 +810,7 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
 
     PNSLR_File output = {0};
     #if PNSLR_WINDOWS
-        ArraySlice(utf16ch) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
+        ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
         HANDLE fileHandle = CreateFileW((LPCWSTR) tempBuffer2.data,
                                    GENERIC_WRITE | (allowRead ? GENERIC_READ : 0),

@@ -1,6 +1,6 @@
 #include "TokenMatch.h"
 
-b8 IsSpace(rune r)
+b8 IsSpace(u32 r)
 {
     if (r <= 0xFF)
     {
@@ -36,7 +36,7 @@ b8 IsSpace(rune r)
     }
 }
 
-b8 IsSymbol(rune r)
+b8 IsSymbol(u32 r)
 {
     if (r <= 0xFF)
     {
@@ -94,7 +94,7 @@ b8 IsValidName(utf8str str)
         PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
-        rune r = decoded.rune;
+        u32 r = decoded.rune;
         b8 allowNumeric = (charIdx != 0);
         b8 isNumeric = (r >= '0' && r <= '9');
         b8 isAlphabetical = (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z');
@@ -137,7 +137,7 @@ b8 IsValidNumber(utf8str str)
         PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
-        rune r = decoded.rune;
+        u32 r = decoded.rune;
         b8 isDash = (r == '-');
         b8 isNumeric = (r >= '0' && r <= '9');
         b8 isDot = (r == '.');
@@ -184,7 +184,7 @@ b8 IsValidHexNumber(utf8str str)
         PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
-        rune r = decoded.rune;
+        u32 r = decoded.rune;
         b8 isNumeric = (r >= '0' && r <= '9');
         b8 isAlpha = (r >= 'A' && r <= 'F');
 

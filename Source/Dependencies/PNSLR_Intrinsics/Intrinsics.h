@@ -16,7 +16,6 @@
     typedef _Bool           b8;
 #endif
 
-typedef unsigned int        b32; // mainly for interop purposes with certain other libraries
 typedef unsigned char       u8;
 typedef unsigned short int  u16;
 typedef unsigned int        u32;
@@ -27,9 +26,6 @@ typedef signed int          i32;
 typedef signed long long    i64;
 typedef float               f32;
 typedef double              f64;
-typedef unsigned char       utf8ch;
-typedef unsigned short int  utf16ch;
-typedef unsigned int        rune;
 typedef char*               cstring;
 typedef void*               rawptr;
 
@@ -156,11 +152,8 @@ typedef void*               rawptr;
 
     template <typename T> struct ArraySlice { i64 count; T* data; };
 
-    #define DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice(ty); \
-
     #define DECLARE_ARRAY_SLICE(ty) \
-        DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
+        typedef struct { i64 count; ty* data; } ArraySlice(ty); \
         EXTERN_C_END \
         template<> struct ArraySlice<ty> \
         { \
@@ -175,36 +168,29 @@ typedef void*               rawptr;
 
 #else
 
-    #define DECLARE_ARRAY_SLICE_TYPEDEF(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice(ty);
-
     #define DECLARE_ARRAY_SLICE(ty) \
-        DECLARE_ARRAY_SLICE_TYPEDEF(ty)
+        typedef struct { i64 count; ty* data; } ArraySlice(ty);
 
 #endif
 
 EXTERN_C_BEGIN
-DECLARE_ARRAY_SLICE        (     b8);
-DECLARE_ARRAY_SLICE_TYPEDEF(    b32);
-DECLARE_ARRAY_SLICE        (     u8);
-DECLARE_ARRAY_SLICE        (    u16);
-DECLARE_ARRAY_SLICE        (    u32);
-DECLARE_ARRAY_SLICE        (    u64);
-DECLARE_ARRAY_SLICE        (     i8);
-DECLARE_ARRAY_SLICE        (    i16);
-DECLARE_ARRAY_SLICE        (    i32);
-DECLARE_ARRAY_SLICE        (    i64);
-DECLARE_ARRAY_SLICE        (    f32);
-DECLARE_ARRAY_SLICE        (    f64);
-DECLARE_ARRAY_SLICE        (   char);
-DECLARE_ARRAY_SLICE_TYPEDEF( utf8ch);
-DECLARE_ARRAY_SLICE_TYPEDEF(utf16ch);
-DECLARE_ARRAY_SLICE_TYPEDEF(   rune);
-DECLARE_ARRAY_SLICE        (cstring);
+DECLARE_ARRAY_SLICE(     b8);
+DECLARE_ARRAY_SLICE(     u8);
+DECLARE_ARRAY_SLICE(    u16);
+DECLARE_ARRAY_SLICE(    u32);
+DECLARE_ARRAY_SLICE(    u64);
+DECLARE_ARRAY_SLICE(     i8);
+DECLARE_ARRAY_SLICE(    i16);
+DECLARE_ARRAY_SLICE(    i32);
+DECLARE_ARRAY_SLICE(    i64);
+DECLARE_ARRAY_SLICE(    f32);
+DECLARE_ARRAY_SLICE(    f64);
+DECLARE_ARRAY_SLICE(   char);
+DECLARE_ARRAY_SLICE(cstring);
 EXTERN_C_END
 
 // UTF-8 string type, with length info (not necessarily null-terminated).
-typedef ArraySlice(utf8ch) utf8str;
+typedef ArraySlice(u8) utf8str;
 
 EXTERN_C_BEGIN
 DECLARE_ARRAY_SLICE(utf8str);
@@ -212,11 +198,11 @@ EXTERN_C_END
 
 #ifdef __cplusplus
     #define PNSLR_STRING_LITERAL(str) \
-        utf8str {sizeof(str) - 1, (utf8ch*) str}
+        utf8str {sizeof(str) - 1, (u8*) str}
 #else
     // Create a utf8str from a string literal.
     #define PNSLR_STRING_LITERAL(str) \
-        (utf8str) {.count = sizeof(str) - 1, .data  = (utf8ch*) str}
+        (utf8str) {.count = sizeof(str) - 1, .data  = (u8*) str}
 #endif
 
 //-skipreflect
