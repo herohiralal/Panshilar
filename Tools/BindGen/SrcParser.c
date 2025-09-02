@@ -761,7 +761,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct
+        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct or type alias
         {
             utf8str nextToken = {0};
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &nextToken, allocator))
@@ -775,12 +775,41 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 cachedLasts->lastMember = nil;
                 continue;
             }
-            else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, nextToken, &delRetTyIdx, allocator)) // delegate
+            else if (ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, nextToken, &delRetTyIdx, allocator)) // delegate or type alias
             {
-                if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
+                utf8str nextTokenAfterTypedef = {0};
+                if (!PeekNextToken(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, &nextTokenAfterTypedef, allocator))
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("not expecting EOF"));
+                    return false;
+                }
 
-                cachedLasts->lastFnArg = nil;
-                continue;
+                if (PNSLR_AreStringsEqual(nextTokenAfterTypedef, PNSLR_STRING_LITERAL("("), 0)) // delegate
+                {
+                    if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
+
+                    cachedLasts->lastFnArg = nil;
+                    continue;
+                }
+                else // type alias
+                {
+                    ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, nil);
+                    if (!tyAl) FORCE_DBG_TRAP;
+
+                    tyAl->header.type = DeclType_TyAlias;
+                    tyAl->header.doc  = lastDoc;
+                    tyAl->tgt         = delRetTyIdx;
+
+                    if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(tyAl->header);
+                    else                       cachedLasts->lastFile->declarations = &(tyAl->header);
+                    cachedLasts->lastDecl                                          = &(tyAl->header);
+                    lastDoc = (utf8str) {0};
+
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &(tyAl->header.name), allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
+
+                    AddNewType(parsedContent, tyAl->header.name);
+                }
             }
 
             PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));

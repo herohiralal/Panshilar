@@ -11,6 +11,7 @@ ENUM_START(DeclType, u8)
     #define DeclType_Enum     ((DeclType) 3)
     #define DeclType_Struct   ((DeclType) 4)
     #define DeclType_Function ((DeclType) 5)
+    #define DeclType_TyAlias  ((DeclType) 6)
 ENUM_END
 
 typedef struct DeclHeader
@@ -108,6 +109,14 @@ typedef struct
     u32          retTy;
     ParsedFnArg* args; // linked list
 } ParsedFunction;
+
+// type alias ======================================================================
+
+typedef struct
+{
+    DeclHeader header;
+    u32        tgt;
+} ParsedTypeAlias;
 
 // overall =========================================================================
 

@@ -210,7 +210,6 @@ EXTERN_C_BEGIN
 
 // Memory Management ===============================================================
 
-
 /**
  * Allocate memory with the specified alignment and size.
  */
