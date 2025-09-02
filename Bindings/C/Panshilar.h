@@ -1,8 +1,9 @@
-#ifdef __cplusplus
-    #error "Please use the C++ bibndings.";
-#else
 #ifndef PANSHILAR_MAIN
 #define PANSHILAR_MAIN
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if (_MSC_VER)
     #define PNSLR_ALIGNAS(x) __declspec(align(x))
@@ -1332,8 +1333,11 @@ void PNSLR_ExitProcess(
     PNSLR_I32 exitCode
 );
 
-
 #undef PNSLR_ALIGNAS
+
+#ifdef __cplusplus
+} // extern c
+#endif
 
 #endif//PANSHILAR_MAIN
 
@@ -1349,4 +1353,3 @@ void PNSLR_ExitProcess(
     _Static_assert(sizeof(PNSLR_I32) == 4, "Size mismatch.");
     _Static_assert(sizeof(PNSLR_I64) == 8, "Size mismatch.");
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
-#endif//__cplusplus

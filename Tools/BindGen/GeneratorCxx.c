@@ -299,6 +299,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
             {
                 case DeclType_Section:
                 {
+                    // ParsedSection* sec = (ParsedSection*) decl;
                     continue;
                 }
                 case DeclType_Array:
@@ -308,109 +309,22 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 }
                 case DeclType_TyAlias:
                 {
+                    // ParsedTypeAlias* alias = (ParsedTypeAlias*) decl;
                     break;
                 }
                 case DeclType_Enum:
                 {
-                    ParsedEnum* enm = (ParsedEnum*) decl;
-                    utf8str backing = {0};
-                    {
-                        switch (enm->size)
-                        {
-                            case  8: backing = enm->negative ? PNSLR_STRING_LITERAL("i8" ) : PNSLR_STRING_LITERAL("u8" ); break;
-                            case 16: backing = enm->negative ? PNSLR_STRING_LITERAL("i16") : PNSLR_STRING_LITERAL("u16"); break;
-                            case 32: backing = enm->negative ? PNSLR_STRING_LITERAL("i32") : PNSLR_STRING_LITERAL("u32"); break;
-                            case 64: backing = enm->negative ? PNSLR_STRING_LITERAL("i64") : PNSLR_STRING_LITERAL("u64"); break;
-                            default: FORCE_DBG_TRAP; break;
-                        }
-                    }
-
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    enum class "));
-                    PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(enm->header.name, 6));
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(" : "));
-                    PNSLR_WriteToFile(f, ARR_FROM_STR(backing));
-                    if (enm->flags) PNSLR_WriteToFile(f, ARR_STR_LIT(" /* use as flags */"));
-                    else            PNSLR_WriteToFile(f, ARR_STR_LIT(" /* use as value */"));
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("\n    {\n"));
-                    for (ParsedEnumVariant* var = enm->variants; var != nil; var = var->next)
-                    {
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("        "));
-                        PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(var->name, (enm->header.name.count + 1)));
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(" = "));
-                        if (var->negative) { PNSLR_WriteToFile(f, ARR_STR_LIT("-")); }
-                        char idxPrintBuff[16];
-                        i32 idxPrintFilled = snprintf(idxPrintBuff, sizeof(idxPrintBuff), "%llu", var->idx);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(",\n"));
-                    }
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    };\n"));
+                    // ParsedEnum* enm = (ParsedEnum*) decl;
                     break;
                 }
                 case DeclType_Struct:
                 {
-                    ParsedStruct* strct = (ParsedStruct*) decl;
-
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    struct "));
-                    if (strct->alignasVal != 0)
-                    {
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("alignas("));
-                        char alignPrintBuff[16];
-                        i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
-                    }
-                    PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(strct->header.name, 6));
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("\n    {\n"));
-                    for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
-                    {
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("       "));
-                        WriteCxxTypeName(f, content->types, member->ty);
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
-                        PNSLR_WriteToFile(f, ARR_FROM_STR(member->name));
-                        if (member->arrSize > 0)
-                        {
-                            PNSLR_WriteToFile(f, ARR_STR_LIT("["));
-                            char arrSizePrintBuff[32];
-                            i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
-                            PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
-                            PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
-                        }
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
-                    }
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    };\n"));
-
+                    // ParsedStruct* strct = (ParsedStruct*) decl;
                     break;
                 }
                 case DeclType_Function:
                 {
-                    ParsedFunction* fn = (ParsedFunction*) decl;
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
-                    if (fn->isDelegate)
-                    {
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
-                        WriteCxxTypeName(f, content->types, fn->retTy);
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(" (*"));
-                        PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(fn->header.name, 6));
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(")"));
-                    }
-                    else
-                    {
-                        WriteCxxTypeName(f, content->types, fn->retTy);
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
-                        PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(fn->header.name, 6));
-                    }
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("("));
-                    if (fn->args != nil) PNSLR_WriteToFile(f, ARR_STR_LIT("\n    "));
-                    for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
-                    {
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
-                        WriteCxxTypeName(f, content->types, arg->ty);
-                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
-                        PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
-                        if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(","));
-                        PNSLR_WriteToFile(f, ARR_STR_LIT("\n    "));
-                    }
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(");\n"));
+                    // ParsedFunction* fn = (ParsedFunction*) decl;
                     break;
                 }
                 default: FORCE_DBG_TRAP; break;

@@ -1,11 +1,12 @@
 #include "Generator.h"
 
 cstring G_GenCPrefix = ""
-"#ifdef __cplusplus\n"
-"    #error \"Please use the C++ bibndings.\";\n"
-"#else\n"
 "#ifndef PANSHILAR_MAIN\n"
 "#define PANSHILAR_MAIN\n"
+"\n"
+"#ifdef __cplusplus\n"
+"extern \"C\" {\n"
+"#endif\n"
 "\n"
 "#if (_MSC_VER)\n"
 "    #define PNSLR_ALIGNAS(x) __declspec(align(x))\n"
@@ -28,8 +29,11 @@ cstring G_GenCPrefix = ""
 "";
 
 cstring G_GenCSuffix = ""
-"\n"
 "#undef PNSLR_ALIGNAS\n"
+"\n"
+"#ifdef __cplusplus\n"
+"} // extern c\n"
+"#endif\n"
 "\n"
 "#endif//PANSHILAR_MAIN\n"
 "\n"
@@ -45,7 +49,6 @@ cstring G_GenCSuffix = ""
 "    _Static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
 "    _Static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
 "#endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
-"#endif//__cplusplus\n"
 "";
 
 #define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
@@ -178,7 +181,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     b8 isUtf8Str = PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_STRING_LITERAL("utf8str"), 0);
                     utf8str tyName = isUtf8Str ? PNSLR_STRING_LITERAL("PNSLR_UTF8STR") : tyAl->header.name;
                     PNSLR_WriteToFile(headerFile, ARR_FROM_STR(tyName));
-                    
+
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;
                 }

@@ -1300,732 +1300,132 @@ namespace Panshilar
 
 
 
-    void* Intrinsic_Malloc(
-        i32 alignment,
-        i32 size
-    );
-
-    void Intrinsic_Free(
-        void* memory
-    );
-
-    void Intrinsic_MemSet(
-        void* memory,
-        i32 value,
-        i32 size
-    );
-
-    void Intrinsic_MemCopy(
-        void* destination,
-        void* source,
-        i32 size
-    );
-
-    void Intrinsic_MemMove(
-        void* destination,
-        void* source,
-        i32 size
-    );
-
-    enum class Platform : u8 /* use as value */
-    {
-        Unknown = 0,
-        Windows = 1,
-        Linux = 2,
-        OSX = 3,
-        Android = 4,
-        iOS = 5,
-        PS5 = 6,
-        XBoxSeries = 7,
-        Switch = 8,
-    };
-
-    enum class Architecture : u8 /* use as value */
-    {
-        Unknown = 0,
-        X64 = 1,
-        ARM64 = 2,
-    };
-
-    Platform GetPlatform();
-
-    Architecture GetArchitecture();
-
-    struct SourceCodeLocation
-    {
-       utf8str file;
-       i32 line;
-       i32 column;
-       utf8str function;
-    };
-
-    struct alignas(8) Mutex
-    {
-       u8 buffer[64];
-    };
-
-    Mutex CreateMutex();
-
-    void DestroyMutex(
-        Mutex* mutex
-    );
-
-    void LockMutex(
-        Mutex* mutex
-    );
-
-    void UnlockMutex(
-        Mutex* mutex
-    );
-
-    b8 TryLockMutex(
-        Mutex* mutex
-    );
-
-    struct alignas(8) RWMutex
-    {
-       u8 buffer[200];
-    };
-
-    RWMutex CreateRWMutex();
-
-    void DestroyRWMutex(
-        RWMutex* rwmutex
-    );
-
-    void LockRWMutexShared(
-        RWMutex* rwmutex
-    );
-
-    void LockRWMutexExclusive(
-        RWMutex* rwmutex
-    );
-
-    void UnlockRWMutexShared(
-        RWMutex* rwmutex
-    );
-
-    void UnlockRWMutexExclusive(
-        RWMutex* rwmutex
-    );
-
-    b8 TryLockRWMutexShared(
-        RWMutex* rwmutex
-    );
-
-    b8 TryLockRWMutexExclusive(
-        RWMutex* rwmutex
-    );
-
-    struct alignas(8) Semaphore
-    {
-       u8 buffer[32];
-    };
-
-    Semaphore CreateSemaphore(
-        i32 initialCount
-    );
-
-    void DestroySemaphore(
-        Semaphore* semaphore
-    );
-
-    void WaitSemaphore(
-        Semaphore* semaphore
-    );
-
-    b8 WaitSemaphoreTimeout(
-        Semaphore* semaphore,
-        i32 timeoutNs
-    );
-
-    void SignalSemaphore(
-        Semaphore* semaphore,
-        i32 count
-    );
-
-    struct alignas(8) ConditionVariable
-    {
-       u8 buffer[48];
-    };
-
-    ConditionVariable CreateConditionVariable();
-
-    void DestroyConditionVariable(
-        ConditionVariable* condvar
-    );
-
-    void WaitConditionVariable(
-        ConditionVariable* condvar,
-        Mutex* mutex
-    );
-
-    b8 WaitConditionVariableTimeout(
-        ConditionVariable* condvar,
-        Mutex* mutex,
-        i32 timeoutNs
-    );
-
-    void SignalConditionVariable(
-        ConditionVariable* condvar
-    );
-
-    void BroadcastConditionVariable(
-        ConditionVariable* condvar
-    );
-
-    enum class AllocatorMode : u8 /* use as value */
-    {
-        Allocate = 0,
-        Resize = 1,
-        Free = 2,
-        FreeAll = 3,
-        AllocateNoZero = 4,
-        ResizeNoZero = 5,
-        QueryCapabilities = 255,
-    };
-
-    enum class AllocatorCapability : u64 /* use as flags */
-    {
-        None = 0,
-        ThreadSafe = 1,
-        Resize = 2,
-        Free = 4,
-        FreeAll = 8,
-        HintNil = 67108864,
-        HintBump = 134217728,
-        HintHeap = 268435456,
-        HintTemp = 536870912,
-        HintDebug = 1073741824,
-    };
-
-    enum class AllocatorError : u8 /* use as value */
-    {
-        None = 0,
-        OutOfMemory = 1,
-        InvalidAlignment = 2,
-        InvalidSize = 3,
-        InvalidMode = 4,
-        Internal = 5,
-        OutOfOrderFree = 6,
-        DoubleFree = 7,
-        CantFreeAll = 8,
-    };
-
-    typedef void* (*AllocatorProcedure)(
-        void* allocatorData,
-        AllocatorMode mode,
-        i32 size,
-        i32 alignment,
-        void* oldMemory,
-        i32 oldSize,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    struct Allocator
-    {
-       AllocatorProcedure procedure;
-       void* data;
-    };
-
-
-    void* Allocate(
-        Allocator allocator,
-        b8 zeroed,
-        i32 size,
-        i32 alignment,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void* Resize(
-        Allocator allocator,
-        b8 zeroed,
-        void* oldMemory,
-        i32 oldSize,
-        i32 newSize,
-        i32 alignment,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void* DefaultResize(
-        Allocator allocator,
-        b8 zeroed,
-        void* oldMemory,
-        i32 oldSize,
-        i32 newSize,
-        i32 alignment,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void Free(
-        Allocator allocator,
-        void* memory,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void FreeAll(
-        Allocator allocator,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    u64 QueryAllocatorCapabilities(
-        Allocator allocator,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    Allocator GetAllocator_DefaultHeap();
-
-    void* AllocatorFn_DefaultHeap(
-        void* allocatorData,
-        AllocatorMode mode,
-        i32 size,
-        i32 alignment,
-        void* oldMemory,
-        i32 oldSize,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    struct ArenaAllocatorBlock
-    {
-       ArenaAllocatorBlock* previous;
-       Allocator allocator;
-       void* memory;
-       u32 capacity;
-       u32 used;
-    };
-
-    struct ArenaAllocatorPayload
-    {
-       Allocator backingAllocator;
-       ArenaAllocatorBlock* currentBlock;
-       u32 totalUsed;
-       u32 totalCapacity;
-       u32 minimumBlockSize;
-       u32 numSnapshots;
-    };
-
-    Allocator NewAllocator_Arena(
-        Allocator backingAllocator,
-        u32 pageSize,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void DestroyAllocator_Arena(
-        Allocator allocator,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void* AllocatorFn_Arena(
-        void* allocatorData,
-        AllocatorMode mode,
-        i32 size,
-        i32 alignment,
-        void* oldMemory,
-        i32 oldSize,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    enum class ArenaSnapshotError : u8 /* use as value */
-    {
-        None = 0,
-        InvalidData = 1,
-        MemoryBlockNotOwned = 2,
-        OutOfOrderRestoreUsage = 3,
-        DoubleRestoreOrDiscardUsage = 4,
-    };
-
-    struct ArenaAllocatorSnapshot
-    {
-       b8 valid;
-       ArenaAllocatorPayload* payload;
-       ArenaAllocatorBlock* block;
-       u32 used;
-    };
-
-    b8 ValidateArenaAllocatorSnapshotState(
-        Allocator allocator
-    );
-
-    ArenaAllocatorSnapshot CaptureArenaAllocatorSnapshot(
-        Allocator allocator
-    );
-
-    ArenaSnapshotError RestoreArenaAllocatorSnapshot(
-        ArenaAllocatorSnapshot* snapshot,
-        SourceCodeLocation loc
-    );
-
-    ArenaSnapshotError DiscardArenaAllocatorSnapshot(
-        ArenaAllocatorSnapshot* snapshot
-    );
-
-    struct alignas(8) StackAllocatorPage
-    {
-       StackAllocatorPage* previousPage;
-       u64 usedBytes;
-       u8 buffer[8192];
-    };
-
-    struct StackAllocationHeader
-    {
-       StackAllocatorPage* page;
-       i32 size;
-       i32 alignment;
-       void* lastAllocation;
-       void* lastAllocationHeader;
-    };
-
-    struct StackAllocatorPayload
-    {
-       Allocator backingAllocator;
-       StackAllocatorPage* currentPage;
-       void* lastAllocation;
-       StackAllocationHeader* lastAllocationHeader;
-    };
-
-    Allocator NewAllocator_Stack(
-        Allocator backingAllocator,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void DestroyAllocator_Stack(
-        Allocator allocator,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    void* AllocatorFn_Stack(
-        void* allocatorData,
-        AllocatorMode mode,
-        i32 size,
-        i32 alignment,
-        void* oldMemory,
-        i32 oldSize,
-        SourceCodeLocation location,
-        AllocatorError* error
-    );
-
-    i64 NanosecondsSinceUnixEpoch();
-
-    i32 GetCStringLength(
-        char* str
-    );
-
-    utf8str StringFromCString(
-        char* str
-    );
-
-    char* CStringFromString(
-        utf8str str,
-        Allocator allocator
-    );
-
-    utf8str CloneString(
-        utf8str str,
-        Allocator allocator
-    );
-
-    utf8str ConcatenateStrings(
-        utf8str str1,
-        utf8str str2,
-        Allocator allocator
-    );
-
-    utf8str UpperString(
-        utf8str str,
-        Allocator allocator
-    );
-
-    utf8str LowerString(
-        utf8str str,
-        Allocator allocator
-    );
-
-    enum class StringComparisonType : u8 /* use as value */
-    {
-        CaseSensitive = 0,
-        CaseInsensitive = 1,
-    };
-
-    b8 AreStringsEqual(
-        utf8str str1,
-        utf8str str2,
-        StringComparisonType comparisonType
-    );
-
-    b8 AreStringAndCStringEqual(
-        utf8str str1,
-        char* str2,
-        StringComparisonType comparisonType
-    );
-
-    b8 AreCStringsEqual(
-        char* str1,
-        char* str2,
-        StringComparisonType comparisonType
-    );
-
-    b8 StringStartsWith(
-        utf8str str,
-        utf8str prefix,
-        StringComparisonType comparisonType
-    );
-
-    b8 StringEndsWith(
-        utf8str str,
-        utf8str suffix,
-        StringComparisonType comparisonType
-    );
-
-    b8 StringStartsWithCString(
-        utf8str str,
-        char* prefix,
-        StringComparisonType comparisonType
-    );
-
-    b8 StringEndsWithCString(
-        utf8str str,
-        char* suffix,
-        StringComparisonType comparisonType
-    );
-
-    b8 CStringStartsWith(
-        char* str,
-        utf8str prefix,
-        StringComparisonType comparisonType
-    );
-
-    b8 CStringEndsWith(
-        char* str,
-        utf8str suffix,
-        StringComparisonType comparisonType
-    );
-
-    b8 CStringStartsWithCString(
-        utf8str str,
-        char* prefix,
-        StringComparisonType comparisonType
-    );
-
-    b8 CStringEndsWithCString(
-        utf8str str,
-        char* suffix,
-        StringComparisonType comparisonType
-    );
-
-    i32 SearchFirstIndexInString(
-        utf8str str,
-        utf8str substring,
-        StringComparisonType comparisonType
-    );
-
-    i32 SearchLastIndexInString(
-        utf8str str,
-        utf8str substring,
-        StringComparisonType comparisonType
-    );
-
-    utf8str ReplaceInString(
-        utf8str str,
-        utf8str oldValue,
-        utf8str newValue,
-        Allocator allocator,
-        StringComparisonType comparisonType
-    );
-
-    struct EncodedRune
-    {
-       u8 data[4];
-       i32 length;
-    };
-
-    struct DecodedRune
-    {
-       u32 rune;
-       i32 length;
-    };
-
-    i32 GetRuneLength(
-        u32 r
-    );
-
-    EncodedRune EncodeRune(
-        u32 c
-    );
-
-    DecodedRune DecodeRune(
-        ArraySlice<u8> s
-    );
-
-    struct Path
-    {
-       utf8str path;
-    };
-
-    enum class PathNormalisationType : u8 /* use as value */
-    {
-        File = 0,
-        Directory = 1,
-    };
-
-    Path NormalisePath(
-        utf8str path,
-        PathNormalisationType type,
-        Allocator allocator
-    );
-
-    b8 SplitPath(
-        Path path,
-        Path* parent,
-        utf8str* selfNameWithExtension,
-        utf8str* selfName,
-        utf8str* extension
-    );
-
-    Path GetPathForChildFile(
-        Path dir,
-        utf8str fileNameWithExtension,
-        Allocator allocator
-    );
-
-    Path GetPathForSubdirectory(
-        Path dir,
-        utf8str dirName,
-        Allocator allocator
-    );
-
-    typedef b8 (*DirectoryIterationVisitorDelegate)(
-        void* payload,
-        Path path,
-        b8 isDirectory,
-        b8* exploreCurrentDirectory
-    );
-
-    void IterateDirectory(
-        Path path,
-        b8 recursive,
-        void* visitorPayload,
-        DirectoryIterationVisitorDelegate visitorFunc
-    );
-
-    enum class PathExistsCheckType : u8 /* use as value */
-    {
-        Either = 0,
-        File = 1,
-        Directory = 2,
-    };
-
-    b8 PathExists(
-        Path path,
-        PathExistsCheckType type
-    );
-
-    b8 DeletePath(
-        Path path
-    );
-
-    i64 GetFileTimestamp(
-        Path path
-    );
-
-    i64 GetFileSize(
-        Path path
-    );
-
-    b8 CreateDirectoryTree(
-        Path path
-    );
-
-    struct File
-    {
-       void* handle;
-    };
-
-    File OpenFileToRead(
-        Path path,
-        b8 allowWrite
-    );
-
-    File OpenFileToWrite(
-        Path path,
-        b8 append,
-        b8 allowRead
-    );
-
-    i64 GetSizeOfFile(
-        File handle
-    );
-
-    b8 SeekPositionInFile(
-        File handle,
-        i64 newPos,
-        b8 relative
-    );
-
-    b8 ReadFromFile(
-        File handle,
-        ArraySlice<u8> dst
-    );
-
-    b8 WriteToFile(
-        File handle,
-        ArraySlice<u8> src
-    );
-
-    b8 TruncateFile(
-        File handle,
-        i64 newSize
-    );
-
-    b8 FlushFile(
-        File handle
-    );
-
-    void CloseFileHandle(
-        File handle
-    );
-
-    b8 ReadAllContentsFromFile(
-        Path path,
-        ArraySlice<u8>* dst,
-        Allocator allocator
-    );
-
-    b8 WriteAllContentsToFile(
-        Path path,
-        ArraySlice<u8> src,
-        b8 append
-    );
-
-    b8 CopyFile(
-        Path src,
-        Path dst
-    );
-
-    b8 MoveFile(
-        Path src,
-        Path dst
-    );
-
-    i32 PrintToStdOut(
-        utf8str message
-    );
-
-    void ExitProcess(
-        i32 exitCode
-    );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #endif//PNSLR_SKIP_IMPLEMENTATION
