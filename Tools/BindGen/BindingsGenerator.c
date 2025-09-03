@@ -89,7 +89,13 @@ void BindGenMain(ArraySlice(utf8str) args)
     printf("used mem: %u / %u\n", pl->totalUsed, pl->totalCapacity);
 }
 
-PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
+i32 main(i32 argc, cstring* argv)
+{
+    ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_DEFAULT_HEAP_ALLOCATOR, nil);
+    for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
+    BindGenMain(args);
+    return 0;
+}
 
 // unity build
 #include "TokenMatch.c"

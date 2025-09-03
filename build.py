@@ -135,13 +135,13 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
         return [
             inputFile,
             getLibraryPath(tgt, arch),
-            '-lpthread',
             '-o',
             outputFile,
             f'-ISource/',
             # '-v',
             # '-###',
-        ] + CLANG_DEBUG_ARGS
+        ] + CLANG_DEBUG_ARGS + \
+        (['-lpthread'] if tgt != 'android' else [])
 
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
     inputFile  = getBindingsGeneratorSourcePath() + 'BindingsGenerator.c'
@@ -262,33 +262,37 @@ def buildPlatform(
         envArgs:            list[str],
     ) -> bool:
 
-    runTools       = (tgt == 'linux' or tgt == 'windows' or tgt == 'osx')
-    actuallyBuild2 = True
+    buildTools = False
+    if sys.platform == 'win32':
+        buildTools = (tgt == 'windows')
+    elif sys.platform == 'darwin':
+        buildTools = (tgt == 'osx')
+    elif sys.platform == 'linux':
+        buildTools = (tgt == 'linux')
+    else:
+        buildTools = False
 
     intrinsicsCompiled    = True
     intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
-        intrinsicsCompiled = (not actuallyBuild2) or \
-                             (True and runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
+        intrinsicsCompiled = (runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
 
     libraryCompiled    = True
     libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
-    libraryCompiled    = (not actuallyBuild2) or \
-                         (intrinsicsCompiled and runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
+    libraryCompiled    = (intrinsicsCompiled and runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
 
     libraryLinked   = True
     libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
-    libraryLinked   = (not actuallyBuild2) or \
-                      (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
+    libraryLinked   = (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
 
     testsSuccessful     = True
     testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
-    testsSuccessful     = (not actuallyBuild2) or (not CMD_ARG_RUN_TESTS) or (not runTools) or \
+    testsSuccessful     = (not CMD_ARG_RUN_TESTS) or \
                           (libraryLinked and runCommand([cCompiler] + testRunnerBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
 
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
-    bindGenSuccessful          = (not actuallyBuild2) or (not CMD_ARG_REGENERATE_BINDINGS) or (not runTools) or \
+    bindGenSuccessful          = (not CMD_ARG_REGENERATE_BINDINGS) or (not buildTools) or \
                                  (libraryLinked and runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
     return libraryLinked and testsSuccessful and bindGenSuccessful
