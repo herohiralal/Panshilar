@@ -62,6 +62,18 @@ cstring G_GenCxxSourcePrefix = ""
 "typedef Panshilar::i32 PNSLR_I32;\n"
 "typedef Panshilar::i64 PNSLR_I64;\n"
 "\n"
+"void*      PNSLR_Bindings_Convert(void*      x) { return x; }\n"
+"char*      PNSLR_Bindings_Convert(char*      x) { return x; }\n"
+"PNSLR_B8*  PNSLR_Bindings_Convert(PNSLR_B8*  x) { return x; }\n"
+"PNSLR_U8*  PNSLR_Bindings_Convert(PNSLR_U8*  x) { return x; }\n"
+"PNSLR_U16* PNSLR_Bindings_Convert(PNSLR_U16* x) { return x; }\n"
+"PNSLR_U32* PNSLR_Bindings_Convert(PNSLR_U32* x) { return x; }\n"
+"PNSLR_U64* PNSLR_Bindings_Convert(PNSLR_U64* x) { return x; }\n"
+"PNSLR_I8*  PNSLR_Bindings_Convert(PNSLR_I8*  x) { return x; }\n"
+"PNSLR_I16* PNSLR_Bindings_Convert(PNSLR_I16* x) { return x; }\n"
+"PNSLR_I32* PNSLR_Bindings_Convert(PNSLR_I32* x) { return x; }\n"
+"PNSLR_I64* PNSLR_Bindings_Convert(PNSLR_I64* x) { return x; }\n"
+"\n"
 "PNSLR_B8&  PNSLR_Bindings_Convert(PNSLR_B8&  x) { return x; }\n"
 "PNSLR_U8&  PNSLR_Bindings_Convert(PNSLR_U8&  x) { return x; }\n"
 "PNSLR_U16& PNSLR_Bindings_Convert(PNSLR_U16& x) { return x; }\n"
@@ -107,7 +119,7 @@ void WriteCxxTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty, b
             b8 skipPrefix = false;
             utf8str nameStr = declTy.u.name;
             if (false) { }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("void"), nameStr, 0)) { }
+            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("void"), nameStr, 0)) { addNamespace = false; }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("b8"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("u8"); }
             else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("u16"); }
@@ -212,19 +224,29 @@ void WriteCxxReinterpretBoilerplate(PNSLR_File f, ArraySlice(DeclTypeInfo) types
     WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("), \"align mismatch\");\n"));
 
+    WriteCTypeNameForCxx(f, types, ty + 1);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(" PNSLR_Bindings_Convert("));
+    WriteCxxTypeName(f, types, ty + 1, true);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(" x) { return reinterpret_cast<"));
+    WriteCTypeNameForCxx(f, types, ty + 1);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(">(x); }\n"));
+
+    WriteCxxTypeName(f, types, ty + 1, true);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(" PNSLR_Bindings_Convert("));
+    WriteCTypeNameForCxx(f, types, ty + 1);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(" x) { return reinterpret_cast<"));
+    WriteCxxTypeName(f, types, ty + 1, true);
+    PNSLR_WriteToFile(f, ARR_STR_LIT(">(x); }\n"));
+
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& PNSLR_Bindings_Convert("));
     WriteCxxTypeName(f, types, ty, true);
-    PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *reinterpret_cast<"));
-    WriteCTypeNameForCxx(f, types, ty + 1);
-    PNSLR_WriteToFile(f, ARR_STR_LIT(">(&x); }\n"));
+    PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *PNSLR_Bindings_Convert(&x); }\n"));
 
     WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& PNSLR_Bindings_Convert("));
     WriteCTypeNameForCxx(f, types, ty);
-    PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *reinterpret_cast<"));
-    WriteCxxTypeName(f, types, ty + 1, true);
-    PNSLR_WriteToFile(f, ARR_STR_LIT(">(&x); }\n"));
+    PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *PNSLR_Bindings_Convert(&x); }\n"));
 }
 
 void WriteCxxMemberParityBoilerplate(PNSLR_File f, ArraySlice(DeclTypeInfo) types, u32 ty, utf8str memberName)
@@ -443,7 +465,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 case DeclType_TyAlias:
                 {
                     ParsedTypeAlias* tyAl = (ParsedTypeAlias*) decl;
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    typedef "));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
                     WriteCTypeNameForCxx(f, content->types, tyAl->tgt);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                     WriteCTypeNameForCxx(f, content->types, tyAl->header.ty);
@@ -452,17 +474,117 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 }
                 case DeclType_Enum:
                 {
-                    // ParsedEnum* enm = (ParsedEnum*) decl;
+                    ParsedEnum* enm = (ParsedEnum*) decl;
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
+                    WriteCxxTypeName(f, content->types, enm->header.ty, true);
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                    WriteCTypeNameForCxx(f, content->types, enm->header.ty);
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
+                    WriteCxxReinterpretBoilerplate(f, content->types, enm->header.ty);
                     break;
                 }
                 case DeclType_Struct:
                 {
-                    // ParsedStruct* strct = (ParsedStruct*) decl;
+                    ParsedStruct* strct = (ParsedStruct*) decl;
+
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("struct "));
+                    if (strct->alignasVal != 0)
+                    {
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("alignas("));
+                        char alignPrintBuff[16];
+                        i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
+                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
+                    }
+                    WriteCTypeNameForCxx(f, content->types, strct->header.ty);
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("\n{\n"));
+                    for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
+                    {
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("   "));
+                        WriteCTypeNameForCxx(f, content->types, member->ty);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(f, ARR_FROM_STR(member->name));
+                        if (member->arrSize > 0)
+                        {
+                            PNSLR_WriteToFile(f, ARR_STR_LIT("["));
+                            char arrSizePrintBuff[32];
+                            i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
+                            PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
+                        }
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
+                    }
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("};\n"));
+                    WriteCxxReinterpretBoilerplate(f, content->types, strct->header.ty);
+                    for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
+                        WriteCxxMemberParityBoilerplate(f, content->types, strct->header.ty, member->name);
                     break;
                 }
                 case DeclType_Function:
                 {
-                    // ParsedFunction* fn = (ParsedFunction*) decl;
+                    ParsedFunction* fn = (ParsedFunction*) decl;
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("extern \"C\" "));
+                    if (fn->isDelegate)
+                    {
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
+                        WriteCTypeNameForCxx(f, content->types, fn->retTy);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" (*"));
+                        WriteCTypeNameForCxx(f, content->types, fn->header.ty);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(")"));
+                    }
+                    else
+                    {
+                        WriteCTypeNameForCxx(f, content->types, fn->retTy);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(f, ARR_FROM_STR(fn->header.name));
+                    }
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("("));
+                    for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
+                    {
+                        WriteCTypeNameForCxx(f, content->types, arg->ty);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                        PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
+                        if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
+                    }
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(");\n"));
+                    if (fn->isDelegate) WriteCxxReinterpretBoilerplate(f, content->types, fn->header.ty);
+                    else
+                    {
+                        WriteCxxTypeName(f, content->types, fn->retTy, true);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" Panshilar::"));
+                        PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(fn->header.name, 6));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("("));
+                        for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
+                        {
+                            WriteCxxTypeName(f, content->types, arg->ty, true);
+                            PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                            PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
+                            if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
+                        }
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(")\n{\n    "));
+                        if (fn->retTy != 0)
+                        {
+                            WriteCTypeNameForCxx(f, content->types, fn->retTy);
+                            PNSLR_WriteToFile(f, ARR_STR_LIT(" zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = "));
+                        }
+
+                        PNSLR_WriteToFile(f, ARR_FROM_STR(fn->header.name));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("("));
+                        for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
+                        {
+                            PNSLR_WriteToFile(f, ARR_STR_LIT("PNSLR_Bindings_Convert("));
+                            PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
+                            PNSLR_WriteToFile(f, ARR_STR_LIT(")"));
+                            if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
+                        }
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(")"));
+
+                        if (fn->retTy != 0)
+                        {
+                            PNSLR_WriteToFile(f, ARR_STR_LIT("; return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW)"));
+                        }
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(";\n}\n"));
+                    }
                     break;
                 }
                 default: FORCE_DBG_TRAP; break;
