@@ -1280,7 +1280,9 @@ namespace Panshilar
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 
 #ifndef PNSLR_IMPLEMENTATION
-#define PNSLR_SKIP_IMPLEMENTATION
+    #define PNSLR_SKIP_IMPLEMENTATION
+#else //PNSLR_IMPLEMENTATION
+    #undef  PNSLR_SKIP_IMPLEMENTATION
 #endif//PNSLR_IMPLEMENTATION
 
 #ifndef PNSLR_SKIP_IMPLEMENTATION
@@ -1488,7 +1490,7 @@ void Panshilar::Intrinsic_MemMove(void* destination, void* source, Panshilar::i3
     PNSLR_Intrinsic_MemMove(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
 }
 
-typedef Panshilar::Platform PNSLR_Platform;
+enum class PNSLR_Platform : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_Platform) == sizeof(Panshilar::Platform), "size mismatch");
 static_assert(alignof(PNSLR_Platform) == alignof(Panshilar::Platform), "align mismatch");
 PNSLR_Platform* PNSLR_Bindings_Convert(Panshilar::Platform* x) { return reinterpret_cast<PNSLR_Platform*>(x); }
@@ -1496,7 +1498,7 @@ Panshilar::Platform* PNSLR_Bindings_Convert(PNSLR_Platform* x) { return reinterp
 PNSLR_Platform& PNSLR_Bindings_Convert(Panshilar::Platform& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::Platform& PNSLR_Bindings_Convert(PNSLR_Platform& x) { return *PNSLR_Bindings_Convert(&x); }
 
-typedef Panshilar::Architecture PNSLR_Architecture;
+enum class PNSLR_Architecture : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_Architecture) == sizeof(Panshilar::Architecture), "size mismatch");
 static_assert(alignof(PNSLR_Architecture) == alignof(Panshilar::Architecture), "align mismatch");
 PNSLR_Architecture* PNSLR_Bindings_Convert(Panshilar::Architecture* x) { return reinterpret_cast<PNSLR_Architecture*>(x); }
@@ -1726,7 +1728,7 @@ void Panshilar::BroadcastConditionVariable(Panshilar::ConditionVariable* condvar
     PNSLR_BroadcastConditionVariable(PNSLR_Bindings_Convert(condvar));
 }
 
-typedef Panshilar::AllocatorMode PNSLR_AllocatorMode;
+enum class PNSLR_AllocatorMode : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_AllocatorMode) == sizeof(Panshilar::AllocatorMode), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorMode) == alignof(Panshilar::AllocatorMode), "align mismatch");
 PNSLR_AllocatorMode* PNSLR_Bindings_Convert(Panshilar::AllocatorMode* x) { return reinterpret_cast<PNSLR_AllocatorMode*>(x); }
@@ -1734,7 +1736,7 @@ Panshilar::AllocatorMode* PNSLR_Bindings_Convert(PNSLR_AllocatorMode* x) { retur
 PNSLR_AllocatorMode& PNSLR_Bindings_Convert(Panshilar::AllocatorMode& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::AllocatorMode& PNSLR_Bindings_Convert(PNSLR_AllocatorMode& x) { return *PNSLR_Bindings_Convert(&x); }
 
-typedef Panshilar::AllocatorCapability PNSLR_AllocatorCapability;
+enum class PNSLR_AllocatorCapability : Panshilar::u64 { };
 static_assert(sizeof(PNSLR_AllocatorCapability) == sizeof(Panshilar::AllocatorCapability), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorCapability) == alignof(Panshilar::AllocatorCapability), "align mismatch");
 PNSLR_AllocatorCapability* PNSLR_Bindings_Convert(Panshilar::AllocatorCapability* x) { return reinterpret_cast<PNSLR_AllocatorCapability*>(x); }
@@ -1742,7 +1744,7 @@ Panshilar::AllocatorCapability* PNSLR_Bindings_Convert(PNSLR_AllocatorCapability
 PNSLR_AllocatorCapability& PNSLR_Bindings_Convert(Panshilar::AllocatorCapability& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::AllocatorCapability& PNSLR_Bindings_Convert(PNSLR_AllocatorCapability& x) { return *PNSLR_Bindings_Convert(&x); }
 
-typedef Panshilar::AllocatorError PNSLR_AllocatorError;
+enum class PNSLR_AllocatorError : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_AllocatorError) == sizeof(Panshilar::AllocatorError), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorError) == alignof(Panshilar::AllocatorError), "align mismatch");
 PNSLR_AllocatorError* PNSLR_Bindings_Convert(Panshilar::AllocatorError* x) { return reinterpret_cast<PNSLR_AllocatorError*>(x); }
@@ -1890,7 +1892,7 @@ void* Panshilar::AllocatorFn_Arena(void* allocatorData, Panshilar::AllocatorMode
     void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Arena(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-typedef Panshilar::ArenaSnapshotError PNSLR_ArenaSnapshotError;
+enum class PNSLR_ArenaSnapshotError : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_ArenaSnapshotError) == sizeof(Panshilar::ArenaSnapshotError), "size mismatch");
 static_assert(alignof(PNSLR_ArenaSnapshotError) == alignof(Panshilar::ArenaSnapshotError), "align mismatch");
 PNSLR_ArenaSnapshotError* PNSLR_Bindings_Convert(Panshilar::ArenaSnapshotError* x) { return reinterpret_cast<PNSLR_ArenaSnapshotError*>(x); }
@@ -2060,7 +2062,7 @@ Panshilar::utf8str Panshilar::LowerString(Panshilar::utf8str str, Panshilar::All
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_LowerString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-typedef Panshilar::StringComparisonType PNSLR_StringComparisonType;
+enum class PNSLR_StringComparisonType : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_StringComparisonType) == sizeof(Panshilar::StringComparisonType), "size mismatch");
 static_assert(alignof(PNSLR_StringComparisonType) == alignof(Panshilar::StringComparisonType), "align mismatch");
 PNSLR_StringComparisonType* PNSLR_Bindings_Convert(Panshilar::StringComparisonType* x) { return reinterpret_cast<PNSLR_StringComparisonType*>(x); }
@@ -2210,7 +2212,7 @@ PNSLR_Path& PNSLR_Bindings_Convert(Panshilar::Path& x) { return *PNSLR_Bindings_
 Panshilar::Path& PNSLR_Bindings_Convert(PNSLR_Path& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Path, path) == PNSLR_STRUCT_OFFSET(Panshilar::Path, path), "path offset mismatch");
 
-typedef Panshilar::PathNormalisationType PNSLR_PathNormalisationType;
+enum class PNSLR_PathNormalisationType : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_PathNormalisationType) == sizeof(Panshilar::PathNormalisationType), "size mismatch");
 static_assert(alignof(PNSLR_PathNormalisationType) == alignof(Panshilar::PathNormalisationType), "align mismatch");
 PNSLR_PathNormalisationType* PNSLR_Bindings_Convert(Panshilar::PathNormalisationType* x) { return reinterpret_cast<PNSLR_PathNormalisationType*>(x); }
@@ -2256,7 +2258,7 @@ void Panshilar::IterateDirectory(Panshilar::Path path, Panshilar::b8 recursive, 
     PNSLR_IterateDirectory(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(recursive), PNSLR_Bindings_Convert(visitorPayload), PNSLR_Bindings_Convert(visitorFunc));
 }
 
-typedef Panshilar::PathExistsCheckType PNSLR_PathExistsCheckType;
+enum class PNSLR_PathExistsCheckType : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_PathExistsCheckType) == sizeof(Panshilar::PathExistsCheckType), "size mismatch");
 static_assert(alignof(PNSLR_PathExistsCheckType) == alignof(Panshilar::PathExistsCheckType), "align mismatch");
 PNSLR_PathExistsCheckType* PNSLR_Bindings_Convert(Panshilar::PathExistsCheckType* x) { return reinterpret_cast<PNSLR_PathExistsCheckType*>(x); }

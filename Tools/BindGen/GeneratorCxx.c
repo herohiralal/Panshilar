@@ -46,7 +46,9 @@ cstring G_GenCxxHeaderSuffix = ""
 cstring G_GenCxxSourcePrefix = ""
 "\n"
 "#ifndef PNSLR_IMPLEMENTATION\n"
-"#define PNSLR_SKIP_IMPLEMENTATION\n"
+"    #define PNSLR_SKIP_IMPLEMENTATION\n"
+"#else //PNSLR_IMPLEMENTATION\n"
+"    #undef  PNSLR_SKIP_IMPLEMENTATION\n"
 "#endif//PNSLR_IMPLEMENTATION\n"
 "\n"
 "#ifndef PNSLR_SKIP_IMPLEMENTATION\n"
@@ -475,11 +477,23 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 case DeclType_Enum:
                 {
                     ParsedEnum* enm = (ParsedEnum*) decl;
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
-                    WriteCxxTypeName(f, content->types, enm->header.ty, true);
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                    utf8str backing = {0};
+                    {
+                        switch (enm->size)
+                        {
+                            case  8: backing = enm->negative ? PNSLR_STRING_LITERAL("i8" ) : PNSLR_STRING_LITERAL("u8" ); break;
+                            case 16: backing = enm->negative ? PNSLR_STRING_LITERAL("i16") : PNSLR_STRING_LITERAL("u16"); break;
+                            case 32: backing = enm->negative ? PNSLR_STRING_LITERAL("i32") : PNSLR_STRING_LITERAL("u32"); break;
+                            case 64: backing = enm->negative ? PNSLR_STRING_LITERAL("i64") : PNSLR_STRING_LITERAL("u64"); break;
+                            default: FORCE_DBG_TRAP; break;
+                        }
+                    }
+
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("enum class "));
                     WriteCTypeNameForCxx(f, content->types, enm->header.ty);
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(" : Panshilar::"));
+                    PNSLR_WriteToFile(f, ARR_FROM_STR(backing));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(" { };\n"));
                     WriteCxxReinterpretBoilerplate(f, content->types, enm->header.ty);
                     break;
                 }

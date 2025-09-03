@@ -1343,13 +1343,25 @@ void PNSLR_ExitProcess(
 
 #ifndef PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 #define PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
-    _Static_assert(sizeof(PNSLR_B8 ) == 1, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_U8 ) == 1, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_U16) == 2, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_U32) == 4, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_U64) == 8, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_I8 ) == 1, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_I16) == 2, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_I32) == 4, "Size mismatch.");
-    _Static_assert(sizeof(PNSLR_I64) == 8, "Size mismatch.");
+    #ifndef __cplusplus
+        _Static_assert(sizeof(PNSLR_B8 ) == 1, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_U8 ) == 1, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_U16) == 2, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_U32) == 4, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_U64) == 8, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_I8 ) == 1, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_I16) == 2, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_I32) == 4, "Size mismatch.");
+        _Static_assert(sizeof(PNSLR_I64) == 8, "Size mismatch.");
+    #else //__cplusplus
+        static_assert(sizeof(PNSLR_B8 ) == 1, "Size mismatch.");
+        static_assert(sizeof(PNSLR_U8 ) == 1, "Size mismatch.");
+        static_assert(sizeof(PNSLR_U16) == 2, "Size mismatch.");
+        static_assert(sizeof(PNSLR_U32) == 4, "Size mismatch.");
+        static_assert(sizeof(PNSLR_U64) == 8, "Size mismatch.");
+        static_assert(sizeof(PNSLR_I8 ) == 1, "Size mismatch.");
+        static_assert(sizeof(PNSLR_I16) == 2, "Size mismatch.");
+        static_assert(sizeof(PNSLR_I32) == 4, "Size mismatch.");
+        static_assert(sizeof(PNSLR_I64) == 8, "Size mismatch.");
+    #endif//__cplusplus
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
