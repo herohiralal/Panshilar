@@ -147,26 +147,12 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                 case DeclType_Array:
                 {
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
-                    u32 arrTyIdx = U32_MAX;
-                    {
-                        for (i64 i = content->typesCount - 1; i >= 0; i--) // likelier to be found from the end
-                        {
-                            DeclTypeInfo tyInfo = content->types.data[i];
-                            if (tyInfo.polyTy == PolymorphicDeclType_Slice && tyInfo.u.polyTgtIdx == arr->tgtTy)
-                            {
-                                arrTyIdx = (u32) i;
-                                break;
-                            }
-                        }
-                        if (arrTyIdx == U32_MAX) FORCE_DBG_TRAP;
-                    }
-
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef struct "));
-                    WriteCTypeName(headerFile, content->types, arrTyIdx);
+                    WriteCTypeName(headerFile, content->types, arr->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    PNSLR_I64 count;\n    "));
                     WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n} "));
-                    WriteCTypeName(headerFile, content->types, arrTyIdx);
+                    WriteCTypeName(headerFile, content->types, arr->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;
                 }
@@ -176,11 +162,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
                     WriteCTypeName(headerFile, content->types, tyAl->tgt);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
-
-                    // currently, has a special case for utf8str
-                    b8 isUtf8Str = PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_STRING_LITERAL("utf8str"), 0);
-                    utf8str tyName = isUtf8Str ? PNSLR_STRING_LITERAL("PNSLR_UTF8STR") : tyAl->header.name;
-                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(tyName));
+                    WriteCTypeName(headerFile, content->types, tyAl->header.ty);
 
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;
@@ -203,7 +185,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
                     PNSLR_WriteToFile(headerFile, ARR_FROM_STR(backing));
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
-                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(enm->header.name));
+                    WriteCTypeName(headerFile, content->types, enm->header.ty);
                     if (enm->flags) PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" /* use as flags */"));
                     else            PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" /* use as value */"));
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
@@ -212,7 +194,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT("#define "));
                         PNSLR_WriteToFile(headerFile, ARR_FROM_STR(var->name));
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" (("));
-                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(enm->header.name));
+                    WriteCTypeName(headerFile, content->types, enm->header.ty);
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(") "));
                         if (var->negative) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("-")); }
                         char idxPrintBuff[16];
@@ -235,23 +217,12 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(") "));
                     }
-                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(strct->header.name));
+                    WriteCTypeName(headerFile, content->types, strct->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n"));
                     for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
                     {
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT("    "));
-                        b8 addStructPrefix = false;
-                        {
-                            DeclTypeInfo ty = content->types.data[member->ty];
-                            if (ty.polyTy == PolymorphicDeclType_Ptr)
-                            {
-                                DeclTypeInfo pointedTy = content->types.data[ty.u.polyTgtIdx];
-                                if (pointedTy.polyTy == PolymorphicDeclType_None && PNSLR_AreStringsEqual(pointedTy.u.name, strct->header.name, 0))
-                                {
-                                    addStructPrefix = true; // is a pointer to self type
-                                }
-                            }
-                        }
+                        b8 addStructPrefix = (member->ty == (strct->header.ty + 1)); // type is a ptr to self
                         if (addStructPrefix) PNSLR_WriteToFile(headerFile, ARR_STR_LIT("struct "));
                         WriteCTypeName(headerFile, content->types, member->ty);
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" "));
@@ -267,7 +238,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     }
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("} "));
-                    PNSLR_WriteToFile(headerFile, ARR_FROM_STR(strct->header.name));
+                    WriteCTypeName(headerFile, content->types, strct->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
 
                     break;
@@ -280,7 +251,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef "));
                         WriteCTypeName(headerFile, content->types, fn->retTy);
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" (*"));
-                        PNSLR_WriteToFile(headerFile, ARR_FROM_STR(fn->header.name));
+                        WriteCTypeName(headerFile, content->types, fn->header.ty);
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(")"));
                     }
                     else

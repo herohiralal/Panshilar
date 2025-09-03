@@ -39,32 +39,34 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
     }
 }
 
-void AddNewType(ParsedContent* content, utf8str name)
+u32 AddNewType(ParsedContent* content, utf8str name)
 {
-    if (!content) return;
+    if (!content) return U32_MAX;
 
     i64 cnt = content->typesCount;
-    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return; }
+    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return U32_MAX; }
 
     i64 idx = cnt;
     content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None, .u.name       = name};
     content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,  .u.polyTgtIdx = idx };
 
     content->typesCount = cnt;
+    return (u32) idx;
 }
 
-void AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
+u32 AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
 {
-    if (!content) return;
+    if (!content) return U32_MAX;
 
     i64 cnt = content->typesCount;
-    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return; }
+    if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return U32_MAX; }
 
     i64 idx = cnt;
     content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = (i64) baseTyIdx};
     content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = idx            };
 
     content->typesCount = cnt;
+    return (u32) idx;
 }
 
 void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 end, utf8str err)
@@ -295,6 +297,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 
     enm->header.type = DeclType_Enum;
     enm->header.doc  = *doc;
+    enm->header.ty   = U32_MAX;
     enm->flags       = isFlags;
     *doc = (utf8str) {0};
 
@@ -333,7 +336,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
 
-    AddNewType(content, enm->header.name);
+    enm->header.ty = AddNewType(content, enm->header.name);
 
     while (iter->i < iter->contents.count)
     {
@@ -460,6 +463,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 
     strct->header.type = DeclType_Struct;
     strct->header.doc  = *doc;
+    strct->header.ty   = U32_MAX;
     *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(strct->header);
@@ -490,7 +494,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &(strct->header.name), allocator)) return false;
     }
 
-    AddNewType(content, strct->header.name);
+    strct->header.ty = AddNewType(content, strct->header.name);
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolBracesOpen, nil, allocator)) return false;
 
     while (iter->i < iter->contents.count)
@@ -583,6 +587,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 
     fn->header.type = DeclType_Function;
     fn->header.doc  = *doc;
+    fn->header.ty   = U32_MAX;
     fn->retTy       = retTy;
     fn->isDelegate  = isDelegate;
     *doc = (utf8str) {0};
@@ -601,7 +606,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 
     if (isDelegate)
     {
-        AddNewType(content, fn->header.name);
+        fn->header.ty = AddNewType(content, fn->header.name);
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
     }
 
@@ -706,6 +711,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
                 sec->header.type = DeclType_Section;
                 sec->header.name = sectionName;
+                sec->header.ty   = U32_MAX;
 
                 if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(sec->header);
                 else                       cachedLasts->lastFile->declarations = &(sec->header);
@@ -729,6 +735,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!arr) FORCE_DBG_TRAP;
 
             arr->header.type = DeclType_Array;
+            arr->header.ty   = U32_MAX;
             arr->header.name = (utf8str) {0};
 
             if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(arr->header);
@@ -741,8 +748,8 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
 
-            AddNewArrayType(parsedContent, dstType);
-            arr->tgtTy       = dstType;
+            arr->header.ty = AddNewArrayType(parsedContent, dstType);
+            arr->tgtTy     = dstType;
 
             lastDoc = (utf8str) {0};
             continue;
@@ -801,6 +808,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
                     tyAl->header.type = DeclType_TyAlias;
                     tyAl->header.doc  = lastDoc;
+                    tyAl->header.ty   = U32_MAX;
                     tyAl->tgt         = delRetTyIdx;
 
                     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(tyAl->header);
@@ -811,7 +819,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &(tyAl->header.name), allocator)) return false;
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
 
-                    AddNewType(parsedContent, tyAl->header.name);
+                    tyAl->header.ty = AddNewType(parsedContent, tyAl->header.name);
                     continue;
                 }
             }

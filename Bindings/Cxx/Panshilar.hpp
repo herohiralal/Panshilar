@@ -2,8 +2,8 @@
 #ifndef __cplusplus
     #error "Please use the C bibndings.";
 #else
-#ifndef PANSHILAR_MAIN
-#define PANSHILAR_MAIN
+#ifndef PANSHILAR_CXX_MAIN
+#define PANSHILAR_CXX_MAIN
 
 namespace Panshilar
 {
@@ -1264,7 +1264,7 @@ namespace Panshilar
 
 }//namespace end
 
-#endif//PANSHILAR_MAIN
+#endif//PANSHILAR_CXX_MAIN
 
 #ifndef PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 #define PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
@@ -1280,22 +1280,145 @@ namespace Panshilar
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 
 #ifndef PNSLR_IMPLEMENTATION
-#define PNSLR_SKIP_IMPLEMENTATION
+// #define PNSLR_SKIP_IMPLEMENTATION
 #endif//PNSLR_IMPLEMENTATION
 
 #ifndef PNSLR_SKIP_IMPLEMENTATION
 #define PNSLR_SKIP_IMPLEMENTATION
 
+typedef Panshilar::b8  PNSLR_B8;
+typedef Panshilar::u8  PNSLR_U8;
+typedef Panshilar::u16 PNSLR_U16;
+typedef Panshilar::u32 PNSLR_U32;
+typedef Panshilar::u64 PNSLR_U64;
+typedef Panshilar::i8  PNSLR_I8;
+typedef Panshilar::i16 PNSLR_I16;
+typedef Panshilar::i32 PNSLR_I32;
+typedef Panshilar::i64 PNSLR_I64;
+
+PNSLR_B8&  PNSLR_Bindings_Convert(PNSLR_B8&  x) { return x; }
+PNSLR_U8&  PNSLR_Bindings_Convert(PNSLR_U8&  x) { return x; }
+PNSLR_U16& PNSLR_Bindings_Convert(PNSLR_U16& x) { return x; }
+PNSLR_U32& PNSLR_Bindings_Convert(PNSLR_U32& x) { return x; }
+PNSLR_U64& PNSLR_Bindings_Convert(PNSLR_U64& x) { return x; }
+PNSLR_I8&  PNSLR_Bindings_Convert(PNSLR_I8&  x) { return x; }
+PNSLR_I16& PNSLR_Bindings_Convert(PNSLR_I16& x) { return x; }
+PNSLR_I32& PNSLR_Bindings_Convert(PNSLR_I32& x) { return x; }
+PNSLR_I64& PNSLR_Bindings_Convert(PNSLR_I64& x) { return x; }
+
+#if (_MSC_VER)
+    #define PNSLR_STRUCT_OFFSET(type, member) ((PNSLR_U64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+#elif (__clang__) || (__GNUC__)
+    #define PNSLR_STRUCT_OFFSET(type, member) ((PNSLR_U64) offsetof(type, member))
+#else
+    #error "UNSUPPORTED COMPILER!";
+#endif
+
+typedef struct { PNSLR_I64 count; PNSLR_B8* data; } PNSLR_ArraySlice_PNSLR_B8;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_B8) == sizeof(Panshilar::ArraySlice<Panshilar::b8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_B8) == alignof(Panshilar::ArraySlice<Panshilar::b8>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_B8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::b8>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_B8*>(&x); }
+Panshilar::ArraySlice<Panshilar::b8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_B8& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::b8>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_B8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::b8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_B8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::b8>, data), "data offset mismatch");
+
+typedef struct { PNSLR_I64 count; PNSLR_U8* data; } PNSLR_ArraySlice_PNSLR_U8;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U8) == sizeof(Panshilar::ArraySlice<Panshilar::u8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_U8) == alignof(Panshilar::ArraySlice<Panshilar::u8>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_U8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u8>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_U8*>(&x); }
+Panshilar::ArraySlice<Panshilar::u8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U8& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::u8>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u8>, data), "data offset mismatch");
+
+typedef struct { PNSLR_I64 count; PNSLR_U16* data; } PNSLR_ArraySlice_PNSLR_U16;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U16) == sizeof(Panshilar::ArraySlice<Panshilar::u16>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_U16) == alignof(Panshilar::ArraySlice<Panshilar::u16>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_U16& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u16>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_U16*>(&x); }
+Panshilar::ArraySlice<Panshilar::u16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U16& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::u16>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U16, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u16>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U16, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u16>, data), "data offset mismatch");
+
+typedef struct { PNSLR_I64 count; PNSLR_U32* data; } PNSLR_ArraySlice_PNSLR_U32;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U32) == sizeof(Panshilar::ArraySlice<Panshilar::u32>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_U32) == alignof(Panshilar::ArraySlice<Panshilar::u32>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_U32& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u32>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_U32*>(&x); }
+Panshilar::ArraySlice<Panshilar::u32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U32& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::u32>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U32, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u32>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U32, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u32>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; PNSLR_U64* data; } PNSLR_ArraySlice_PNSLR_U64;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U64) == sizeof(Panshilar::ArraySlice<Panshilar::u64>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_U64) == alignof(Panshilar::ArraySlice<Panshilar::u64>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_U64& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u64>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_U64*>(&x); }
+Panshilar::ArraySlice<Panshilar::u64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U64& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::u64>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U64, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u64>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U64, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u64>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; PNSLR_I8* data; } PNSLR_ArraySlice_PNSLR_I8;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I8) == sizeof(Panshilar::ArraySlice<Panshilar::i8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_I8) == alignof(Panshilar::ArraySlice<Panshilar::i8>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_I8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i8>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_I8*>(&x); }
+Panshilar::ArraySlice<Panshilar::i8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I8& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::i8>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i8>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; PNSLR_I16* data; } PNSLR_ArraySlice_PNSLR_I16;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I16) == sizeof(Panshilar::ArraySlice<Panshilar::i16>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_I16) == alignof(Panshilar::ArraySlice<Panshilar::i16>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_I16& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i16>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_I16*>(&x); }
+Panshilar::ArraySlice<Panshilar::i16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I16& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::i16>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I16, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i16>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I16, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i16>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; PNSLR_I32* data; } PNSLR_ArraySlice_PNSLR_I32;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I32) == sizeof(Panshilar::ArraySlice<Panshilar::i32>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_I32) == alignof(Panshilar::ArraySlice<Panshilar::i32>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_I32& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i32>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_I32*>(&x); }
+Panshilar::ArraySlice<Panshilar::i32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I32& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::i32>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I32, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i32>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I32, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i32>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; PNSLR_I64* data; } PNSLR_ArraySlice_PNSLR_I64;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I64) == sizeof(Panshilar::ArraySlice<Panshilar::i64>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_I64) == alignof(Panshilar::ArraySlice<Panshilar::i64>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_I64& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i64>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_I64*>(&x); }
+Panshilar::ArraySlice<Panshilar::i64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I64& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::i64>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I64, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i64>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I64, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i64>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; float* data; } PNSLR_ArraySlice_float;
+static_assert(sizeof(PNSLR_ArraySlice_float) == sizeof(Panshilar::ArraySlice<float>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_float) == alignof(Panshilar::ArraySlice<float>), "align mismatch");
+PNSLR_ArraySlice_float& PNSLR_Bindings_Convert(Panshilar::ArraySlice<float>& x) { return *reinterpret_cast<PNSLR_ArraySlice_float*>(&x); }
+Panshilar::ArraySlice<float>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_float& x) { return *reinterpret_cast<Panshilar::ArraySlice<float>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_float, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<float>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_float, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<float>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; double* data; } PNSLR_ArraySlice_double;
+static_assert(sizeof(PNSLR_ArraySlice_double) == sizeof(Panshilar::ArraySlice<double>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_double) == alignof(Panshilar::ArraySlice<double>), "align mismatch");
+PNSLR_ArraySlice_double& PNSLR_Bindings_Convert(Panshilar::ArraySlice<double>& x) { return *reinterpret_cast<PNSLR_ArraySlice_double*>(&x); }
+Panshilar::ArraySlice<double>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_double& x) { return *reinterpret_cast<Panshilar::ArraySlice<double>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_double, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<double>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_double, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<double>, data), "data offset mismatch");
 
+typedef struct { PNSLR_I64 count; char* data; } PNSLR_ArraySlice_char;
+static_assert(sizeof(PNSLR_ArraySlice_char) == sizeof(Panshilar::ArraySlice<char>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_char) == alignof(Panshilar::ArraySlice<char>), "align mismatch");
+PNSLR_ArraySlice_char& PNSLR_Bindings_Convert(Panshilar::ArraySlice<char>& x) { return *reinterpret_cast<PNSLR_ArraySlice_char*>(&x); }
+Panshilar::ArraySlice<char>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_char& x) { return *reinterpret_cast<Panshilar::ArraySlice<char>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<char>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<char>, data), "data offset mismatch");
 
+    typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
 
+typedef struct { PNSLR_I64 count; PNSLR_UTF8STR* data; } PNSLR_ArraySlice_PNSLR_UTF8STR;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_UTF8STR) == sizeof(Panshilar::ArraySlice<Panshilar::utf8str>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_UTF8STR) == alignof(Panshilar::ArraySlice<Panshilar::utf8str>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_UTF8STR& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::utf8str>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_UTF8STR*>(&x); }
+Panshilar::ArraySlice<Panshilar::utf8str>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_UTF8STR& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::utf8str>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, data), "data offset mismatch");
 
 
 
@@ -1340,6 +1463,13 @@ namespace Panshilar
 
 
 
+typedef struct { PNSLR_I64 count; PNSLR_Allocator* data; } PNSLR_ArraySlice_PNSLR_Allocator;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_Allocator) == sizeof(Panshilar::ArraySlice<Panshilar::Allocator>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_Allocator) == alignof(Panshilar::ArraySlice<Panshilar::Allocator>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_Allocator& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::Allocator>& x) { return *reinterpret_cast<PNSLR_ArraySlice_PNSLR_Allocator*>(&x); }
+Panshilar::ArraySlice<Panshilar::Allocator>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Allocator& x) { return *reinterpret_cast<Panshilar::ArraySlice<Panshilar::Allocator>*>(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::Allocator>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::Allocator>, data), "data offset mismatch");
 
 
 
@@ -1425,8 +1555,7 @@ namespace Panshilar
 
 
 
-
-
+#undef PNSLR_STRUCT_OFFSET
 
 #endif//PNSLR_SKIP_IMPLEMENTATION
 #endif//__cplusplus

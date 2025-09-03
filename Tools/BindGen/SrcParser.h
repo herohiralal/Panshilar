@@ -17,6 +17,7 @@ ENUM_END
 typedef struct DeclHeader
 {
     DeclType           type;
+    u32                ty;
     struct DeclHeader* next;
     utf8str            name;
     utf8str            doc;
