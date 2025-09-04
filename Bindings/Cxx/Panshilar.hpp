@@ -1314,6 +1314,26 @@ namespace Panshilar
         i32 exitCode
     );
 
+    /** Create a utf8str from a string literal. */
+    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+
+    /** Get the current source code location. */
+    #define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) {STRING_LITERAL(__FILE__), __LINE__, 0, STRING_LITERAL(__FUNCTION__)}
+
+    /** Allocate an object of type 'ty' using the provided allocator. */
+    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { return Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err); }
+
+    /** Delete an object allocated with `PNSLR_New`, using the provided allocator. */
+    template <typename T> void Delete(T* obj, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (obj) { Free(allocator, (void*) obj, loc, err); } }
+
+    /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
+    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { return ArraySlice<T>{count, (T*) Allocate(allocator, zeroed, (i32) (sizeof(T) * count), (i32) alignof(T), loc, err)}; }
+
+    /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
+    template <typename T> void FreeSlice(ArraySlice<T>& slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (slice.data) { Free(allocator, (void*) slice.data, loc, err); slice.count = 0; slice.data = nullptr; } }
+
+    /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
+    template <typename T> void ResizeSlice(ArraySlice<T>& slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { slice = ArraySlice<T>{newCount, (T*) Resize(allocator, zeroed, (void*) slice.data, (i32) slice.count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err)}; }
 }//namespace end
 
 #endif//PANSHILAR_CXX_MAIN
