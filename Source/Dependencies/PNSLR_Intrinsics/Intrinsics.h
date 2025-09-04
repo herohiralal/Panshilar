@@ -150,15 +150,15 @@ typedef char*               cstring;
 
 #ifdef __cplusplus
 
-    template <typename T> struct ArraySlice { i64 count; T* data; };
+    template <typename T> struct ArraySlice { T* data; i64 count; };
 
     #define DECLARE_ARRAY_SLICE(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice(ty); \
+        typedef struct { ty* data; i64 count; } ArraySlice(ty); \
         EXTERN_C_END \
         template<> struct ArraySlice<ty> \
         { \
-            i64 count; \
             ty* data; \
+            i64 count; \
             ArraySlice<ty>() = default; \
             ArraySlice<ty>(i64 inCount, ty* inData) : count(inCount), data(inData) { } \
             ArraySlice<ty>(const ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
@@ -169,7 +169,7 @@ typedef char*               cstring;
 #else
 
     #define DECLARE_ARRAY_SLICE(ty) \
-        typedef struct { i64 count; ty* data; } ArraySlice(ty);
+        typedef struct { ty* data; i64 count; } ArraySlice(ty);
 
 #endif
 
@@ -201,11 +201,11 @@ DECLARE_ARRAY_SLICE(utf8str);
 
 #ifdef __cplusplus
     #define PNSLR_STRING_LITERAL(str) \
-        utf8str {sizeof(str) - 1, (u8*) str}
+        utf8str {(u8*) str, sizeof(str) - 1}
 #else
     // Create a utf8str from a string literal.
     #define PNSLR_STRING_LITERAL(str) \
-        (utf8str) {.count = sizeof(str) - 1, .data  = (u8*) str}
+        (utf8str) {.count = sizeof(str) - 1, .data = (u8*) str}
 #endif
 
 //-skipreflect

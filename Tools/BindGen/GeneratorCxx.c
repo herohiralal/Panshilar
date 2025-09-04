@@ -20,7 +20,7 @@ cstring G_GenCxxHeaderPrefix = ""
 "    typedef signed short int    i16;\n"
 "    typedef signed int          i32;\n"
 "    typedef signed long long    i64;\n"
-"    template <typename T> struct ArraySlice { i64 count; T* data; };\n"
+"    template <typename T> struct ArraySlice { T* data; i64 count; };\n"
 "\n"
 "";
 
@@ -38,13 +38,13 @@ cstring G_GenCxxHeaderSuffix = ""
 "    template <typename T> void Delete(T* obj, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (obj) { Free(allocator, (void*) obj, loc, err); } }\n"
 "\n"
 "    /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
-"    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { return ArraySlice<T>{count, (T*) Allocate(allocator, zeroed, (i32) (sizeof(T) * count), (i32) alignof(T), loc, err)}; }\n"
+"    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { ArraySlice<T> output; output.data = (T*) Allocate(allocator, zeroed, (i32) (sizeof(T) * count), (i32) alignof(T), loc, err); output.count = count; return output; }\n"
 "\n"
 "    /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */\n"
 "    template <typename T> void FreeSlice(ArraySlice<T>& slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (slice.data) { Free(allocator, (void*) slice.data, loc, err); slice.count = 0; slice.data = nullptr; } }\n"
 "\n"
 "    /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */\n"
-"    template <typename T> void ResizeSlice(ArraySlice<T>& slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { slice = ArraySlice<T>{newCount, (T*) Resize(allocator, zeroed, (void*) slice.data, (i32) slice.count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err)}; }\n"
+"    template <typename T> void ResizeSlice(ArraySlice<T>& slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { slice.data = (T*) Resize(allocator, zeroed, (void*) slice.data, (i32) slice.count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err); slice.count = newCount; }\n"
 // "\n"
 // "    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { }\n"
 "}//namespace end\n"
@@ -477,9 +477,9 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 case DeclType_Array:
                 {
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("typedef struct { PNSLR_I64 count; "));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT("typedef struct { "));
                     WriteCTypeNameForCxx(f, content->types, arr->tgtTy + 1 /* +1 for ptr ty */);
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(" data; } "));
+                    PNSLR_WriteToFile(f, ARR_STR_LIT(" data; PNSLR_I64 count; } "));
                     WriteCTypeNameForCxx(f, content->types, arr->header.ty);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
                     WriteCxxReinterpretBoilerplate(f, content->types, arr->header.ty);

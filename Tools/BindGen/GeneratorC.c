@@ -44,7 +44,7 @@ cstring G_GenCSuffix = ""
 "#define PNSLR_Delete(obj, allocator, error__) do { if (obj) PNSLR_Free(allocator, obj, PNSLR_GET_LOC(), error__); } while(0)\n"
 "\n"
 "/** Declare an array slice of type 'ty'. */\n"
-"#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { PNSLR_I64 count; ty* data; } PNSLR_ArraySlice_##ty;\n"
+"#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { ty* data; PNSLR_I64 count; } PNSLR_ArraySlice_##ty;\n"
 "\n"
 "/** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
 "#define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (count__), .data = (ty*) PNSLR_Allocate(allocator, zeroed, (PNSLR_I32) (count__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}\n"
@@ -185,9 +185,9 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef struct "));
                     WriteCTypeName(headerFile, content->types, arr->header.ty);
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    PNSLR_I64 count;\n    "));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    "));
                     WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n} "));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n    PNSLR_I64 count;\n} "));
                     WriteCTypeName(headerFile, content->types, arr->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;

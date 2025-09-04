@@ -31,74 +31,74 @@ typedef signed long long    PNSLR_I64;
 
 typedef struct PNSLR_ArraySlice_PNSLR_B8
 {
-    PNSLR_I64 count;
     PNSLR_B8* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_B8;
 
 typedef struct PNSLR_ArraySlice_PNSLR_U8
 {
-    PNSLR_I64 count;
     PNSLR_U8* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_U8;
 
 typedef struct PNSLR_ArraySlice_PNSLR_U16
 {
-    PNSLR_I64 count;
     PNSLR_U16* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_U16;
 
 typedef struct PNSLR_ArraySlice_PNSLR_U32
 {
-    PNSLR_I64 count;
     PNSLR_U32* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_U32;
 
 typedef struct PNSLR_ArraySlice_PNSLR_U64
 {
-    PNSLR_I64 count;
     PNSLR_U64* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_U64;
 
 typedef struct PNSLR_ArraySlice_PNSLR_I8
 {
-    PNSLR_I64 count;
     PNSLR_I8* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_I8;
 
 typedef struct PNSLR_ArraySlice_PNSLR_I16
 {
-    PNSLR_I64 count;
     PNSLR_I16* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_I16;
 
 typedef struct PNSLR_ArraySlice_PNSLR_I32
 {
-    PNSLR_I64 count;
     PNSLR_I32* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_I32;
 
 typedef struct PNSLR_ArraySlice_PNSLR_I64
 {
-    PNSLR_I64 count;
     PNSLR_I64* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_I64;
 
 typedef struct PNSLR_ArraySlice_float
 {
-    PNSLR_I64 count;
     float* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_float;
 
 typedef struct PNSLR_ArraySlice_double
 {
-    PNSLR_I64 count;
     double* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_double;
 
 typedef struct PNSLR_ArraySlice_char
 {
-    PNSLR_I64 count;
     char* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_char;
 
 /**
@@ -108,8 +108,8 @@ typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
 
 typedef struct PNSLR_ArraySlice_PNSLR_UTF8STR
 {
-    PNSLR_I64 count;
     PNSLR_UTF8STR* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_UTF8STR;
 
 // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -513,8 +513,8 @@ typedef struct PNSLR_Allocator
 
 typedef struct PNSLR_ArraySlice_PNSLR_Allocator
 {
-    PNSLR_I64 count;
     PNSLR_Allocator* data;
+    PNSLR_I64 count;
 } PNSLR_ArraySlice_PNSLR_Allocator;
 
 // Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1400,7 +1400,7 @@ void PNSLR_ExitProcess(
 #define PNSLR_Delete(obj, allocator, error__) do { if (obj) PNSLR_Free(allocator, obj, PNSLR_GET_LOC(), error__); } while(0)
 
 /** Declare an array slice of type 'ty'. */
-#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { PNSLR_I64 count; ty* data; } PNSLR_ArraySlice_##ty;
+#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { ty* data; PNSLR_I64 count; } PNSLR_ArraySlice_##ty;
 
 /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
 #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (count__), .data = (ty*) PNSLR_Allocate(allocator, zeroed, (PNSLR_I32) (count__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}
