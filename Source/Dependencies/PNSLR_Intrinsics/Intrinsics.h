@@ -162,14 +162,14 @@ typedef char*               cstring;
             ArraySlice<ty>() = default; \
             ArraySlice<ty>(i64 inCount, ty* inData) : count(inCount), data(inData) { } \
             ArraySlice<ty>(const ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
-            operator ArraySlice(ty)() const { return {count, data}; } \
+            operator ArraySlice(ty)() const { return {data, count}; } \
         }; \
         EXTERN_C_BEGIN
 
 #else
 
     #define DECLARE_ARRAY_SLICE(ty) \
-        typedef struct { ty* data; i64 count; } ArraySlice(ty);
+        typedef union { struct { ty* data; i64 count; }; PNSLR_RawArraySlice raw; } ArraySlice(ty);
 
 #endif
 
@@ -177,6 +177,11 @@ typedef char*               cstring;
 EXTERN_C_BEGIN
 
 // Primitive Collections  ==========================================================
+
+/**
+ * A raw type-unspecific array slice.
+ */
+typedef struct PNSLR_RawArraySlice { rawptr data; i64 count; } PNSLR_RawArraySlice;
 
 DECLARE_ARRAY_SLICE(     b8);
 DECLARE_ARRAY_SLICE(     u8);

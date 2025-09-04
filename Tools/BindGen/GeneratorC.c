@@ -35,25 +35,36 @@ cstring G_GenCSuffix = ""
 "#define PNSLR_StringLiteral(str) (PNSLR_UTF8STR) {.count = sizeof(str) - 1, .data = (u8*) str}\n"
 "\n"
 "/** Get the current source code location. */\n"
-"#define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) {.file = PNSLR_StringLiteral(__FILE__), .line = __LINE__, .function = PNSLR_StringLiteral(__FUNCTION__)}\n"
+"#define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) \\\n"
+"    { \\\n"
+"        .file = PNSLR_StringLiteral(__FILE__), \\\n"
+"        .line = __LINE__, \\\n"
+"        .function = PNSLR_StringLiteral(__FUNCTION__) \\\n"
+"    }\n"
 "\n"
 "/** Allocate an object of type 'ty' using the provided allocator. */\n"
-"#define PNSLR_New(ty, allocator, error__) ((ty*) PNSLR_Allocate(allocator, sizeof(ty), alignof(ty), PNSLR_GET_LOC(), error__))\n"
+"#define PNSLR_New(ty, allocator, loc, error__) \\\n"
+"    ((ty*) PNSLR_Allocate(allocator, sizeof(ty), alignof(ty), loc, error__))\n"
 "\n"
 "/** Delete an object allocated with `PNSLR_New`, using the provided allocator. */\n"
-"#define PNSLR_Delete(obj, allocator, error__) do { if (obj) PNSLR_Free(allocator, obj, PNSLR_GET_LOC(), error__); } while(0)\n"
+"#define PNSLR_Delete(obj, allocator, loc, error__) \\\n"
+"    do { if (obj) PNSLR_Free(allocator, obj, loc, error__); } while(0)\n"
 "\n"
 "/** Declare an array slice of type 'ty'. */\n"
-"#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { ty* data; PNSLR_I64 count; } PNSLR_ArraySlice_##ty;\n"
+"#define PNSLR_DECLARE_ARRAY_SLICE(ty) \\\n"
+"    typedef union PNSLR_ArraySlice_##ty { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice_##ty;\n"
 "\n"
-"/** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
-"#define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (count__), .data = (ty*) PNSLR_Allocate(allocator, zeroed, (PNSLR_I32) (count__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}\n"
+"/** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
+"#define PNSLR_MakeSlice(ty, count, zeroed, allocator, error__) \\\n"
+"    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}\n"
 "\n"
-"/** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */\n"
-"#define PNSLR_FreeSlice(slice, allocator, error__) do { if (slice.data) PNSLR_Free(allocator, slice.data, PNSLR_GET_LOC(), error__); slice.data = (void*) 0; slice.count = 0; } while(0)\n"
+"/** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */\n"
+"#define PNSLR_FreeSlice(slice, allocator, loc, error__) \\\n"
+"    do { if (slice) PNSLR_FreeRawSlice(&((slice)->raw), allocator, loc, error__); } while(0)\n"
 "\n"
-"/** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */\n"
-"#define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) do { slice = (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (newCount__), .data = (ty*) PNSLR_Resize(allocator, zeroed, slice.data, (PNSLR_I32) (slice.count) * (PNSLR_I32) (sizeof(ty)), (PNSLR_I32) (newCount__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}; } while(0)\n"
+"/** Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
+"#define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \\\n"
+"    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)\n"
 "\n"
 "#ifdef __cplusplus\n"
 "} // extern c\n"
@@ -183,11 +194,11 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                 case DeclType_Array:
                 {
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef struct "));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef union "));
                     WriteCTypeName(headerFile, content->types, arr->header.ty);
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    "));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    struct {\n        "));
                     WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n    PNSLR_I64 count;\n} "));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n        PNSLR_I64 count;\n    };\n    PNSLR_RawArraySlice raw;\n} "));
                     WriteCTypeName(headerFile, content->types, arr->header.ty);
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
                     break;

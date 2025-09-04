@@ -264,7 +264,7 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
     utf8str output = {0};
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
 
-    ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, nil);
+    ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, CURRENT_LOC(), nil);
     i64             numReplacementIndices = 0;
 
     i64 searchSpaceOffset = 0;
@@ -276,7 +276,7 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
 
         if (numReplacementIndices >= replacementIndices.count)
         {
-            PNSLR_ResizeSlice(u32, replacementIndices, (numReplacementIndices + 64), false, internalAllocator, nil);
+            PNSLR_ResizeSlice(u32, &replacementIndices, (numReplacementIndices + 64), false, internalAllocator, CURRENT_LOC(), nil);
         }
 
         replacementIndices.data[numReplacementIndices] = (u32) (searchSpaceOffset + idx);
@@ -497,12 +497,12 @@ ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allo
     i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
     if (n <= 0) { return (ArraySlice(u16)) {0}; } // conversion failed
 
-    ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, nil);
+    ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
 
     i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
     if (n1 == 0)
     {
-        PNSLR_FreeSlice(output, allocator, nil);
+        PNSLR_FreeSlice(&output, allocator, CURRENT_LOC(), nil);
         return (ArraySlice(u16)) {0}; // conversion failed
     }
 

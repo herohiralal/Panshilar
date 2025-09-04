@@ -5,6 +5,14 @@ package Panshilar
 
 // Primitive ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+/**
+ * A raw type-unspecific array slice.
+ */
+RawArraySlice :: struct  {
+	data: rawptr,
+	count: i64,
+}
+
 // declare []b8
 
 // declare []u8
@@ -868,7 +876,53 @@ foreign {
 	) -> rawptr ---
 }
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+     */
+	MakeRawSlice :: proc "c" (
+		tySize: i32,
+		tyAlign: i32,
+		count: i64,
+		zeroed: b8,
+		allocator: Allocator,
+		location: SourceCodeLocation,
+		error: ^AllocatorError,
+	) -> RawArraySlice ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
+     */
+	FreeRawSlice :: proc "c" (
+		slice: ^RawArraySlice,
+		allocator: Allocator,
+		location: SourceCodeLocation,
+		error: ^AllocatorError,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+     */
+	ResizeRawSlice :: proc "c" (
+		slice: ^RawArraySlice,
+		tySize: i32,
+		tyAlign: i32,
+		newCount: i64,
+		zeroed: b8,
+		allocator: Allocator,
+		location: SourceCodeLocation,
+		error: ^AllocatorError,
+	) ---
+}
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -1613,3 +1667,17 @@ foreign {
 
 #assert(size_of(int)  == 8, " int must be 8 bytes")
 #assert(size_of(uint) == 8, "uint must be 8 bytes")
+
+GET_LOC :: proc(loc := #caller_location) -> SourceCodeLocation {
+	return {file = loc.file_path, line = loc.line, column = loc.column, function = loc.procedure}
+}
+
+New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
+
+Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if obj != nil {Free(allocator, obj, loc, err)}}
+
+MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
+
+FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
+
+ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}

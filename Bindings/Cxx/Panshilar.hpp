@@ -25,6 +25,15 @@ namespace Panshilar
     // Primitive ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
+     * A raw type-unspecific array slice.
+     */
+    struct RawArraySlice
+    {
+       void* data;
+       i64 count;
+    };
+
+    /**
      * UTF-8 string type, with length info (not necessarily null-terminated).
      */
     typedef ArraySlice<u8> utf8str;
@@ -726,7 +735,44 @@ namespace Panshilar
         AllocatorError* error
     );
 
-    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+     */
+    RawArraySlice MakeRawSlice(
+        i32 tySize,
+        i32 tyAlign,
+        i64 count,
+        b8 zeroed,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    /**
+     * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
+     */
+    void FreeRawSlice(
+        RawArraySlice* slice,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    /**
+     * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+     */
+    void ResizeRawSlice(
+        RawArraySlice* slice,
+        i32 tySize,
+        i32 tyAlign,
+        i64 newCount,
+        b8 zeroed,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
 
     /**
      * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
@@ -1321,19 +1367,35 @@ namespace Panshilar
     #define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) {STRING_LITERAL(__FILE__), __LINE__, 0, STRING_LITERAL(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
-    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { return Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err); }
+    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        return (T*) Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
+    }
 
     /** Delete an object allocated with `PNSLR_New`, using the provided allocator. */
-    template <typename T> void Delete(T* obj, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (obj) { Free(allocator, (void*) obj, loc, err); } }
+    template <typename T> void Delete(T* obj, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (obj) { Free(allocator, obj, loc, err); }
+    }
 
     /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
-    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { ArraySlice<T> output; output.data = (T*) Allocate(allocator, zeroed, (i32) (sizeof(T) * count), (i32) alignof(T), loc, err); output.count = count; return output; }
+    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        RawArraySlice raw = MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
+        return *reinterpret_cast<ArraySlice<T>*>(&raw);
+}
 
     /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
-    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (slice->data) { if (!slice) return; Free(allocator, (void*) slice->data, loc, err); slice->count = 0; slice->data = nullptr; } }
+    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (slice) FreeRawSlice(reinterpret_cast<RawArraySlice*>(slice), allocator, loc, err);
+    }
 
     /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
-    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (!slice) return; slice->data = (T*) Resize(allocator, zeroed, (void*) slice->data, (i32) slice->count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err); slice->count = newCount; }
+    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
+    }
 }//namespace end
 
 #endif//PANSHILAR_CXX_MAIN
@@ -1400,6 +1462,20 @@ PNSLR_I64& PNSLR_Bindings_Convert(PNSLR_I64& x) { return x; }
 #else
     #error "UNSUPPORTED COMPILER!";
 #endif
+
+struct PNSLR_RawArraySlice
+{
+   void* data;
+   PNSLR_I64 count;
+};
+static_assert(sizeof(PNSLR_RawArraySlice) == sizeof(Panshilar::RawArraySlice), "size mismatch");
+static_assert(alignof(PNSLR_RawArraySlice) == alignof(Panshilar::RawArraySlice), "align mismatch");
+PNSLR_RawArraySlice* PNSLR_Bindings_Convert(Panshilar::RawArraySlice* x) { return reinterpret_cast<PNSLR_RawArraySlice*>(x); }
+Panshilar::RawArraySlice* PNSLR_Bindings_Convert(PNSLR_RawArraySlice* x) { return reinterpret_cast<Panshilar::RawArraySlice*>(x); }
+PNSLR_RawArraySlice& PNSLR_Bindings_Convert(Panshilar::RawArraySlice& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::RawArraySlice& PNSLR_Bindings_Convert(PNSLR_RawArraySlice& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_RawArraySlice, data) == PNSLR_STRUCT_OFFSET(Panshilar::RawArraySlice, data), "data offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_RawArraySlice, count) == PNSLR_STRUCT_OFFSET(Panshilar::RawArraySlice, count), "count offset mismatch");
 
 typedef struct { PNSLR_B8* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_B8;
 static_assert(sizeof(PNSLR_ArraySlice_PNSLR_B8) == sizeof(Panshilar::ArraySlice<Panshilar::b8>), "size mismatch");
@@ -2091,6 +2167,24 @@ extern "C" void* PNSLR_AllocatorFn_Stack(void* allocatorData, PNSLR_AllocatorMod
 void* Panshilar::AllocatorFn_Stack(void* allocatorData, Panshilar::AllocatorMode mode, Panshilar::i32 size, Panshilar::i32 alignment, void* oldMemory, Panshilar::i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Stack(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_RawArraySlice PNSLR_MakeRawSlice(PNSLR_I32 tySize, PNSLR_I32 tyAlign, PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+Panshilar::RawArraySlice Panshilar::MakeRawSlice(Panshilar::i32 tySize, Panshilar::i32 tyAlign, Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_RawArraySlice zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeRawSlice(PNSLR_Bindings_Convert(tySize), PNSLR_Bindings_Convert(tyAlign), PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_FreeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::FreeRawSlice(Panshilar::RawArraySlice* slice, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_FreeRawSlice(PNSLR_Bindings_Convert(slice), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
+}
+
+extern "C" void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_I32 tySize, PNSLR_I32 tyAlign, PNSLR_I64 newCount, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::ResizeRawSlice(Panshilar::RawArraySlice* slice, Panshilar::i32 tySize, Panshilar::i32 tyAlign, Panshilar::i64 newCount, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_ResizeRawSlice(PNSLR_Bindings_Convert(slice), PNSLR_Bindings_Convert(tySize), PNSLR_Bindings_Convert(tyAlign), PNSLR_Bindings_Convert(newCount), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_MakeString(PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);

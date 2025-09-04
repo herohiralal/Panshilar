@@ -29,76 +29,121 @@ typedef signed long long    PNSLR_I64;
 
 // Primitive ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-typedef struct PNSLR_ArraySlice_PNSLR_B8
+/**
+ * A raw type-unspecific array slice.
+ */
+typedef struct PNSLR_RawArraySlice
 {
-    PNSLR_B8* data;
+    void* data;
     PNSLR_I64 count;
+} PNSLR_RawArraySlice;
+
+typedef union PNSLR_ArraySlice_PNSLR_B8
+{
+    struct {
+        PNSLR_B8* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_B8;
 
-typedef struct PNSLR_ArraySlice_PNSLR_U8
+typedef union PNSLR_ArraySlice_PNSLR_U8
 {
-    PNSLR_U8* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_U8* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_U8;
 
-typedef struct PNSLR_ArraySlice_PNSLR_U16
+typedef union PNSLR_ArraySlice_PNSLR_U16
 {
-    PNSLR_U16* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_U16* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_U16;
 
-typedef struct PNSLR_ArraySlice_PNSLR_U32
+typedef union PNSLR_ArraySlice_PNSLR_U32
 {
-    PNSLR_U32* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_U32* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_U32;
 
-typedef struct PNSLR_ArraySlice_PNSLR_U64
+typedef union PNSLR_ArraySlice_PNSLR_U64
 {
-    PNSLR_U64* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_U64* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_U64;
 
-typedef struct PNSLR_ArraySlice_PNSLR_I8
+typedef union PNSLR_ArraySlice_PNSLR_I8
 {
-    PNSLR_I8* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_I8* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_I8;
 
-typedef struct PNSLR_ArraySlice_PNSLR_I16
+typedef union PNSLR_ArraySlice_PNSLR_I16
 {
-    PNSLR_I16* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_I16* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_I16;
 
-typedef struct PNSLR_ArraySlice_PNSLR_I32
+typedef union PNSLR_ArraySlice_PNSLR_I32
 {
-    PNSLR_I32* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_I32* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_I32;
 
-typedef struct PNSLR_ArraySlice_PNSLR_I64
+typedef union PNSLR_ArraySlice_PNSLR_I64
 {
-    PNSLR_I64* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_I64* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_I64;
 
-typedef struct PNSLR_ArraySlice_float
+typedef union PNSLR_ArraySlice_float
 {
-    float* data;
-    PNSLR_I64 count;
+    struct {
+        float* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_float;
 
-typedef struct PNSLR_ArraySlice_double
+typedef union PNSLR_ArraySlice_double
 {
-    double* data;
-    PNSLR_I64 count;
+    struct {
+        double* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_double;
 
-typedef struct PNSLR_ArraySlice_char
+typedef union PNSLR_ArraySlice_char
 {
-    char* data;
-    PNSLR_I64 count;
+    struct {
+        char* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_char;
 
 /**
@@ -106,10 +151,13 @@ typedef struct PNSLR_ArraySlice_char
  */
 typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
 
-typedef struct PNSLR_ArraySlice_PNSLR_UTF8STR
+typedef union PNSLR_ArraySlice_PNSLR_UTF8STR
 {
-    PNSLR_UTF8STR* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_UTF8STR* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_UTF8STR;
 
 // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -511,10 +559,13 @@ typedef struct PNSLR_Allocator
     void* data;
 } PNSLR_Allocator;
 
-typedef struct PNSLR_ArraySlice_PNSLR_Allocator
+typedef union PNSLR_ArraySlice_PNSLR_Allocator
 {
-    PNSLR_Allocator* data;
-    PNSLR_I64 count;
+    struct {
+        PNSLR_Allocator* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
 } PNSLR_ArraySlice_PNSLR_Allocator;
 
 // Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -803,7 +854,44 @@ void* PNSLR_AllocatorFn_Stack(
     PNSLR_AllocatorError* error
 );
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+ */
+PNSLR_RawArraySlice PNSLR_MakeRawSlice(
+    PNSLR_I32 tySize,
+    PNSLR_I32 tyAlign,
+    PNSLR_I64 count,
+    PNSLR_B8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+/**
+ * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
+ */
+void PNSLR_FreeRawSlice(
+    PNSLR_RawArraySlice* slice,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+/**
+ * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+ */
+void PNSLR_ResizeRawSlice(
+    PNSLR_RawArraySlice* slice,
+    PNSLR_I32 tySize,
+    PNSLR_I32 tyAlign,
+    PNSLR_I64 newCount,
+    PNSLR_B8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
 
 /**
  * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
@@ -1391,25 +1479,36 @@ void PNSLR_ExitProcess(
 #define PNSLR_StringLiteral(str) (PNSLR_UTF8STR) {.count = sizeof(str) - 1, .data = (u8*) str}
 
 /** Get the current source code location. */
-#define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) {.file = PNSLR_StringLiteral(__FILE__), .line = __LINE__, .function = PNSLR_StringLiteral(__FUNCTION__)}
+#define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) \
+    { \
+        .file = PNSLR_StringLiteral(__FILE__), \
+        .line = __LINE__, \
+        .function = PNSLR_StringLiteral(__FUNCTION__) \
+    }
 
 /** Allocate an object of type 'ty' using the provided allocator. */
-#define PNSLR_New(ty, allocator, error__) ((ty*) PNSLR_Allocate(allocator, sizeof(ty), alignof(ty), PNSLR_GET_LOC(), error__))
+#define PNSLR_New(ty, allocator, loc, error__) \
+    ((ty*) PNSLR_Allocate(allocator, sizeof(ty), alignof(ty), loc, error__))
 
 /** Delete an object allocated with `PNSLR_New`, using the provided allocator. */
-#define PNSLR_Delete(obj, allocator, error__) do { if (obj) PNSLR_Free(allocator, obj, PNSLR_GET_LOC(), error__); } while(0)
+#define PNSLR_Delete(obj, allocator, loc, error__) \
+    do { if (obj) PNSLR_Free(allocator, obj, loc, error__); } while(0)
 
 /** Declare an array slice of type 'ty'. */
-#define PNSLR_DECLARE_ARRAY_SLICE(ty) typedef struct PNSLR_ArraySlice_##ty { ty* data; PNSLR_I64 count; } PNSLR_ArraySlice_##ty;
+#define PNSLR_DECLARE_ARRAY_SLICE(ty) \
+    typedef union PNSLR_ArraySlice_##ty { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice_##ty;
 
-/** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
-#define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (count__), .data = (ty*) PNSLR_Allocate(allocator, zeroed, (PNSLR_I32) (count__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}
+/** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */
+#define PNSLR_MakeSlice(ty, count, zeroed, allocator, error__) \
+    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
 
-/** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
-#define PNSLR_FreeSlice(slice, allocator, error__) do { if (slice.data) PNSLR_Free(allocator, slice.data, PNSLR_GET_LOC(), error__); slice.data = (void*) 0; slice.count = 0; } while(0)
+/** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */
+#define PNSLR_FreeSlice(slice, allocator, loc, error__) \
+    do { if (slice) PNSLR_FreeRawSlice(&((slice)->raw), allocator, loc, error__); } while(0)
 
-/** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
-#define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) do { slice = (PNSLR_ArraySlice_##ty) {.count = (PNSLR_I64) (newCount__), .data = (ty*) PNSLR_Resize(allocator, zeroed, slice.data, (PNSLR_I32) (slice.count) * (PNSLR_I32) (sizeof(ty)), (PNSLR_I32) (newCount__) * (PNSLR_I32) (sizeof(ty)), alignof(ty), PNSLR_GET_LOC(), error__)}; } while(0)
+/** Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed. */
+#define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
+    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)
 
 #ifdef __cplusplus
 } // extern c

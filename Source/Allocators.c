@@ -894,13 +894,34 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i
     return nil; // Should not reach here.
 }
 
+PNSLR_RawArraySlice PNSLR_MakeRawSlice(i32 tySize, i32 tyAlign, i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    PNSLR_RawArraySlice output = {0};
+    output.data = PNSLR_Allocate(allocator, zeroed, tySize * (i32) count, tyAlign, location, error);
+    output.count = output.data ? count : 0;
+    return output;
+}
+
+void PNSLR_FreeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    if (!slice) { return; }
+    PNSLR_Free(allocator, slice->data, location, error);
+    *slice = (PNSLR_RawArraySlice) {0};
+}
+
+void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, i32 tySize, i32 tyAlign, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    if (!slice) { return; }
+    slice->data = PNSLR_Resize(allocator, zeroed, slice->data, tySize * (i32) slice->count, tySize * (i32) newCount, tyAlign, location, error);
+    slice->count = slice->data ? newCount : 0;
+}
+
 utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
-    return (utf8str)
-    {
-        .count = count,
-        .data = PNSLR_Allocate(allocator, zeroed, (i32) (count) * (i32) (sizeof(u8)), (i32) (alignof(u8)), location, error),
-    };
+    static_assert(sizeof(utf8str) == sizeof(PNSLR_RawArraySlice), "utf8str must be the same size as PNSLR_RawArraySlice");
+    static_assert(alignof(utf8str) == alignof(PNSLR_RawArraySlice), "utf8str must have the same alignment as PNSLR_RawArraySlice");
+    PNSLR_RawArraySlice raw = PNSLR_MakeRawSlice((i32) sizeof(u8), (i32) alignof(u8), count, zeroed, allocator, location, error);
+    return *(utf8str*) &raw;
 }
 
 void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)

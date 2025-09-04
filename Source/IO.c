@@ -94,7 +94,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
 
             // need to create a new buffer
             PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-            buff->buffer = PNSLR_MakeSlice(u8, (buff->originalString.count + 1), false, buff->allocator, &err);
+            buff->buffer = PNSLR_MakeSlice(u8, (buff->originalString.count + 1), false, buff->allocator, CURRENT_LOC(), &err);
             if (err != PNSLR_AllocatorError_None) { return false; } // allocation failed
             PNSLR_Intrinsic_MemCopy(buff->buffer.data, buff->originalString.data, buff->writeIdx);
         }
@@ -125,7 +125,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
 
     static void DisposeLazyPathBuffer(LazyPathBuffer* buff)
     {
-        PNSLR_FreeSlice(buff->buffer, buff->allocator, nil);
+        PNSLR_FreeSlice(&(buff->buffer), buff->allocator, CURRENT_LOC(), nil);
         *buff = (LazyPathBuffer) {0}; // reset the buffer
     }
 
@@ -196,7 +196,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
         utf8str tempFullPath = (utf8str) {0};
         if (n > 0)
         {
-            buf = PNSLR_MakeSlice(u16, n, false, internalAllocator, nil);
+            buf = PNSLR_MakeSlice(u16, n, false, internalAllocator, CURRENT_LOC(), nil);
             n = GetFullPathNameW((LPCWSTR) p.data, (DWORD) n, (LPWSTR) buf.data, nil);
             if (n > 0)
             {
@@ -427,7 +427,7 @@ void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     // copy the filename to a temporary buffer
-    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 3), false, internalAllocator, nil);
+    ArraySlice(char) tempBuffer2 = PNSLR_MakeSlice(char, (path.path.count + 3), false, internalAllocator, CURRENT_LOC(), nil);
     PNSLR_Intrinsic_MemCopy(tempBuffer2.data, path.path.data, (i32) path.path.count);
     #if PNSLR_WINDOWS
     {
@@ -995,7 +995,7 @@ b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_All
     i64 size = PNSLR_GetSizeOfFile(file);
     if (size <= 0) { PNSLR_CloseFileHandle(file); return false; }
 
-    *dst = PNSLR_MakeSlice(u8, size, false, allocator, nil);
+    *dst = PNSLR_MakeSlice(u8, size, false, allocator, CURRENT_LOC(), nil);
     if (!dst->data || !dst->count) { PNSLR_CloseFileHandle(file); return false; }
 
     b8 success = PNSLR_ReadFromFile(file, *dst);
@@ -1043,7 +1043,7 @@ b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst)
             else
             {
                 b8 fail = false;
-                ArraySlice(u8) buffer = PNSLR_MakeSlice(u8, 8192, false, internalAllocator, nil);
+                ArraySlice(u8) buffer = PNSLR_MakeSlice(u8, 8192, false, internalAllocator, CURRENT_LOC(), nil);
                 i64 n;
                 while ((n = read(input, buffer.data, (u64) buffer.count)) > 0)
                 {

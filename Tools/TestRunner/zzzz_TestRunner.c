@@ -30,7 +30,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
     if (G_NumBufferedMessages >= (u64) G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_ResizeSlice(BufferedMessage, G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, &err);
+        PNSLR_ResizeSlice(BufferedMessage, &G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), &err);
 
         if (err != PNSLR_AllocatorError_None)
         {
@@ -78,7 +78,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     {
         u64                          testsCount = ZZZZ_GetTestsCount();
         PNSLR_AllocatorError         err        = PNSLR_AllocatorError_None;
-        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), &err);
+        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
 
         tests = tests2;
     }
@@ -101,7 +101,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         TestFunctionInfo info = tests.data[i];
 
         PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nil);
-        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, nil);
+        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), nil);
         G_NumBufferedMessages = 0;
 
         info.fn(&ctx);

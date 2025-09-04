@@ -336,96 +336,157 @@ rawptr PNSLR_AllocatorFn_Stack(
     PNSLR_AllocatorError*    error
 );
 
+// Collections make/free functions =================================================
+
+/**
+ * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+ */
+PNSLR_RawArraySlice PNSLR_MakeRawSlice(i32 tySize, i32 tyAlign, i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
+ */
+void PNSLR_FreeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
+ */
+void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, i32 tySize, i32 tyAlign, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
+ */
+utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
+ */
+void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
+ */
+cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
+ */
+void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
 //+skipreflect
+
+// C++ Convenience Templates =======================================================
+
+EXTERN_C_END
+
+#ifdef __cplusplus
+
+    template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    {
+        return (T*) PNSLR_Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
+    }
+
+    template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    {
+        if (obj) { PNSLR_Free(allocator, obj, loc, err); }
+    }
+
+    template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    {
+        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+
+        PNSLR_RawArraySlice raw = PNSLR_MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
+        return *reinterpret_cast<ArraySlice<T>*>(&raw);
+    }
+
+    template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    {
+        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+
+        if (slice) PNSLR_FreeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), allocator, loc, err);
+    }
+
+    template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    {
+        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+
+        if (slice) PNSLR_ResizeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
+    }
+
+#endif
+
+EXTERN_C_BEGIN
 
 // Allocation Macros ===============================================================
 
-/**
- * Allocate an object of type 'ty' using the provided allocator.
- */
-#define PNSLR_New(ty, allocator, error__) \
-    ((ty*) PNSLR_Allocate(allocator, true, sizeof(ty), alignof(ty), CURRENT_LOC(), error__))
-
-/**
- * Delete an object allocated with `PNSLR_New`, using the provided allocator.
- */
-#define PNSLR_Delete(obj, allocator, error__) \
-    do \
-    { \
-        if (obj) \
-        { \
-            PNSLR_Free(allocator, obj, CURRENT_LOC(), error__); \
-        } \
-    } while (false);
-
 #ifdef __cplusplus
+
     /**
-     * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     * Allocate an object of type 'ty' using the provided allocator.
      */
-    #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
-        ArraySlice(ty) \
-        { \
-            (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__), \
-            (i64) (count__), \
-        }
+    #define PNSLR_New(ty, allocator, loc, error__) \
+        PNSLR_NewT<ty>(allocator, loc, error__)
+
+    /**
+     * Delete an object allocated with `PNSLR_New`, using the provided allocator.
+     */
+    #define PNSLR_Delete(obj, allocator, loc, error__) \
+        PNSLR_DeleteT<decltype(*(obj))>(obj, allocator, loc, error__)
+
+    /**
+     * Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
+        PNSLR_MakeSliceT<ty>(count, zeroed, allocator, loc, error__)
+
+    /**
+     * Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator.
+     */
+    #define PNSLR_FreeSlice(slice, allocator, loc, error__) \
+        PNSLR_FreeSliceT(slice, allocator, loc, error__)
+
+    /**
+     * Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
+        PNSLR_ResizeSliceT<ty>(slice, newCount, zeroed, allocator, loc, error__)
+
 #else
+
     /**
-     * Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     * Allocate an object of type 'ty' using the provided allocator.
      */
-    #define PNSLR_MakeSlice(ty, count__, zeroed, allocator, error__) \
-        (ArraySlice(ty)) \
-        { \
-            .data  = (ty*) PNSLR_Allocate(allocator, zeroed, (i32) (count__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__), \
-            .count = (i64) (count__), \
-        }
+    #define PNSLR_New(ty, allocator, loc, error__) \
+        ((ty*) PNSLR_Allocate(allocator, true, sizeof(ty), alignof(ty), loc, error__))
+
+    /**
+     * Delete an object allocated with `PNSLR_New`, using the provided allocator.
+     */
+    #define PNSLR_Delete(obj, allocator, loc, error__) \
+        do { if (obj) { PNSLR_Free(allocator, obj, loc, error__); } } while (false)
+
+    /**
+     * Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
+        (ArraySlice(ty)) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
+
+    /**
+     * Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator.
+     */
+    #define PNSLR_FreeSlice(slice, allocator, loc, error__) \
+        do { if (slice) PNSLR_FreeRawSlice(&((slice)->raw), allocator, loc, error__); } while(false)
+
+    /**
+     * Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed.
+     */
+    #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
+        do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(false)
+
 #endif
-
-/**
- * Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator.
- * Expects a reassignable variable.
- */
-#define PNSLR_FreeSlice(slice, allocator, error__) \
-    do \
-    { \
-        if ((slice).data) \
-        { \
-            PNSLR_Free(allocator, (slice).data, CURRENT_LOC(), error__); \
-            (slice).data = nil; \
-            (slice).count = 0; \
-        } \
-    } while (false);
-
-
-#ifdef __cplusplus
-    /**
-     * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
-     * Expects a reassignable variable.
-     */
-    #define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
-        do \
-        { \
-            slice = ArraySlice(ty) \
-            { \
-                (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__), \
-                (i64) (newCount__), \
-            }; \
-        } while (false);
-#else
-    /**
-     * Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed.
-     * Expects a reassignable variable.
-     */
-    #define PNSLR_ResizeSlice(ty, slice, newCount__, zeroed, allocator, error__) \
-        do \
-        { \
-            slice = (ArraySlice(ty)) \
-            { \
-                .data  = (ty*) PNSLR_Resize(allocator, zeroed, (slice).data, (i32) ((slice).count) * (i32) (sizeof(ty)), (i32) (newCount__) * (i32) (sizeof(ty)), alignof(ty), CURRENT_LOC(), error__), \
-                .count = (i64) (newCount__), \
-            }; \
-        } while (false);
-#endif
-
 
 #ifdef PNSLR_IMPLEMENTATION
 
@@ -487,28 +548,6 @@ rawptr PNSLR_AllocatorFn_Stack(
 #endif
 
 //-skipreflect
-
-// String make/free functions ======================================================
-
-/**
- * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
- */
-utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-
-/**
- * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
- */
-void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-
-/**
- * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
- */
-cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-
-/**
- * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
- */
-void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
 
 EXTERN_C_END
 #endif // PNSLR_ALLOCATORS_H =======================================================

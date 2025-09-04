@@ -88,7 +88,7 @@ MAIN_TEST_FN(ctx)
 
         DirectoryStuffListerForFilePresentTestPayload data = {0};
         data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
-        data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, nil);
+        data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, CURRENT_LOC(), nil);
         PNSLR_IterateDirectory(dir, true, &data, DirectoryStuffListerForFilePresentTest);
 
         b8 pnslrHeaderFound = false, pnslrUnityFound = false;

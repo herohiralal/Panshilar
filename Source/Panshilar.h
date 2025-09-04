@@ -19,7 +19,7 @@ EXTERN_C_BEGIN
 #define PNSLR_EXECUTABLE_ENTRY_POINT(entryPointFunctionName__) \
     i32 main(i32 argc, cstring* argv) \
     { \
-        ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), nil); \
+        ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil); \
         for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); } \
         entryPointFunctionName__(args); \
         return 0; \

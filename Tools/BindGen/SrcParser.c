@@ -3,7 +3,7 @@
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
 {
-    ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, nil);
+    ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, CURRENT_LOC(), nil);
     if (!tt.data || !tt.count) FORCE_DBG_TRAP;
 
     i64 cnt = 0;
@@ -292,7 +292,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 {
     i32 enumStart = iter->startOfToken - 1, enumEnd = iter->i;
 
-    ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, nil);
+    ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, CURRENT_LOC(), nil);
     if (!enm) FORCE_DBG_TRAP;
 
     enm->header.type = DeclType_Enum;
@@ -361,7 +361,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
 
-            ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, nil);
+            ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, CURRENT_LOC(), nil);
             if (!var) FORCE_DBG_TRAP;
 
             if (cachedLasts->lastVariant) cachedLasts->lastVariant->next = var;
@@ -460,7 +460,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 {
     i32 structStart = iter->startOfToken - 1, structEnd = iter->i;
 
-    ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, nil);
+    ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, CURRENT_LOC(), nil);
     if (!strct) FORCE_DBG_TRAP;
 
     strct->header.type = DeclType_Struct;
@@ -529,7 +529,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 
         if (rec == TokenType_Identifier)
         {
-            ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, nil);
+            ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, CURRENT_LOC(), nil);
             if (!mem) FORCE_DBG_TRAP;
 
             mem->arrSize = -1;
@@ -584,7 +584,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 {
     i32 fnStart = iter->startOfToken - 1, fnEnd = iter->i;
 
-    ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, nil);
+    ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, CURRENT_LOC(), nil);
     if (!fn) FORCE_DBG_TRAP;
 
     fn->header.type = DeclType_Function;
@@ -630,7 +630,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
         }
         else // is an actual arg and not just `void`
         {
-            ParsedFnArg* arg = PNSLR_New(ParsedFnArg, allocator, nil);
+            ParsedFnArg* arg = PNSLR_New(ParsedFnArg, allocator, CURRENT_LOC(), nil);
             if (!arg) FORCE_DBG_TRAP;
 
             arg->ty = tyIdx;
@@ -703,7 +703,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
         {
             if (tokenStr.count == 84 && PNSLR_StringEndsWith(tokenStr, PNSLR_STRING_LITERAL("======="), 0))
             {
-                ParsedSection* sec = PNSLR_New(ParsedSection, allocator, nil);
+                ParsedSection* sec = PNSLR_New(ParsedSection, allocator, CURRENT_LOC(), nil);
                 if (!sec) FORCE_DBG_TRAP;
 
                 i64 firstSpaceIdx = tokenStr.count - 1;
@@ -733,7 +733,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
         if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
         {
-            ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, nil);
+            ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, CURRENT_LOC(), nil);
             if (!arr) FORCE_DBG_TRAP;
 
             arr->header.type = DeclType_Array;
@@ -805,7 +805,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 }
                 else // type alias
                 {
-                    ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, nil);
+                    ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, CURRENT_LOC(), nil);
                     if (!tyAl) FORCE_DBG_TRAP;
 
                     tyAl->header.type = DeclType_TyAlias;
@@ -850,7 +850,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
 b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
-    ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, nil);
+    ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, CURRENT_LOC(), nil);
     if (!file) FORCE_DBG_TRAP;
 
     // gather file name
