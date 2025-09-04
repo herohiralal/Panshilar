@@ -80,8 +80,9 @@ void BindGenMain(ArraySlice(utf8str) args)
         PNSLR_Path bindingsDir = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Bindings"), appArena);
         if (!PNSLR_PathExists(bindingsDir, PNSLR_PathExistsCheckType_Directory)) { PNSLR_CreateDirectoryTree(bindingsDir); }
 
-        RunGenerator(GenerateCBindings,   bindingsDir, PNSLR_STRING_LITERAL("C"),   &parsedStuff, appArena);
-        RunGenerator(GenerateCxxBindings, bindingsDir, PNSLR_STRING_LITERAL("Cxx"), &parsedStuff, appArena);
+        RunGenerator(GenerateCBindings,   bindingsDir, PNSLR_STRING_LITERAL("C"),    &parsedStuff, appArena);
+        RunGenerator(GenerateCxxBindings, bindingsDir, PNSLR_STRING_LITERAL("Cxx"),  &parsedStuff, appArena);
+        RunGenerator(GenerateOdnBindings, bindingsDir, PNSLR_STRING_LITERAL("Odin"), &parsedStuff, appArena);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
@@ -98,3 +99,4 @@ PNSLR_EXECUTABLE_ENTRY_POINT(BindGenMain)
 #include "Generator.c"
 #include "GeneratorC.c"
 #include "GeneratorCxx.c"
+#include "GeneratorOdn.c"
