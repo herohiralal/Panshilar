@@ -79,8 +79,6 @@
         #include <errno.h>
         #include <dirent.h>
         #include <pthread.h>
-        #include <signal.h>
-        #include <time.h>
         #include <semaphore.h>
     #endif
 
