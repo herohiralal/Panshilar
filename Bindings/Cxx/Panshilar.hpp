@@ -1330,10 +1330,10 @@ namespace Panshilar
     template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { ArraySlice<T> output; output.data = (T*) Allocate(allocator, zeroed, (i32) (sizeof(T) * count), (i32) alignof(T), loc, err); output.count = count; return output; }
 
     /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
-    template <typename T> void FreeSlice(ArraySlice<T>& slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (slice.data) { Free(allocator, (void*) slice.data, loc, err); slice.count = 0; slice.data = nullptr; } }
+    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (slice->data) { if (!slice) return; Free(allocator, (void*) slice->data, loc, err); slice->count = 0; slice->data = nullptr; } }
 
     /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
-    template <typename T> void ResizeSlice(ArraySlice<T>& slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { slice.data = (T*) Resize(allocator, zeroed, (void*) slice.data, (i32) slice.count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err); slice.count = newCount; }
+    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err) { if (!slice) return; slice->data = (T*) Resize(allocator, zeroed, (void*) slice->data, (i32) slice->count * (i32) sizeof(T), (i32) newCount * (i32) sizeof(T), (i32) alignof(T), loc, err); slice->count = newCount; }
 }//namespace end
 
 #endif//PANSHILAR_CXX_MAIN
