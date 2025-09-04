@@ -113,7 +113,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
 
         utf8str x = (utf8str) {.data = buff->volAndPath.data, .count = buff->volumeLength};
         utf8str y = (utf8str) {.data = buff->buffer.data, .count = buff->writeIdx};
-        utf8str z = PNSLR_MakeString((x.count + y.count), false, buff-> allocator, nil);
+        utf8str z = PNSLR_MakeString((x.count + y.count), false, buff-> allocator, CURRENT_LOC(), nil);
         if (z.data != nil)
         {
             PNSLR_Intrinsic_MemCopy(z.data,           x.data, (i32) x.count);
@@ -218,7 +218,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
             if (path.count == 0)
             {
                 // path is just a volume, needs a trailing slash and then return
-                resultPath = PNSLR_MakeString(volumeLength + 1, false, allocator, nil);
+                resultPath = PNSLR_MakeString(volumeLength + 1, false, allocator, CURRENT_LOC(), nil);
                 if (resultPath.data)
                 {
                     PNSLR_Intrinsic_MemCopy(resultPath.data, originalPath.data, volumeLength);
@@ -333,7 +333,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
         {
            utf8str tempAlias = PNSLR_StringFromCString(pathPtr);
            i32 tgtCount = (i32) tempAlias.count + ((type == PNSLR_PathNormalisationType_Directory) ? 1 : 0);
-           utf8str output = PNSLR_MakeString(tgtCount, false, allocator, nil);
+           utf8str output = PNSLR_MakeString(tgtCount, false, allocator, CURRENT_LOC(), nil);
 
            if (output.data != nil)
            {
@@ -398,7 +398,7 @@ b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, utf8str* selfNameWithExt
 
 PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, utf8str fileNameWithExtension, PNSLR_Allocator allocator)
 {
-    utf8str output = PNSLR_MakeString((dir.path.count + fileNameWithExtension.count + 1), false, allocator, nil); // +1 for joining slash
+    utf8str output = PNSLR_MakeString((dir.path.count + fileNameWithExtension.count + 1), false, allocator, CURRENT_LOC(), nil); // +1 for joining slash
     if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
 
     PNSLR_Intrinsic_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
@@ -410,7 +410,7 @@ PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, utf8str fileNameWithExtensi
 
 PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, utf8str dirName, PNSLR_Allocator allocator)
 {
-    utf8str output = PNSLR_MakeString((dir.path.count + dirName.count + 2), false, allocator, nil); // +1 for joining slash; +1 for trailing slash
+    utf8str output = PNSLR_MakeString((dir.path.count + dirName.count + 2), false, allocator, CURRENT_LOC(), nil); // +1 for joining slash; +1 for trailing slash
     if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
 
     PNSLR_Intrinsic_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
@@ -482,7 +482,7 @@ void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload
 
                 PNSLR_ArenaAllocatorSnapshot currentIterSnapshot = PNSLR_CaptureArenaAllocatorSnapshot(internalAllocator);
 
-                utf8str foundPath = PNSLR_MakeString((path.path.count + fileNameLen + 3), false, internalAllocator, nil);
+                utf8str foundPath = PNSLR_MakeString((path.path.count + fileNameLen + 3), false, internalAllocator, CURRENT_LOC(), nil);
 
                 PNSLR_Intrinsic_MemCopy(foundPath.data, path.path.data, (i32) path.path.count);
                 u32 iterator = (u32) path.path.count - 1;

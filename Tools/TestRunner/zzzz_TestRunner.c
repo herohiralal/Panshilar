@@ -78,7 +78,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     {
         u64                          testsCount = ZZZZ_GetTestsCount();
         PNSLR_AllocatorError         err        = PNSLR_AllocatorError_None;
-        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_DEFAULT_HEAP_ALLOCATOR, &err);
+        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), &err);
 
         tests = tests2;
     }
@@ -93,7 +93,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     ZZZZ_GetAllTests(tests);
     b8 success = true;
 
-    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 8 * 1024 * 1024, CURRENT_LOC(), nil);
+    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8 * 1024 * 1024, CURRENT_LOC(), nil);
 
     for (i32 i = 0; i < (i32) tests.count; ++i)
     {

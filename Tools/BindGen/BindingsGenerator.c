@@ -39,7 +39,7 @@ void BindGenMain(ArraySlice(utf8str) args)
         if (!firstArgIsExecutable) { printf("First argument is not the executable name."); FORCE_DBG_TRAP; }
 
         dirRaw.count -= executableName.count;
-        dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_DEFAULT_HEAP_ALLOCATOR);
+        dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_GetAllocator_DefaultHeap());
 
         if (!PNSLR_SplitPath(dir, nil, nil, &dirName, nil)) { printf("Failed to split path."); FORCE_DBG_TRAP; }
     }
@@ -47,7 +47,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     // initialise global main thread allocator
     PNSLR_Allocator appArena = {0};
     {
-        appArena = PNSLR_NewAllocator_Arena(PNSLR_DEFAULT_HEAP_ALLOCATOR, 16 * 1024 * 1024 /* 16 MiB */, CURRENT_LOC(), nil);
+        appArena = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 16 * 1024 * 1024 /* 16 MiB */, CURRENT_LOC(), nil);
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 

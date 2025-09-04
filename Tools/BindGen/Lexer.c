@@ -74,7 +74,7 @@ utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator a
     }
 
     allocSize -= joiner.count;
-    utf8str output = PNSLR_MakeString(allocSize, false, allocator, nil);
+    utf8str output = PNSLR_MakeString(allocSize, false, allocator, CURRENT_LOC(), nil);
     if (output.data && output.count)
     {
         i64 iterator = 0;

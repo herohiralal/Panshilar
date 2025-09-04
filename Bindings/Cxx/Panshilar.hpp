@@ -508,6 +508,14 @@ namespace Panshilar
         AllocatorError* error
     );
 
+    // Nil ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
+     * Otherwise no-ops all around.
+     */
+    Allocator GetAllocator_Nil();
+
     // Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
@@ -714,6 +722,50 @@ namespace Panshilar
         i32 alignment,
         void* oldMemory,
         i32 oldSize,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
+     */
+    utf8str MakeString(
+        i64 count,
+        b8 zeroed,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    /**
+     * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
+     */
+    void FreeString(
+        utf8str str,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    /**
+     * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
+     */
+    char* MakeCString(
+        i64 count,
+        b8 zeroed,
+        Allocator allocator,
+        SourceCodeLocation location,
+        AllocatorError* error
+    );
+
+    /**
+     * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
+     */
+    void FreeCString(
+        char* str,
+        Allocator allocator,
         SourceCodeLocation location,
         AllocatorError* error
     );
@@ -1821,6 +1873,12 @@ Panshilar::u64 Panshilar::QueryAllocatorCapabilities(Panshilar::Allocator alloca
     PNSLR_U64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_QueryAllocatorCapabilities(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
+extern "C" PNSLR_Allocator PNSLR_GetAllocator_Nil();
+Panshilar::Allocator Panshilar::GetAllocator_Nil()
+{
+    PNSLR_Allocator zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetAllocator_Nil(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
 extern "C" PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap();
 Panshilar::Allocator Panshilar::GetAllocator_DefaultHeap()
 {
@@ -2013,6 +2071,30 @@ extern "C" void* PNSLR_AllocatorFn_Stack(void* allocatorData, PNSLR_AllocatorMod
 void* Panshilar::AllocatorFn_Stack(void* allocatorData, Panshilar::AllocatorMode mode, Panshilar::i32 size, Panshilar::i32 alignment, void* oldMemory, Panshilar::i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Stack(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_MakeString(PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+Panshilar::utf8str Panshilar::MakeString(Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeString(PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_FreeString(PNSLR_UTF8STR str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::FreeString(Panshilar::utf8str str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_FreeString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
+}
+
+extern "C" char* PNSLR_MakeCString(PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+char* Panshilar::MakeCString(Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    char* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeCString(PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_FreeCString(char* str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::FreeCString(char* str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+{
+    PNSLR_FreeCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
 extern "C" PNSLR_I64 PNSLR_NanosecondsSinceUnixEpoch();

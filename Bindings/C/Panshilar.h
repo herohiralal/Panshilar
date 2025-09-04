@@ -587,6 +587,14 @@ PNSLR_U64 PNSLR_QueryAllocatorCapabilities(
     PNSLR_AllocatorError* error
 );
 
+// Nil ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
+ * Otherwise no-ops all around.
+ */
+PNSLR_Allocator PNSLR_GetAllocator_Nil();
+
 // Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
@@ -791,6 +799,50 @@ void* PNSLR_AllocatorFn_Stack(
     PNSLR_I32 alignment,
     void* oldMemory,
     PNSLR_I32 oldSize,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
+ */
+PNSLR_UTF8STR PNSLR_MakeString(
+    PNSLR_I64 count,
+    PNSLR_B8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+/**
+ * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
+ */
+void PNSLR_FreeString(
+    PNSLR_UTF8STR str,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+/**
+ * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
+ */
+char* PNSLR_MakeCString(
+    PNSLR_I64 count,
+    PNSLR_B8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error
+);
+
+/**
+ * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
+ */
+void PNSLR_FreeCString(
+    char* str,
+    PNSLR_Allocator allocator,
     PNSLR_SourceCodeLocation location,
     PNSLR_AllocatorError* error
 );

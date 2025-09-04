@@ -87,7 +87,7 @@ MAIN_TEST_FN(ctx)
         PNSLR_Path dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, ctx->testAllocator);
 
         DirectoryStuffListerForFilePresentTestPayload data = {0};
-        data.allocator = PNSLR_NewAllocator_Stack(PNSLR_DEFAULT_HEAP_ALLOCATOR, CURRENT_LOC(), nil);
+        data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
         data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, nil);
         PNSLR_IterateDirectory(dir, true, &data, DirectoryStuffListerForFilePresentTest);
 
@@ -107,13 +107,13 @@ MAIN_TEST_FN(ctx)
             }
 
             PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-            PNSLR_FreeString(path, data.allocator, &err);
+            PNSLR_FreeString(path, data.allocator, CURRENT_LOC(), &err);
             AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing last path.");
             err = PNSLR_AllocatorError_None;
 
             utf8str pollute = PNSLR_CloneString(PNSLR_STRING_LITERAL("POLLUTION_TEST"), data.allocator);
             AssertMsg(pollute.data && pollute.count, "Failed to pollute.");
-            PNSLR_FreeString(pollute, data.allocator, &err);
+            PNSLR_FreeString(pollute, data.allocator, CURRENT_LOC(), &err);
             AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing pollution string.");
             err = PNSLR_AllocatorError_None;
         }

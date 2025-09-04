@@ -145,6 +145,14 @@ u64 PNSLR_QueryAllocatorCapabilities(
     PNSLR_AllocatorError*    error
 );
 
+// Nil allocator ===================================================================
+
+/**
+ * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
+ * Otherwise no-ops all around.
+ */
+PNSLR_Allocator PNSLR_GetAllocator_Nil(void);
+
 // Default Heap Allocator ==========================================================
 
 /**
@@ -418,48 +426,6 @@ rawptr PNSLR_AllocatorFn_Stack(
         } while (false);
 #endif
 
-/**
- * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
- */
-#define PNSLR_MakeString(count__, zeroed, allocator, error__) \
-    PNSLR_MakeSlice(u8, count__, zeroed, allocator, error__)
-
-/**
- * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
- */
-#define PNSLR_FreeString(str, allocator, error__) \
-    PNSLR_FreeSlice(str, allocator, error__)
-
-/**
- * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
- */
-#define PNSLR_MakeCString(count__, zeroed, allocator, error__) \
-    PNSLR_MakeSlice(char, ((count__) + 1), zeroed, allocator, error__).data
-
-/**
- * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
- */
-#define PNSLR_FreeCString(str, allocator, error__) \
-    do \
-    { \
-        if (str) \
-        { \
-            PNSLR_Free(allocator, str, CURRENT_LOC(), error__); \
-            str = nil; \
-        } \
-    } while (false);
-
-/**
- * Short-hand for a nil allocator, which does nothing.
- */
-#define PNSLR_NIL_ALLOCATOR \
-    (PNSLR_Allocator) { .procedure = nil, .data = nil }
-
-/**
- * Short-hand for the default heap allocator.
- */
-#define PNSLR_DEFAULT_HEAP_ALLOCATOR \
-    PNSLR_GetAllocator_DefaultHeap()
 
 #ifdef PNSLR_IMPLEMENTATION
 
@@ -490,7 +456,7 @@ rawptr PNSLR_AllocatorFn_Stack(
                 G_##name##InternalAllocatorInfo.arenaBlock = (PNSLR_ArenaAllocatorBlock) \
                 { \
                     .previous  = nil, \
-                    .allocator = PNSLR_NIL_ALLOCATOR, \
+                    .allocator = PNSLR_GetAllocator_Nil(), \
                     .memory    = (rawptr) &G_##name##InternalAllocatorInfo.buffer.data, \
                     .capacity  = sizeof(G_##name##InternalAllocatorInfo.buffer.data), \
                     .used      = 0, \
@@ -498,7 +464,7 @@ rawptr PNSLR_AllocatorFn_Stack(
                 \
                 G_##name##InternalAllocatorInfo.arenaPayload = (PNSLR_ArenaAllocatorPayload) \
                 { \
-                    .backingAllocator    = PNSLR_NIL_ALLOCATOR, \
+                    .backingAllocator    = PNSLR_GetAllocator_Nil(), \
                     .currentBlock        = &G_##name##InternalAllocatorInfo.arenaBlock, \
                     .totalUsed           = 0, \
                     .totalCapacity       = sizeof(G_##name##InternalAllocatorInfo.buffer.data), \
@@ -521,6 +487,28 @@ rawptr PNSLR_AllocatorFn_Stack(
 #endif
 
 //-skipreflect
+
+// String make/free functions ======================================================
+
+/**
+ * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
+ */
+utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
+ */
+void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
+ */
+cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+
+/**
+ * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
+ */
+void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
 
 EXTERN_C_END
 #endif // PNSLR_ALLOCATORS_H =======================================================

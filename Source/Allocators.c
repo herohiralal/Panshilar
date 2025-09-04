@@ -132,6 +132,11 @@ u64 PNSLR_QueryAllocatorCapabilities(PNSLR_Allocator allocator, PNSLR_SourceCode
     return (u64)(result);
 }
 
+PNSLR_Allocator PNSLR_GetAllocator_Nil(void)
+{
+    return (PNSLR_Allocator) {0};
+}
+
 PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void)
 {
     return (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_DefaultHeap, .data = nil};
@@ -373,10 +378,10 @@ PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 p
         error
     );
 
-    if (!payload) { return PNSLR_NIL_ALLOCATOR; }
+    if (!payload) { return PNSLR_GetAllocator_Nil(); }
 
     PNSLR_ArenaAllocatorBlock* block = NewArenaAllocatorBlock(backingAllocator, pageSize, 0, location, error);
-    if (!block) { return PNSLR_NIL_ALLOCATOR; }
+    if (!block) { return PNSLR_GetAllocator_Nil(); }
 
     *payload = (PNSLR_ArenaAllocatorPayload)
     {
@@ -618,7 +623,7 @@ PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR
         error
     );
 
-    if (!payload) { return PNSLR_NIL_ALLOCATOR; }
+    if (!payload) { return PNSLR_GetAllocator_Nil(); }
 
     payload->lastAllocation       = nil;
     payload->lastAllocationHeader = nil;
@@ -888,3 +893,28 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i
 
     return nil; // Should not reach here.
 }
+
+utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    return (utf8str)
+    {
+        .count = count,
+        .data = PNSLR_Allocate(allocator, zeroed, (i32) (count) * (i32) (sizeof(u8)), (i32) (alignof(u8)), location, error),
+    };
+}
+
+void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    PNSLR_Free(allocator, str.data, location, error);
+}
+
+cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    return (cstring) PNSLR_Allocate(allocator, zeroed, (i32) (count + 1 /*for null term*/) * (i32) (sizeof(char)), (i32) (alignof(char)), location, error);
+}
+
+void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+{
+    PNSLR_Free(allocator, str, location, error);
+}
+
