@@ -45,6 +45,7 @@ typedef struct ParsedEnumVariant
     struct ParsedEnumVariant* next;
     utf8str                   name;
     u64                       idx;
+    u8                        flagsOffset;
     b8                        negative;
 } ParsedEnumVariant;
 

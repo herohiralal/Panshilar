@@ -368,6 +368,8 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             else                          enm->variants                  = var;
             cachedLasts->lastVariant                                     = var;
 
+            var->flagsOffset = U8_MAX;
+
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &(var->name), allocator)) return false;
             if (!PNSLR_StringStartsWith(var->name, enm->header.name, 0))
             {
@@ -433,7 +435,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             var->negative = (idxToken.count >= 1 && idxToken.data && idxToken.data[0] == '-');
             if (var->negative) idxToken = (utf8str) {.data = idxToken.data + 1, .count = idxToken.count - 1}; // trim '-' sign
             var->idx = (u64) strtoull(PNSLR_CStringFromString(idxToken, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
-            if (isFlags) var->idx = (1ULL << var->idx);
+            if (isFlags) { var->flagsOffset = (u8) var->idx; var->idx = (1ULL << var->idx); }
 
             if (isFlags) // flags
             {
