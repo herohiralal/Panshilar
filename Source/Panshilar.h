@@ -12,6 +12,7 @@
 #include "IO.h"
 #include "Console.h"
 #include "Process.h"
+#include "Network.h"
 EXTERN_C_BEGIN
 
 //+skipreflect

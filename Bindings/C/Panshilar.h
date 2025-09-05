@@ -1473,6 +1473,30 @@ void PNSLR_ExitProcess(
     PNSLR_I32 exitCode
 );
 
+// #######################################################################################
+// Network
+// #######################################################################################
+
+/**
+ * Represents an IP address in binary form.
+ * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
+ */
+typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPAddress;
+
+typedef union PNSLR_ArraySlice_PNSLR_IPAddress
+{
+    struct {
+        PNSLR_IPAddress* data;
+        PNSLR_I64 count;
+    };
+    PNSLR_RawArraySlice raw;
+} PNSLR_ArraySlice_PNSLR_IPAddress;
+
+PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
+    PNSLR_ArraySlice_PNSLR_IPAddress* addresses,
+    PNSLR_Allocator allocator
+);
+
 #undef PNSLR_ALIGNAS
 
 /** Create a utf8str from a string literal. */

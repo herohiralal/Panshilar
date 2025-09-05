@@ -10,3 +10,4 @@
 #include "IO.c"
 #include "Console.c"
 #include "Process.c"
+#include "Network.c"

@@ -1665,6 +1665,26 @@ foreign {
 	) ---
 }
 
+// #######################################################################################
+// Network
+// #######################################################################################
+
+/**
+ * Represents an IP address in binary form.
+ * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
+ */
+IPAddress :: []u8
+
+// declare []IPAddress
+
+@(link_prefix="PNSLR_")
+foreign {
+	GetInterfaceIPAddresses :: proc "c" (
+		addresses: ^[]IPAddress,
+		allocator: Allocator,
+	) -> b8 ---
+}
+
 #assert(size_of(int)  == 8, " int must be 8 bytes")
 #assert(size_of(uint) == 8, "uint must be 8 bytes")
 

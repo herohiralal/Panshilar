@@ -59,8 +59,13 @@
     PRAGMA_SUPPRESS_WARNINGS
 
     #if PNSLR_WINDOWS
+        #define WIN32_LEAN_AND_MEAN
         #include <Windows.h>
+        #include <WinSock2.h>
+        #include <ws2ipdef.h>
+        #include <iphlpapi.h>
         #include <intrin.h>
+        #undef WIN32_LEAN_AND_MEAN
     #endif
 
     #if PNSLR_UNIX
@@ -72,10 +77,13 @@
         #include <stdlib.h>
         #include <unistd.h>
         #include <fcntl.h>
+        #include <ifaddrs.h>
         #include <sys/types.h>
+        #include <sys/socket.h>
         #include <sys/stat.h>
         #include <sys/wait.h>
         #include <sys/mman.h>
+        #include <netinet/in.h>
         #include <errno.h>
         #include <dirent.h>
         #include <pthread.h>

@@ -204,7 +204,7 @@ PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount)
     PNSLR_Semaphore* semaphore = &output;
 
     #if PNSLR_WINDOWS
-        HANDLE tempSemaphore = CreateSemaphoreExW(nil, initialCount, LONG_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
+        HANDLE tempSemaphore = CreateSemaphoreExW(nil, initialCount, I32_MAX, nil, 0, SEMAPHORE_ALL_ACCESS);
         *((HANDLE*) semaphore) = tempSemaphore;
         if (tempSemaphore == nil) {
             // Handle error

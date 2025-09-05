@@ -98,6 +98,7 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             '/NOLOGO',
             intrinsicsObjFile,
             libraryObjFile,
+            'iphlpapi.lib',
             f'/OUT:{outputFile}',
         ]
     elif tgt == 'osx':
