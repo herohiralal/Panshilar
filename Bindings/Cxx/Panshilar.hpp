@@ -1370,8 +1370,23 @@ namespace Panshilar
      */
     typedef ArraySlice<u8> IPAddress;
 
+    /**
+     * Represents a subnet mask in binary form.
+     * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
+     */
+    typedef ArraySlice<u8> IPMask;
+
+    /**
+     * Represents an IP network, consisting of an IP address and a subnet mask.
+     */
+    struct IPNetwork
+    {
+       IPAddress address;
+       IPMask mask;
+    };
+
     b8 GetInterfaceIPAddresses(
-        ArraySlice<IPAddress>* addresses,
+        ArraySlice<IPNetwork>* networks,
         Allocator allocator
     );
 
@@ -2612,20 +2627,36 @@ void Panshilar::ExitProcess(Panshilar::i32 exitCode)
 
 typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPAddress;
 
-typedef struct { PNSLR_IPAddress* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_IPAddress;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_IPAddress) == sizeof(Panshilar::ArraySlice<Panshilar::IPAddress>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_IPAddress) == alignof(Panshilar::ArraySlice<Panshilar::IPAddress>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_IPAddress* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPAddress>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_IPAddress*>(x); }
-Panshilar::ArraySlice<Panshilar::IPAddress>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPAddress* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::IPAddress>*>(x); }
-PNSLR_ArraySlice_PNSLR_IPAddress& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPAddress>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::IPAddress>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPAddress& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPAddress, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPAddress>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPAddress, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPAddress>, data), "data offset mismatch");
+typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPMask;
 
-extern "C" PNSLR_B8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice_PNSLR_IPAddress* addresses, PNSLR_Allocator allocator);
-Panshilar::b8 Panshilar::GetInterfaceIPAddresses(Panshilar::ArraySlice<Panshilar::IPAddress>* addresses, Panshilar::Allocator allocator)
+struct PNSLR_IPNetwork
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetInterfaceIPAddresses(PNSLR_Bindings_Convert(addresses), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+   PNSLR_IPAddress address;
+   PNSLR_IPMask mask;
+};
+static_assert(sizeof(PNSLR_IPNetwork) == sizeof(Panshilar::IPNetwork), "size mismatch");
+static_assert(alignof(PNSLR_IPNetwork) == alignof(Panshilar::IPNetwork), "align mismatch");
+PNSLR_IPNetwork* PNSLR_Bindings_Convert(Panshilar::IPNetwork* x) { return reinterpret_cast<PNSLR_IPNetwork*>(x); }
+Panshilar::IPNetwork* PNSLR_Bindings_Convert(PNSLR_IPNetwork* x) { return reinterpret_cast<Panshilar::IPNetwork*>(x); }
+PNSLR_IPNetwork& PNSLR_Bindings_Convert(Panshilar::IPNetwork& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::IPNetwork& PNSLR_Bindings_Convert(PNSLR_IPNetwork& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_IPNetwork, address) == PNSLR_STRUCT_OFFSET(Panshilar::IPNetwork, address), "address offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_IPNetwork, mask) == PNSLR_STRUCT_OFFSET(Panshilar::IPNetwork, mask), "mask offset mismatch");
+
+typedef struct { PNSLR_IPNetwork* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_IPNetwork;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_IPNetwork) == sizeof(Panshilar::ArraySlice<Panshilar::IPNetwork>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_IPNetwork) == alignof(Panshilar::ArraySlice<Panshilar::IPNetwork>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_IPNetwork* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPNetwork>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_IPNetwork*>(x); }
+Panshilar::ArraySlice<Panshilar::IPNetwork>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::IPNetwork>*>(x); }
+PNSLR_ArraySlice_PNSLR_IPNetwork& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPNetwork>& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::ArraySlice<Panshilar::IPNetwork>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPNetwork>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPNetwork>, data), "data offset mismatch");
+
+extern "C" PNSLR_B8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice_PNSLR_IPNetwork* networks, PNSLR_Allocator allocator);
+Panshilar::b8 Panshilar::GetInterfaceIPAddresses(Panshilar::ArraySlice<Panshilar::IPNetwork>* networks, Panshilar::Allocator allocator)
+{
+    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetInterfaceIPAddresses(PNSLR_Bindings_Convert(networks), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 

@@ -1483,17 +1483,32 @@ void PNSLR_ExitProcess(
  */
 typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPAddress;
 
-typedef union PNSLR_ArraySlice_PNSLR_IPAddress
+/**
+ * Represents a subnet mask in binary form.
+ * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
+ */
+typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPMask;
+
+/**
+ * Represents an IP network, consisting of an IP address and a subnet mask.
+ */
+typedef struct PNSLR_IPNetwork
+{
+    PNSLR_IPAddress address;
+    PNSLR_IPMask mask;
+} PNSLR_IPNetwork;
+
+typedef union PNSLR_ArraySlice_PNSLR_IPNetwork
 {
     struct {
-        PNSLR_IPAddress* data;
+        PNSLR_IPNetwork* data;
         PNSLR_I64 count;
     };
     PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_IPAddress;
+} PNSLR_ArraySlice_PNSLR_IPNetwork;
 
 PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
-    PNSLR_ArraySlice_PNSLR_IPAddress* addresses,
+    PNSLR_ArraySlice_PNSLR_IPNetwork* networks,
     PNSLR_Allocator allocator
 );
 

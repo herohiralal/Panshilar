@@ -1675,12 +1675,26 @@ foreign {
  */
 IPAddress :: []u8
 
-// declare []IPAddress
+/**
+ * Represents a subnet mask in binary form.
+ * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
+ */
+IPMask :: []u8
+
+/**
+ * Represents an IP network, consisting of an IP address and a subnet mask.
+ */
+IPNetwork :: struct  {
+	address: IPAddress,
+	mask: IPMask,
+}
+
+// declare []IPNetwork
 
 @(link_prefix="PNSLR_")
 foreign {
 	GetInterfaceIPAddresses :: proc "c" (
-		addresses: ^[]IPAddress,
+		networks: ^[]IPNetwork,
 		allocator: Allocator,
 	) -> b8 ---
 }
