@@ -99,6 +99,7 @@ def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
             intrinsicsObjFile,
             libraryObjFile,
             'iphlpapi.lib',
+            'Ws2_32.lib',
             f'/OUT:{outputFile}',
         ]
     elif tgt == 'osx':

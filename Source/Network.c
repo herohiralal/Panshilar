@@ -53,13 +53,37 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
                     case AF_INET:
                     {
                         ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
                         PNSLR_Intrinsic_MemCopy(ipAddr.data, &(((SOCKADDR_IN*) addr)->sin_addr), 4);
+                        if (puni->OnLinkPrefixLength <= 32)
+                        {
+                            *(DWORD*) ipMask.data = htonl((puni->OnLinkPrefixLength == 0) ? 0 : (0xFFFFFFFF << (32 - puni->OnLinkPrefixLength)));
+                        }
+                        else
+                        {
+                            *(DWORD*) ipMask.data = 0; // invalid prefix length, set mask to 0
+                        }
                         break;
                     }
                     case AF_INET6:
                     {
                         ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
                         PNSLR_Intrinsic_MemCopy(ipAddr.data, &(((SOCKADDR_IN6*) addr)->sin6_addr), 16);
+                        if (puni->OnLinkPrefixLength <= 128)
+                        {
+                            u8 prefix = (u8) puni->OnLinkPrefixLength;
+                            for (i32 i = 0; i < 16; i++)
+                            {
+                                if (prefix >= 8) { ipMask.data[i] = 0xFF; prefix -= 8; }
+                                else if (prefix > 0) { ipMask.data[i] = (u8)(0xFF << (8 - prefix)); prefix = 0; }
+                                else { ipMask.data[i] = 0x00; }
+                            }
+                        }
+                        else
+                        {
+                            for (i32 i = 0; i < 16; i++) ipMask.data[i] = 0x00;
+                        }
                         break;
                     }
                     default: continue;
@@ -86,13 +110,17 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
                     case AF_INET:
                     {
                         ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
                         PNSLR_Intrinsic_MemCopy(ipAddr.data, &(((SOCKADDR_IN*) addr)->sin_addr), 4);
+                        *(DWORD*) ipMask.data = 0xFFFFFFFF; // Windows does not provide a mask for anycast addresses, so we set it to all ones
                         break;
                     }
                     case AF_INET6:
                     {
                         ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
                         PNSLR_Intrinsic_MemCopy(ipAddr.data, &(((SOCKADDR_IN6*) addr)->sin6_addr), 16);
+                        for (i32 i = 0; i < 16; i++) { ipMask.data[i] = 0xFF; } // Windows does not provide a mask for anycast addresses, so we set it to all ones
                         break;
                     }
                     default: continue;
@@ -131,6 +159,9 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
             i64 ipLen = 0;
             const u8* ipBytes = nil;
 
+            PNSLR_IPAddress ipAddr = {0};
+            PNSLR_IPMask    ipMask = {0};
+
             switch (ifa->ifa_addr->sa_family)
             {
                 case AF_INET:
@@ -138,6 +169,10 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
                     struct sockaddr_in* ipv4 = (struct sockaddr_in*) ifa->ifa_addr;
                     ipLen = 4;
                     ipBytes = (const u8*) &ipv4->sin_addr;
+
+                    struct sockaddr_in* netmask4 = (struct sockaddr_in*) ifa->ifa_netmask;
+                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+                    PNSLR_Intrinsic_MemCopy(ipMask.data, &netmask4->sin_addr, (i32) ipLen);
                     break;
                 }
                 case AF_INET6:
@@ -145,15 +180,17 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
                     struct sockaddr_in6* ipv6 = (struct sockaddr_in6*) ifa->ifa_addr;
                     ipLen = 16;
                     ipBytes = (const u8*) &ipv6->sin6_addr;
+
+                    struct sockaddr_in6* netmask6 = (struct sockaddr_in6*) ifa->ifa_netmask;
+                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+                    PNSLR_Intrinsic_MemCopy(ipMask.data, &netmask6->sin6_addr, (i32) ipLen);
                     break;
                 }
                 default: continue;
             }
 
-            PNSLR_IPAddress ipAddr = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
-            PNSLR_IPMask    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+            ipAddr = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
             PNSLR_Intrinsic_MemCopy(ipAddr.data, (rawptr) ipBytes, (i32) ipLen);
-            PNSLR_Intrinsic_MemCopy(ipMask.data, (rawptr) &ifa->ifa_netmask, (i32) ipLen);
 
             if (countTrack >= networksTemp.count)
             {
