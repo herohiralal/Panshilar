@@ -43,6 +43,15 @@ if exist "%LINUX_MULTIARCH_ROOT%aarch64-unknown-linux-gnueabi\bin\clang.exe" (
 rem Android Toolchain
 
 if "!ANDROID_NDK_HOME!" equ "" (
+    if not defined JAVA_HOME (
+        set JAVA_HOME=%ProgramFiles%\Android\Android Studio\jbr
+        if not exist "!JAVA_HOME!" (
+            set JAVA_HOME=%ProgramFiles(x86)%\Android\Android Studio\jbr
+            if not exist "!JAVA_HOME!" (
+                set JAVA_HOME=
+            )
+        )
+    )
     if exist "%LOCALAPPDATA%\Android\Sdk" (
         set ANDROID_SDK_ROOT=%LOCALAPPDATA%\Android\Sdk
         set ANDROID_HOME=!ANDROID_SDK_ROOT!
