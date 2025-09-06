@@ -2,27 +2,20 @@
 
 The name means nothing, it just sounds good.
 
-It's a C11 standard library for games with a heavy focus on minimalism, readability and cross-platform compatibility.
-
-One of the stretch goals is to also support _multiple languages_ and provide a common base so that different libraries (in different languages) that use Panshilar, can interoperate a bit easier.
-
-For now, even the idea of it, only revolves around:
-- A common UTF-8 string type.
-- Conversions to UTF-16 as required.
-- Common internally-compatible allocators.
-- Common slice and array types.
+It's a C11 standard library for games with a heavy focus on minimalism, simplicity (to the point of dumbness), ease of interoperability (between different languages) and cross-platform compatibility.
 
 ## Tools
 
-Currently the repository has two tools (neither of them even at their first version):
-- Test Runner - run tests for the library, print results
+Currently the repository has two tools:
 - Bindings Generator - parse the headers and generate bindings for different languages; some ideas include (in the order of priority):
-  - Jai - primary target; for a personal project
-  - Odin - because it's a short detour from Jai
+  - Odin - primary target; for a personal project
+  - Jai - because it's a short detour from Odin
   - C++ - because most people use that
-    - currently hard-disabled from using via a static assert
-    - the idea is to build better APIs that are more suited for C++
+  - C - because it's better to have a single consumable header than a whole repo to download
   - C# - because it sucks to deal with GC, which all Unity users have to
+- Test Runner - run tests for the library, print results
+  - However, in its current state, there aren't a lot of tests.
+  - It also currently only builds/runs for the desktop platforms (Windows, OSX, Linux). Yet to add appropriate 'building' pipelines for iOS, iOS Simulator and Android.
 
 Both meant to utilise the library and iron out its quirks.
 
@@ -31,29 +24,34 @@ Both meant to utilise the library and iron out its quirks.
 Listing some ideas here as soft constraints or styling guide.
 - No conditional compilation allowed in _most_ header files.
   - This maintains a clear, consistent and reliable API across different environments and platforms.
-  - This would also help with reflection-based code generation for different languages.
+  - It also prevents linking hell.
+  - Keeps Bindings Generator simple.
 - C11 only.
   - C++ ABI is unstable and it's easier to port.
 - No exceptions, no crashes. Return errors as values.
+  - In some cases, feel free to return boolean result only.
 - Avoid delegate passing.
   - While a lot of languages are compatible with C calling convention, it's not the default.
   - For languages like Jai/Odin, that use an implicit context system, this is even more annoying.
 - No storing delegates (and by extension 'allocators') in structs or global variables.
   - Pain when it comes to hot-reloading.
 - Avoid globals, but not outright banned, if they're localised properly.
-- Avoid UCRT dependencies.
+  - Currently the repository has 'internal allocators' for certain modules (strings, paths, etc.), that are thread-local globals. But it should be fine, as any 'returning' function ensures that the allocators are cleaned up appropriately. They've also been designed in the way that the thread 'exiting' the thread does not need any sort of customized cleanup.
+- Avoid Std C Lib dependencies.
   - This isn't a hard rule, because functionality comes first, but avoid as much as possible.
 
 ## Supported Platforms
 
 You can find binaries for the following platforms in `Libraries/` directory:
 ```plaintext
-- Windows (X64)   - primary platform
-- Linux   (X64)
-- Linux   (ARM64) - mostly for embedded; might drop it
-- OSX     (ARM64)
-- Android (ARM64)
-- iOS     (ARM64)
+- Windows (X64)   Good ol' gaming primary.
+- Linux   (X64)   Up 'n comin gaming primary.
+- Linux   (ARM64) Mostly for embedded.
+- OSX     (ARM64) MacOS (Apple Silicon)
+- OSX     (X64)   MacOS (Intel)
+- Android (ARM64) Most accessible gaming hardware.
+- iOS     (ARM64) Most inaccessible game development platform.
+- iOS Sim (ARM64)
 ```
 
 However, this library is in very initial stages and there might not be a lot of feature parity around different platforms.
@@ -71,7 +69,9 @@ Currently it supposrts two hosts that can build different subsets of the targets
 - Windows (x64)   -> Linux   (ARM64)
 - Windows (x64)   -> Android (ARM64)
 - OSX     (ARM64) -> OSX     (ARM64)
+- OSX     (ARM64) -> OSX     (X64)
 - OSX     (ARM64) -> iOS     (ARM64)
+- OSX     (ARM64) -> iOS Sim (ARM64)
 ```
 
 The batch files (`build.bat`/`build.sh`) for both host platforms are set up, which in turn call `build.py`.
@@ -93,4 +93,11 @@ Also, never switching to a build system. Unity build, with a single build comman
 
 ## How to use
 
-Idk why anyone would want to at this stage, but check out how `TestRunner
+The repository includes prebuilt static libraries for all platforms inside `Libraries/` directory. Link against them and you're good to go.
+
+There's bindings (with extensive LSP-compatible API docs) available for the following languages:
+- C
+- C++
+- Odin
+
+## Made by HeroHiralal
