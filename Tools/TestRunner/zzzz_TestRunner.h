@@ -12,7 +12,8 @@
 
 typedef struct
 {
-    struct PNSLR_Allocator     testAllocator;
+    PNSLR_Path                      tgtDir;
+    PNSLR_Allocator                 testAllocator;
     PNSLR_ArraySlice(PNSLR_UTF8STR) args;
 } TestContext;
 

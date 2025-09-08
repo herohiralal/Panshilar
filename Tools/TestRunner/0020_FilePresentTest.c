@@ -51,83 +51,40 @@ PNSLR_B8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, 
 
 MAIN_TEST_FN(ctx)
 {
-    PNSLR_Platform     plt  = PNSLR_GetPlatform();
-    PNSLR_Architecture arch = PNSLR_GetArchitecture();
+    DirectoryStuffListerForFilePresentTestPayload data = {0};
+    data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
+    data.paths = PNSLR_MakeSlice(PNSLR_UTF8STR, 2048, false, ctx->testAllocator, PNSLR_GET_LOC(), nullptr);
+    PNSLR_IterateDirectory(ctx->tgtDir, true, &data, DirectoryStuffListerForFilePresentTest);
 
-    if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux || plt == PNSLR_Platform_OSX)
+    PNSLR_B8 pnslrHeaderFound = false, pnslrUnityFound = false;
+    for (PNSLR_I32 i = (PNSLR_I32) data.pathsCount - 1; i >= 0; --i)
     {
-        PNSLR_UTF8STR executableName = {0};
+        PNSLR_UTF8STR path = data.paths.data[i];
 
-        if (plt == PNSLR_Platform_Windows)
+        if (!pnslrHeaderFound)
         {
-            executableName = PNSLR_StringLiteral("Binaries\\TestRunner-windows-x64.exe");
-        }
-        else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_X64)
-        {
-            executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-x64");
-        }
-        else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64)
-        {
-            executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-arm64");
-        }
-        else if (plt == PNSLR_Platform_OSX)
-        {
-            executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-arm64");
-        }
-        else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64)
-        {
-            executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-x64");
-        }
-        else
-        {
-            AssertMsg(false, "Unsupported platform or architecture.");
-            return;
+            pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseInsensitive);
         }
 
-        if (!AssertMsg(ctx->args.count, "Need at least one arg to extract location.")) { return; }
-
-        PNSLR_B8 firstArgIsExecutable = PNSLR_StringEndsWith(ctx->args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
-        if (!AssertMsg(firstArgIsExecutable, "First argument must be the executable name.")) { return; }
-
-        PNSLR_UTF8STR dirRaw = ctx->args.data[0];
-        dirRaw.count -= executableName.count;
-        PNSLR_Path dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, ctx->testAllocator);
-
-        DirectoryStuffListerForFilePresentTestPayload data = {0};
-        data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
-        data.paths = PNSLR_MakeSlice(PNSLR_UTF8STR, 2048, false, ctx->testAllocator, PNSLR_GET_LOC(), nullptr);
-        PNSLR_IterateDirectory(dir, true, &data, DirectoryStuffListerForFilePresentTest);
-
-        PNSLR_B8 pnslrHeaderFound = false, pnslrUnityFound = false;
-        for (PNSLR_I32 i = (PNSLR_I32) data.pathsCount - 1; i >= 0; --i)
+        if (!pnslrUnityFound)
         {
-            PNSLR_UTF8STR path = data.paths.data[i];
-
-            if (!pnslrHeaderFound)
-            {
-                pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseInsensitive);
-            }
-
-            if (!pnslrUnityFound)
-            {
-                pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseInsensitive);
-            }
-
-            PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-            PNSLR_FreeString(path, data.allocator, PNSLR_GET_LOC(), &err);
-            AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing last path.");
-            err = PNSLR_AllocatorError_None;
-
-            PNSLR_UTF8STR pollute = PNSLR_CloneString(PNSLR_StringLiteral("POLLUTION_TEST"), data.allocator);
-            AssertMsg(pollute.data && pollute.count, "Failed to pollute.");
-            PNSLR_FreeString(pollute, data.allocator, PNSLR_GET_LOC(), &err);
-            AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing pollution string.");
-            err = PNSLR_AllocatorError_None;
+            pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseInsensitive);
         }
 
-        PNSLR_DestroyAllocator_Stack(data.allocator, PNSLR_GET_LOC(), nullptr);
+        PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
+        PNSLR_FreeString(path, data.allocator, PNSLR_GET_LOC(), &err);
+        AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing last path.");
+        err = PNSLR_AllocatorError_None;
 
-        Assert(pnslrHeaderFound);
-        Assert(pnslrUnityFound);
+        PNSLR_UTF8STR pollute = PNSLR_CloneString(PNSLR_StringLiteral("POLLUTION_TEST"), data.allocator);
+        AssertMsg(pollute.data && pollute.count, "Failed to pollute.");
+        PNSLR_FreeString(pollute, data.allocator, PNSLR_GET_LOC(), &err);
+        AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing pollution string.");
+        err = PNSLR_AllocatorError_None;
     }
+
+    PNSLR_DestroyAllocator_Stack(data.allocator, PNSLR_GET_LOC(), nullptr);
+
+    Assert(pnslrHeaderFound);
+    Assert(pnslrUnityFound);
 }

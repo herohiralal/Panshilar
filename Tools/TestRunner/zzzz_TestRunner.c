@@ -82,6 +82,47 @@ void TestRunnerMain(PNSLR_ArraySlice(PNSLR_UTF8STR) args)
 {
     setvbuf(stdout, NULL, _IONBF, 0); // disable stdout buffering
 
+    PNSLR_Path tgtDir = {0};
+    {
+        PNSLR_Platform     plt  = PNSLR_GetPlatform();
+        PNSLR_Architecture arch = PNSLR_GetArchitecture();
+
+        if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux || plt == PNSLR_Platform_OSX)
+        {
+            PNSLR_UTF8STR executableName = {0};
+
+            if (plt == PNSLR_Platform_Windows) { executableName = PNSLR_StringLiteral("Binaries\\TestRunner-windows-x64.exe"); }
+            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-x64"); }
+            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-arm64"); }
+            else if (plt == PNSLR_Platform_OSX) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-arm64"); }
+            else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-x64"); }
+            else { printf("Unsupported platform or architecture."); PNSLR_ExitProcess(1); return; }
+
+            if (!args.count) { printf("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
+
+            PNSLR_B8 firstArgIsExecutable = PNSLR_StringEndsWith(args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
+
+            if (!firstArgIsExecutable) { printf("First argument must be the executable name."); PNSLR_ExitProcess(1); return; }
+
+            PNSLR_UTF8STR dirRaw = args.data[0];
+            dirRaw.count -= executableName.count;
+            tgtDir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_GetAllocator_DefaultHeap());
+        }
+        else if (plt == PNSLR_Platform_Android)
+        {
+            // TODO: find path
+        }
+        else if (plt == PNSLR_Platform_iOS)
+        {
+            // TODO: find path
+        }
+        else
+        {
+            printf("Unsupported platform.");
+            PNSLR_ExitProcess(1); return;
+        }
+    }
+
     PNSLR_ArraySlice(TestFunctionInfo) tests = {0};
     {
         PNSLR_U64                          testsCount = ZZZZ_GetTestsCount();
@@ -105,7 +146,7 @@ void TestRunnerMain(PNSLR_ArraySlice(PNSLR_UTF8STR) args)
 
     for (PNSLR_I32 i = 0; i < (PNSLR_I32) tests.count; ++i)
     {
-        TestContext      ctx  = {.testAllocator = G_CurrentTestRunnerAllocator, .args = args};
+        TestContext      ctx  = {.tgtDir = tgtDir,.testAllocator = G_CurrentTestRunnerAllocator, .args = args};
         TestFunctionInfo info = tests.data[i];
 
         PNSLR_FreeAll(ctx.testAllocator, PNSLR_GET_LOC(), nullptr);
@@ -154,7 +195,15 @@ void TestRunnerMain(PNSLR_ArraySlice(PNSLR_UTF8STR) args)
 
     PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
 
-    if (!success) { PNSLR_ExitProcess(1); }
+    if (!success)
+    {
+        printf("=============== One or more tests failed. (>_<) ===============\n");
+        PNSLR_ExitProcess(1);
+    }
+    else
+    {
+        printf("=================== All tests passed. (^_^) ===================\n");
+    }
 }
 
 PNSLR_I32 main(PNSLR_I32 argc, char** argv)
