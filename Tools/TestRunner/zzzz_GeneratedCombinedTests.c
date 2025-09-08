@@ -10,7 +10,12 @@
 #include "0020_FilePresentTest.c"
 #undef MAIN_TEST_FN
 
-PNSLR_U64 ZZZZ_GetTestsCount(void) { return 2ULL; }
+#undef MAIN_TEST_FN
+#define MAIN_TEST_FN(ctxArgName) void ZZZZ_Test_StringsTest(const TestContext* ctxArgName)
+#include "StringsTest.c"
+#undef MAIN_TEST_FN
+
+PNSLR_U64 ZZZZ_GetTestsCount(void) { return 3ULL; }
 
 void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)
 {
@@ -19,6 +24,9 @@ void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)
 
     fns.data[1].name = PNSLR_StringLiteral("0020_FilePresentTest");
     fns.data[1].fn   = ZZZZ_Test_0020_FilePresentTest;
+
+    fns.data[2].name = PNSLR_StringLiteral("StringsTest");
+    fns.data[2].fn   = ZZZZ_Test_StringsTest;
 
     // done
 }
