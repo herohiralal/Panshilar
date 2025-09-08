@@ -1417,7 +1417,7 @@ PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
 #undef PNSLR_ALIGNAS
 
 /** Create a utf8str from a string literal. */
-#define PNSLR_StringLiteral(str) (PNSLR_UTF8STR) {.count = sizeof(str) - 1, .data = (u8*) str}
+#define PNSLR_StringLiteral(str) (PNSLR_UTF8STR) {.count = sizeof(str) - 1, .data = (PNSLR_U8*) str}
 
 /** Get the current source code location. */
 #define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) \
@@ -1437,7 +1437,7 @@ PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
 
 /** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */
 #define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
-    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
+    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((PNSLR_I32) sizeof(ty), (PNSLR_I32) alignof(ty), (PNSLR_I64) count, zeroed, allocator, loc, error__)}
 
 /** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */
 #define PNSLR_FreeSlice(slice, allocator, loc, error__) \
@@ -1445,7 +1445,7 @@ PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
 
 /** Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed. */
 #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
-    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)
+    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (PNSLR_I32) sizeof(ty), (PNSLR_I32) alignof(ty), (PNSLR_I64) newCount, zeroed, allocator, loc, error__); } while(0)
 
 #ifdef __cplusplus
 } // extern c
