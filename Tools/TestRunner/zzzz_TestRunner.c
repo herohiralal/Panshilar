@@ -85,7 +85,7 @@ void TestRunnerMain(PNSLR_ArraySlice(PNSLR_UTF8STR) args)
     PNSLR_ArraySlice(TestFunctionInfo) tests = {0};
     {
         PNSLR_U64                          testsCount = ZZZZ_GetTestsCount();
-        PNSLR_AllocatorError         err        = PNSLR_AllocatorError_None;
+        PNSLR_AllocatorError               err        = PNSLR_AllocatorError_None;
         PNSLR_ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
 
         tests = tests2;

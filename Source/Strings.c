@@ -1,7 +1,7 @@
 #define PNSLR_IMPLEMENTATION
 #include "Strings.h"
 
-PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 1024);
+PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 60);
 
 i32 PNSLR_GetCStringLength(cstring str)
 {

@@ -5,7 +5,7 @@
 
 // internal allocator stuff ========================================================
 
-PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 512);
+PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
 
 // some bs internal stuff ==========================================================
 
