@@ -50,6 +50,7 @@ You can find binaries for the following platforms in `Libraries/` directory:
 - OSX     (ARM64) MacOS (Apple Silicon)
 - OSX     (X64)   MacOS (Intel)
 - Android (ARM64) Most accessible gaming hardware.
+- Android (X64)   Helps with emulator/AVD compat.
 - iOS     (ARM64) Most inaccessible game development platform.
 - iOS Sim (ARM64)
 ```
@@ -68,6 +69,7 @@ Currently it supposrts two hosts that can build different subsets of the targets
 - Windows (x64)   -> Linux   (x64)
 - Windows (x64)   -> Linux   (ARM64)
 - Windows (x64)   -> Android (ARM64)
+- Windows (x64)   -> Android (X64)
 - OSX     (ARM64) -> OSX     (ARM64)
 - OSX     (ARM64) -> OSX     (X64)
 - OSX     (ARM64) -> iOS     (ARM64)

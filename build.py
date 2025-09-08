@@ -542,6 +542,37 @@ def main():
         ))
 
     if androidToolchain:
+        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=x86_64-linux-android28']
+
+        buildPlatform(
+            'Android',
+            'X64',
+            'android',
+            'x64',
+            os.path.join(androidToolchain, 'bin', 'clang.exe'),
+            os.path.join(androidToolchain, 'bin', 'clang++.exe'),
+            CLANG_C_STD_ARGS,
+            CLANG_CXX_STD_ARGS,
+            os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
+            commonArgs,
+            ['-DPNSLR_ANDROID=1', '-DPNSLR_X64=1'],
+        )
+
+        properties.configurations.append(CCppPropertiesConfiguration(
+            name             = 'Android-x64',
+            compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe').replace('\\', '/'),
+            cStandard        = 'c11',
+            cppStandard      = 'c++14',
+            includePath      = [
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings',
+                f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
+            ],
+            defines          = ['PNSLR_ANDROID=1', 'PNSLR_X64=1'],
+            compilerArgs     = commonArgs,
+        ))
+
+    if androidToolchain:
         commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28']
 
         buildPlatform(
