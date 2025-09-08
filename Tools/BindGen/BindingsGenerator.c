@@ -91,7 +91,7 @@ void BindGenMain(ArraySlice(utf8str) args)
 
 i32 main(i32 argc, cstring* argv)
 {
-    ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_DEFAULT_HEAP_ALLOCATOR, nil);
+    ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
     for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
     BindGenMain(args);
     return 0;
