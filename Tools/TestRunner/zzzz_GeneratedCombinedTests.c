@@ -10,14 +10,14 @@
 #include "0020_FilePresentTest.c"
 #undef MAIN_TEST_FN
 
-u64 ZZZZ_GetTestsCount(void) { return 2; }
+PNSLR_U64 ZZZZ_GetTestsCount(void) { return 2ULL; }
 
-void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)
+void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)
 {
-    fns.data[0].name = PNSLR_STRING_LITERAL("0010_DefaultHeapTest");
+    fns.data[0].name = PNSLR_StringLiteral("0010_DefaultHeapTest");
     fns.data[0].fn   = ZZZZ_Test_0010_DefaultHeapTest;
 
-    fns.data[1].name = PNSLR_STRING_LITERAL("0020_FilePresentTest");
+    fns.data[1].name = PNSLR_StringLiteral("0020_FilePresentTest");
     fns.data[1].fn   = ZZZZ_Test_0020_FilePresentTest;
 
     // done

@@ -127,6 +127,7 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             inputFile,
             getLibraryPath(tgt, arch),
             '/ISource/',
+            '/IBindings/',
             f'/Fe{outputFile}',
             f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
             f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
@@ -137,7 +138,8 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             getLibraryPath(tgt, arch),
             '-o',
             outputFile,
-            f'-ISource/',
+            '-ISource/',
+            '-IBindings/',
             # '-v',
             # '-###',
         ] + CLANG_DEBUG_ARGS + \
@@ -349,13 +351,13 @@ def main():
                 outputFile.write(f'#include "{test}.c"\n')
                 outputFile.write('#undef MAIN_TEST_FN\n\n')
 
-            outputFile.write(f'u64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}; }}\n\n')
-            outputFile.write('void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)\n')
+            outputFile.write(f'PNSLR_U64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}ULL; }}\n\n')
+            outputFile.write('void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)\n')
             outputFile.write('{\n')
 
             i: int = 0
             for test in tests:
-                outputFile.write(f'    fns.data[{i}].name = PNSLR_STRING_LITERAL("{test}");\n')
+                outputFile.write(f'    fns.data[{i}].name = PNSLR_StringLiteral("{test}");\n')
                 outputFile.write(f'    fns.data[{i}].fn   = ZZZZ_Test_{test};\n\n')
                 i += 1
 
@@ -410,7 +412,8 @@ def main():
             cStandard        = 'c11',
             cppStandard      = 'c++14',
             includePath      = [
-                '${workspaceFolder}/Source'
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings'
             ],
             defines          = ['PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
             compilerArgs     = commonArgs
@@ -440,6 +443,7 @@ def main():
             cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings',
                 f'{linuxX64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
             defines          = ['PNSLR_LINUX=1', 'PNSLR_X64=1'],
@@ -469,7 +473,8 @@ def main():
             cStandard        = 'c11',
             cppStandard      = 'c++14',
             includePath      = [
-                '${workspaceFolder}/Source'
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings'
             ],
             defines          = ['PNSLR_OSX=1', 'PNSLR_X64=1'],
             compilerArgs     = commonArgs,
@@ -498,7 +503,8 @@ def main():
             cStandard        = 'c11',
             cppStandard      = 'c++14',
             includePath      = [
-                '${workspaceFolder}/Source'
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings'
             ],
             defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
@@ -528,6 +534,7 @@ def main():
             cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings',
                 f'{linuxArm64Toolchain}\\usr\\include'.replace('\\', '/')
             ],
             defines          = ['PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
@@ -558,6 +565,7 @@ def main():
             cppStandard      = 'c++14',
             includePath      = [
                 '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings',
                 f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
             ],
             defines          = ['PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
@@ -587,7 +595,8 @@ def main():
             cStandard        = 'c11',
             cppStandard      = 'c++14',
             includePath      = [
-                '${workspaceFolder}/Source'
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings'
             ],
             defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
@@ -615,7 +624,8 @@ def main():
             cStandard        = 'c11',
             cppStandard      = 'c++14',
             includePath      = [
-                '${workspaceFolder}/Source'
+                '${workspaceFolder}/Source',
+                '${workspaceFolder}/Bindings'
             ],
             defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,

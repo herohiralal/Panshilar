@@ -1,36 +1,43 @@
 #ifndef PNSLR_TEST_RUNNER_H // =====================================================
 #define PNSLR_TEST_RUNNER_H
 
-#include "Panshilar.h"
+#include "C/Panshilar.h"
+
+#undef true
+#undef false
+#undef nullptr
+#define true    ((PNSLR_B8) 1)
+#define false   ((PNSLR_B8) 0)
+#define nullptr ((void*)    0)
 
 typedef struct
 {
-    PNSLR_Allocator     testAllocator;
-    ArraySlice(utf8str) args;
+    struct PNSLR_Allocator     testAllocator;
+    PNSLR_ArraySlice(PNSLR_UTF8STR) args;
 } TestContext;
 
-b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
+PNSLR_B8 AssertInternal(PNSLR_B8 condition, PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location);
 
 #define Assert(cond) \
-    AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " #cond), CURRENT_LOC())
+    AssertInternal((PNSLR_B8) (cond), PNSLR_StringLiteral("Assertion failed: " #cond), PNSLR_GET_LOC())
 
 #define AssertMsg(cond, msg) \
-    AssertInternal((cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
+    AssertInternal((PNSLR_B8) (cond), PNSLR_StringLiteral("Assertion failed: " msg), PNSLR_GET_LOC())
 
-void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
+void LogInternal(PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location);
 
 #define Log(msg) \
-    LogInternal(PNSLR_STRING_LITERAL(msg), CURRENT_LOC())
+    LogInternal(PNSLR_StringLiteral(msg), PNSLR_GET_LOC())
 
 typedef void (*TestFunction)(const TestContext* ctx);
 
 typedef struct
 {
-    utf8str      name;
+    PNSLR_UTF8STR      name;
     TestFunction fn;
 } TestFunctionInfo;
 
-DECLARE_ARRAY_SLICE(TestFunctionInfo);
+PNSLR_DECLARE_ARRAY_SLICE(TestFunctionInfo);
 
 #endif // PNSLR_TEST_RUNNER_H ======================================================
 

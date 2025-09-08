@@ -1,36 +1,44 @@
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"
+#if PNSLR_MSVC
+    #define thread_local            __declspec(thread)
+    #define alignof(type)           __alignof(type)
+#elif (PNSLR_CLANG || PNSLR_GCC)
+    #define thread_local            __thread
+    #define alignof(type)           __alignof__(type)
+#else
+    #error "Required features not supported by this compiler."
+#endif
 PRAGMA_SUPPRESS_WARNINGS
 #include <stdio.h>
 PRAGMA_REENABLE_WARNINGS
 #include "zzzz_TestRunner.h"
 #include "zzzz_GeneratedCombinedTests.c"
 
-ENUM_START(BufferedMessageType, u8)
-    #define BufferedMessageType_Invalid     ((BufferedMessageType) 0)
-    #define BufferedMessageType_TestFnLog   ((BufferedMessageType) 1)
-    #define BufferedMessageType_AssertPass  ((BufferedMessageType) 2)
-    #define BufferedMessageType_AssertFail  ((BufferedMessageType) 3)
-ENUM_END
+typedef PNSLR_U8 BufferedMessageType;
+#define BufferedMessageType_Invalid     ((BufferedMessageType) 0)
+#define BufferedMessageType_TestFnLog   ((BufferedMessageType) 1)
+#define BufferedMessageType_AssertPass  ((BufferedMessageType) 2)
+#define BufferedMessageType_AssertFail  ((BufferedMessageType) 3)
 
 typedef struct
 {
     BufferedMessageType      type;
-    utf8str                  msg;
+    PNSLR_UTF8STR                  msg;
     PNSLR_SourceCodeLocation loc;
 } BufferedMessage;
 
-DECLARE_ARRAY_SLICE(BufferedMessage);
+PNSLR_DECLARE_ARRAY_SLICE(BufferedMessage);
 
-static thread_local ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
-static thread_local u64                         G_NumBufferedMessages        = {0};
+static thread_local PNSLR_ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
+static thread_local PNSLR_U64                         G_NumBufferedMessages        = {0};
 static thread_local PNSLR_Allocator             G_CurrentTestRunnerAllocator = {0};
 
 static inline void BufferMessage(const BufferedMessage* msg)
 {
-    if (G_NumBufferedMessages >= (u64) G_BufferedMessages.count)
+    if (G_NumBufferedMessages >= (PNSLR_U64) G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_ResizeSlice(BufferedMessage, &G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), &err);
+        PNSLR_ResizeSlice(BufferedMessage, &G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), &err);
 
         if (err != PNSLR_AllocatorError_None)
         {
@@ -44,7 +52,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
     G_NumBufferedMessages++;
 }
 
-void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
+void LogInternal(PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {
@@ -56,7 +64,7 @@ void LogInternal(utf8str message, PNSLR_SourceCodeLocation location)
     BufferMessage(&msg);
 }
 
-b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location)
+PNSLR_B8 AssertInternal(PNSLR_B8 condition, PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location)
 {
     BufferedMessage msg =
     {
@@ -70,15 +78,15 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 }
 
 // TODO: make the test runner multi-threaded
-void TestRunnerMain(ArraySlice(utf8str) args)
+void TestRunnerMain(PNSLR_ArraySlice(PNSLR_UTF8STR) args)
 {
     setvbuf(stdout, NULL, _IONBF, 0); // disable stdout buffering
 
-    ArraySlice(TestFunctionInfo) tests = {0};
+    PNSLR_ArraySlice(TestFunctionInfo) tests = {0};
     {
-        u64                          testsCount = ZZZZ_GetTestsCount();
+        PNSLR_U64                          testsCount = ZZZZ_GetTestsCount();
         PNSLR_AllocatorError         err        = PNSLR_AllocatorError_None;
-        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+        PNSLR_ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
 
         tests = tests2;
     }
@@ -91,33 +99,33 @@ void TestRunnerMain(ArraySlice(utf8str) args)
     }
 
     ZZZZ_GetAllTests(tests);
-    b8 success = true;
+    PNSLR_B8 success = true;
 
-    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8 * 1024 * 1024, CURRENT_LOC(), nil);
+    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8 * 1024 * 1024, PNSLR_GET_LOC(), nullptr);
 
-    for (i32 i = 0; i < (i32) tests.count; ++i)
+    for (PNSLR_I32 i = 0; i < (PNSLR_I32) tests.count; ++i)
     {
         TestContext      ctx  = {.testAllocator = G_CurrentTestRunnerAllocator, .args = args};
         TestFunctionInfo info = tests.data[i];
 
-        PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nil);
-        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), nil);
+        PNSLR_FreeAll(ctx.testAllocator, PNSLR_GET_LOC(), nullptr);
+        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
         G_NumBufferedMessages = 0;
 
         info.fn(&ctx);
 
-        printf("==== [%.*s] ====\n", (i32) info.name.count, info.name.data);
+        printf("==== [%.*s] ====\n", (PNSLR_I32) info.name.count, info.name.data);
 
-        i32 checkCount = 0, passCount = 0;
-        for (i32 j = 0; j < (i32) G_NumBufferedMessages; ++j)
+        PNSLR_I32 checkCount = 0, passCount = 0;
+        for (PNSLR_I32 j = 0; j < (PNSLR_I32) G_NumBufferedMessages; ++j)
         {
             BufferedMessage* msg = &G_BufferedMessages.data[j];
 
             switch (msg->type)
             {
                 case BufferedMessageType_TestFnLog:
-                    printf("INFO  : %.*s\n", (i32) msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    printf("INFO  : %.*s\n", (PNSLR_I32) msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", (PNSLR_I32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 case BufferedMessageType_AssertPass:
                     checkCount++;
@@ -126,8 +134,8 @@ void TestRunnerMain(ArraySlice(utf8str) args)
                 case BufferedMessageType_AssertFail:
                     success = false;
                     checkCount++;
-                    printf("ERROR : %.*s\n", (i32) msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    printf("ERROR : %.*s\n", (PNSLR_I32) msg->msg.count, msg->msg.data);
+                    printf("        from %.*s:%d\n", (PNSLR_I32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 default:
                     printf("ERROR_UNKNOWN_MESSAGE\n");
@@ -140,13 +148,19 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         else                         { printf("One or more tests failed. (>_<)\n"); }
 
         printf("======");
-        for (i32 j = 0; j < (i32) info.name.count; ++j) { printf("="); }
+        for (PNSLR_I32 j = 0; j < (PNSLR_I32) info.name.count; ++j) { printf("="); }
         printf("======\n\n");
     }
 
-    PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, CURRENT_LOC(), nil);
+    PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
 
     if (!success) { PNSLR_ExitProcess(1); }
 }
 
-PNSLR_EXECUTABLE_ENTRY_POINT(TestRunnerMain)
+PNSLR_I32 main(PNSLR_I32 argc, char** argv)
+{
+    PNSLR_ArraySlice(PNSLR_UTF8STR) args = PNSLR_MakeSlice(PNSLR_UTF8STR, argc, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
+    for (PNSLR_I32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
+    TestRunnerMain(args);
+    return 0;
+}
