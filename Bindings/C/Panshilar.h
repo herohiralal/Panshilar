@@ -5,13 +5,20 @@
 extern "C" {
 #endif
 
-#if (_MSC_VER)
+#if defined(_MSC_VER)
     #define PNSLR_ALIGNAS(x) __declspec(align(x))
-#elif (__clang__) || (__GNUC__)
+#elif defined(__clang__) || defined(__GNUC__)
     #define PNSLR_ALIGNAS(x) __attribute__((aligned(x)))
 #else
     #error "UNSUPPORTED COMPILER!";
 #endif
+
+/** An array slice of type 'ty'. */
+#define PNSLR_ArraySlice(ty) PNSLR_ArraySlice_##ty
+
+/** Declare an array slice of type 'ty'. */
+#define PNSLR_DECLARE_ARRAY_SLICE(ty) \
+    typedef union PNSLR_ArraySlice(ty) { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice(ty);
 
 typedef unsigned char       PNSLR_B8;
 typedef unsigned char       PNSLR_U8;
@@ -38,127 +45,36 @@ typedef struct PNSLR_RawArraySlice
     PNSLR_I64 count;
 } PNSLR_RawArraySlice;
 
-typedef union PNSLR_ArraySlice_PNSLR_B8
-{
-    struct {
-        PNSLR_B8* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_B8;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_B8);
 
-typedef union PNSLR_ArraySlice_PNSLR_U8
-{
-    struct {
-        PNSLR_U8* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_U8;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_U8);
 
-typedef union PNSLR_ArraySlice_PNSLR_U16
-{
-    struct {
-        PNSLR_U16* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_U16;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_U16);
 
-typedef union PNSLR_ArraySlice_PNSLR_U32
-{
-    struct {
-        PNSLR_U32* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_U32;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_U32);
 
-typedef union PNSLR_ArraySlice_PNSLR_U64
-{
-    struct {
-        PNSLR_U64* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_U64;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_U64);
 
-typedef union PNSLR_ArraySlice_PNSLR_I8
-{
-    struct {
-        PNSLR_I8* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_I8;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_I8);
 
-typedef union PNSLR_ArraySlice_PNSLR_I16
-{
-    struct {
-        PNSLR_I16* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_I16;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_I16);
 
-typedef union PNSLR_ArraySlice_PNSLR_I32
-{
-    struct {
-        PNSLR_I32* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_I32;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_I32);
 
-typedef union PNSLR_ArraySlice_PNSLR_I64
-{
-    struct {
-        PNSLR_I64* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_I64;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_I64);
 
-typedef union PNSLR_ArraySlice_float
-{
-    struct {
-        float* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_float;
+PNSLR_DECLARE_ARRAY_SLICE(float);
 
-typedef union PNSLR_ArraySlice_double
-{
-    struct {
-        double* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_double;
+PNSLR_DECLARE_ARRAY_SLICE(double);
 
-typedef union PNSLR_ArraySlice_char
-{
-    struct {
-        char* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_char;
+PNSLR_DECLARE_ARRAY_SLICE(char);
 
 /**
  * UTF-8 string type, with length info (not necessarily null-terminated).
  */
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
+typedef PNSLR_ArraySlice(PNSLR_U8) PNSLR_UTF8STR;
 
-typedef union PNSLR_ArraySlice_PNSLR_UTF8STR
-{
-    struct {
-        PNSLR_UTF8STR* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_UTF8STR;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_UTF8STR);
 
 // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -559,14 +475,7 @@ typedef struct PNSLR_Allocator
     void* data;
 } PNSLR_Allocator;
 
-typedef union PNSLR_ArraySlice_PNSLR_Allocator
-{
-    struct {
-        PNSLR_Allocator* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_Allocator;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_Allocator);
 
 // Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1203,7 +1112,7 @@ PNSLR_EncodedRune PNSLR_EncodeRune(
  * Returns error rune (U+FFFD) for invalid sequences.
  */
 PNSLR_DecodedRune PNSLR_DecodeRune(
-    PNSLR_ArraySlice_PNSLR_U8 s
+    PNSLR_ArraySlice(PNSLR_U8) s
 );
 
 // #######################################################################################
@@ -1383,7 +1292,7 @@ PNSLR_B8 PNSLR_SeekPositionInFile(
  */
 PNSLR_B8 PNSLR_ReadFromFile(
     PNSLR_File handle,
-    PNSLR_ArraySlice_PNSLR_U8 dst
+    PNSLR_ArraySlice(PNSLR_U8) dst
 );
 
 /**
@@ -1391,7 +1300,7 @@ PNSLR_B8 PNSLR_ReadFromFile(
  */
 PNSLR_B8 PNSLR_WriteToFile(
     PNSLR_File handle,
-    PNSLR_ArraySlice_PNSLR_U8 src
+    PNSLR_ArraySlice(PNSLR_U8) src
 );
 
 /**
@@ -1422,7 +1331,7 @@ void PNSLR_CloseFileHandle(
  */
 PNSLR_B8 PNSLR_ReadAllContentsFromFile(
     PNSLR_Path path,
-    PNSLR_ArraySlice_PNSLR_U8* dst,
+    PNSLR_ArraySlice(PNSLR_U8)* dst,
     PNSLR_Allocator allocator
 );
 
@@ -1431,7 +1340,7 @@ PNSLR_B8 PNSLR_ReadAllContentsFromFile(
  */
 PNSLR_B8 PNSLR_WriteAllContentsToFile(
     PNSLR_Path path,
-    PNSLR_ArraySlice_PNSLR_U8 src,
+    PNSLR_ArraySlice(PNSLR_U8) src,
     PNSLR_B8 append
 );
 
@@ -1481,13 +1390,13 @@ void PNSLR_ExitProcess(
  * Represents an IP address in binary form.
  * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
  */
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPAddress;
+typedef PNSLR_ArraySlice(PNSLR_U8) PNSLR_IPAddress;
 
 /**
  * Represents a subnet mask in binary form.
  * For IPv4, it's 4 bytes. For IPv6, it's 16 bytes.
  */
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPMask;
+typedef PNSLR_ArraySlice(PNSLR_U8) PNSLR_IPMask;
 
 /**
  * Represents an IP network, consisting of an IP address and a subnet mask.
@@ -1498,17 +1407,10 @@ typedef struct PNSLR_IPNetwork
     PNSLR_IPMask mask;
 } PNSLR_IPNetwork;
 
-typedef union PNSLR_ArraySlice_PNSLR_IPNetwork
-{
-    struct {
-        PNSLR_IPNetwork* data;
-        PNSLR_I64 count;
-    };
-    PNSLR_RawArraySlice raw;
-} PNSLR_ArraySlice_PNSLR_IPNetwork;
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_IPNetwork);
 
 PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
-    PNSLR_ArraySlice_PNSLR_IPNetwork* networks,
+    PNSLR_ArraySlice(PNSLR_IPNetwork)* networks,
     PNSLR_Allocator allocator
 );
 
@@ -1533,12 +1435,8 @@ PNSLR_B8 PNSLR_GetInterfaceIPAddresses(
 #define PNSLR_Delete(obj, allocator, loc, error__) \
     do { if (obj) PNSLR_Free(allocator, obj, loc, error__); } while(0)
 
-/** Declare an array slice of type 'ty'. */
-#define PNSLR_DECLARE_ARRAY_SLICE(ty) \
-    typedef union PNSLR_ArraySlice_##ty { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice_##ty;
-
 /** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */
-#define PNSLR_MakeSlice(ty, count, zeroed, allocator, error__) \
+#define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
     (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
 
 /** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */

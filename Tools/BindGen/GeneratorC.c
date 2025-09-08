@@ -8,13 +8,20 @@ cstring G_GenCPrefix = ""
 "extern \"C\" {\n"
 "#endif\n"
 "\n"
-"#if (_MSC_VER)\n"
+"#if defined(_MSC_VER)\n"
 "    #define PNSLR_ALIGNAS(x) __declspec(align(x))\n"
-"#elif (__clang__) || (__GNUC__)\n"
+"#elif defined(__clang__) || defined(__GNUC__)\n"
 "    #define PNSLR_ALIGNAS(x) __attribute__((aligned(x)))\n"
 "#else\n"
 "    #error \"UNSUPPORTED COMPILER!\";\n"
 "#endif\n"
+"\n"
+"/** An array slice of type 'ty'. */\n"
+"#define PNSLR_ArraySlice(ty) PNSLR_ArraySlice_##ty\n"
+"\n"
+"/** Declare an array slice of type 'ty'. */\n"
+"#define PNSLR_DECLARE_ARRAY_SLICE(ty) \\\n"
+"    typedef union PNSLR_ArraySlice(ty) { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice(ty);\n"
 "\n"
 "typedef unsigned char       PNSLR_B8;\n"
 "typedef unsigned char       PNSLR_U8;\n"
@@ -50,12 +57,8 @@ cstring G_GenCSuffix = ""
 "#define PNSLR_Delete(obj, allocator, loc, error__) \\\n"
 "    do { if (obj) PNSLR_Free(allocator, obj, loc, error__); } while(0)\n"
 "\n"
-"/** Declare an array slice of type 'ty'. */\n"
-"#define PNSLR_DECLARE_ARRAY_SLICE(ty) \\\n"
-"    typedef union PNSLR_ArraySlice_##ty { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice_##ty;\n"
-"\n"
 "/** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
-"#define PNSLR_MakeSlice(ty, count, zeroed, allocator, error__) \\\n"
+"#define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \\\n"
 "    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}\n"
 "\n"
 "/** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */\n"
@@ -137,8 +140,9 @@ void WriteCTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
         {
             // WILL NOT WORK FOR `cstring` AND `rawptr` WHICH ARE TYPEDEF'D PTR TYPES
             // but should be fine for now because we're not using arrays of them anyway
-            PNSLR_WriteToFile(file, ARR_STR_LIT("PNSLR_ArraySlice_"));
+            PNSLR_WriteToFile(file, ARR_STR_LIT("PNSLR_ArraySlice("));
             WriteCTypeName(file, types, (u32) declTy.u.polyTgtIdx);
+            PNSLR_WriteToFile(file, ARR_STR_LIT(")"));
             break;
         }
         case PolymorphicDeclType_Ptr:
@@ -194,13 +198,9 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                 case DeclType_Array:
                 {
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("typedef union "));
-                    WriteCTypeName(headerFile, content->types, arr->header.ty);
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n{\n    struct {\n        "));
-                    WriteCTypeName(headerFile, content->types, arr->tgtTy + 1); // +1 for pointer type
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(" data;\n        PNSLR_I64 count;\n    };\n    PNSLR_RawArraySlice raw;\n} "));
-                    WriteCTypeName(headerFile, content->types, arr->header.ty);
-                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT("PNSLR_DECLARE_ARRAY_SLICE("));
+                    WriteCTypeName(headerFile, content->types, arr->tgtTy);
+                    PNSLR_WriteToFile(headerFile, ARR_STR_LIT(");\n"));
                     break;
                 }
                 case DeclType_TyAlias:
