@@ -309,6 +309,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     }
                     PNSLR_WriteToFile(headerFile, ARR_STR_LIT("("));
                     if (fn->args != nil) PNSLR_WriteToFile(headerFile, ARR_STR_LIT("\n"));
+                    else                 PNSLR_WriteToFile(headerFile, ARR_STR_LIT("void"));
                     for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
                     {
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT("    "));

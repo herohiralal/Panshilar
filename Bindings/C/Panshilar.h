@@ -233,12 +233,12 @@ typedef PNSLR_U8 PNSLR_Architecture /* use as value */;
 /**
  * Get the current platform.
  */
-PNSLR_Platform PNSLR_GetPlatform();
+PNSLR_Platform PNSLR_GetPlatform(void);
 
 /**
  * Get the current architecture.
  */
-PNSLR_Architecture PNSLR_GetArchitecture();
+PNSLR_Architecture PNSLR_GetArchitecture(void);
 
 // #######################################################################################
 // Runtime
@@ -272,7 +272,7 @@ typedef struct PNSLR_ALIGNAS(8) PNSLR_Mutex
 /**
  * Creates a mutex.
  */
-PNSLR_Mutex PNSLR_CreateMutex();
+PNSLR_Mutex PNSLR_CreateMutex(void);
 
 /**
  * Destroys a mutex.
@@ -318,7 +318,7 @@ typedef struct PNSLR_ALIGNAS(8) PNSLR_RWMutex
 /**
  * Creates a read-write mutex.
  */
-PNSLR_RWMutex PNSLR_CreateRWMutex();
+PNSLR_RWMutex PNSLR_CreateRWMutex(void);
 
 /**
  * Destroys a read-write mutex.
@@ -442,7 +442,7 @@ typedef struct PNSLR_ALIGNAS(8) PNSLR_ConditionVariable
 /**
  * Creates a condition variable.
  */
-PNSLR_ConditionVariable PNSLR_CreateConditionVariable();
+PNSLR_ConditionVariable PNSLR_CreateConditionVariable(void);
 
 /**
  * Destroys a condition variable.
@@ -644,14 +644,14 @@ PNSLR_U64 PNSLR_QueryAllocatorCapabilities(
  * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
  * Otherwise no-ops all around.
  */
-PNSLR_Allocator PNSLR_GetAllocator_Nil();
+PNSLR_Allocator PNSLR_GetAllocator_Nil(void);
 
 // Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Get the default heap allocator.
  */
-PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap();
+PNSLR_Allocator PNSLR_GetAllocator_DefaultHeap(void);
 
 /**
  * Main allocator function for the default heap allocator.
@@ -942,7 +942,7 @@ void PNSLR_FreeCString(
 /**
  * Returns the current time in nanoseconds since the Unix epoch (January 1, 1970).
  */
-PNSLR_I64 PNSLR_NanosecondsSinceUnixEpoch();
+PNSLR_I64 PNSLR_NanosecondsSinceUnixEpoch(void);
 
 // #######################################################################################
 // Strings
