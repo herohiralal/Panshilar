@@ -1,26 +1,12 @@
-import os, sys, subprocess
+import os, sys
 from dataclasses import dataclass, asdict
+import buildutils
 
 # region Commandline arguments ================================================================================================
 
 CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' in sys.argv # Rebuild the intrinsics dependency
 CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
-CMD_ARG_SILENT              = '-silent'             in sys.argv # Suppress output from the build script (but not from the compiler/linker)
-CMD_ARG_VERY_SILENT         = '-very-silent'        in sys.argv # Suppress all output from the build script (including compiler/linker output)
-
-# endregion
-
-# region Internal Constants ===================================================================================================
-
-MSVC_DEBUG_ARGS    = ['/Zi', '/Od', '/D_DEBUG']
-MSVC_C_STD_ARGS    = ['/std:c11']
-MSVC_CXX_STD_ARGS  = ['/std:c++14']
-MSVC_COMMON_ARGS   = ['/Brepro', '/nologo', '/Wall', '/WX']
-CLANG_DEBUG_ARGS   = ['-g', '-O0', '-DDEBUG']
-CLANG_C_STD_ARGS   = ['-std=c11']
-CLANG_CXX_STD_ARGS = ['-std=c++14']
-CLANG_COMMON_ARGS  = ['-Werror']
 
 # endregion
 
@@ -131,7 +117,7 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             f'/Fe{outputFile}',
             f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
             f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
-        ] + MSVC_DEBUG_ARGS
+        ] + buildutils.MSVC_DEBUG_ARGS
     else:
         return [
             inputFile,
@@ -142,7 +128,7 @@ def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
             '-IBindings/',
             # '-v',
             # '-###',
-        ] + CLANG_DEBUG_ARGS + \
+        ] + buildutils.CLANG_DEBUG_ARGS + \
         (['-lpthread'] if tgt != 'android' else [])
 
 def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
@@ -157,7 +143,7 @@ def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
             f'/Fe{outputFile}',
             f'/FoTemp/BindingsGenerator-{tgt}-{arch}.obj',
             f'/FdBinaries/BindingsGenerator-{tgt}-{arch}.pdb',
-        ] + MSVC_DEBUG_ARGS
+        ] + buildutils.MSVC_DEBUG_ARGS
     else:
         return [
             inputFile,
@@ -168,87 +154,9 @@ def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
             f'-ISource/',
             # '-v',
             # '-###',
-        ] + CLANG_DEBUG_ARGS
+        ] + buildutils.CLANG_DEBUG_ARGS
 
 # endregion
-
-# region Global State =========================================================================================================
-
-succeededProcesses: list[str] = []  # List to track successful processes
-failedProcesses:    list[str] = []  # List to track failed processes
-
-# endregion
-
-#region Helper functions ======================================================================================================
-
-def print2(message: str):
-    if CMD_ARG_SILENT or CMD_ARG_VERY_SILENT:
-        return
-
-    print(message)
-
-def printSectionStart():
-    print2('')
-    print2('=' * 80)
-
-def printSectionEnd():
-    print2('=' * 80)
-    print2('')
-
-def printDebug(message: str):
-    print2(  f'\033[1m[DEBUG]:    \033[0m\033[90m{message}\033[0m')
-
-def printInfo(message: str):
-    print2(f'\033[1;36m[INFO]:    \033[0m{message}')
-
-def printWarn(message: str):
-    print2(f'\033[1;33m[WARNING]: \033[0m{message}')
-
-def printErr(message: str):
-    print2(f'\033[1;31m[ERROR]:   \033[0m{message}')
-
-def printSuccess(message: str):
-    print2(f'\033[1;32m[SUCCESS]: \033[0m{message}')
-
-def printFailure(message: str):
-    print2(f'\033[1;31m[FAILURE]: \033[0m{message}')
-
-def runCommand(command: list[str], name: str) -> bool:
-    printSectionStart()
-    printInfo(f'Running: {name}')
-    printDebug(f'Command: {' '.join(command)}')
-    if CMD_ARG_VERY_SILENT:
-        result = subprocess.run(command, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-    else:
-        result = subprocess.run(command, stdout = sys.stdout, stderr = sys.stderr)
-
-    if result.returncode == 0:
-        printSuccess(f'Completed successfully: {name}')
-        succeededProcesses.append(name)
-    else:
-        printFailure(f'Failed to complete: {name}')
-        failedProcesses.append(name)
-    printSectionEnd()
-    return result.returncode == 0
-
-# endregion
-
-# region Main Logic  ==========================================================================================================
-
-def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str, toolchainEnvVarName: str) -> str:
-    toolchainFound = '1' == os.getenv(statusBoolEnvVarName)
-    if not toolchainFound:
-        printWarn(f'{prettyTgt}-{prettyArch} toolchain not found!')
-        return ''
-
-    toolchainPath = os.getenv(toolchainEnvVarName)
-    if not toolchainPath:
-        printErr(f'{prettyTgt}-{prettyArch} toolchain path not set!')
-        failedProcesses.append(f'{prettyTgt}-{prettyArch} Toolchain Path Query')
-        return ''
-
-    printInfo(f'Using {prettyTgt} {prettyArch} toolchain at: {toolchainPath}.')
-    return toolchainPath
 
 def buildPlatform(
         prettyTgt:          str,
@@ -277,64 +185,31 @@ def buildPlatform(
     intrinsicsCompiled    = True
     intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
     if CMD_ARG_REBUILD_INTRINSICS:
-        intrinsicsCompiled = (runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
+        intrinsicsCompiled = (buildutils.runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
 
     libraryCompiled    = True
     libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
-    libraryCompiled    = (intrinsicsCompiled and runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
+    libraryCompiled    = (intrinsicsCompiled and buildutils.runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
 
     libraryLinked   = True
     libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
-    libraryLinked   = (libraryCompiled and runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
+    libraryLinked   = (libraryCompiled and buildutils.runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
 
     testsSuccessful     = True
     testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
     testsSuccessful     = (not CMD_ARG_RUN_TESTS) or \
-                          (libraryLinked and runCommand([cCompiler] + testRunnerBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
+                          (libraryLinked and buildutils.runCommand([cCompiler] + testRunnerBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
 
     bindGenSuccessful          = True
     bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
     bindGenSuccessful          = (not CMD_ARG_REGENERATE_BINDINGS) or (not buildTools) or \
-                                 (libraryLinked and runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
+                                 (libraryLinked and buildutils.runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
 
     return libraryLinked and testsSuccessful and bindGenSuccessful
 
 # endregion
 
 def main():
-
-    # region Check for toolchains =============================================================================================
-
-    windowsToolchain      = ''
-    linuxX64Toolchain     = ''
-    linuxArm64Toolchain   = ''
-    androidToolchain      = ''
-    osxTools              = ''
-    iosToolchain          = ''
-    iosSimulatorToolchain = ''
-    osxToolchain          = ''
-
-    if sys.platform == 'win32':
-        printSectionStart()
-        windowsToolchain    = getToolchainPath('Windows', 'x64',   'WINDOWS_TOOLCHAIN_FOUND',     'WINDOWS_TOOLCHAIN')
-        linuxX64Toolchain   = getToolchainPath('Linux',   'x64',   'LINUX_X64_TOOLCHAIN_FOUND',   'LINUX_X64_TOOLCHAIN')
-        linuxArm64Toolchain = getToolchainPath('Linux',   'ARM64', 'LINUX_ARM64_TOOLCHAIN_FOUND', 'LINUX_ARM64_TOOLCHAIN')
-        androidToolchain    = getToolchainPath('Android', 'ARM64', 'ANDROID_TOOLCHAIN_FOUND',     'ANDROID_TOOLCHAIN')
-        printSectionEnd()
-
-    elif sys.platform == 'darwin':
-        printSectionStart()
-        osxTools              = os.getenv('BUILD_TOOLS_PATH', '')
-        iosToolchain          = getToolchainPath('iOS',           'ARM64', 'IOS_SDK_FOUND',     'IOS_SDK_PATH')
-        iosSimulatorToolchain = getToolchainPath('iOS-Simulator', 'ARM64', 'IOS_SIM_SDK_FOUND', 'IOS_SIM_SDK_PATH')
-        osxToolchain          = getToolchainPath('macOS',         'ARM64', 'OSX_SDK_FOUND',     'OSX_SDK_PATH')
-        printSectionEnd()
-
-    else:
-        print2(f'Unsupported platform: {sys.platform}')
-        exit(1)
-
-    # endregion
 
     # region Setup Tests ======================================================================================================
 
@@ -369,20 +244,6 @@ def main():
 
     # region Project Files Definitions ========================================================================================
 
-    @dataclass
-    class CCppPropertiesConfiguration:
-        name:             str
-        compilerPath:     str
-        cStandard:        str
-        cppStandard:      str
-        includePath:      list[str]
-        defines:          list[str]
-        compilerArgs:     list[str]
-
-    @dataclass
-    class CCppProperties:
-        version:        int
-        configurations: list[CCppPropertiesConfiguration]
 
     properties: CCppProperties = CCppProperties(version = 4, configurations = [])
 
@@ -673,26 +534,7 @@ def main():
 
     # endregion
 
-    # region Summary ==========================================================================================================
-
-    printSectionStart()
-
-    if succeededProcesses:
-        printInfo('Succeeded processes:')
-        for process in succeededProcesses:
-            print2(f' - {process}')
-
-    if failedProcesses:
-        printErr('Failed processes:')
-        for process in failedProcesses:
-            print2(f' - {process}')
-        printFailure('One or more processes failed. Please check the output above for details.')
-    else:
-        printSuccess('All processes completed successfully!')
-
-    printSectionEnd()
-
-    sys.exit(0 if not failedProcesses else 1)
+    buildutils.printSummary()
 
     # endregion
 
