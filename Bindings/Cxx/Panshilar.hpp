@@ -36,7 +36,11 @@ namespace Panshilar
     /**
      * UTF-8 string type, with length info (not necessarily null-terminated).
      */
-    typedef ArraySlice<u8> utf8str;
+    struct utf8str : ArraySlice<u8>
+    {
+        b8 operator==(const utf8str& other) const;
+        b8 operator!=(const utf8str& other) const;
+    };
 
     // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1389,6 +1393,10 @@ namespace Panshilar
         ArraySlice<IPNetwork>* networks,
         Allocator allocator
     );
+
+    b8 utf8str::operator==(const utf8str& other) const { return AreStringsEqual(*this, other, StringComparisonType::CaseSensitive); }
+
+    b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
 
     /** Create a utf8str from a string literal. */
     template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }

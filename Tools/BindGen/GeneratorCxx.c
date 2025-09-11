@@ -25,6 +25,10 @@ cstring G_GenCxxHeaderPrefix = ""
 "";
 
 cstring G_GenCxxHeaderSuffix = ""
+"    b8 utf8str::operator==(const utf8str& other) const { return AreStringsEqual(*this, other, StringComparisonType::CaseSensitive); }\n"
+"\n"
+"    b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }\n"
+"\n"
 "    /** Create a utf8str from a string literal. */\n"
 "    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }\n"
 "\n"
@@ -355,11 +359,21 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 case DeclType_TyAlias:
                 {
                     ParsedTypeAlias* tyAl = (ParsedTypeAlias*) decl;
-                    PNSLR_WriteToFile(f, ARR_STR_LIT("    typedef "));
-                    WriteCxxTypeName(f, content->types, tyAl->tgt, false);
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
-                    WriteCxxTypeName(f, content->types, tyAl->header.ty, false);
-                    PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
+                    if (PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_STRING_LITERAL("utf8str"), 0))
+                    {
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("    struct utf8str : ArraySlice<u8>\n    {\n"));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("        b8 operator==(const utf8str& other) const;\n"));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("        b8 operator!=(const utf8str& other) const;\n"));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("    };\n"));
+                    }
+                    else
+                    {
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("    typedef "));
+                        WriteCxxTypeName(f, content->types, tyAl->tgt, false);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
+                        WriteCxxTypeName(f, content->types, tyAl->header.ty, false);
+                        PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
+                    }
                     break;
                 }
                 case DeclType_Enum:
