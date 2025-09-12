@@ -21,6 +21,13 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
         FORCE_DBG_TRAP;
     }
 
+    PNSLR_Path relDir = {0};
+    if (!PNSLR_SplitPath(srcFile, &relDir, nil, nil, nil))
+    {
+        printf("Failed to split source file path '%.*s'.\n", (i32) pathRel.count, pathRel.data);
+        FORCE_DBG_TRAP;
+    }
+
     ArraySlice(u8) contents;
     if (!PNSLR_ReadAllContentsFromFile(srcFile, &contents, globalAllocator))
     {
@@ -59,7 +66,7 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
             if (nextTokenInCurrentLine.type == TokenType_String)
             {
                 utf8str fileNameStr = (utf8str) {.data = line.data + nextTokenInCurrentLine.start + 1, .count = nextTokenInCurrentLine.end - nextTokenInCurrentLine.start - 2};
-                GatherSourceFilesInternal(collectedFiles, numCollectedFiles, srcDir, fileNameStr, globalAllocator);
+                GatherSourceFilesInternal(collectedFiles, numCollectedFiles, relDir, fileNameStr, globalAllocator);
             }
             else break;
         }
