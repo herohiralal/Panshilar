@@ -157,5 +157,5 @@ if __name__ == '__main__':
 
     buildutils.printSummary()
 
-    if buildutils.failedProcesses:
+    if len(buildutils.failedProcesses) > 0:
         exit(1)
