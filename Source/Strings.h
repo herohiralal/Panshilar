@@ -171,10 +171,6 @@ PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
  */
 PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
 
-//+skipreflect
-
-#if PNSLR_WINDOWS
-
 // Windows-specific bs for UTF-16 conversions ======================================
 
 /**
@@ -190,10 +186,6 @@ ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allo
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
  */
 utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
-
-#endif
-
-//-skipreflect
 
 EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================

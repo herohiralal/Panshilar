@@ -1093,6 +1093,28 @@ namespace Panshilar
         ArraySlice<u8> s
     );
 
+    // Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Converts a UTF-8 string to a UTF-16 string.
+     * The returned string is allocated using the specified allocator.
+     * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     */
+    ArraySlice<u16> UTF16FromUTF8WindowsOnly(
+        utf8str str,
+        Allocator allocator
+    );
+
+    /**
+     * Converts a UTF-16 string to a UTF-8 string.
+     * The returned string is allocated using the specified allocator.
+     * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     */
+    utf8str UTF8FromUTF16WindowsOnly(
+        ArraySlice<u16> utf16str,
+        Allocator allocator
+    );
+
     // #######################################################################################
     // IO
     // #######################################################################################
@@ -2433,6 +2455,18 @@ extern "C" PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice_PNSLR_U8 s);
 Panshilar::DecodedRune Panshilar::DecodeRune(Panshilar::ArraySlice<Panshilar::u8> s)
 {
     PNSLR_DecodedRune zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DecodeRune(PNSLR_Bindings_Convert(s)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_ArraySlice_PNSLR_U16 PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
+Panshilar::ArraySlice<Panshilar::u16> Panshilar::UTF16FromUTF8WindowsOnly(Panshilar::utf8str str, Panshilar::Allocator allocator)
+{
+    PNSLR_ArraySlice_PNSLR_U16 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice_PNSLR_U16 utf16str, PNSLR_Allocator allocator);
+Panshilar::utf8str Panshilar::UTF8FromUTF16WindowsOnly(Panshilar::ArraySlice<Panshilar::u16> utf16str, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_Bindings_Convert(utf16str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_Path

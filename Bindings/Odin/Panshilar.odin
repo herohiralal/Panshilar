@@ -1323,6 +1323,34 @@ foreign {
 	) -> DecodedRune ---
 }
 
+// Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Converts a UTF-8 string to a UTF-16 string.
+     * The returned string is allocated using the specified allocator.
+     * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     */
+	UTF16FromUTF8WindowsOnly :: proc "c" (
+		str: string,
+		allocator: Allocator,
+	) -> []u16 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Converts a UTF-16 string to a UTF-8 string.
+     * The returned string is allocated using the specified allocator.
+     * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     */
+	UTF8FromUTF16WindowsOnly :: proc "c" (
+		utf16str: []u16,
+		allocator: Allocator,
+	) -> string ---
+}
+
 // #######################################################################################
 // IO
 // #######################################################################################

@@ -485,69 +485,81 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
 #undef PNSLR_LOCB
 #undef PNSLR_HICB
 
-#if PNSLR_WINDOWS
-
 ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator)
 {
-    if (!str.data || !str.count)
+    #if PNSLR_WINDOWS
+    {
+        if (!str.data || !str.count)
+        {
+            return (ArraySlice(u16)) {0};
+        }
+
+        i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
+        if (n <= 0) { return (ArraySlice(u16)) {0}; } // conversion failed
+
+        ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
+
+        i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
+        if (n1 == 0)
+        {
+            PNSLR_FreeSlice(&output, allocator, CURRENT_LOC(), nil);
+            return (ArraySlice(u16)) {0}; // conversion failed
+        }
+
+        output.data[n] = 0; // null-terminate the UTF-16 string
+
+        while (n >= 1 && output.data[n - 1] == 0)
+        {
+            --n; // remove trailing null characters
+        }
+
+        output.count = n; // update count to exclude trailing null characters
+        return output;
+    }
+    #else
     {
         return (ArraySlice(u16)) {0};
     }
-
-    i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
-    if (n <= 0) { return (ArraySlice(u16)) {0}; } // conversion failed
-
-    ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
-
-    i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
-    if (n1 == 0)
-    {
-        PNSLR_FreeSlice(&output, allocator, CURRENT_LOC(), nil);
-        return (ArraySlice(u16)) {0}; // conversion failed
-    }
-
-    output.data[n] = 0; // null-terminate the UTF-16 string
-
-    while (n >= 1 && output.data[n - 1] == 0)
-    {
-        --n; // remove trailing null characters
-    }
-
-    output.count = n; // update count to exclude trailing null characters
-    return output;
+    #endif
 }
 
 utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator)
 {
-    if (!utf16str.data || !utf16str.count)
+    #if PNSLR_WINDOWS
+    {
+        if (!utf16str.data || !utf16str.count)
+        {
+            return (utf8str) {0};
+        }
+
+        i32 n = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, nil, 0, nil, nil);
+        if (n <= 0) { return (utf8str) {0}; } // conversion failed
+
+        utf8str output = PNSLR_MakeString(n, false, allocator, CURRENT_LOC(), nil);
+        if (!output.data) { return (utf8str) {0}; } // allocation failed
+
+        i32 n1 = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, (LPSTR) output.data, (i32) n, nil, nil);
+        if (n1 == 0)
+        {
+            PNSLR_FreeString(output, allocator, CURRENT_LOC(), nil);
+            return (utf8str) {0}; // conversion failed
+        }
+
+        for (i32 i = 0; i < n; i++)
+        {
+            if (output.data[i] == 0)
+            {
+                n = i; // remove trailing null characters
+                break;
+            }
+        }
+
+        output.count = n; // update count to exclude trailing null characters
+        return output;
+    }
+    #else
     {
         return (utf8str) {0};
     }
-
-    i32 n = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, nil, 0, nil, nil);
-    if (n <= 0) { return (utf8str) {0}; } // conversion failed
-
-    utf8str output = PNSLR_MakeString(n, false, allocator, CURRENT_LOC(), nil);
-    if (!output.data) { return (utf8str) {0}; } // allocation failed
-
-    i32 n1 = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, (LPSTR) output.data, (i32) n, nil, nil);
-    if (n1 == 0)
-    {
-        PNSLR_FreeString(output, allocator, CURRENT_LOC(), nil);
-        return (utf8str) {0}; // conversion failed
-    }
-
-    for (i32 i = 0; i < n; i++)
-    {
-        if (output.data[i] == 0)
-        {
-            n = i; // remove trailing null characters
-            break;
-        }
-    }
-
-    output.count = n; // update count to exclude trailing null characters
-    return output;
+    #endif
 }
-
-#endif

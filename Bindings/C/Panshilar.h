@@ -1115,6 +1115,28 @@ PNSLR_DecodedRune PNSLR_DecodeRune(
     PNSLR_ArraySlice(PNSLR_U8) s
 );
 
+// Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Converts a UTF-8 string to a UTF-16 string.
+ * The returned string is allocated using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ */
+PNSLR_ArraySlice(PNSLR_U16) PNSLR_UTF16FromUTF8WindowsOnly(
+    PNSLR_UTF8STR str,
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Converts a UTF-16 string to a UTF-8 string.
+ * The returned string is allocated using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ */
+PNSLR_UTF8STR PNSLR_UTF8FromUTF16WindowsOnly(
+    PNSLR_ArraySlice(PNSLR_U16) utf16str,
+    PNSLR_Allocator allocator
+);
+
 // #######################################################################################
 // IO
 // #######################################################################################
