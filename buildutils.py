@@ -228,7 +228,7 @@ def getCxxCompiler(plt: Platform) -> str:
 
 def getStaticLibLinker(plt: Platform) -> str:
     if plt.tgt == 'windows':
-        return os.path.join(plt.toolch, 'bin', 'lib.exe')
+        return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'lib.exe')
     elif plt.tgt == 'linux' or plt.tgt == 'android':
         return os.path.join(plt.toolch, 'bin', 'llvm-ar.exe')
     elif plt.tgt == 'osx':
@@ -240,7 +240,7 @@ def getStaticLibLinker(plt: Platform) -> str:
 
 def getMainLinker(plt: Platform) -> str:
     if plt.tgt == 'windows':
-        return os.path.join(plt.toolch, 'bin', 'link.exe')
+        return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'link.exe')
     else:
         return getCxxCompiler(plt)
 
