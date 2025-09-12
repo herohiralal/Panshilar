@@ -135,8 +135,7 @@ def getToolchains() -> Toolchains:
         printSectionEnd()
 
     else:
-        print2(f'Unsupported platform: {sys.platform}')
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform: {sys.platform}')
 
     return toolch
 
@@ -197,7 +196,7 @@ def getPlatformTgtDefine(plt: Platform) -> str:
     elif plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return 'PNSLR_IOS'
     else:
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
 def getPlatformArchDefine(plt: Platform) -> str:
     if plt.arch == 'x64':
@@ -205,7 +204,7 @@ def getPlatformArchDefine(plt: Platform) -> str:
     elif plt.arch == 'arm64':
         return 'PNSLR_ARM64'
     else:
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform architecture: {plt.arch}')
 
 def getCCompiler(plt: Platform) -> str:
     if plt.tgt == 'windows':
@@ -215,7 +214,7 @@ def getCCompiler(plt: Platform) -> str:
     elif plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'clang')
     else:
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
 def getCxxCompiler(plt: Platform) -> str:
     if plt.tgt == 'windows':
@@ -225,7 +224,7 @@ def getCxxCompiler(plt: Platform) -> str:
     elif plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'clang++')
     else:
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
 def getStaticLibLinker(plt: Platform) -> str:
     if plt.tgt == 'windows':
@@ -237,7 +236,13 @@ def getStaticLibLinker(plt: Platform) -> str:
     elif plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'ar')
     else:
-        exit(1)
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
+
+def getMainLinker(plt: Platform) -> str:
+    if plt.tgt == 'windows':
+        return os.path.join(plt.toolch, 'bin', 'link.exe')
+    else:
+        return getCCompiler(plt)
 
 def getObjectOutputFileName(
         name: str,
@@ -250,6 +255,19 @@ def getStaticLibOutputFileName(
         plt:  Platform,
     ) -> str:
     return f'{'' if plt.tgt == 'windows' else 'lib'}{name}-{plt.tgt}-{plt.arch}.{'lib' if plt.tgt == 'windows' else 'a'}'
+
+def getDynamicLibOutputFileName(
+        name: str,
+        plt:  Platform,
+    ) -> str:
+    if plt.tgt == 'windows':
+        return f'{name}-{plt.tgt}-{plt.arch}.dll'
+    elif plt.tgt == 'linux' or plt.tgt == 'android':
+        return f'lib{name}-{plt.tgt}-{plt.arch}.so'
+    elif plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
+        return f'lib{name}-{plt.tgt}-{plt.arch}.dylib'
+    else:
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
 def getExecOutputFileName(
         name: str,
@@ -273,7 +291,15 @@ def getCommonCompilationArgs(
         output = ['-Werror']
 
     if dbg:
-        output += (['/Zi', '/Od', '/D_DEBUG'] if plt.tgt == 'windows' else ['-g', '-O0', '-DDEBUG'])
+        if plt.tgt == 'windows':
+            output += ['/Zi', '/Od', '/D_DEBUG']
+        else:
+            output += ['-g', '-O0', '-DDEBUG']
+    else:
+        if plt.tgt == 'windows':
+            output += ['/O2', '/DNDEBUG']
+        else:
+            output += ['-O2', '-DNDEBUG']
 
     if compileOnly:
         output += ['/c'] if plt.tgt == 'windows' else ['-c']
@@ -281,10 +307,55 @@ def getCommonCompilationArgs(
     if addEnvArgs:
         specifier: str = '/D' if plt.tgt == 'windows' else '-D'
         output += [f'{specifier}{getPlatformTgtDefine(plt)}=1', f'{specifier}{getPlatformArchDefine(plt)}=1']
+        if plt.tgt == 'android':
+            output += ['-DANDROID=1', '-D_FORTIFY_SOURCE=2']
 
     if addStdArgs:
         specifier: str = '/std:' if plt.tgt == 'windows' else '-std='
         output += [f'{specifier}c++14'] if useCxx else [f'{specifier}c11']
+
+    if plt.tgt == 'windows':
+        pass
+    elif plt.tgt == 'linux':
+        output += [f'--sysroot={plt.toolch}\\']
+        if plt.arch == 'x64':
+            output += ['--target=x86_64-unknown-linux-gnu']
+        elif plt.arch == 'arm64':
+            output += ['--target=aarch64-unknown-linux-gnueabi']
+        else:
+            raise NotImplementedError(f'Unsupported architecture for Linux: {plt.arch}')
+    elif plt.tgt == 'android':
+        output += [f'--sysroot={plt.toolch}\\sysroot\\', '-fPIC']
+        if plt.arch == 'x64':
+            output += ['--target=x86_64-none-linux-android28']
+        elif plt.arch == 'arm64':
+            output += ['--target=aarch64-none-linux-android28']
+        else:
+            raise NotImplementedError(f'Unsupported architecture for Android: {plt.arch}')
+    elif plt.tgt == 'osx':
+        output += ['--sysroot', plt.toolch, '-target', 'arm64-apple-macos11.0']
+    elif plt.tgt == 'ios':
+        output += [
+            '--sysroot',
+            plt.toolch,
+            '-miphoneos-version-min=16.0',
+            '-target',
+            'arm64-apple-ios16.0',
+            '-arch',
+            'arm64',
+        ]
+    elif plt.tgt == 'iossimulator':
+        output += [
+            '--sysroot',
+            plt.toolch,
+            '-miphoneos-version-min=16.0',
+            '-target',
+            'arm64-apple-ios16.0-simulator',
+            '-arch',
+            'arm64',
+        ]
+    else:
+        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
     return output
 
@@ -295,7 +366,7 @@ def getCompilationCommand(
         outputF:  str,
         includes: list[str] = [],
         useCxx:   bool      = False,
-    ) -> list[str]:
+    ) -> tuple[str, list[str]]:
     output: list[str] = getCommonCompilationArgs(
         plt          = plt,
         dbg          = dbg,
@@ -309,41 +380,74 @@ def getCompilationCommand(
         output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
 
     output += [inputF]
-    output += ['/Fo' + outputF] if plt.tgt == 'windows' else ['-o', outputF]
+    output += ['/Fo', outputF] if plt.tgt == 'windows' else ['-o', outputF]
 
-    return output
+    if dbg and plt.tgt == 'windows':
+        output += ['/Fd', outputF.rstrip('.obj') + '.pdb']
+
+    return getCCompiler(plt), output
 
 def getStaticLibLinkCommand(
-        plt: Platform,
-    ) -> list[str]:
+        plt:     Platform,
+        inputFs: list[str],
+        sysLibs: list[str],
+        outputF: str,
+    ) -> tuple[str, list[str]]:
     output: list[str] = []
-    return output
+    if plt.tgt == 'windows':
+        output += [
+            '/Brepro',
+            '/NOLOGO',
+            '/OUT:' + outputF,
+        ] + inputFs + sysLibs
+    elif plt.tgt == 'osx':
+        output += [
+            '-static',
+            '-o',
+            outputF,
+        ] + inputFs
+        for lib in sysLibs:
+            output += ['-l'+lib]
+    else:
+        output += [
+            'rcs',
+            outputF,
+        ] + inputFs
+        for lib in sysLibs:
+            output += ['-l'+lib]
 
-def getBuildCommand(
-        plt:      Platform,
-        dbg:      bool,
-        inputFs:  list[str],
-        # tempF
-        outputF:  str,
-        includes: list[str] = [],
-        useCxx:   bool      = False,
-    ) -> list[str]:
-    output: list[str] = getCommonCompilationArgs(
-        plt          = plt,
-        dbg          = dbg,
-        compileOnly  = False,
-        addEnvArgs   = True,
-        addStdArgs   = True,
-        useCxx       = useCxx,
-    )
+    return getStaticLibLinker(plt), output
 
-    for inc in includes:
-        output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
+def getExecLinkCommand(
+        plt:     Platform,
+        dbg:     bool,
+        inputFs: list[str],
+        sysLibs: list[str],
+        outputF: str,
+    ) -> tuple[str, list[str]]:
+    output: list[str] = []
+    if plt.tgt == 'windows':
+        output += [
+            '/Brepro',
+            '/NOLOGO',
+            '/OUT:' + outputF,
+            '/SUBSYSTEM:WINDOWS',
+        ] + inputFs + sysLibs
+        if dbg:
+            output += ['/DEBUG', '/PDB:' + outputF.rstrip('.exe') + '.pdb']
+    elif plt.tgt == 'osx' or plt.tgt == 'linux':
+        output += [
+            '-o',
+            outputF,
+        ] + inputFs
+        for lib in sysLibs:
+            output += ['-l'+lib]
+        if dbg:
+            output += ['-g']
+    else:
+        raise NotImplementedError(f'Unsupported platform for executable linking: {plt.tgt}-{plt.arch}')
 
-    output += inputFs
-    output += ['/Fe' + outputF] if plt.tgt == 'windows' else ['-o', outputF]
-
-    return output
+    return getMainLinker(plt), output
 
 # endregion
 
@@ -390,6 +494,14 @@ def setupVsCodeLspStuff():
                 useCxx       = False,
             ),
         )
+
+        if plt.tgt == 'android':
+            config.defines += ['ANDROID=1', '_FORTIFY_SOURCE=2']
+            config.includePath += [f'{plt.toolch}\\sysroot\\usr\\include'.replace('\\', '/')]
+
+        if plt.tgt == 'linux':
+            config.includePath += [f'{plt.toolch}\\usr\\include'.replace('\\', '/')]
+
         properties.configurations.append(config)
 
     ccppPropsFile = '.vscode/c_cpp_properties.json'

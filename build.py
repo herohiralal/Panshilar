@@ -1,5 +1,4 @@
 import os, sys
-from dataclasses import dataclass, asdict
 import buildutils
 
 # region Commandline arguments ================================================================================================
@@ -523,14 +522,6 @@ def main():
             defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
             compilerArgs     = commonArgs,
         ))
-
-
-    # Write the C/C++ properties file
-    ccppPropertiesFile = '.vscode/c_cpp_properties.json'
-    os.makedirs(os.path.dirname(ccppPropertiesFile), exist_ok=True)
-    with open(ccppPropertiesFile, 'w') as f:
-        import json
-        json.dump(asdict(properties), f, indent = 2)
 
     # endregion
 

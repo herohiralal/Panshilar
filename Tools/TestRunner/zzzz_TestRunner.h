@@ -1,6 +1,7 @@
 #ifndef PNSLR_TEST_RUNNER_H // =====================================================
 #define PNSLR_TEST_RUNNER_H
 
+#include "Dependencies/PNSLR_Intrinsics/Macros.h"
 #include "C/Panshilar.h"
 
 #undef true

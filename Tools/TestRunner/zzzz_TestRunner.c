@@ -1,13 +1,4 @@
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"
-#if PNSLR_MSVC
-    #define thread_local            __declspec(thread)
-    #define alignof(type)           __alignof(type)
-#elif (PNSLR_CLANG || PNSLR_GCC)
-    #define thread_local            __thread
-    #define alignof(type)           __alignof__(type)
-#else
-    #error "Required features not supported by this compiler."
-#endif
 PRAGMA_SUPPRESS_WARNINGS
 #include <stdio.h>
 PRAGMA_REENABLE_WARNINGS
@@ -23,7 +14,7 @@ typedef PNSLR_U8 BufferedMessageType;
 typedef struct
 {
     BufferedMessageType      type;
-    PNSLR_UTF8STR                  msg;
+    PNSLR_UTF8STR            msg;
     PNSLR_SourceCodeLocation loc;
 } BufferedMessage;
 
@@ -31,7 +22,7 @@ PNSLR_DECLARE_ARRAY_SLICE(BufferedMessage);
 
 static thread_local PNSLR_ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
 static thread_local PNSLR_U64                         G_NumBufferedMessages        = {0};
-static thread_local PNSLR_Allocator             G_CurrentTestRunnerAllocator = {0};
+static thread_local PNSLR_Allocator                   G_CurrentTestRunnerAllocator = {0};
 
 static inline void BufferMessage(const BufferedMessage* msg)
 {
