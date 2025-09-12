@@ -28,6 +28,7 @@
     #pragma warning(disable: 4324) // structure was padded due to alignment specifier
     #pragma warning(disable: 4820) // bytes padding added after data member
     #pragma warning(disable: 4127) // conditional expression is constant
+    #pragma warning(disable: 4711) // function selected for automatic inline expansion
 
     #define PRAGMA_SUPPRESS_WARNINGS \
         __pragma(warning(push, 0))
