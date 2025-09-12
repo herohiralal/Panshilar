@@ -17,6 +17,11 @@ PNSLR_INTRINSICS_ROOT_DIR         = PNSLR_FOLDER_STRUCTURE.depDir + 'PNSLR_Intri
 PNSLR_TEST_RUNNER_ROOT_DIR        = PNSLR_FOLDER_STRUCTURE.root   + 'Tools/TestRunner/'
 PNSLR_BINDINGS_GENERATOR_ROOT_DIR = PNSLR_FOLDER_STRUCTURE.root   + 'Tools/BindGen/'
 
+PNSLR_INTRINSICS_MAIN_FILE         = PNSLR_INTRINSICS_ROOT_DIR         + 'Intrinsics.c'
+PNSLR_MAIN_FILE                    = PNSLR_FOLDER_STRUCTURE.srcDir     + 'zzzz_Unity.c'
+PNSLR_TEST_RUNNER_MAIN_FILE        = PNSLR_TEST_RUNNER_ROOT_DIR        + 'zzzz_TestRunner.c'
+PNSLR_BINDINGS_GENERATOR_MAIN_FILE = PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.c'
+
 def getIntrinsicsObjectPath(plt: buildutils.Platform) -> str:
     return PNSLR_INTRINSICS_ROOT_DIR + 'Prebuilt/' + buildutils.getObjectOutputFileName('intrinsics', plt)
 
@@ -42,7 +47,7 @@ def getIntrinsicsCompileCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getCompilationCommand(
         plt,
         False,
-        PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c',
+        PNSLR_INTRINSICS_MAIN_FILE,
         getIntrinsicsObjectPath(plt),
     )
 
@@ -50,7 +55,7 @@ def getLibraryCompileCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getCompilationCommand(
         plt,
         False,
-        PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
+        PNSLR_MAIN_FILE,
         getLibraryObjectPath(plt),
     )
 
@@ -66,9 +71,9 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [
-            PNSLR_TEST_RUNNER_ROOT_DIR + 'zzzz_TestRunner.c',
-            PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
-            PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
+            PNSLR_TEST_RUNNER_MAIN_FILE,
+            PNSLR_MAIN_FILE,
+            PNSLR_INTRINSICS_MAIN_FILE
         ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
@@ -80,9 +85,9 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [
-            PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.c',
-            PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
-            PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
+            PNSLR_BINDINGS_GENERATOR_MAIN_FILE,
+            PNSLR_MAIN_FILE,
+            PNSLR_INTRINSICS_MAIN_FILE
         ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
