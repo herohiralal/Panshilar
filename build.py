@@ -20,11 +20,11 @@ PNSLR_BINDINGS_GENERATOR_ROOT_DIR = PNSLR_FOLDER_STRUCTURE.root   + 'Tools/BindG
 def getIntrinsicsObjectPath(plt: buildutils.Platform) -> str:
     return PNSLR_INTRINSICS_ROOT_DIR + 'Prebuilt/' + buildutils.getObjectOutputFileName('intrinsics', plt)
 
-def getLibraryObjectPath(plt: buildutils.Platform, dbg: bool) -> str:
-    return PNSLR_FOLDER_STRUCTURE.tmpDir + buildutils.getObjectOutputFileName('unity' + ('-dbg' if dbg else ''), plt)
+def getLibraryObjectPath(plt: buildutils.Platform) -> str:
+    return PNSLR_FOLDER_STRUCTURE.tmpDir + buildutils.getObjectOutputFileName('unity', plt)
 
-def getLibraryPath(plt: buildutils.Platform, dbg: bool) -> str:
-    return PNSLR_FOLDER_STRUCTURE.libDir + buildutils.getStaticLibOutputFileName('panshilar' + ('-dbg' if dbg else ''), plt)
+def getLibraryPath(plt: buildutils.Platform) -> str:
+    return PNSLR_FOLDER_STRUCTURE.libDir + buildutils.getStaticLibOutputFileName('panshilar', plt)
 
 def getTestRunnerObjectPath(plt: buildutils.Platform) -> str:
     return PNSLR_FOLDER_STRUCTURE.tmpDir +  buildutils.getObjectOutputFileName('testrunner', plt)
@@ -46,53 +46,45 @@ def getIntrinsicsCompileCommand(plt: buildutils.Platform) -> list[str]:
         getIntrinsicsObjectPath(plt),
     )
 
-def getLibraryCompileCommand(plt: buildutils.Platform, dbg: bool) -> list[str]:
+def getLibraryCompileCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getCompilationCommand(
         plt,
-        dbg,
+        False,
         PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
-        getLibraryObjectPath(plt, dbg),
+        getLibraryObjectPath(plt),
     )
 
-def getLibraryLinkCommand(plt: buildutils.Platform, dbg: bool) -> list[str]:
+def getLibraryLinkCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getStaticLibLinkCommand(
         plt,
-        [getIntrinsicsObjectPath(plt), getLibraryObjectPath(plt, dbg)],
-        getLibraryPath(plt, dbg),
+        [getIntrinsicsObjectPath(plt), getLibraryObjectPath(plt)],
+        getLibraryPath(plt),
     )
 
-def getTestRunnerCompileCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getCompilationCommand(
+def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getExecBuildCommand(
         plt,
         True,
-        PNSLR_TEST_RUNNER_ROOT_DIR + 'zzzz_TestRunner.c',
-        getTestRunnerObjectPath(plt),
+        [
+            PNSLR_TEST_RUNNER_ROOT_DIR + 'zzzz_TestRunner.c',
+            PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
+            PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
+        ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
-    )
-
-def getTestRunnerLinkCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getExecLinkCommand(
-        plt,
-        True,
-        [getTestRunnerObjectPath(plt), getLibraryPath(plt, True)],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
         getTestRunnerExecutablePath(plt),
     )
 
-def getBindingsGeneratorCompileCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getCompilationCommand(
+def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getExecBuildCommand(
         plt,
         True,
-        PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.c',
-        getBindingsGeneratorObjectPath(plt),
-        [PNSLR_FOLDER_STRUCTURE.srcDir],
-    )
-
-def getBindingsGeneratorLinkCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getExecLinkCommand(
-        plt,
-        True,
-        [getBindingsGeneratorObjectPath(plt), getLibraryPath(plt, True)],
+        [
+            PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.c',
+            PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
+            PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
+        ],
+        [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
         getBindingsGeneratorExecutablePath(plt),
     )
@@ -105,30 +97,26 @@ def buildIntrinsics(plt: buildutils.Platform) -> bool:
     cmd = getIntrinsicsCompileCommand(plt)
     return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Intrinsics Compile')
 
-def buildLibrary(plt: buildutils.Platform, dbg: bool) -> bool:
-    cmd = getLibraryCompileCommand(plt, dbg)
+def buildLibrary(plt: buildutils.Platform) -> bool:
+    cmd = getLibraryCompileCommand(plt)
     if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Library Compile'):
         return False
-    cmd = getLibraryLinkCommand(plt, dbg)
+    cmd = getLibraryLinkCommand(plt)
     return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Library Link')
 
 def buildTestRunner(plt: buildutils.Platform) -> bool:
-    cmd = getTestRunnerCompileCommand(plt)
-    if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Test Runner Compile'):
-        return False
-    cmd = getTestRunnerLinkCommand(plt)
-    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Test Runner Link')
+    cmd = getTestRunnerBuildCommand(plt)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Test Runner Build')
 
 def buildBindingsGenerator(plt: buildutils.Platform) -> bool:
-    cmd = getBindingsGeneratorCompileCommand(plt)
-    if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Bindings Generator Compile'):
-        return False
-    cmd = getBindingsGeneratorLinkCommand(plt)
-    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Bindings Generator Link')
+    cmd = getBindingsGeneratorBuildCommand(plt)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Bindings Generator Build')
 
 # endregion
 
 if __name__ == '__main__':
+    buildutils.setupVsCodeLspStuff()
+
     if CMD_ARG_RUN_TESTS:
         tests = [f.rstrip('.c') for f in os.listdir(PNSLR_TEST_RUNNER_ROOT_DIR) if f.endswith('.c') and not f.startswith('zzzz_')]
         tests = sorted(tests)
@@ -159,15 +147,12 @@ if __name__ == '__main__':
         if CMD_ARG_REBUILD_INTRINSICS:
             buildIntrinsics(plt)
 
-        buildLibrary(plt, False)
-
-        if CMD_ARG_RUN_TESTS or CMD_ARG_REGENERATE_BINDINGS:
-            buildLibrary(plt, True)
+        buildLibrary(plt)
 
         if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
             buildBindingsGenerator(plt)
 
-        if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
+        if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
             buildTestRunner(plt)
 
     buildutils.printSummary()

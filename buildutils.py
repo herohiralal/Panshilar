@@ -238,12 +238,6 @@ def getStaticLibLinker(plt: Platform) -> str:
     else:
         raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
-def getMainLinker(plt: Platform) -> str:
-    if plt.tgt == 'windows':
-        return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'link.exe')
-    else:
-        return getCxxCompiler(plt)
-
 def getObjectOutputFileName(
         name: str,
         plt:  Platform,
@@ -415,34 +409,38 @@ def getStaticLibLinkCommand(
 
     return output
 
-def getExecLinkCommand(
-        plt:     Platform,
-        dbg:     bool,
-        inputFs: list[str],
-        sysLibs: list[str],
-        outputF: str,
+def getExecBuildCommand(
+        plt:      Platform,
+        dbg:      bool,
+        inputFs:  list[str],
+        includes: list[str],
+        sysLibs:  list[str],
+        outputF:  str,
+        useCxx:   bool = False,
     ) -> list[str]:
-    output: list[str] = [getMainLinker(plt)]
+    output: list[str] = [(getCxxCompiler(plt) if useCxx else getCCompiler(plt))]
+
+    output += getCommonCompilationArgs(
+        plt          = plt,
+        dbg          = dbg,
+        compileOnly  = True,
+        addEnvArgs   = True,
+        addStdArgs   = True,
+        useCxx       = useCxx,
+    )
+
+    for inc in includes:
+        output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
+
+    output += inputFs
+    output += ['/Fe'+outputF] if plt.tgt == 'windows' else ['-o', outputF]
+
     if plt.tgt == 'windows':
-        output += [
-            '/Brepro',
-            '/NOLOGO',
-            '/OUT:' + outputF,
-            '/SUBSYSTEM:WINDOWS',
-        ] + inputFs + sysLibs
-        if dbg:
-            output += ['/DEBUG', '/PDB:' + outputF.rstrip('.exe') + '.pdb']
-    elif plt.tgt == 'osx' or plt.tgt == 'linux':
-        output += [
-            '-o',
-            outputF,
-        ] + inputFs
-        for lib in sysLibs:
-            output += ['-l'+lib]
-        if dbg:
-            output += ['-g']
+        output += sysLibs
+        output += ['/DEBUG', '/Fd'+outputF.rstrip('.exe') + '.pdb'] if dbg else []
     else:
-        raise NotImplementedError(f'Unsupported platform for executable linking: {plt.tgt}-{plt.arch}')
+        for lib in sysLibs:
+            output += ['-l' + lib]
 
     return output
 
