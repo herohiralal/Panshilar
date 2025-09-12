@@ -156,3 +156,6 @@ if __name__ == '__main__':
             buildTestRunner(plt)
 
     buildutils.printSummary()
+
+    if buildutils.failedProcesses:
+        exit(1)
