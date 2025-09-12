@@ -11,209 +11,121 @@ CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the
 
 # region File paths ===========================================================================================================
 
-def getIntrinsicsSourcePath() -> str:
-    return f'Source/Dependencies/PNSLR_Intrinsics/'
+PNSLR_FOLDER_STRUCTURE = buildutils.getFolderStructure(os.path.dirname(os.path.abspath(__file__)))
 
-def getLibrarySourcePath() -> str:
-    return f'Source/'
+PNSLR_INTRINSICS_ROOT_DIR         = PNSLR_FOLDER_STRUCTURE.depDir + 'PNSLR_Intrinsics/'
+PNSLR_TEST_RUNNER_ROOT_DIR        = PNSLR_FOLDER_STRUCTURE.root   + 'Tools/TestRunner/'
+PNSLR_BINDINGS_GENERATOR_ROOT_DIR = PNSLR_FOLDER_STRUCTURE.root   + 'Tools/BindGen/'
 
-def getTestRunnerSourcePath() -> str:
-    return f'Tools/TestRunner/'
+def getIntrinsicsObjectPath(plt: buildutils.Platform) -> str:
+    return PNSLR_INTRINSICS_ROOT_DIR + 'Prebuilt/' + buildutils.getObjectOutputFileName('intrinsics', plt)
 
-def getBindingsGeneratorSourcePath() -> str:
-    return f'Tools/BindGen/'
+def getLibraryObjectPath(plt: buildutils.Platform, dbg: bool) -> str:
+    return PNSLR_FOLDER_STRUCTURE.tmpDir + buildutils.getObjectOutputFileName('unity' + ('-dbg' if dbg else ''), plt)
 
-def getIntrinsicsObjectPath(tgt: str, arch: str) -> str:
-    return f'Source/Dependencies/PNSLR_Intrinsics/Prebuilt/intrinsics-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
+def getLibraryPath(plt: buildutils.Platform, dbg: bool) -> str:
+    return PNSLR_FOLDER_STRUCTURE.libDir + buildutils.getStaticLibOutputFileName('panshilar' + ('-dbg' if dbg else ''), plt)
 
-def getLibraryObjectPath(tgt: str, arch: str) -> str:
-    return f'Temp/unity-{tgt}-{arch}.{'obj' if tgt == 'windows' else 'o'}'
+def getTestRunnerExecutablePath(plt: buildutils.Platform) -> str:
+    return PNSLR_FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('TestRunner', plt)
 
-def getLibraryPath(tgt: str, arch: str) -> str:
-    return f'Libraries/panshilar-{tgt}-{arch}.{'lib' if tgt == 'windows' else 'a'}'
+def getBindingsGeneratorExecutablePath(plt: buildutils.Platform) -> str:
+    return PNSLR_FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt)
 
-def getTestRunnerExecutablePath(tgt: str, arch: str) -> str:
-    return f'Binaries/TestRunner-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
+def getIntrinsicsCompileCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getCompilationCommand(
+        plt,
+        False,
+        PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c',
+        getIntrinsicsObjectPath(plt),
+    )
 
-def getBindingsGeneratorExecutablePath(tgt: str, arch: str) -> str:
-    return f'Binaries/BindingsGenerator-{tgt}-{arch}{'.exe' if tgt == 'windows' else ''}'
+def getLibraryCompileCommand(plt: buildutils.Platform, dbg: bool) -> list[str]:
+    return buildutils.getCompilationCommand(
+        plt,
+        dbg,
+        PNSLR_FOLDER_STRUCTURE.srcDir + 'zzzz_Unity.c',
+        getLibraryObjectPath(plt, dbg),
+    )
 
-def getIntrinsicsCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getIntrinsicsSourcePath() + 'Intrinsics.c'
-    outputFile = getIntrinsicsObjectPath(tgt, arch)
+def getLibraryLinkCommand(plt: buildutils.Platform, dbg: bool) -> list[str]:
+    return buildutils.getStaticLibLinkCommand(
+        plt,
+        [getIntrinsicsObjectPath(plt), getLibraryObjectPath(plt, dbg)],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
+        getLibraryPath(plt, dbg),
+    )
 
-    if tgt == 'windows':
-        return [
-            '/c',
-            inputFile,
-            f'/Fo{outputFile}',
-        ]
-    else:
-        return [
-            '-c',
-            inputFile,
-            f'-o{outputFile}',
-        ]
+def getTestRunnerCompileCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getCompilationCommand(
+        plt,
+        True,
+        PNSLR_TEST_RUNNER_ROOT_DIR + 'Source/zzzz_TestRunner.c',
+        getTestRunnerExecutablePath(plt),
+        [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
+    )
 
-def getLibraryCompileArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getLibrarySourcePath() + 'zzzz_Unity.c'
-    outputFile = getLibraryObjectPath(tgt, arch)
+def getTestRunnerLinkCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getExecLinkCommand(
+        plt,
+        True,
+        [PNSLR_TEST_RUNNER_ROOT_DIR + 'Source/zzzz_TestRunner.c', getLibraryPath(plt, True)],
+        [],
+        getTestRunnerExecutablePath(plt),
+    )
 
-    if tgt == 'windows':
-        return [
-            '/c',
-            inputFile,
-            f'/Fo{outputFile}',
-        ] # + MSVC_DEBUG_ARGS
-    else:
-        return [
-            '-c',
-            inputFile,
-            f'-o{outputFile}',
-        ] # + CLANG_DEBUG_ARGS
+def getBindingsGeneratorCompileCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getCompilationCommand(
+        plt,
+        True,
+        PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'Source/BindingsGenerator.c',
+        getBindingsGeneratorExecutablePath(plt),
+        [PNSLR_FOLDER_STRUCTURE.srcDir],
+    )
 
-def getLibraryLinkArgs(tgt: str, arch: str) -> list[str]:
-    intrinsicsObjFile = getIntrinsicsObjectPath(tgt, arch)
-    libraryObjFile    = getLibraryObjectPath(tgt, arch)
-    outputFile        = getLibraryPath(tgt, arch)
-
-    if tgt == 'windows':
-        return [
-            '/Brepro',
-            '/NOLOGO',
-            intrinsicsObjFile,
-            libraryObjFile,
-            'iphlpapi.lib',
-            'Ws2_32.lib',
-            f'/OUT:{outputFile}',
-        ]
-    elif tgt == 'osx':
-        return [
-            '-static',
-            '-o',
-            outputFile,
-            intrinsicsObjFile,
-            libraryObjFile,
-        ]
-    else:
-        return [
-            'rcs',
-            outputFile,
-            intrinsicsObjFile,
-            libraryObjFile,
-        ]
-
-def getTestRunnerBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getTestRunnerSourcePath() + 'zzzz_TestRunner.c'
-    outputFile = getTestRunnerExecutablePath(tgt, arch)
-
-    if tgt == 'windows':
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '/ISource/',
-            '/IBindings/',
-            f'/Fe{outputFile}',
-            f'/FoTemp/TestRunner-{tgt}-{arch}.obj',
-            f'/FdBinaries/TestRunner-{tgt}-{arch}.pdb',
-        ] + buildutils.MSVC_DEBUG_ARGS
-    else:
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '-o',
-            outputFile,
-            '-ISource/',
-            '-IBindings/',
-            # '-v',
-            # '-###',
-        ] + buildutils.CLANG_DEBUG_ARGS + \
-        (['-lpthread'] if tgt != 'android' else [])
-
-def getBindGenBuildArgs(tgt: str, arch: str) -> list[str]:
-    inputFile  = getBindingsGeneratorSourcePath() + 'BindingsGenerator.c'
-    outputFile = getBindingsGeneratorExecutablePath(tgt, arch)
-
-    if tgt == 'windows':
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '/ISource',
-            f'/Fe{outputFile}',
-            f'/FoTemp/BindingsGenerator-{tgt}-{arch}.obj',
-            f'/FdBinaries/BindingsGenerator-{tgt}-{arch}.pdb',
-        ] + buildutils.MSVC_DEBUG_ARGS
-    else:
-        return [
-            inputFile,
-            getLibraryPath(tgt, arch),
-            '-lpthread',
-            '-o',
-            outputFile,
-            f'-ISource/',
-            # '-v',
-            # '-###',
-        ] + buildutils.CLANG_DEBUG_ARGS
+def getBindingsGeneratorLinkCommand(plt: buildutils.Platform) -> list[str]:
+    return buildutils.getExecLinkCommand(
+        plt,
+        True,
+        [PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'Source/BindingsGenerator.c', getLibraryPath(plt, True)],
+        [],
+        getBindingsGeneratorExecutablePath(plt),
+    )
 
 # endregion
 
-def buildPlatform(
-        prettyTgt:          str,
-        prettyArch:         str,
-        tgt:                str,
-        arch:               str,
-        cCompiler:          str,
-        cxxCompiler:        str,
-        cStdArgs:           list[str],
-        cxxStdArgs:         list[str],
-        linker:             str,
-        commonCompilerArgs: list[str],
-        envArgs:            list[str],
-    ) -> bool:
+# region Main Logic ===========================================================================================================
 
-    buildTools = False
-    if sys.platform == 'win32':
-        buildTools = (tgt == 'windows')
-    elif sys.platform == 'darwin':
-        buildTools = (tgt == 'osx')
-    elif sys.platform == 'linux':
-        buildTools = (tgt == 'linux')
-    else:
-        buildTools = False
+def buildIntrinsics(plt: buildutils.Platform) -> bool:
+    cmd = getIntrinsicsCompileCommand(plt)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Intrinsics Compile')
 
-    intrinsicsCompiled    = True
-    intrinsicsCompileArgs = commonCompilerArgs + getIntrinsicsCompileArgs(tgt, arch)
-    if CMD_ARG_REBUILD_INTRINSICS:
-        intrinsicsCompiled = (buildutils.runCommand([cCompiler] + intrinsicsCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Intrinsics Compile'))
+def buildLibrary(plt: buildutils.Platform, dbg: bool) -> bool:
+    cmd = getLibraryCompileCommand(plt, dbg)
+    if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Library Compile'):
+        return False
+    cmd = getLibraryLinkCommand(plt, dbg)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Library Link')
 
-    libraryCompiled    = True
-    libraryCompileArgs = commonCompilerArgs + getLibraryCompileArgs(tgt, arch) + envArgs
-    libraryCompiled    = (intrinsicsCompiled and buildutils.runCommand([cCompiler] + libraryCompileArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Library Compile'))
+def buildTestRunner(plt: buildutils.Platform) -> bool:
+    cmd = getTestRunnerCompileCommand(plt)
+    if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Test Runner Compile'):
+        return False
+    cmd = getTestRunnerLinkCommand(plt)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Test Runner Link')
 
-    libraryLinked   = True
-    libraryLinkArgs = getLibraryLinkArgs(tgt, arch)
-    libraryLinked   = (libraryCompiled and buildutils.runCommand([linker] + libraryLinkArgs, f'{prettyTgt}-{prettyArch} Library Link'))
-
-    testsSuccessful     = True
-    testRunnerBuildArgs = commonCompilerArgs + getTestRunnerBuildArgs(tgt, arch) + envArgs
-    testsSuccessful     = (not CMD_ARG_RUN_TESTS) or \
-                          (libraryLinked and buildutils.runCommand([cCompiler] + testRunnerBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Test Runner Build'))
-
-    bindGenSuccessful          = True
-    bindingsGeneratorBuildArgs = commonCompilerArgs + getBindGenBuildArgs(tgt, arch) + envArgs
-    bindGenSuccessful          = (not CMD_ARG_REGENERATE_BINDINGS) or (not buildTools) or \
-                                 (libraryLinked and buildutils.runCommand([cCompiler] + bindingsGeneratorBuildArgs + cStdArgs, f'{prettyTgt}-{prettyArch} Bindings Generator Build'))
-
-    return libraryLinked and testsSuccessful and bindGenSuccessful
+def buildBindingsGenerator(plt: buildutils.Platform) -> bool:
+    cmd = getBindingsGeneratorCompileCommand(plt)
+    if not buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Bindings Generator Compile'):
+        return False
+    cmd = getBindingsGeneratorLinkCommand(plt)
+    return buildutils.runCommand(cmd, f'{plt.tgt}-{plt.arch} Bindings Generator Link')
 
 # endregion
 
-def main():
-
-    # region Setup Tests ======================================================================================================
-
+if __name__ == '__main__':
     if CMD_ARG_RUN_TESTS:
-        sourcePath = getTestRunnerSourcePath()
+        sourcePath = PNSLR_TEST_RUNNER_ROOT_DIR + 'Source/'
         tests = [f.rstrip('.c') for f in os.listdir(sourcePath) if f.endswith('.c') and not f.startswith('zzzz_')]
         tests = sorted(tests)
         outputFilePath = os.path.join(sourcePath, 'zzzz_GeneratedCombinedTests.c')
@@ -239,295 +151,19 @@ def main():
             outputFile.write('    // done\n')
             outputFile.write('}\n')
 
-    # endregion
+    for plt in buildutils.PLATFORMS:
+        if CMD_ARG_REBUILD_INTRINSICS:
+            buildIntrinsics(plt)
 
-    # region Project Files Definitions ========================================================================================
+        buildLibrary(plt, False)
 
+        if CMD_ARG_RUN_TESTS or CMD_ARG_REGENERATE_BINDINGS:
+            buildLibrary(plt, True)
 
-    properties: CCppProperties = CCppProperties(version = 4, configurations = [])
+        if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
+            buildBindingsGenerator(plt)
 
-    # endregion
-
-    # region Builds ===========================================================================================================
-
-    if windowsToolchain:
-        commonArgs = MSVC_COMMON_ARGS + []
-
-        buildPlatform(
-            'Windows',
-            'x64',
-            'windows',
-            'x64',
-            os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe'),
-            os.path.join(windowsToolchain, "bin", 'HostX64', 'x64', 'cl.exe'),
-            MSVC_C_STD_ARGS,
-            MSVC_CXX_STD_ARGS,
-            os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'lib.exe'),
-            commonArgs,
-            ['/DPNSLR_WINDOWS=1', '/DPNSLR_X64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'Windows-x64',
-            compilerPath     = os.path.join(windowsToolchain, 'bin', 'HostX64', 'x64', 'cl.exe').replace('\\', '/'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings'
-            ],
-            defines          = ['PNSLR_WINDOWS=1', 'PNSLR_X64=1'],
-            compilerArgs     = commonArgs
-        ))
-
-    if linuxX64Toolchain:
-        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={linuxX64Toolchain}\\', '--target=x86_64-unknown-linux-gnu']
-
-        buildPlatform(
-            'Linux',
-            'x64',
-            'linux',
-            'x64',
-            os.path.join(linuxX64Toolchain, 'bin', 'clang.exe'),
-            os.path.join(linuxX64Toolchain, 'bin', 'clang++.exe'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(linuxX64Toolchain, 'bin', 'llvm-ar.exe'),
-            commonArgs,
-            ['-DPNSLR_LINUX=1', '-DPNSLR_X64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'Linux-x64',
-            compilerPath     = os.path.join(linuxX64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings',
-                f'{linuxX64Toolchain}\\usr\\include'.replace('\\', '/')
-            ],
-            defines          = ['PNSLR_LINUX=1', 'PNSLR_X64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if osxTools and osxToolchain:
-        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'x86_64-apple-macos11.0']
-
-        buildPlatform(
-            'MacOS',
-            'Intel',
-            'osx',
-            'x64',
-            os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            os.path.join(osxTools, 'bin', 'clang++'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(osxTools, 'usr', 'bin', 'libtool'),
-            commonArgs,
-            ['-DPNSLR_OSX=1', '-DPNSLR_X64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'MacOS-X64',
-            compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings'
-            ],
-            defines          = ['PNSLR_OSX=1', 'PNSLR_X64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if osxTools and osxToolchain:
-        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', osxToolchain, '-target', 'arm64-apple-macos11.0']
-
-        buildPlatform(
-            'MacOS',
-            'Apple Silicon',
-            'osx',
-            'arm64',
-            os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            os.path.join(osxTools, 'bin', 'clang++'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(osxTools, 'usr', 'bin', 'libtool'),
-            commonArgs,
-            ['-DPNSLR_OSX=1', '-DPNSLR_ARM64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'MacOS-ARM64',
-            compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings'
-            ],
-            defines          = ['PNSLR_OSX=1', 'PNSLR_ARM64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if linuxArm64Toolchain:
-        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={linuxArm64Toolchain}\\', '--target=aarch64-unknown-linux-gnueabi']
-
-        buildPlatform(
-            'Linux',
-            'ARM64',
-            'linux',
-            'arm64',
-            os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe'),
-            os.path.join(linuxArm64Toolchain, 'bin', 'clang++.exe'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(linuxArm64Toolchain, 'bin', 'llvm-ar.exe'),
-            commonArgs,
-            ['-DPNSLR_LINUX=1', '-DPNSLR_ARM64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'Linux-ARM64',
-            compilerPath     = os.path.join(linuxArm64Toolchain, 'bin', 'clang.exe').replace('\\', '/'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings',
-                f'{linuxArm64Toolchain}\\usr\\include'.replace('\\', '/')
-            ],
-            defines          = ['PNSLR_LINUX=1', 'PNSLR_ARM64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if androidToolchain:
-        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=x86_64-linux-android28']
-
-        buildPlatform(
-            'Android',
-            'X64',
-            'android',
-            'x64',
-            os.path.join(androidToolchain, 'bin', 'clang.exe'),
-            os.path.join(androidToolchain, 'bin', 'clang++.exe'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
-            commonArgs,
-            ['-DPNSLR_ANDROID=1', '-DPNSLR_X64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'Android-x64',
-            compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe').replace('\\', '/'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings',
-                f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
-            ],
-            defines          = ['PNSLR_ANDROID=1', 'PNSLR_X64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if androidToolchain:
-        commonArgs = CLANG_COMMON_ARGS + [f'--sysroot={androidToolchain}\\sysroot\\', '--target=aarch64-linux-android28']
-
-        buildPlatform(
-            'Android',
-            'ARM64',
-            'android',
-            'arm64',
-            os.path.join(androidToolchain, 'bin', 'clang.exe'),
-            os.path.join(androidToolchain, 'bin', 'clang++.exe'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(androidToolchain, 'bin', 'llvm-ar.exe'),
-            commonArgs,
-            ['-DPNSLR_ANDROID=1', '-DPNSLR_ARM64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'Android-ARM64',
-            compilerPath     = os.path.join(androidToolchain, 'bin', 'clang.exe').replace('\\', '/'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings',
-                f'{androidToolchain}\\sysroot\\usr\\include'.replace('\\', '/'),
-            ],
-            defines          = ['PNSLR_ANDROID=1', 'PNSLR_ARM64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if osxTools and iosToolchain:
-        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', iosToolchain, '-miphoneos-version-min=16.0', '-target', 'aarch64-apple-ios16.0', '-arch', 'arm64']
-
-        buildPlatform(
-            'iOS',
-            'ARM64',
-            'ios',
-            'arm64',
-            os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            os.path.join(osxTools, 'usr', 'bin', 'clang++'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(osxTools, 'usr', 'bin', 'ar'),
-            commonArgs,
-            ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'iOS-ARM64',
-            compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings'
-            ],
-            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    if osxTools and iosSimulatorToolchain:
-        commonArgs = CLANG_COMMON_ARGS + ['--sysroot', iosSimulatorToolchain, '-miphoneos-version-min=16.0', '-target', 'aarch64-apple-ios16.0-simulator', '-arch', 'arm64']
-        buildPlatform(
-            'iOS-Simulator',
-            'ARM64',
-            'iossimulator',
-            'arm64',
-            os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            os.path.join(osxTools, 'usr', 'bin', 'clang++'),
-            CLANG_C_STD_ARGS,
-            CLANG_CXX_STD_ARGS,
-            os.path.join(osxTools, 'usr', 'bin', 'ar'),
-            commonArgs,
-            ['-DPNSLR_IOS=1', '-DPNSLR_ARM64=1'],
-        )
-
-        properties.configurations.append(CCppPropertiesConfiguration(
-            name             = 'iOS-Simulator-ARM64',
-            compilerPath     = os.path.join(osxTools, 'usr', 'bin', 'clang'),
-            cStandard        = 'c11',
-            cppStandard      = 'c++14',
-            includePath      = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings'
-            ],
-            defines          = ['PNSLR_IOS=1', 'PNSLR_ARM64=1'],
-            compilerArgs     = commonArgs,
-        ))
-
-    # endregion
+        if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
+            buildTestRunner(plt)
 
     buildutils.printSummary()
-
-    # endregion
-
-if __name__ == '__main__':
-    main()

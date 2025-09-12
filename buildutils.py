@@ -242,7 +242,7 @@ def getMainLinker(plt: Platform) -> str:
     if plt.tgt == 'windows':
         return os.path.join(plt.toolch, 'bin', 'link.exe')
     else:
-        return getCCompiler(plt)
+        return getCxxCompiler(plt)
 
 def getObjectOutputFileName(
         name: str,
@@ -366,8 +366,10 @@ def getCompilationCommand(
         outputF:  str,
         includes: list[str] = [],
         useCxx:   bool      = False,
-    ) -> tuple[str, list[str]]:
-    output: list[str] = getCommonCompilationArgs(
+    ) -> list[str]:
+    output: list[str] = [(getCxxCompiler(plt) if useCxx else getCCompiler(plt))]
+
+    output += getCommonCompilationArgs(
         plt          = plt,
         dbg          = dbg,
         compileOnly  = True,
@@ -385,15 +387,15 @@ def getCompilationCommand(
     if dbg and plt.tgt == 'windows':
         output += ['/Fd', outputF.rstrip('.obj') + '.pdb']
 
-    return getCCompiler(plt), output
+    return output
 
 def getStaticLibLinkCommand(
         plt:     Platform,
         inputFs: list[str],
         sysLibs: list[str],
         outputF: str,
-    ) -> tuple[str, list[str]]:
-    output: list[str] = []
+    ) -> list[str]:
+    output: list[str] = [getStaticLibLinker(plt)]
     if plt.tgt == 'windows':
         output += [
             '/Brepro',
@@ -416,7 +418,7 @@ def getStaticLibLinkCommand(
         for lib in sysLibs:
             output += ['-l'+lib]
 
-    return getStaticLibLinker(plt), output
+    return output
 
 def getExecLinkCommand(
         plt:     Platform,
@@ -424,8 +426,8 @@ def getExecLinkCommand(
         inputFs: list[str],
         sysLibs: list[str],
         outputF: str,
-    ) -> tuple[str, list[str]]:
-    output: list[str] = []
+    ) -> list[str]:
+    output: list[str] = [getMainLinker(plt)]
     if plt.tgt == 'windows':
         output += [
             '/Brepro',
@@ -447,7 +449,7 @@ def getExecLinkCommand(
     else:
         raise NotImplementedError(f'Unsupported platform for executable linking: {plt.tgt}-{plt.arch}')
 
-    return getMainLinker(plt), output
+    return output
 
 # endregion
 
@@ -509,5 +511,30 @@ def setupVsCodeLspStuff():
     with open(ccppPropsFile, 'w', encoding = 'utf-8') as f:
         import json
         json.dump(asdict(properties), f, indent = 4)
+
+# endregion
+
+# region Folder Structure =====================================================================================================
+
+@dataclass
+class FolderStructure:
+    root:   str
+    binDir: str
+    bndDir: str
+    libDir: str
+    tmpDir: str
+    srcDir: str
+    depDir: str
+
+def getFolderStructure(root: str) -> FolderStructure:
+    return FolderStructure(
+        root   = root                                        .replace('\\', '/') + '/',
+        binDir = os.path.join(root, 'Binaries')              .replace('\\', '/') + '/',
+        bndDir = os.path.join(root, 'Bindings')              .replace('\\', '/') + '/',
+        libDir = os.path.join(root, 'Libraries')             .replace('\\', '/') + '/',
+        tmpDir = os.path.join(root, 'Temp')                  .replace('\\', '/') + '/',
+        srcDir = os.path.join(root, 'Source')                .replace('\\', '/') + '/',
+        depDir = os.path.join(root, 'Source', 'Dependencies').replace('\\', '/') + '/',
+    )
 
 # endregion
