@@ -71,7 +71,7 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
             PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
         ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
-        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
         getTestRunnerExecutablePath(plt),
     )
 
