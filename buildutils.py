@@ -382,10 +382,10 @@ def getCompilationCommand(
         output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
 
     output += [inputF]
-    output += ['/Fo', outputF] if plt.tgt == 'windows' else ['-o', outputF]
+    output += ['/Fo'+outputF] if plt.tgt == 'windows' else ['-o', outputF]
 
     if dbg and plt.tgt == 'windows':
-        output += ['/Fd', outputF.rstrip('.obj') + '.pdb']
+        output += ['/Fd'+outputF.rstrip('.obj') + '.pdb']
 
     return output
 
