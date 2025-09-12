@@ -423,7 +423,7 @@ def getExecBuildCommand(
     output += getCommonCompilationArgs(
         plt          = plt,
         dbg          = dbg,
-        compileOnly  = True,
+        compileOnly  = False,
         addEnvArgs   = True,
         addStdArgs   = True,
         useCxx       = useCxx,
@@ -438,6 +438,7 @@ def getExecBuildCommand(
     if plt.tgt == 'windows':
         output += sysLibs
         output += ['/DEBUG', '/Fd'+outputF.rstrip('.exe') + '.pdb'] if dbg else []
+        output += ['/Fo'+os.path.dirname(outputF)+'/']
     else:
         for lib in sysLibs:
             output += ['-l' + lib]

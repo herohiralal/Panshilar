@@ -71,7 +71,7 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
             PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
         ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
-        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
         getTestRunnerExecutablePath(plt),
     )
 
@@ -85,7 +85,7 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
             PNSLR_INTRINSICS_ROOT_DIR + 'Intrinsics.c'
         ],
         [PNSLR_FOLDER_STRUCTURE.srcDir, PNSLR_FOLDER_STRUCTURE.bndDir],
-        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
         getBindingsGeneratorExecutablePath(plt),
     )
 
@@ -149,10 +149,10 @@ if __name__ == '__main__':
 
         buildLibrary(plt)
 
-        if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
+        if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
             buildBindingsGenerator(plt)
 
-        if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
+        if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
             buildTestRunner(plt)
 
     buildutils.printSummary()
