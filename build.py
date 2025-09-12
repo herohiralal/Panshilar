@@ -52,7 +52,6 @@ def getLibraryLinkCommand(plt: buildutils.Platform, dbg: bool) -> list[str]:
     return buildutils.getStaticLibLinkCommand(
         plt,
         [getIntrinsicsObjectPath(plt), getLibraryObjectPath(plt, dbg)],
-        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
         getLibraryPath(plt, dbg),
     )
 
@@ -70,7 +69,7 @@ def getTestRunnerLinkCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [PNSLR_TEST_RUNNER_ROOT_DIR + 'Source/zzzz_TestRunner.c', getLibraryPath(plt, True)],
-        [],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
         getTestRunnerExecutablePath(plt),
     )
 
@@ -88,7 +87,7 @@ def getBindingsGeneratorLinkCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [PNSLR_BINDINGS_GENERATOR_ROOT_DIR + 'Source/BindingsGenerator.c', getLibraryPath(plt, True)],
-        [],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt != 'android' else [],
         getBindingsGeneratorExecutablePath(plt),
     )
 

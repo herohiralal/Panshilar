@@ -392,7 +392,6 @@ def getCompilationCommand(
 def getStaticLibLinkCommand(
         plt:     Platform,
         inputFs: list[str],
-        sysLibs: list[str],
         outputF: str,
     ) -> list[str]:
     output: list[str] = [getStaticLibLinker(plt)]
@@ -401,22 +400,18 @@ def getStaticLibLinkCommand(
             '/Brepro',
             '/NOLOGO',
             '/OUT:' + outputF,
-        ] + inputFs + sysLibs
+        ] + inputFs
     elif plt.tgt == 'osx':
         output += [
             '-static',
             '-o',
             outputF,
         ] + inputFs
-        for lib in sysLibs:
-            output += ['-l'+lib]
     else:
         output += [
             'rcs',
             outputF,
         ] + inputFs
-        for lib in sysLibs:
-            output += ['-l'+lib]
 
     return output
 
