@@ -3,7 +3,6 @@ import buildutils
 
 # region Commandline arguments ================================================================================================
 
-CMD_ARG_REBUILD_INTRINSICS  = '-rebuild-intrinsics' in sys.argv # Rebuild the intrinsics dependency
 CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 
@@ -13,17 +12,12 @@ CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the
 
 FOLDER_STRUCTURE = buildutils.getFolderStructure(os.path.dirname(os.path.abspath(__file__)))
 
-INTRINSICS_ROOT_DIR         = FOLDER_STRUCTURE.depDir + 'PNSLR_Intrinsics/'
 TEST_RUNNER_ROOT_DIR        = FOLDER_STRUCTURE.root   + 'Tools/TestRunner/'
 BINDINGS_GENERATOR_ROOT_DIR = FOLDER_STRUCTURE.root   + 'Tools/BindGen/'
 
-INTRINSICS_MAIN_FILE         = INTRINSICS_ROOT_DIR         + 'Intrinsics.c'
 MAIN_FILE                    = FOLDER_STRUCTURE.srcDir     + 'zzzz_Unity.c'
 TEST_RUNNER_MAIN_FILE        = TEST_RUNNER_ROOT_DIR        + 'zzzz_TestRunner.c'
 BINDINGS_GENERATOR_MAIN_FILE = BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.c'
-
-def getIntrinsicsObjectPath(plt: buildutils.Platform) -> str:
-    return INTRINSICS_ROOT_DIR + 'Prebuilt/' + buildutils.getObjectOutputFileName('intrinsics', plt)
 
 def getLibraryObjectPath(plt: buildutils.Platform) -> str:
     return FOLDER_STRUCTURE.tmpDir + buildutils.getObjectOutputFileName('unity', plt)
@@ -43,20 +37,17 @@ def getBindingsGeneratorObjectPath(plt: buildutils.Platform) -> str:
 def getBindingsGeneratorExecutablePath(plt: buildutils.Platform) -> str:
     return FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt)
 
-def getIntrinsicsCompileCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getCompilationCommand(plt, False, INTRINSICS_MAIN_FILE, getIntrinsicsObjectPath(plt))
-
 def getLibraryCompileCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getCompilationCommand(plt, False, MAIN_FILE, getLibraryObjectPath(plt))
 
 def getLibraryLinkCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getStaticLibLinkCommand(plt, [getIntrinsicsObjectPath(plt), getLibraryObjectPath(plt)], getLibraryPath(plt))
+    return buildutils.getStaticLibLinkCommand(plt, [getLibraryObjectPath(plt)], getLibraryPath(plt))
 
 def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getExecBuildCommand(
         plt,
         True,
-        [TEST_RUNNER_MAIN_FILE, MAIN_FILE, INTRINSICS_MAIN_FILE],
+        [TEST_RUNNER_MAIN_FILE, MAIN_FILE],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
         getTestRunnerExecutablePath(plt),
     )
@@ -65,7 +56,7 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getExecBuildCommand(
         plt,
         True,
-        [BINDINGS_GENERATOR_MAIN_FILE, MAIN_FILE, INTRINSICS_MAIN_FILE],
+        [BINDINGS_GENERATOR_MAIN_FILE, MAIN_FILE],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
         getBindingsGeneratorExecutablePath(plt),
     )
@@ -73,9 +64,6 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
 # endregion
 
 # region Main Logic ===========================================================================================================
-
-def buildIntrinsics(plt: buildutils.Platform) -> bool:
-    return buildutils.runCommand(getIntrinsicsCompileCommand(plt), f'{plt.prettyTgt}-{plt.prettyArch} Intrinsics Compile')
 
 def buildLibrary(plt: buildutils.Platform) -> bool:
     return buildutils.runCommand(getLibraryCompileCommand(plt), f'{plt.prettyTgt}-{plt.prettyArch} Library Compile') and \
@@ -120,8 +108,6 @@ if __name__ == '__main__':
 
     for plt in buildutils.PLATFORMS_TO_BUILD:
         cnt = True
-        if CMD_ARG_REBUILD_INTRINSICS:
-            cnt = cnt and buildIntrinsics(plt)
 
         if not CMD_ARG_REGENERATE_BINDINGS and not CMD_ARG_RUN_TESTS: # don't build the library if we are building bindgen or testrunner
             cnt = cnt and buildLibrary(plt)

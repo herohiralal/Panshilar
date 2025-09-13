@@ -4,6 +4,33 @@
 #include "Runtime.h"
 EXTERN_C_BEGIN
 
+// Memory Management ===============================================================
+
+/**
+ * Allocate memory with the specified alignment and size.
+ */
+rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);
+
+/**
+ * Free memory allocated with PNSLR_Intrinsic_Malloc.
+ */
+void PNSLR_Intrinsic_Free(rawptr memory);
+
+/**
+ * Set a block of memory to a specific value.
+ */
+void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size);
+
+/**
+ * Copy a block of memory from source to destination.
+ */
+void PNSLR_Intrinsic_MemCopy(rawptr destination, rawptr source, i32 size);
+
+/**
+ * Copy a block of memory from source to destination, handling overlapping regions.
+ */
+void PNSLR_Intrinsic_MemMove(rawptr destination, rawptr source, i32 size);
+
 // Allocator Declaration ===========================================================
 
 /**

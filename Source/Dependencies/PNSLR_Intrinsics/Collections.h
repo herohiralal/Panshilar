@@ -1,15 +1,8 @@
-/**
- * The goal of this file is to provide a set of intrinsic functions that are yoinked
- * from the standard library, so that we do not have to directly include the
- * standard library headers in our code.
- */
-
-#ifndef PNSLR_INTRINSICS_H // ======================================================
-#define PNSLR_INTRINSICS_H
+#ifndef PNSLR_COLLECTIONS_INTRINSICS_H // ==========================================
+#define PNSLR_COLLECTIONS_INTRINSICS_H
 #include "Primitives.h"
+#include "Compiler.h"
 #include "Macros.h"
-
-// Collections =====================================================================
 
 //+skipreflect
 #define ArraySlice(ty) ArraySlice_##ty
@@ -77,33 +70,6 @@ DECLARE_ARRAY_SLICE(utf8str);
 #endif
 //-skipreflect
 
-// Memory Management ===============================================================
-
-/**
- * Allocate memory with the specified alignment and size.
- */
-rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size);
-
-/**
- * Free memory allocated with PNSLR_Intrinsic_Malloc.
- */
-void PNSLR_Intrinsic_Free(rawptr memory);
-
-/**
- * Set a block of memory to a specific value.
- */
-void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size);
-
-/**
- * Copy a block of memory from source to destination.
- */
-void PNSLR_Intrinsic_MemCopy(rawptr destination, rawptr source, i32 size);
-
-/**
- * Copy a block of memory from source to destination, handling overlapping regions.
- */
-void PNSLR_Intrinsic_MemMove(rawptr destination, rawptr source, i32 size);
-
 EXTERN_C_END
 
-#endif // PNSLR_INTRINSICS_H =======================================================
+#endif // PNSLR_COLLECTIONS_INTRINSICS_H ===========================================

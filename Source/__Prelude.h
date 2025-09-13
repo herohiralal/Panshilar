@@ -16,6 +16,7 @@
         #include <ws2ipdef.h>
         #include <iphlpapi.h>
         #include <intrin.h>
+        #include <malloc.h>
         #undef WIN32_LEAN_AND_MEAN
     #endif
 
@@ -51,13 +52,15 @@
         #include <android/native_activity.h>
     #endif
 
+    #include <string.h>
+
     PNSLR_UNSUPPRESS_WARN
 
 #endif
 
-// always include this last and outside the implementation block
-// it contains some important macros/typedefs that we'll use
-#include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
+#include "Dependencies/PNSLR_Intrinsics/Primitives.h"
+#include "Dependencies/PNSLR_Intrinsics/Macros.h"
+#include "Dependencies/PNSLR_Intrinsics/Collections.h"
 
 // Static tests ====================================================================
 
