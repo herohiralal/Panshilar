@@ -1,6 +1,6 @@
 #ifndef PNSLR_LEXER_H
 #define PNSLR_LEXER_H
-#include "Panshilar.h"
+#include "../../Source/Panshilar.h"
 #include "TokenMatch.h"
 
 typedef struct

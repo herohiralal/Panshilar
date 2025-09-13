@@ -59,5 +59,31 @@ typedef char*               cstring;
 #define F64_MIN ((f64) ((-1.7976931348623157e+308)))
 #define F64_MAX ((f64) (1.7976931348623157e+308))
 
+#define PNSLR_PTR_SIZE 8
+
+#if !defined(__cplusplus) && !defined(static_assert)
+    #define static_assert _Static_assert
+    #define PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT
+#endif
+
+static_assert(sizeof(b8)      == 1, " b8 must be 1 byte ");
+static_assert(sizeof(u8)      == 1, " u8 must be 1 byte ");
+static_assert(sizeof(i8)      == 1, " i8 must be 1 byte ");
+static_assert(sizeof(u16)     == 2, "u16 must be 2 bytes");
+static_assert(sizeof(i16)     == 2, "i16 must be 2 bytes");
+static_assert(sizeof(u32)     == 4, "u32 must be 4 bytes");
+static_assert(sizeof(i32)     == 4, "i32 must be 4 bytes");
+static_assert(sizeof(f32)     == 4, "f32 must be 4 bytes");
+static_assert(sizeof(u64)     == 8, "u64 must be 8 bytes");
+static_assert(sizeof(i64)     == 8, "i64 must be 8 bytes");
+static_assert(sizeof(f64)     == 8, "f64 must be 8 bytes");
+static_assert(sizeof(rawptr)  == 8, "ptr must be 8 bytes");
+static_assert(PNSLR_PTR_SIZE  == 8, "ptr must be 8 bytes"); // keep in sync with sizeof(rawptr)
+
+#ifdef PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT
+    #undef PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT
+    #undef static_assert
+#endif
+
 //-skipreflect
 #endif // PNSLR_PRIMITIVE_INTRINSICS_H =============================================

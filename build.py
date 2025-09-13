@@ -57,7 +57,6 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [TEST_RUNNER_MAIN_FILE, MAIN_FILE, INTRINSICS_MAIN_FILE],
-        [FOLDER_STRUCTURE.srcDir, FOLDER_STRUCTURE.bndDir],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
         getTestRunnerExecutablePath(plt),
     )
@@ -67,7 +66,6 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [BINDINGS_GENERATOR_MAIN_FILE, MAIN_FILE, INTRINSICS_MAIN_FILE],
-        [FOLDER_STRUCTURE.srcDir, FOLDER_STRUCTURE.bndDir],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
         getBindingsGeneratorExecutablePath(plt),
     )
@@ -120,7 +118,7 @@ if __name__ == '__main__':
             outputFile.write('    // done\n')
             outputFile.write('}\n')
 
-    for plt in buildutils.PLATFORMS:
+    for plt in buildutils.PLATFORMS_TO_BUILD:
         cnt = True
         if CMD_ARG_REBUILD_INTRINSICS:
             cnt = cnt and buildIntrinsics(plt)

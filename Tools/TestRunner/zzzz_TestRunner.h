@@ -1,8 +1,8 @@
 #ifndef PNSLR_TEST_RUNNER_H // =====================================================
 #define PNSLR_TEST_RUNNER_H
 
-#include "Dependencies/PNSLR_Intrinsics/Macros.h"
-#include "C/Panshilar.h"
+#include "../../Source/Dependencies/PNSLR_Intrinsics/Macros.h"
+#include "../../Bindings/C/Panshilar.h"
 
 #undef true
 #undef false

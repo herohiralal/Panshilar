@@ -1,6 +1,6 @@
 #ifndef PNSLR_BINDGEN_GEN
 #define PNSLR_BINDGEN_GEN
-#include "Panshilar.h"
+#include "../../Source/Panshilar.h"
 #include "SrcParser.h"
 
 typedef void (*GeneratorFn)(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator);

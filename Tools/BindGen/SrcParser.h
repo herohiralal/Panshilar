@@ -1,6 +1,6 @@
 #ifndef PNSLR_SRC_PARSER_H
 #define PNSLR_SRC_PARSER_H
-#include "Panshilar.h"
+#include "../../Source/Panshilar.h"
 
 // base ============================================================================
 

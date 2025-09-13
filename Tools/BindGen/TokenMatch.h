@@ -1,6 +1,6 @@
 #ifndef PNSLR_TOKEN_MATCH_H
 #define PNSLR_TOKEN_MATCH_H
-#include "Panshilar.h"
+#include "../../Source/Panshilar.h"
 
 b8 IsSpace(u32 r);
 b8 IsSymbol(u32 r);

@@ -1,6 +1,7 @@
 #include "Compiler.h"
+#include "Warnings.h"
 
-PRAGMA_SUPPRESS_WARNINGS
+PNSLR_SUPPRESS_WARN
 
 #if PNSLR_CLANG || PNSLR_GCC
     #include <stdlib.h>
@@ -15,7 +16,7 @@ PRAGMA_SUPPRESS_WARNINGS
 
 #include <string.h>
 
-PRAGMA_REENABLE_WARNINGS
+PNSLR_UNSUPPRESS_WARN
 
 #include "Intrinsics.h"
 

@@ -153,7 +153,7 @@ class Platform:
     prettyArch:  str
     toolch:      str
 
-def getPlatforms() -> list[Platform]:
+def getPlatforms(all: bool) -> list[Platform]:
     platforms: list[Platform] = []
 
     if TOOLCHAINS.windowsToolchain:
@@ -162,7 +162,7 @@ def getPlatforms() -> list[Platform]:
     if TOOLCHAINS.osxSdk:
         platforms.append(Platform('osx', 'arm64', 'macOS', 'ARM64', TOOLCHAINS.osxSdk))
 
-    if not CMD_ARG_HOST_ONLY: # cross compilation platforms
+    if all or not CMD_ARG_HOST_ONLY: # cross compilation platforms
 
         if TOOLCHAINS.linuxX64Toolchain:
             platforms.append(Platform('linux', 'x64', 'Linux', 'x64', TOOLCHAINS.linuxX64Toolchain))
@@ -182,7 +182,8 @@ def getPlatforms() -> list[Platform]:
 
     return platforms
 
-PLATFORMS = getPlatforms()
+VALID_PLATFORMS    = getPlatforms(True)
+PLATFORMS_TO_BUILD = getPlatforms(False)
 
 def getPlatformTgtDefine(plt: Platform) -> str:
     if plt.tgt == 'windows':
@@ -358,7 +359,6 @@ def getCompilationCommand(
         dbg:      bool,
         inputF:   str,
         outputF:  str,
-        includes: list[str] = [],
         useCxx:   bool      = False,
     ) -> list[str]:
     output: list[str] = [(getCxxCompiler(plt) if useCxx else getCCompiler(plt))]
@@ -371,9 +371,6 @@ def getCompilationCommand(
         addStdArgs   = True,
         useCxx       = useCxx,
     )
-
-    for inc in includes:
-        output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
 
     output += [inputF]
     output += ['/Fo'+outputF] if plt.tgt == 'windows' else ['-o', outputF]
@@ -413,7 +410,6 @@ def getExecBuildCommand(
         plt:      Platform,
         dbg:      bool,
         inputFs:  list[str],
-        includes: list[str],
         sysLibs:  list[str],
         outputF:  str,
         useCxx:   bool = False,
@@ -428,9 +424,6 @@ def getExecBuildCommand(
         addStdArgs   = True,
         useCxx       = useCxx,
     )
-
-    for inc in includes:
-        output += ['/I', inc] if plt.tgt == 'windows' else ['-I', inc]
 
     output += inputFs
     output += ['/Fe'+outputF] if plt.tgt == 'windows' else ['-o', outputF]
@@ -467,16 +460,13 @@ def setupVsCodeLspStuff():
 
     properties: CCppProperties = CCppProperties(version = 4, configurations = [])
 
-    for plt in PLATFORMS:
+    for plt in VALID_PLATFORMS:
         config: CCppPropertiesConfiguration = CCppPropertiesConfiguration(
             name = f'{plt.prettyTgt}-{plt.prettyArch}',
             compilerPath = getCCompiler(plt),
             cStandard = 'c11',
             cppStandard = 'c++14',
-            includePath = [
-                '${workspaceFolder}/Source',
-                '${workspaceFolder}/Bindings',
-            ],
+            includePath = [],
             defines = [
                 f'{getPlatformTgtDefine(plt)}=1',
                 f'{getPlatformArchDefine(plt)}=1',

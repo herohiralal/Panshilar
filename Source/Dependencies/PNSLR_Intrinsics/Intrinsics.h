@@ -8,12 +8,10 @@
 #define PNSLR_INTRINSICS_H
 #include "Primitives.h"
 #include "Macros.h"
-//+skipreflect
-
-#define PNSLR_PTR_SIZE 8
 
 // Collections =====================================================================
 
+//+skipreflect
 #define ArraySlice(ty) ArraySlice_##ty
 
 #ifdef __cplusplus
@@ -40,11 +38,9 @@
         typedef union { struct { ty* data; i64 count; }; PNSLR_RawArraySlice raw; } ArraySlice(ty);
 
 #endif
-
 //-skipreflect
-EXTERN_C_BEGIN
 
-// Primitive Collections  ==========================================================
+EXTERN_C_BEGIN
 
 /**
  * A raw type-unspecific array slice.
@@ -71,7 +67,6 @@ typedef ArraySlice(u8) utf8str;
 DECLARE_ARRAY_SLICE(utf8str);
 
 //+skipreflect
-
 #ifdef __cplusplus
     #define PNSLR_STRING_LITERAL(str) \
         utf8str {(u8*) str, sizeof(str) - 1}
@@ -80,7 +75,6 @@ DECLARE_ARRAY_SLICE(utf8str);
     #define PNSLR_STRING_LITERAL(str) \
         (utf8str) {.count = sizeof(str) - 1, .data = (u8*) str}
 #endif
-
 //-skipreflect
 
 // Memory Management ===============================================================

@@ -1,9 +1,15 @@
-#include "Dependencies/PNSLR_Intrinsics/Compiler.h"
-PRAGMA_SUPPRESS_WARNINGS
+#ifdef _MSC_VER
+    #pragma warning(disable: 4464) // relative include path contains '..'
+#endif
+
+#include "../../Source/Dependencies/PNSLR_Intrinsics/Compiler.h"
+#include "../../Source/Dependencies/PNSLR_Intrinsics/Warnings.h"
+
+PNSLR_SUPPRESS_WARN
 #include <stdio.h>
 #include <stdlib.h>
-PRAGMA_REENABLE_WARNINGS
-#include "Panshilar.h"
+PNSLR_UNSUPPRESS_WARN
+#include "../../Source/Panshilar.h"
 #include "FilesGather.h"
 #include "SrcParser.h"
 #include "Generator.h"

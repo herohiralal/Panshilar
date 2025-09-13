@@ -1,6 +1,6 @@
 #ifndef PNSLR_FILES_GATHER_H
 #define PNSLR_FILES_GATHER_H
-#include "Panshilar.h"
+#include "../../Source/Panshilar.h"
 
 typedef struct
 {

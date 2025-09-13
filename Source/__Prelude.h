@@ -1,62 +1,13 @@
 #ifndef PNSLR_ENTRY_H // ===========================================================
 #define PNSLR_ENTRY_H
 //+skipreflect
-
-// Environment setup ===============================================================
-
-// platform
-
-#ifndef PNSLR_WINDOWS
-    #define PNSLR_WINDOWS 0
-#endif
-#ifndef PNSLR_LINUX
-    #define PNSLR_LINUX 0
-#endif
-#ifndef PNSLR_OSX
-    #define PNSLR_OSX 0
-#endif
-#ifndef PNSLR_ANDROID
-    #define PNSLR_ANDROID 0
-#endif
-#ifndef PNSLR_IOS
-    #define PNSLR_IOS 0
-#endif
-#ifndef PNSLR_PS5
-    #define PNSLR_PS5 0
-#endif
-#ifndef PNSLR_XSERIES
-    #define PNSLR_XSERIES 0
-#endif
-#ifndef PNSLR_SWITCH
-    #define PNSLR_SWITCH 0
-#endif
-
-// architecture
-
-#ifndef PNSLR_X64
-    #define PNSLR_X64 0
-#endif
-#ifndef PNSLR_ARM64
-    #define PNSLR_ARM64 0
-#endif
-
-// derived
-
-#define PNSLR_UNIX    (PNSLR_LINUX || PNSLR_OSX || PNSLR_ANDROID || PNSLR_IOS)
-#define PNSLR_APPLE   (PNSLR_OSX || PNSLR_IOS)
-#define PNSLR_DESKTOP (PNSLR_WINDOWS || PNSLR_LINUX || PNSLR_OSX)
-#define PNSLR_MOBILE  (PNSLR_ANDROID || PNSLR_IOS)
-#define PNSLR_CONSOLE (PNSLR_PS5 || PNSLR_XSERIES || PNSLR_SWITCH)
-
-// Includes ========================================================================
-
-// always include this first and outside the implementation block
-// it contains some important macros that we'll use
+#include "Dependencies/PNSLR_Intrinsics/Platforms.h"
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"
+#include "Dependencies/PNSLR_Intrinsics/Warnings.h"
 
 #ifdef PNSLR_IMPLEMENTATION
 
-    PRAGMA_SUPPRESS_WARNINGS
+    PNSLR_SUPPRESS_WARN
 
     #if PNSLR_WINDOWS
         #define WIN32_LEAN_AND_MEAN
@@ -100,7 +51,7 @@
         #include <android/native_activity.h>
     #endif
 
-    PRAGMA_REENABLE_WARNINGS
+    PNSLR_UNSUPPRESS_WARN
 
 #endif
 
@@ -109,39 +60,6 @@
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
 
 // Static tests ====================================================================
-
-// auto alignment check
-typedef struct { i32 a; i32 b; } PNSLR_StaticTests_AutoAlignCheck;
-static_assert(offsetof(PNSLR_StaticTests_AutoAlignCheck, a) == 0, "Offset of 'a' should be 0");
-static_assert(offsetof(PNSLR_StaticTests_AutoAlignCheck, b) == 4, "Offset of 'b' should be 4");
-
-// manual alignment check
-typedef struct alignas(16) { i32 a; i32 b; } PNSLR_StaticTests_ManualAlignCheck;
-static_assert(alignof(PNSLR_StaticTests_ManualAlignCheck) == 16, "Custom alignment should be 16 bytes");
-
-// ensure all compiler macros are defined, and exactly one is set
-static_assert((PNSLR_CLANG + PNSLR_GCC + PNSLR_MSVC) == 1, "Exactly one compiler must be defined.");
-
-// ensure all platform macros are defined, and exactly one is set
-static_assert((PNSLR_WINDOWS + PNSLR_LINUX + PNSLR_OSX + PNSLR_ANDROID + PNSLR_IOS + PNSLR_PS5 + PNSLR_XSERIES + PNSLR_SWITCH) == 1, "Exactly one platform must be defined.");
-
-// ensure all architecture macros are defined, and exactly one is set
-static_assert((PNSLR_X64 + PNSLR_ARM64) == 1, "Exactly one architecture must be defined.");
-
-// primitive type size assertions
-static_assert(sizeof(b8)      == 1, "     b8 must be 1 byte ");
-static_assert(sizeof(u8)      == 1, "     u8 must be 1 byte ");
-static_assert(sizeof(i8)      == 1, "     i8 must be 1 byte ");
-static_assert(sizeof(u16)     == 2, "    u16 must be 2 bytes");
-static_assert(sizeof(i16)     == 2, "    i16 must be 2 bytes");
-static_assert(sizeof(u32)     == 4, "    u32 must be 4 bytes");
-static_assert(sizeof(i32)     == 4, "    i32 must be 4 bytes");
-static_assert(sizeof(f32)     == 4, "    f32 must be 4 bytes");
-static_assert(sizeof(u64)     == 8, "    u64 must be 8 bytes");
-static_assert(sizeof(i64)     == 8, "    i64 must be 8 bytes");
-static_assert(sizeof(f64)     == 8, "    f64 must be 8 bytes");
-static_assert(sizeof(rawptr)  == 8, "    ptr must be 8 bytes");
-static_assert(PNSLR_PTR_SIZE  == 8, "    ptr must be 8 bytes"); // keep in sync with sizeof(rawptr)
 
 // assert msvc toolchain for windows
 // will not be supporting MinGW or anything else because so much Windows-specific
