@@ -125,7 +125,8 @@ if __name__ == '__main__':
         if CMD_ARG_REBUILD_INTRINSICS:
             cnt = cnt and buildIntrinsics(plt)
 
-        cnt = cnt and buildLibrary(plt)
+        if not CMD_ARG_REGENERATE_BINDINGS and not CMD_ARG_RUN_TESTS: # don't build the library if we are building bindgen or testrunner
+            cnt = cnt and buildLibrary(plt)
 
         if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
             cnt = cnt and buildBindingsGenerator(plt)
