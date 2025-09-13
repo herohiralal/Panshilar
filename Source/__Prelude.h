@@ -17,6 +17,13 @@
         #include <iphlpapi.h>
         #include <intrin.h>
         #include <malloc.h>
+
+        #if PNSLR_DBG
+            #define RADDBG_MARKUP_IMPLEMENTATION
+            #include "Dependencies/raddbg/raddbg_markup.h"
+            #undef RADDBG_MARKUP_IMPLEMENTATION
+        #endif
+
         #undef WIN32_LEAN_AND_MEAN
     #endif
 
