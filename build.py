@@ -22,26 +22,15 @@ BINDINGS_GENERATOR_MAIN_FILE = BINDINGS_GENERATOR_ROOT_DIR + 'BindingsGenerator.
 def getLibraryObjectPath(plt: buildutils.Platform) -> str:
     return FOLDER_STRUCTURE.tmpDir + buildutils.getObjectOutputFileName('unity', plt)
 
-def getLibraryPath(plt: buildutils.Platform) -> str:
-    return FOLDER_STRUCTURE.libDir + buildutils.getStaticLibOutputFileName('panshilar', plt)
-
-def getTestRunnerObjectPath(plt: buildutils.Platform) -> str:
-    return FOLDER_STRUCTURE.tmpDir +  buildutils.getObjectOutputFileName('testrunner', plt)
-
-def getTestRunnerExecutablePath(plt: buildutils.Platform) -> str:
-    return FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('TestRunner', plt)
-
-def getBindingsGeneratorObjectPath(plt: buildutils.Platform) -> str:
-    return FOLDER_STRUCTURE.tmpDir +  buildutils.getObjectOutputFileName('bindgen', plt)
-
-def getBindingsGeneratorExecutablePath(plt: buildutils.Platform) -> str:
-    return FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt)
-
 def getLibraryCompileCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getCompilationCommand(plt, False, MAIN_FILE, getLibraryObjectPath(plt))
 
 def getLibraryLinkCommand(plt: buildutils.Platform) -> list[str]:
-    return buildutils.getStaticLibLinkCommand(plt, [getLibraryObjectPath(plt)], getLibraryPath(plt))
+    return buildutils.getStaticLibLinkCommand(
+        plt,
+        [getLibraryObjectPath(plt)],
+        FOLDER_STRUCTURE.libDir + buildutils.getStaticLibOutputFileName('panshilar', plt)
+    )
 
 def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getExecBuildCommand(
@@ -49,7 +38,7 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
         True,
         [TEST_RUNNER_MAIN_FILE, MAIN_FILE],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
-        getTestRunnerExecutablePath(plt),
+        FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('TestRunner', plt),
     )
 
 def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
@@ -58,7 +47,7 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
         True,
         [BINDINGS_GENERATOR_MAIN_FILE, MAIN_FILE],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
-        getBindingsGeneratorExecutablePath(plt),
+        FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt),
     )
 
 # endregion
@@ -107,16 +96,14 @@ if __name__ == '__main__':
             outputFile.write('}\n')
 
     for plt in buildutils.PLATFORMS_TO_BUILD:
-        cnt = True
-
         if not CMD_ARG_REGENERATE_BINDINGS and not CMD_ARG_RUN_TESTS: # don't build the library if we are building bindgen or testrunner
-            cnt = cnt and buildLibrary(plt)
+            buildLibrary(plt)
 
         if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
-            cnt = cnt and buildBindingsGenerator(plt)
+            buildBindingsGenerator(plt)
 
         if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
-            cnt = cnt and buildTestRunner(plt)
+            buildTestRunner(plt)
 
     buildutils.printSummary()
 
