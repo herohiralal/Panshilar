@@ -1,6 +1,7 @@
 #define PNSLR_IMPLEMENTATION
 #include "__Prelude.h"
 
+#include "Memory.c"
 #include "Environment.c"
 #include "Runtime.c"
 #include "Sync.c"

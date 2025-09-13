@@ -31,7 +31,7 @@ typedef signed int          PNSLR_I32;
 typedef signed long long    PNSLR_I64;
 
 // #######################################################################################
-// Intrinsics
+// Collections
 // #######################################################################################
 
 /**
@@ -73,50 +73,6 @@ PNSLR_DECLARE_ARRAY_SLICE(char);
 typedef PNSLR_ArraySlice(PNSLR_U8) PNSLR_UTF8STR;
 
 PNSLR_DECLARE_ARRAY_SLICE(PNSLR_UTF8STR);
-
-// Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-/**
- * Allocate memory with the specified alignment and size.
- */
-void* PNSLR_Intrinsic_Malloc(
-    PNSLR_I32 alignment,
-    PNSLR_I32 size
-);
-
-/**
- * Free memory allocated with PNSLR_Intrinsic_Malloc.
- */
-void PNSLR_Intrinsic_Free(
-    void* memory
-);
-
-/**
- * Set a block of memory to a specific value.
- */
-void PNSLR_Intrinsic_MemSet(
-    void* memory,
-    PNSLR_I32 value,
-    PNSLR_I32 size
-);
-
-/**
- * Copy a block of memory from source to destination.
- */
-void PNSLR_Intrinsic_MemCopy(
-    void* destination,
-    void* source,
-    PNSLR_I32 size
-);
-
-/**
- * Copy a block of memory from source to destination, handling overlapping regions.
- */
-void PNSLR_Intrinsic_MemMove(
-    void* destination,
-    void* source,
-    PNSLR_I32 size
-);
 
 // #######################################################################################
 // Environment
@@ -401,6 +357,37 @@ void PNSLR_SignalConditionVariable(
  */
 void PNSLR_BroadcastConditionVariable(
     PNSLR_ConditionVariable* condvar
+);
+
+// #######################################################################################
+// Memory
+// #######################################################################################
+
+/**
+ * Set a block of memory to a specific value.
+ */
+void PNSLR_MemSet(
+    void* memory,
+    PNSLR_I32 value,
+    PNSLR_I32 size
+);
+
+/**
+ * Copy a block of memory from source to destination.
+ */
+void PNSLR_MemCopy(
+    void* destination,
+    void* source,
+    PNSLR_I32 size
+);
+
+/**
+ * Copy a block of memory from source to destination, handling overlapping regions.
+ */
+void PNSLR_MemMove(
+    void* destination,
+    void* source,
+    PNSLR_I32 size
 );
 
 // #######################################################################################

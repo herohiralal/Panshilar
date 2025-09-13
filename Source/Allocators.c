@@ -1,50 +1,6 @@
 #define PNSLR_IMPLEMENTATION
 #include "Allocators.h"
 
-rawptr PNSLR_Intrinsic_Malloc(i32 alignment, i32 size)
-{
-    if (size <= 0 || alignment <= 0) { return nil; }
-
-    #if PNSLR_MSVC
-        return _aligned_malloc(size, alignment);
-    #elif PNSLR_CLANG || PNSLR_GCC
-        return aligned_alloc((u64) alignment, (u64) size);
-    #else
-        #error "Unsupported compiler. Please define the appropriate aligned allocation function."
-    #endif
-}
-
-void PNSLR_Intrinsic_Free(rawptr memory)
-{
-    if (memory == nil) { return; }
-
-    #if PNSLR_MSVC
-        _aligned_free(memory);
-    #elif PNSLR_CLANG || PNSLR_GCC
-        free(memory);
-    #else
-        #error "Unsupported compiler. Please define the appropriate aligned free function."
-    #endif
-}
-
-void PNSLR_Intrinsic_MemSet(rawptr memory, i32 value, i32 size)
-{
-    if (memory == nil || size <= 0) { return; }
-    memset(memory, value, (u64) size);
-}
-
-void PNSLR_Intrinsic_MemCopy(rawptr destination, rawptr source, i32 size)
-{
-    if (destination == nil || source == nil || size <= 0) { return; }
-    memcpy(destination, source, (u64) size);
-}
-
-void PNSLR_Intrinsic_MemMove(rawptr destination, rawptr source, i32 size)
-{
-    if (destination == nil || source == nil || size <= 0) { return; }
-    memmove(destination, source, (u64) size);
-}
-
 static inline u64 AlignU64Forward(u64 value, u64 alignment)
 {
     u64 modulo = value & (alignment - 1);
@@ -108,7 +64,7 @@ rawptr PNSLR_DefaultResize(PNSLR_Allocator allocator, b8 zeroed, rawptr oldMemor
         return nil;
     }
 
-    PNSLR_Intrinsic_MemCopy(newMemory, oldMemory, oldSize < newSize ? oldSize : newSize);
+    PNSLR_MemCopy(newMemory, oldMemory, oldSize < newSize ? oldSize : newSize);
     PNSLR_Free(allocator, oldMemory, location, error);
     return newMemory;
 }
@@ -216,14 +172,22 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
                 size = (size + (alignment - 1)) & ~(alignment - 1);
             #endif
 
-            rawptr memory = PNSLR_Intrinsic_Malloc(alignment, size);
+            rawptr memory = nil;
+            #if PNSLR_MSVC
+                memory = _aligned_malloc(size, alignment);
+            #elif PNSLR_CLANG || PNSLR_GCC
+                memory = aligned_alloc((u64) alignment, (u64) size);
+            #else
+                #error "Unsupported compiler. Please define the appropriate aligned allocation function."
+            #endif
+
             if (!memory)
             {
                 if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
                 return nil;
             }
 
-            if (memory && mode == PNSLR_AllocatorMode_Allocate) { PNSLR_Intrinsic_MemSet(memory, 0, size); }
+            if (memory && mode == PNSLR_AllocatorMode_Allocate) { PNSLR_MemSet(memory, 0, size); }
             return memory;
         }
         case PNSLR_AllocatorMode_Resize:
@@ -255,7 +219,14 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
                 return nil;
             }
 
-            PNSLR_Intrinsic_Free(oldMemory);
+            #if PNSLR_MSVC
+                _aligned_free(oldMemory);
+            #elif PNSLR_CLANG || PNSLR_GCC
+                free(oldMemory);
+            #else
+                #error "Unsupported compiler. Please define the appropriate aligned free function."
+            #endif
+
             return nil;
         }
         case PNSLR_AllocatorMode_FreeAll:
@@ -404,7 +375,7 @@ static void FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_S
 
     if (data->currentBlock != nil)
     {
-        PNSLR_Intrinsic_MemSet(data->currentBlock->memory, 0, (i32) data->currentBlock->used);
+        PNSLR_MemSet(data->currentBlock->memory, 0, (i32) data->currentBlock->used);
         data->currentBlock->used = 0;
     }
 
@@ -515,7 +486,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
             else if (size == oldSize)
             {
                 // return old memory
-                if (oldMemory && mode == PNSLR_AllocatorMode_Resize) { PNSLR_Intrinsic_MemSet(oldMemory, 0, oldSize); }
+                if (oldMemory && mode == PNSLR_AllocatorMode_Resize) { PNSLR_MemSet(oldMemory, 0, oldSize); }
                 return oldMemory;
             }
             else if ((((u64) oldData) & ((u64) (alignment - 1))) == 0)
@@ -540,7 +511,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
 
             rawptr newMemory = AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
             if (!newMemory) { return nil; }
-            PNSLR_Intrinsic_MemCopy(newMemory, oldMemory, oldSize < size ? oldSize : size);
+            PNSLR_MemCopy(newMemory, oldMemory, oldSize < size ? oldSize : size);
             return newMemory;
         }
         case PNSLR_AllocatorMode_QueryCapabilities:
@@ -626,7 +597,7 @@ PNSLR_ArenaSnapshotError PNSLR_RestoreArenaAllocatorSnapshot(PNSLR_ArenaAllocato
             }
 
             u32 amountToZero = block->used - snapshot->used;
-            PNSLR_Intrinsic_MemSet(((u8*) block->memory) + snapshot->used, 0, (i32) amountToZero);
+            PNSLR_MemSet(((u8*) block->memory) + snapshot->used, 0, (i32) amountToZero);
             block->used = snapshot->used;
             snapshot->payload->totalUsed -= amountToZero;
         }
@@ -802,7 +773,7 @@ rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i
 
             if (mode == PNSLR_AllocatorMode_Allocate)
             {
-                PNSLR_Intrinsic_MemSet(tgtAllocation, 0, size); // Zero the memory if requested
+                PNSLR_MemSet(tgtAllocation, 0, size); // Zero the memory if requested
             }
 
             return tgtAllocation;

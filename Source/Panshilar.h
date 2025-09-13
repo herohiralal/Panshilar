@@ -4,6 +4,7 @@
 #include "Environment.h"
 #include "Runtime.h"
 #include "Sync.h"
+#include "Memory.h"
 #include "Allocators.h"
 #include "Chrono.h"
 #include "Strings.h"

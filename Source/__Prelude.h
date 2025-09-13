@@ -27,6 +27,7 @@
         #define _XOPEN_SOURCE 700
 
         #include <stdlib.h>
+        #include <string.h>
         #include <unistd.h>
         #include <fcntl.h>
         #include <ifaddrs.h>
@@ -51,8 +52,6 @@
         #include <android/asset_manager.h>
         #include <android/native_activity.h>
     #endif
-
-    #include <string.h>
 
     PNSLR_UNSUPPRESS_WARN
 

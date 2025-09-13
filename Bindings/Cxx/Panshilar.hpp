@@ -19,7 +19,7 @@ namespace Panshilar
     template <typename T> struct ArraySlice { T* data; i64 count; };
 
     // #######################################################################################
-    // Intrinsics
+    // Collections
     // #######################################################################################
 
     /**
@@ -39,50 +39,6 @@ namespace Panshilar
         b8 operator==(const utf8str& other) const;
         b8 operator!=(const utf8str& other) const;
     };
-
-    // Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    /**
-     * Allocate memory with the specified alignment and size.
-     */
-    void* Intrinsic_Malloc(
-        i32 alignment,
-        i32 size
-    );
-
-    /**
-     * Free memory allocated with PNSLR_Intrinsic_Malloc.
-     */
-    void Intrinsic_Free(
-        void* memory
-    );
-
-    /**
-     * Set a block of memory to a specific value.
-     */
-    void Intrinsic_MemSet(
-        void* memory,
-        i32 value,
-        i32 size
-    );
-
-    /**
-     * Copy a block of memory from source to destination.
-     */
-    void Intrinsic_MemCopy(
-        void* destination,
-        void* source,
-        i32 size
-    );
-
-    /**
-     * Copy a block of memory from source to destination, handling overlapping regions.
-     */
-    void Intrinsic_MemMove(
-        void* destination,
-        void* source,
-        i32 size
-    );
 
     // #######################################################################################
     // Environment
@@ -371,6 +327,37 @@ namespace Panshilar
      */
     void BroadcastConditionVariable(
         ConditionVariable* condvar
+    );
+
+    // #######################################################################################
+    // Memory
+    // #######################################################################################
+
+    /**
+     * Set a block of memory to a specific value.
+     */
+    void MemSet(
+        void* memory,
+        i32 value,
+        i32 size
+    );
+
+    /**
+     * Copy a block of memory from source to destination.
+     */
+    void MemCopy(
+        void* destination,
+        void* source,
+        i32 size
+    );
+
+    /**
+     * Copy a block of memory from source to destination, handling overlapping regions.
+     */
+    void MemMove(
+        void* destination,
+        void* source,
+        i32 size
     );
 
     // #######################################################################################
@@ -1667,36 +1654,6 @@ Panshilar::ArraySlice<Panshilar::utf8str>& PNSLR_Bindings_Convert(PNSLR_ArraySli
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, count), "count offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, data), "data offset mismatch");
 
-extern "C" void* PNSLR_Intrinsic_Malloc(PNSLR_I32 alignment, PNSLR_I32 size);
-void* Panshilar::Intrinsic_Malloc(Panshilar::i32 alignment, Panshilar::i32 size)
-{
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_Intrinsic_Malloc(PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(size)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
-}
-
-extern "C" void PNSLR_Intrinsic_Free(void* memory);
-void Panshilar::Intrinsic_Free(void* memory)
-{
-    PNSLR_Intrinsic_Free(PNSLR_Bindings_Convert(memory));
-}
-
-extern "C" void PNSLR_Intrinsic_MemSet(void* memory, PNSLR_I32 value, PNSLR_I32 size);
-void Panshilar::Intrinsic_MemSet(void* memory, Panshilar::i32 value, Panshilar::i32 size)
-{
-    PNSLR_Intrinsic_MemSet(PNSLR_Bindings_Convert(memory), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(size));
-}
-
-extern "C" void PNSLR_Intrinsic_MemCopy(void* destination, void* source, PNSLR_I32 size);
-void Panshilar::Intrinsic_MemCopy(void* destination, void* source, Panshilar::i32 size)
-{
-    PNSLR_Intrinsic_MemCopy(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
-}
-
-extern "C" void PNSLR_Intrinsic_MemMove(void* destination, void* source, PNSLR_I32 size);
-void Panshilar::Intrinsic_MemMove(void* destination, void* source, Panshilar::i32 size)
-{
-    PNSLR_Intrinsic_MemMove(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
-}
-
 enum class PNSLR_Platform : Panshilar::u8 { };
 static_assert(sizeof(PNSLR_Platform) == sizeof(Panshilar::Platform), "size mismatch");
 static_assert(alignof(PNSLR_Platform) == alignof(Panshilar::Platform), "align mismatch");
@@ -1933,6 +1890,24 @@ extern "C" void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condva
 void Panshilar::BroadcastConditionVariable(Panshilar::ConditionVariable* condvar)
 {
     PNSLR_BroadcastConditionVariable(PNSLR_Bindings_Convert(condvar));
+}
+
+extern "C" void PNSLR_MemSet(void* memory, PNSLR_I32 value, PNSLR_I32 size);
+void Panshilar::MemSet(void* memory, Panshilar::i32 value, Panshilar::i32 size)
+{
+    PNSLR_MemSet(PNSLR_Bindings_Convert(memory), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(size));
+}
+
+extern "C" void PNSLR_MemCopy(void* destination, void* source, PNSLR_I32 size);
+void Panshilar::MemCopy(void* destination, void* source, Panshilar::i32 size)
+{
+    PNSLR_MemCopy(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
+}
+
+extern "C" void PNSLR_MemMove(void* destination, void* source, PNSLR_I32 size);
+void Panshilar::MemMove(void* destination, void* source, Panshilar::i32 size)
+{
+    PNSLR_MemMove(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
 }
 
 enum class PNSLR_AllocatorMode : Panshilar::u8 { };

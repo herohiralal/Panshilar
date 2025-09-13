@@ -1,6 +1,6 @@
 package Panshilar
 // #######################################################################################
-// Intrinsics
+// Collections
 // #######################################################################################
 
 /**
@@ -41,65 +41,6 @@ RawArraySlice :: struct  {
 // string :: []u8
 
 // declare []string
-
-// Memory ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-@(link_prefix="PNSLR_")
-foreign {
-    /**
-     * Allocate memory with the specified alignment and size.
-     */
-	Intrinsic_Malloc :: proc "c" (
-		alignment: i32,
-		size: i32,
-	) -> rawptr ---
-}
-
-@(link_prefix="PNSLR_")
-foreign {
-    /**
-     * Free memory allocated with PNSLR_Intrinsic_Malloc.
-     */
-	Intrinsic_Free :: proc "c" (
-		memory: rawptr,
-	) ---
-}
-
-@(link_prefix="PNSLR_")
-foreign {
-    /**
-     * Set a block of memory to a specific value.
-     */
-	Intrinsic_MemSet :: proc "c" (
-		memory: rawptr,
-		value: i32,
-		size: i32,
-	) ---
-}
-
-@(link_prefix="PNSLR_")
-foreign {
-    /**
-     * Copy a block of memory from source to destination.
-     */
-	Intrinsic_MemCopy :: proc "c" (
-		destination: rawptr,
-		source: rawptr,
-		size: i32,
-	) ---
-}
-
-@(link_prefix="PNSLR_")
-foreign {
-    /**
-     * Copy a block of memory from source to destination, handling overlapping regions.
-     */
-	Intrinsic_MemMove :: proc "c" (
-		destination: rawptr,
-		source: rawptr,
-		size: i32,
-	) ---
-}
 
 // #######################################################################################
 // Environment
@@ -458,6 +399,46 @@ foreign {
      */
 	BroadcastConditionVariable :: proc "c" (
 		condvar: ^ConditionVariable,
+	) ---
+}
+
+// #######################################################################################
+// Memory
+// #######################################################################################
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Set a block of memory to a specific value.
+     */
+	MemSet :: proc "c" (
+		memory: rawptr,
+		value: i32,
+		size: i32,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Copy a block of memory from source to destination.
+     */
+	MemCopy :: proc "c" (
+		destination: rawptr,
+		source: rawptr,
+		size: i32,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Copy a block of memory from source to destination, handling overlapping regions.
+     */
+	MemMove :: proc "c" (
+		destination: rawptr,
+		source: rawptr,
+		size: i32,
 	) ---
 }
 

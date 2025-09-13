@@ -24,7 +24,7 @@ cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
     cstring result = PNSLR_MakeCString(str.count, false, allocator, CURRENT_LOC(), nil);
     if (result == nil) { return nil; } // allocation failed
 
-    PNSLR_Intrinsic_MemCopy(result, str.data, (i32) str.count);
+    PNSLR_MemCopy(result, str.data, (i32) str.count);
     result[str.count] = '\0'; // null-terminate the C-style string
 
     return result;
@@ -40,7 +40,7 @@ utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
     utf8str result = PNSLR_MakeString(str.count, false, allocator, CURRENT_LOC(), nil);
     if (result.data == nil) { return (utf8str) {0}; } // allocation failed
 
-    PNSLR_Intrinsic_MemCopy(result.data, str.data, (i32) str.count);
+    PNSLR_MemCopy(result.data, str.data, (i32) str.count);
     return result;
 }
 
@@ -49,8 +49,8 @@ utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator all
     utf8str result = PNSLR_MakeString(str1.count + str2.count, false, allocator, CURRENT_LOC(), nil);
     if (result.data == nil) { return (utf8str) {0}; } // allocation failed
 
-    PNSLR_Intrinsic_MemCopy(result.data,              str1.data, (i32) str1.count);
-    PNSLR_Intrinsic_MemCopy(result.data + str1.count, str2.data, (i32) str2.count);
+    PNSLR_MemCopy(result.data,              str1.data, (i32) str1.count);
+    PNSLR_MemCopy(result.data + str1.count, str2.data, (i32) str2.count);
     return result;
 }
 
