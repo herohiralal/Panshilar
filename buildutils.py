@@ -302,6 +302,7 @@ def getCommonCompilationArgs(
     if addEnvArgs:
         specifier: str = '/D' if plt.tgt == 'windows' else '-D'
         output += [f'{specifier}{getPlatformTgtDefine(plt)}=1', f'{specifier}{getPlatformArchDefine(plt)}=1']
+        output += [f'{specifier}{'PNSLR_DBG' if dbg else 'PNSLR_REL'}=1']
         if plt.tgt == 'android':
             output += ['-DANDROID=1', '-D_FORTIFY_SOURCE=2']
 
@@ -470,6 +471,7 @@ def setupVsCodeLspStuff():
             defines = [
                 f'{getPlatformTgtDefine(plt)}=1',
                 f'{getPlatformArchDefine(plt)}=1',
+                f'PNSLR_DBG=1',
             ],
             compilerArgs = getCommonCompilationArgs(
                 plt          = plt,

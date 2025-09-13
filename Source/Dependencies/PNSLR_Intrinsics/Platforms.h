@@ -2,6 +2,15 @@
 #define PNSLR_PLATFORM_INTRINSICS_H
 //+skipreflect
 
+// configuration
+
+#ifndef PNSLR_DBG
+    #define PNSLR_DBG 0
+#endif
+#ifndef PNSLR_REL
+    #define PNSLR_REL 0
+#endif
+
 // platform
 
 #ifndef PNSLR_WINDOWS
@@ -45,6 +54,10 @@
 #define PNSLR_DESKTOP (PNSLR_WINDOWS || PNSLR_LINUX || PNSLR_OSX)
 #define PNSLR_MOBILE  (PNSLR_ANDROID || PNSLR_IOS)
 #define PNSLR_CONSOLE (PNSLR_PS5 || PNSLR_XSERIES || PNSLR_SWITCH)
+
+#if (PNSLR_DBG + PNSLR_REL) != 1
+    #error "Exactly one configuration must be defined."
+#endif
 
 #if (PNSLR_WINDOWS + PNSLR_LINUX + PNSLR_OSX + PNSLR_ANDROID + PNSLR_IOS + PNSLR_PS5 + PNSLR_XSERIES + PNSLR_SWITCH) != 1
     #error "Exactly one platform must be defined."
