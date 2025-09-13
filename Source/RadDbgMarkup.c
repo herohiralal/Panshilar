@@ -10,4 +10,11 @@ raddbg_type_view(utf8str, array(data, count));
 raddbg_type_view(PNSLR_UTF8STR, array(data, count));
 raddbg_type_view(PNSLR_ArraySlice_?, array(data, count));
 
+#ifdef __cplusplus
+
+    raddbg_type_view(ArraySlice<?>, array(data, count));
+    raddbg_type_view(Panshilar::ArraySlice<?>, array(data, count));
+
+#endif
+
 #endif

@@ -36,6 +36,8 @@ namespace Panshilar
      */
     struct utf8str : ArraySlice<u8>
     {
+        utf8str() = default;
+        utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }
         b8 operator==(const utf8str& other) const;
         b8 operator!=(const utf8str& other) const;
     };
@@ -1409,7 +1411,7 @@ namespace Panshilar
     template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
     /** Get the current source code location. */
-    #define PNSLR_GET_LOC() SourceCodeLocation{STRING_LITERAL(__FILE__), __LINE__, 0, STRING_LITERAL(__FUNCTION__)}
+    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::STRING_LITERAL(__FILE__), __LINE__, 0, Panshilar::STRING_LITERAL(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
     template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)

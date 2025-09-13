@@ -33,7 +33,7 @@ cstring G_GenCxxHeaderSuffix = ""
 "    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }\n"
 "\n"
 "    /** Get the current source code location. */\n"
-"    #define PNSLR_GET_LOC() SourceCodeLocation{STRING_LITERAL(__FILE__), __LINE__, 0, STRING_LITERAL(__FUNCTION__)}\n"
+"    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::STRING_LITERAL(__FILE__), __LINE__, 0, Panshilar::STRING_LITERAL(__FUNCTION__)}\n"
 "\n"
 "    /** Allocate an object of type 'ty' using the provided allocator. */\n"
 "    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)\n"
@@ -362,6 +362,8 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     if (PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_STRING_LITERAL("utf8str"), 0))
                     {
                         PNSLR_WriteToFile(f, ARR_STR_LIT("    struct utf8str : ArraySlice<u8>\n    {\n"));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("        utf8str() = default;\n"));
+                        PNSLR_WriteToFile(f, ARR_STR_LIT("        utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }\n"));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("        b8 operator==(const utf8str& other) const;\n"));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("        b8 operator!=(const utf8str& other) const;\n"));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("    };\n"));

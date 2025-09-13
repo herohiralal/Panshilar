@@ -7,7 +7,6 @@
 PNSLR_SUPPRESS_WARN
 #include <stdio.h>
 PNSLR_UNSUPPRESS_WARN
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Primitives.h"
 #include "../../Source/Dependencies/PNSLR_Intrinsics/Macros.h"
 #include "zzzz_TestRunner.h"
 #include "zzzz_GeneratedCombinedTests.c"
