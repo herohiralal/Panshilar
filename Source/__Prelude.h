@@ -104,21 +104,6 @@
 
 #endif
 
-#if PNSLR_MSVC
-
-    #define FORCE_TRAP     __fastfail(FAST_FAIL_FATAL_APP_EXIT)
-    #define FORCE_DBG_TRAP __debugbreak()
-
-#elif (PNSLR_CLANG || PNSLR_GCC)
-
-    #define FORCE_TRAP     __builtin_trap()
-    #define FORCE_DBG_TRAP __builtin_debugtrap()
-
-#else
-    #error "Required features not supported by this compiler."
-#endif
-
-
 // always include this last and outside the implementation block
 // it contains some important macros/typedefs that we'll use
 #include "Dependencies/PNSLR_Intrinsics/Intrinsics.h"
