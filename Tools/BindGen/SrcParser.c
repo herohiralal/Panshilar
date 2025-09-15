@@ -124,7 +124,7 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     }
 }
 
-TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask ignoreMask, TokenType typeMask, utf8str* tokenStr, PNSLR_Allocator allocator)
+TknTy ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask ignoreMask, TknTy typeMask, utf8str* tokenStr, PNSLR_Allocator allocator)
 {
     // empty by default
     if (tokenStr) *tokenStr = (utf8str) {0};
@@ -132,11 +132,11 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask
     TokenSpan currSpan = {0};
     if (!DequeueNextTokenSpan(iter, ignoreMask, &currSpan))
     {
-        if (typeMask & TokenType_EOF) { return TokenType_EOF; } // user expecting EOF
+        if (typeMask & TknTy_EOF) { return TknTy_EOF; } // user expecting EOF
 
         // user not expecting EOF
         PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, PNSLR_STRING_LITERAL("Not expecting EOF."));
-        return TokenType_Invalid;
+        return TknTy_Invalid;
     }
 
     utf8str tokenStr2 = (utf8str) {.data = iter->contents.data + currSpan.start, .count = currSpan.end - currSpan.start};
@@ -147,7 +147,7 @@ TokenType ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask
         utf8str maskStr = GetTokenTypeMaskString(typeMask, PNSLR_STRING_LITERAL(", "), allocator);
         utf8str errorFull = PNSLR_ConcatenateStrings(errorPrefix, maskStr, allocator);
         PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, errorFull);
-        return TokenType_Invalid;
+        return TknTy_Invalid;
     }
 
     return currSpan.type;
@@ -163,7 +163,7 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     // if the user didn't pass an actual string input, get the next identifier token from the source
     if (!tokenStr.data || !tokenStr.count)
     {
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &tokenStr, allocator))
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_Identifier, &tokenStr, allocator))
         {
             return false;
         }
@@ -172,9 +172,9 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     u32 typeIdxTemp = U32_MAX;
     if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ArraySlice"), 0)) // is an array slice
     {
-        b8 success = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)
+        b8 success = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)
                   && ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str) {0}, &typeIdxTemp, allocator)
-                  && ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator);
+                  && ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator);
 
         if (!success) return false;
 
@@ -198,8 +198,8 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     {
         if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("struct"), 0))
         {
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &tokenStr, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &tokenStr, allocator)) return false;
         }
 
         b8 success = false;
@@ -243,29 +243,29 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
 
 b8 ConsumeFileIntro(utf8str pathRel, FileIterInfo* iter, utf8str* includeGuardIdentifier, PNSLR_Allocator allocator)
 {
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, includeGuardIdentifier, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, includeGuardIdentifier, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
 
     utf8str beginComment = {0};
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_LineEndComment, &beginComment, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_LineEndComment, &beginComment, allocator)) return false;
     i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifier->count + 1 /*space*/));
     if (beginComment.count != expectedCommentLength)
     {
         PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) beginComment.count, iter->i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
         return false;
     }
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_PreprocessorDefine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
     utf8str includeGuardIdentifierDecl = {0};
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
     if (!PNSLR_AreStringsEqual(*includeGuardIdentifier, includeGuardIdentifierDecl, 0))
     {
         PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) includeGuardIdentifierDecl.count, iter->i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
         return false;
     }
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
 
     return true;
 }
@@ -277,7 +277,7 @@ b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
     TokenSpan currSpan = {0};
     while (DequeueNextTokenSpan(iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, &currSpan))
     {
-        if (currSpan.type == TokenType_MetaSkipReflectEnd)
+        if (currSpan.type == TknTy_MetaSkipReflectEnd)
         {
             return true;
         }
@@ -305,12 +305,12 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     else                       cachedLasts->lastFile->declarations = &(enm->header);
     cachedLasts->lastDecl                                          = &(enm->header);
 
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &(enm->header.name), allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolComma, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &(enm->header.name), allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolComma, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
     utf8str enumBacking = {0};
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &enumBacking, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &enumBacking, allocator)) return false;
 
     if (false) { }
     else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u8"),  0)) { enm->size =  8; enm->negative = false; }
@@ -333,33 +333,33 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
         return false;
     }
 
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_NewLine, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
 
     enm->header.ty = AddNewType(content, enm->header.name);
 
     while (iter->i < iter->contents.count)
     {
         utf8str tokenStr;
-        TokenType rec = ForceGetNextToken(pathRel, iter,
+        TknTy rec = ForceGetNextToken(pathRel, iter,
             TokenIgnoreMask_None,
-            TokenType_Spaces |
-            TokenType_Identifier |
-            TokenType_Invalid,
+            TknTy_Spaces |
+            TknTy_Identifier |
+            TknTy_Invalid,
             &tokenStr,
             allocator
         );
         if (!rec) return false;
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_END"), 0)) // end
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_END"), 0)) // end
         {
             return true;
         }
 
-        if (rec == TokenType_Spaces) // assumedly a variant
+        if (rec == TknTy_Spaces) // assumedly a variant
         {
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_PreprocessorDefine, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_PreprocessorDefine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
 
             ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, CURRENT_LOC(), nil);
             if (!var) FORCE_DBG_TRAP;
@@ -370,30 +370,30 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 
             var->flagsOffset = U8_MAX;
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &(var->name), allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &(var->name), allocator)) return false;
             if (!PNSLR_StringStartsWith(var->name, enm->header.name, 0))
             {
                 PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) var->name.count, iter->i, PNSLR_STRING_LITERAL("Enum variant name does not start with enum name as prefix."));
                 return false;
             }
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
             utf8str nameMatch = {0};
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &nameMatch, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &nameMatch, allocator)) return false;
             if (!PNSLR_AreStringsEqual(nameMatch, enm->header.name, 0))
             {
                 PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameMatch.count, iter->i, PNSLR_STRING_LITERAL("Enum variant cast does not match enum name."));
                 return false;
             }
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
 
             if (isFlags) // flags
             {
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
                 utf8str mustBe1 = {0};
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &mustBe1, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &mustBe1, allocator)) return false;
                 if (mustBe1.count != 1 || !mustBe1.data)
                 {
                     PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBe1.count, iter->i, PNSLR_STRING_LITERAL("Expected '1' or '0' for flags enum variant."));
@@ -403,9 +403,9 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                 if (mustBe1.data[0] == '0')
                 {
                     var->idx = 0;
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
 
                     continue;
                 }
@@ -420,18 +420,18 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                 }
 
                 utf8str mustBeULL = {0};
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier, &mustBeULL, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &mustBeULL, allocator)) return false;
                 if (!PNSLR_AreStringsEqual(mustBeULL, PNSLR_STRING_LITERAL("ULL"), 0))
                 {
                     PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBeULL.count, iter->i, PNSLR_STRING_LITERAL("Expected 'ULL' suffix for flags enum variant."));
                 }
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolLeftShift, nil, allocator)) return false;
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolLeftShift, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
             }
 
             utf8str idxToken = {0};
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &idxToken, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &idxToken, allocator)) return false;
             var->negative = (idxToken.count >= 1 && idxToken.data && idxToken.data[0] == '-');
             if (var->negative) idxToken = (utf8str) {.data = idxToken.data + 1, .count = idxToken.count - 1}; // trim '-' sign
             var->idx = (u64) strtoull(PNSLR_CStringFromString(idxToken, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
@@ -439,11 +439,11 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 
             if (isFlags) // flags
             {
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
             }
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TokenType_NewLine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
 
             continue;
         }
@@ -472,12 +472,12 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
     else                       cachedLasts->lastFile->declarations = &(strct->header);
     cachedLasts->lastDecl                                          = &(strct->header);
 
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(strct->header.name), allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_Identifier, &(strct->header.name), allocator)) return false;
     if (PNSLR_AreStringsEqual(strct->header.name, PNSLR_STRING_LITERAL("alignas"), 0))
     {
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
         utf8str alignasVal = {0};
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_Identifier | TokenType_Integer, &alignasVal, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier | TknTy_Integer, &alignasVal, allocator)) return false;
         if (PNSLR_AreStringsEqual(alignasVal, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
         {
             strct->alignasVal = sizeof(rawptr);
@@ -492,42 +492,42 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
             }
         }
 
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &(strct->header.name), allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Identifier, &(strct->header.name), allocator)) return false;
     }
 
     strct->header.ty = AddNewType(content, strct->header.name);
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolBracesOpen, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolBracesOpen, nil, allocator)) return false;
 
     while (iter->i < iter->contents.count)
     {
         utf8str tokenStr;
-        TokenType rec = ForceGetNextToken(pathRel, iter,
+        TknTy rec = ForceGetNextToken(pathRel, iter,
             TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments,
-            TokenType_Identifier |
-            TokenType_SymbolBracesClose |
-            TokenType_Invalid,
+            TknTy_Identifier |
+            TknTy_SymbolBracesClose |
+            TknTy_Invalid,
             &tokenStr,
             allocator
         );
         if (!rec) return false;
 
-        if (rec == TokenType_SymbolBracesClose)
+        if (rec == TknTy_SymbolBracesClose)
         {
             utf8str nameCheck = {0};
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_Identifier, &nameCheck, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_Identifier, &nameCheck, allocator)) return false;
             if (!PNSLR_AreStringsEqual(nameCheck, strct->header.name, 0))
             {
                 PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameCheck.count, iter->i, PNSLR_STRING_LITERAL("Struct name does not match."));
                 return false;
             }
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
             return true;
         }
 
-        if (rec == TokenType_Identifier)
+        if (rec == TknTy_Identifier)
         {
             ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, CURRENT_LOC(), nil);
             if (!mem) FORCE_DBG_TRAP;
@@ -544,22 +544,22 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
                 return false;
             }
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &(mem->name), allocator)) return false;
-            TokenType tt = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolBracketOpen | TokenType_SymbolSemicolon, nil, allocator);
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Identifier, &(mem->name), allocator)) return false;
+            TknTy tt = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolBracketOpen | TknTy_SymbolSemicolon, nil, allocator);
             if (!tt) return false;
 
-            if (tt == TokenType_SymbolBracketOpen)
+            if (tt == TknTy_SymbolBracketOpen)
             {
                 utf8str arrCount = {0};
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Integer, &arrCount, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &arrCount, allocator)) return false;
                 mem->arrSize = (u32) strtoull(PNSLR_CStringFromString(arrCount, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
 
-                TokenType tt2 = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolBracketClose | TokenType_SymbolAsterisk, nil, allocator);
+                TknTy tt2 = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolBracketClose | TknTy_SymbolAsterisk, nil, allocator);
                 if (!tt2) return false;
-                if (tt2 == TokenType_SymbolAsterisk)
+                if (tt2 == TknTy_SymbolAsterisk)
                 {
                     utf8str secondPart = {0};
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_Identifier, &secondPart, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Identifier, &secondPart, allocator)) return false;
                     if (!PNSLR_AreStringsEqual(secondPart, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
                     {
                         PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) secondPart.count, iter->i, PNSLR_STRING_LITERAL("invalid multiplication syntax type thing"));
@@ -568,10 +568,10 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 
                     mem->arrSize *= sizeof(rawptr);
 
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TokenType_SymbolBracketClose, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolBracketClose, nil, allocator)) return false;
                 }
 
-                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TokenType_SymbolSemicolon, nil, allocator)) return false;
+                if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolSemicolon, nil, allocator)) return false;
             }
         }
     }
@@ -600,19 +600,19 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 
     if (isDelegate)
     {
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolAsterisk, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolAsterisk, nil, allocator)) return false;
     }
 
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(fn->header.name), allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_Identifier, &(fn->header.name), allocator)) return false;
 
     if (isDelegate)
     {
         fn->header.ty = AddNewType(content, fn->header.name);
-        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
+        if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
     }
 
-    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
 
     while (iter->i < iter->contents.count)
     {
@@ -639,22 +639,22 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
             else                        fn->args                     = arg;
             cachedLasts->lastFnArg                                   = arg;
 
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_Identifier, &(arg->name), allocator)) break;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_Identifier, &(arg->name), allocator)) break;
         }
 
-        TokenType rec = ForceGetNextToken(pathRel, iter,
+        TknTy rec = ForceGetNextToken(pathRel, iter,
             TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments,
-            (tyIdx == 0 ? 0 : TokenType_SymbolComma) | TokenType_SymbolParenthesesClose, // if void input, don't accept any more args
+            (tyIdx == 0 ? 0 : TknTy_SymbolComma) | TknTy_SymbolParenthesesClose, // if void input, don't accept any more args
             nil,
             allocator);
 
         if (!rec) return false;
 
-        if (rec == TokenType_SymbolComma) continue; // onto next arg
+        if (rec == TknTy_SymbolComma) continue; // onto next arg
 
-        if (rec == TokenType_SymbolParenthesesClose)
+        if (rec == TknTy_SymbolParenthesesClose)
         {
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TokenType_SymbolSemicolon, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
             return true;
         }
@@ -674,32 +674,32 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
     while (iter->i < iter->contents.count)
     {
         utf8str tokenStr;
-        TokenType rec = ForceGetNextToken(pathRel, iter,
+        TknTy rec = ForceGetNextToken(pathRel, iter,
             TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces,
-            TokenType_MetaExternCEnd |
-            TokenType_MetaSkipReflectBegin |
-            TokenType_BlockComment |
-            TokenType_LineEndComment |
-            TokenType_Identifier |
-            TokenType_Invalid,
+            TknTy_MetaExternCEnd |
+            TknTy_MetaSkipReflectBegin |
+            TknTy_BlockComment |
+            TknTy_LineEndComment |
+            TknTy_Identifier |
+            TknTy_Invalid,
             &tokenStr,
             allocator
         );
         if (!rec) return false;
 
-        if (rec == TokenType_MetaExternCEnd)
+        if (rec == TknTy_MetaExternCEnd)
         {
             return true;
         }
 
-        if (rec == TokenType_MetaSkipReflectBegin) // if skipreflect, consume till end
+        if (rec == TknTy_MetaSkipReflectBegin) // if skipreflect, consume till end
         {
             if (!ConsumeSkipReflectBlock(pathRel, iter)) return false;
 
             continue;
         }
 
-        if (rec == TokenType_LineEndComment)
+        if (rec == TknTy_LineEndComment)
         {
             if (tokenStr.count == 84 && PNSLR_StringEndsWith(tokenStr, PNSLR_STRING_LITERAL("======="), 0))
             {
@@ -725,13 +725,13 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TokenType_BlockComment)
+        if (rec == TknTy_BlockComment)
         {
             lastDoc = tokenStr;
             continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
         {
             ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, CURRENT_LOC(), nil);
             if (!arr) FORCE_DBG_TRAP;
@@ -745,10 +745,10 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             cachedLasts->lastDecl                                          = &(arr->header);
 
             u32 dstType = U32_MAX;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesOpen, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
             if (!ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str){0}, &dstType, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolParenthesesClose, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
             arr->header.ty = AddNewArrayType(parsedContent, dstType);
             arr->tgtTy     = dstType;
@@ -757,7 +757,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, false, allocator)) return false;
 
@@ -765,7 +765,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum flags
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum flags
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, true, allocator)) return false;
 
@@ -773,10 +773,10 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TokenType_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct or type alias
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct or type alias
         {
             utf8str nextToken = {0};
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &nextToken, allocator))
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_Identifier, &nextToken, allocator))
                 return false;
 
             u32 delRetTyIdx = U32_MAX;
@@ -818,8 +818,8 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                     cachedLasts->lastDecl                                          = &(tyAl->header);
                     lastDoc = (utf8str) {0};
 
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_Identifier, &(tyAl->header.name), allocator)) return false;
-                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TokenType_SymbolSemicolon, nil, allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_Identifier, &(tyAl->header.name), allocator)) return false;
+                    if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
                     tyAl->header.ty = AddNewType(parsedContent, tyAl->header.name);
                     continue;
@@ -871,13 +871,13 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str p
     // extract file doc
     {
         utf8str fileDocTemp = {0};
-        TokenType rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine,
-            TokenType_BlockComment | TokenType_PreprocessorIfndef, &fileDocTemp, allocator);
-        if (rec == TokenType_BlockComment)
+        TknTy rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine,
+            TknTy_BlockComment | TknTy_PreprocessorIfndef, &fileDocTemp, allocator);
+        if (rec == TknTy_BlockComment)
         {
             file->doc = fileDocTemp;
             rec = ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments,
-                TokenType_PreprocessorIfndef, nil, allocator);
+                TknTy_PreprocessorIfndef, nil, allocator);
         }
         if (!rec) return false;
     }
@@ -888,40 +888,40 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str p
     while (iter.i < contents.count)
     {
         utf8str tokenStr;
-        TokenType rec = ForceGetNextToken(pathRel, &iter,
+        TknTy rec = ForceGetNextToken(pathRel, &iter,
             TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces,
-            TokenType_MetaSkipReflectBegin |
-            TokenType_PreprocessorEndif |
-            TokenType_MetaExternCBegin |
-            TokenType_PreprocessorInclude |
-            TokenType_Invalid,
+            TknTy_MetaSkipReflectBegin |
+            TknTy_PreprocessorEndif |
+            TknTy_MetaExternCBegin |
+            TknTy_PreprocessorInclude |
+            TknTy_Invalid,
             &tokenStr,
             allocator
         );
         if (!rec) return false;
 
-        if (rec == TokenType_MetaSkipReflectBegin) // if skipreflect, consume till end
+        if (rec == TknTy_MetaSkipReflectBegin) // if skipreflect, consume till end
         {
             if (!ConsumeSkipReflectBlock(pathRel, &iter)) return false;
 
             continue;
         }
 
-        if (rec == TokenType_PreprocessorInclude) // if #include, consume the whole line
+        if (rec == TknTy_PreprocessorInclude) // if #include, consume the whole line
         {
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_String, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, TokenType_NewLine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TknTy_String, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_Comments | TokenIgnoreMask_Spaces, TknTy_NewLine, nil, allocator)) return false;
 
             continue;
         }
 
-        if (rec == TokenType_PreprocessorEndif) // include guard ended
+        if (rec == TknTy_PreprocessorEndif) // include guard ended
         {
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_Spaces, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
 
             utf8str endComment = {0};
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TokenType_LineEndComment, &endComment, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_None, TknTy_LineEndComment, &endComment, allocator)) return false;
             {
                 i64 expectedLength = (84 - (((i64) sizeof("#endif") - 1) + 1 /*space*/));
                 if (endComment.count != expectedLength)
@@ -938,12 +938,12 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str p
                 }
             }
 
-            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TokenType_EOF, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, &iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_EOF, nil, allocator)) return false;
             break;
         }
 
         // ONLY REACHES HERE IF THE CURRENT TOKEN IS EXTERN C BEGIN
-        if (rec != TokenType_MetaExternCBegin) { FORCE_DBG_TRAP; }
+        if (rec != TknTy_MetaExternCBegin) { FORCE_DBG_TRAP; }
         if (ProcessExternCBlock(parsedContent, cachedLasts, pathRel, &iter, allocator)) continue;
 
         // failed somewhere

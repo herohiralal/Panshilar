@@ -10,66 +10,66 @@ typedef struct
     i32            startOfToken;
 } FileIterInfo;
 
-ENUM_START(TokenType, u64)
-    #define TokenType_Invalid                       ((TokenType) (         0))
-    #define TokenType_Unused0______________________ ((TokenType) (1ULL <<  0))
-    #define TokenType_Identifier                    ((TokenType) (1ULL <<  1))
-    #define TokenType_IdentifierButCouldBeHexNumber ((TokenType) (1ULL <<  2))
-    #define TokenType_Integer                       ((TokenType) (1ULL <<  3))
-    #define TokenType_Float                         ((TokenType) (1ULL <<  4))
-    #define TokenType_HexNumber                     ((TokenType) (1ULL <<  5))
-    #define TokenType_String                        ((TokenType) (1ULL <<  6))
-    #define TokenType_BooleanTrue                   ((TokenType) (1ULL <<  7))
-    #define TokenType_BooleanFalse                  ((TokenType) (1ULL <<  8))
-    #define TokenType_IncompleteString              ((TokenType) (1ULL <<  9))
-    #define TokenType_SymbolPlus                    ((TokenType) (1ULL << 10))
-    #define TokenType_SymbolMinus                   ((TokenType) (1ULL << 11))
-    #define TokenType_SymbolAsterisk                ((TokenType) (1ULL << 12))
-    #define TokenType_SymbolDollar                  ((TokenType) (1ULL << 13))
-    #define TokenType_SymbolHash                    ((TokenType) (1ULL << 14))
-    #define TokenType_SymbolTilde                   ((TokenType) (1ULL << 15))
-    #define TokenType_SymbolColon                   ((TokenType) (1ULL << 16))
-    #define TokenType_SymbolSemicolon               ((TokenType) (1ULL << 17))
-    #define TokenType_SymbolComma                   ((TokenType) (1ULL << 18))
-    #define TokenType_SymbolDot                     ((TokenType) (1ULL << 19))
-    #define TokenType_SymbolUnderscore              ((TokenType) (1ULL << 20))
-    #define TokenType_SymbolQuestion                ((TokenType) (1ULL << 21))
-    #define TokenType_SymbolExclamation             ((TokenType) (1ULL << 22))
-    #define TokenType_SymbolParenthesesOpen         ((TokenType) (1ULL << 23))
-    #define TokenType_SymbolParenthesesClose        ((TokenType) (1ULL << 24))
-    #define TokenType_SymbolBracesOpen              ((TokenType) (1ULL << 25))
-    #define TokenType_SymbolBracesClose             ((TokenType) (1ULL << 26))
-    #define TokenType_SymbolBracketOpen             ((TokenType) (1ULL << 27))
-    #define TokenType_SymbolBracketClose            ((TokenType) (1ULL << 28))
-    #define TokenType_SymbolLesserThan              ((TokenType) (1ULL << 29))
-    #define TokenType_SymbolGreaterThan             ((TokenType) (1ULL << 30))
-    #define TokenType_SymbolLeftShift               ((TokenType) (1ULL << 31))
-    #define TokenType_SymbolRightShift              ((TokenType) (1ULL << 32))
-    #define TokenType_SymbolUnknown                 ((TokenType) (1ULL << 33))
-    #define TokenType_Spaces                        ((TokenType) (1ULL << 34))
-    #define TokenType_NewLine                       ((TokenType) (1ULL << 35))
-    #define TokenType_Tab                           ((TokenType) (1ULL << 36))
-    #define TokenType_LineEndComment                ((TokenType) (1ULL << 37))
-    #define TokenType_BlockComment                  ((TokenType) (1ULL << 38))
-    #define TokenType_IncompleteBlockComment        ((TokenType) (1ULL << 39))
-    #define TokenType_PreprocessorDefine            ((TokenType) (1ULL << 40))
-    #define TokenType_PreprocessorIfdef             ((TokenType) (1ULL << 41))
-    #define TokenType_PreprocessorIfndef            ((TokenType) (1ULL << 42))
-    #define TokenType_PreprocessorIf                ((TokenType) (1ULL << 43))
-    #define TokenType_PreprocessorEndif             ((TokenType) (1ULL << 44))
-    #define TokenType_PreprocessorInclude           ((TokenType) (1ULL << 45))
-    #define TokenType_MetaExternCBegin              ((TokenType) (1ULL << 46))
-    #define TokenType_MetaExternCEnd                ((TokenType) (1ULL << 47))
-    #define TokenType_MetaSkipReflectBegin          ((TokenType) (1ULL << 48))
-    #define TokenType_MetaSkipReflectEnd            ((TokenType) (1ULL << 49))
-    #define TokenType_EOF                           ((TokenType) (1ULL << 63))
+ENUM_START(TknTy, u64)
+    #define TknTy_Invalid                       ((TknTy) (         0))
+    #define TknTy_Unused0______________________ ((TknTy) (1ULL <<  0))
+    #define TknTy_Identifier                    ((TknTy) (1ULL <<  1))
+    #define TknTy_IdentifierButCouldBeHexNumber ((TknTy) (1ULL <<  2))
+    #define TknTy_Integer                       ((TknTy) (1ULL <<  3))
+    #define TknTy_Float                         ((TknTy) (1ULL <<  4))
+    #define TknTy_HexNumber                     ((TknTy) (1ULL <<  5))
+    #define TknTy_String                        ((TknTy) (1ULL <<  6))
+    #define TknTy_BooleanTrue                   ((TknTy) (1ULL <<  7))
+    #define TknTy_BooleanFalse                  ((TknTy) (1ULL <<  8))
+    #define TknTy_IncompleteString              ((TknTy) (1ULL <<  9))
+    #define TknTy_SymbolPlus                    ((TknTy) (1ULL << 10))
+    #define TknTy_SymbolMinus                   ((TknTy) (1ULL << 11))
+    #define TknTy_SymbolAsterisk                ((TknTy) (1ULL << 12))
+    #define TknTy_SymbolDollar                  ((TknTy) (1ULL << 13))
+    #define TknTy_SymbolHash                    ((TknTy) (1ULL << 14))
+    #define TknTy_SymbolTilde                   ((TknTy) (1ULL << 15))
+    #define TknTy_SymbolColon                   ((TknTy) (1ULL << 16))
+    #define TknTy_SymbolSemicolon               ((TknTy) (1ULL << 17))
+    #define TknTy_SymbolComma                   ((TknTy) (1ULL << 18))
+    #define TknTy_SymbolDot                     ((TknTy) (1ULL << 19))
+    #define TknTy_SymbolUnderscore              ((TknTy) (1ULL << 20))
+    #define TknTy_SymbolQuestion                ((TknTy) (1ULL << 21))
+    #define TknTy_SymbolExclamation             ((TknTy) (1ULL << 22))
+    #define TknTy_SymbolParenthesesOpen         ((TknTy) (1ULL << 23))
+    #define TknTy_SymbolParenthesesClose        ((TknTy) (1ULL << 24))
+    #define TknTy_SymbolBracesOpen              ((TknTy) (1ULL << 25))
+    #define TknTy_SymbolBracesClose             ((TknTy) (1ULL << 26))
+    #define TknTy_SymbolBracketOpen             ((TknTy) (1ULL << 27))
+    #define TknTy_SymbolBracketClose            ((TknTy) (1ULL << 28))
+    #define TknTy_SymbolLesserThan              ((TknTy) (1ULL << 29))
+    #define TknTy_SymbolGreaterThan             ((TknTy) (1ULL << 30))
+    #define TknTy_SymbolLeftShift               ((TknTy) (1ULL << 31))
+    #define TknTy_SymbolRightShift              ((TknTy) (1ULL << 32))
+    #define TknTy_SymbolUnknown                 ((TknTy) (1ULL << 33))
+    #define TknTy_Spaces                        ((TknTy) (1ULL << 34))
+    #define TknTy_NewLine                       ((TknTy) (1ULL << 35))
+    #define TknTy_Tab                           ((TknTy) (1ULL << 36))
+    #define TknTy_LineEndComment                ((TknTy) (1ULL << 37))
+    #define TknTy_BlockComment                  ((TknTy) (1ULL << 38))
+    #define TknTy_IncompleteBlockComment        ((TknTy) (1ULL << 39))
+    #define TknTy_PreprocessorDefine            ((TknTy) (1ULL << 40))
+    #define TknTy_PreprocessorIfdef             ((TknTy) (1ULL << 41))
+    #define TknTy_PreprocessorIfndef            ((TknTy) (1ULL << 42))
+    #define TknTy_PreprocessorIf                ((TknTy) (1ULL << 43))
+    #define TknTy_PreprocessorEndif             ((TknTy) (1ULL << 44))
+    #define TknTy_PreprocessorInclude           ((TknTy) (1ULL << 45))
+    #define TknTy_MetaExternCBegin              ((TknTy) (1ULL << 46))
+    #define TknTy_MetaExternCEnd                ((TknTy) (1ULL << 47))
+    #define TknTy_MetaSkipReflectBegin          ((TknTy) (1ULL << 48))
+    #define TknTy_MetaSkipReflectEnd            ((TknTy) (1ULL << 49))
+    #define TknTy_EOF                           ((TknTy) (1ULL << 63))
 ENUM_END
 
 typedef struct
 {
-    TokenType type;
-    i32       start;
-    i32       end;
+    TknTy type;
+    i32   start;
+    i32   end;
 } TokenSpan;
 
 typedef struct
@@ -86,8 +86,8 @@ ENUM_FLAGS_START(TokenIgnoreMask, u8)
     #define TokenIgnoreMask_Comments     ((TokenIgnoreMask) (1ULL << 2))
 ENUM_END
 
-utf8str GetTokenTypeString(TokenType type);
-utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator allocator);
+utf8str GetTokenTypeString(TknTy type);
+utf8str GetTokenTypeMaskString(TknTy type, utf8str joiner, PNSLR_Allocator allocator);
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd);
 b8 DequeueNextTokenSpan(FileIterInfo* file, TokenIgnoreMask ignoreMask, TokenSpan* outTokenSpan);
 b8 PeekNextToken(FileIterInfo* file, TokenIgnoreMask ignoreMask, utf8str* outToken);

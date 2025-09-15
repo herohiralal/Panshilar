@@ -1,8 +1,8 @@
 #include "Lexer.h"
 
-utf8str GetTokenTypeString(TokenType type)
+utf8str GetTokenTypeString(TknTy type)
 {
-    #define TOKEN_VALUE(x) case TokenType_##x: return PNSLR_STRING_LITERAL(#x);
+    #define TOKEN_VALUE(x) case TknTy_##x: return PNSLR_STRING_LITERAL(#x);
     switch (type)
     {
         TOKEN_VALUE(Invalid                       )
@@ -62,13 +62,13 @@ utf8str GetTokenTypeString(TokenType type)
     return PNSLR_STRING_LITERAL("__UNKNOWN_TOKEN_TYPE__");
 }
 
-utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator allocator)
+utf8str GetTokenTypeMaskString(TknTy type, utf8str joiner, PNSLR_Allocator allocator)
 {
     i64 allocSize = 0;
     {
         for (u8 typeMaskShiftIt = 0; typeMaskShiftIt < 64; typeMaskShiftIt++)
         {
-            TokenType typeMaskIt = (TokenType) (1ULL << typeMaskShiftIt);
+            TknTy typeMaskIt = (TknTy) (1ULL << typeMaskShiftIt);
             if (type & typeMaskIt) { allocSize += GetTokenTypeString(typeMaskIt).count + joiner.count; }
         }
     }
@@ -80,7 +80,7 @@ utf8str GetTokenTypeMaskString(TokenType type, utf8str joiner, PNSLR_Allocator a
         i64 iterator = 0;
         for (u8 typeMaskShiftIt = 0; typeMaskShiftIt < 64; typeMaskShiftIt++)
         {
-            TokenType typeMaskIt = (TokenType) (1ULL << typeMaskShiftIt);
+            TknTy typeMaskIt = (TknTy) (1ULL << typeMaskShiftIt);
             if (type & typeMaskIt)
             {
                 utf8str tokenTypeStr = GetTokenTypeString(typeMaskIt);
@@ -184,14 +184,14 @@ b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, TokenIgnoreMask ignoreMa
         startOfToken = tokenSpanInfo.newStartOfToken;
 
         b8 success = false;
-        if (tokenSpanInfo.span.type != TokenType_Invalid)
+        if (tokenSpanInfo.span.type != TknTy_Invalid)
         {
             if (outTokenSpan) *outTokenSpan = tokenSpanInfo.span;
             success = true;
         }
         else if (i >= file->contents.count)
         {
-            if (outTokenSpan) *outTokenSpan = (TokenSpan) {.start = (i32) file->contents.count - 1, .end = (i32) file->contents.count, .type = TokenType_Invalid};
+            if (outTokenSpan) *outTokenSpan = (TokenSpan) {.start = (i32) file->contents.count - 1, .end = (i32) file->contents.count, .type = TknTy_Invalid};
             success = false;
         }
         else { continue; }
@@ -238,7 +238,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             // send new line as individual token
             if (r == '\n')
             {
-                retOut.span.type       = TokenType_NewLine;
+                retOut.span.type       = TknTy_NewLine;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = i + width;
                 retOut.iterateFwd      = width;
@@ -252,7 +252,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             // ignore carriage return
             if (r == '\r')
             {
-                retOut.span.type       = TokenType_Invalid;
+                retOut.span.type       = TknTy_Invalid;
                 retOut.iterateFwd      = width;
                 retOut.newStartOfToken = startOfToken + width;
                 return retOut;
@@ -261,7 +261,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             // send tab as individual token
             if (r == '\t')
             {
-                retOut.span.type       = TokenType_Tab;
+                retOut.span.type       = TknTy_Tab;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = i + width;
                 retOut.iterateFwd      = width;
@@ -278,7 +278,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                     LEXER_DECODE_RUNE(r2, w2, fileContents, j);
                     if (r2 != ' ')
                     {
-                        retOut.span.type       = TokenType_Spaces;
+                        retOut.span.type       = TknTy_Spaces;
                         retOut.span.start      = startOfToken;
                         retOut.span.end        = j;
                         retOut.iterateFwd      = j - i;
@@ -288,7 +288,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                 }
 
                 // reached end of file but space didn't finish
-                retOut.span.type       = TokenType_Spaces;
+                retOut.span.type       = TknTy_Spaces;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = fileSize;
                 retOut.iterateFwd      = fileSize - i;
@@ -297,7 +297,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             }
         }
 
-        retOut.span.type       = TokenType_Invalid;
+        retOut.span.type       = TknTy_Invalid;
         retOut.iterateFwd      = width;
         retOut.newStartOfToken = startOfToken + width;
         return retOut;
@@ -322,7 +322,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (!r2IsLastRune && r3 == '\n')
             {
-                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TokenType_Invalid : TokenType_LineEndComment;
+                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TknTy_Invalid : TknTy_LineEndComment;
                 // check for spl comments
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
@@ -330,11 +330,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                     utf8str spanStr = (utf8str) {.count = retOut.span.end - retOut.span.start, .data = fileContents.data + retOut.span.start};
                     if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//+skipreflect"), 0))
                     {
-                        retOut.span.type = TokenType_MetaSkipReflectBegin;
+                        retOut.span.type = TknTy_MetaSkipReflectBegin;
                     }
                     else if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//-skipreflect"), 0))
                     {
-                        retOut.span.type = TokenType_MetaSkipReflectEnd;
+                        retOut.span.type = TknTy_MetaSkipReflectEnd;
                     }
                 }
                 retOut.iterateFwd      = j + (r2 == '\r' ? 0 : w2) - i;
@@ -344,7 +344,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         }
 
         // reached the end of file but comment didn't finish
-        retOut.span.type       = TokenType_LineEndComment;
+        retOut.span.type       = TknTy_LineEndComment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -371,7 +371,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
             if (r2 == '*' && !r2IsLastRune && r3 == '/')
             {
-                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TokenType_Invalid : TokenType_BlockComment;
+                retOut.span.type       = ignoreMask & TokenIgnoreMask_Comments ? TknTy_Invalid : TknTy_BlockComment;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2 + PNSLR_GetRuneLength('/');
                 retOut.iterateFwd      = j + w2 + PNSLR_GetRuneLength('/') - i;
@@ -381,7 +381,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         }
 
         // reached end of file but comment didn't finish
-        retOut.span.type       = TokenType_IncompleteBlockComment;
+        retOut.span.type       = TknTy_IncompleteBlockComment;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -399,7 +399,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             LEXER_DECODE_RUNE(r2, w2, fileContents, j);
             if (r2 == '"' && prevRune != '\\')
             {
-                retOut.span.type       = TokenType_String;
+                retOut.span.type       = TknTy_String;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = j + w2;
                 retOut.iterateFwd      = j + w2 - i;
@@ -411,7 +411,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         }
 
         // reaached end of file but string didn't finish
-        retOut.span.type       = TokenType_IncompleteString;
+        retOut.span.type       = TknTy_IncompleteString;
         retOut.span.start      = startOfToken;
         retOut.span.end        = fileSize;
         retOut.iterateFwd      = fileSize - i;
@@ -444,7 +444,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                     {
                         if (hasDecimalPoint) // multiple decimal pts??
                         {
-                            retOut.span.type       = TokenType_Float;
+                            retOut.span.type       = TknTy_Float;
                             retOut.span.start      = startOfToken;
                             retOut.span.end        = j;
                             retOut.iterateFwd      = (j - i);
@@ -458,7 +458,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
                     if (!((r2 >= '0' && r2 <= '9') || splCharValid))
                     {
-                        retOut.span.type       = hasDecimalPoint ? TokenType_Float : TokenType_Integer;
+                        retOut.span.type       = hasDecimalPoint ? TknTy_Float : TknTy_Integer;
                         retOut.span.start      = startOfToken;
                         retOut.span.end        = j;
                         retOut.iterateFwd      = (j - i);
@@ -468,7 +468,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                 }
 
                 // reached end of file but number didn't finish
-                retOut.span.type       = hasDecimalPoint ? TokenType_Float : TokenType_Integer;
+                retOut.span.type       = hasDecimalPoint ? TknTy_Float : TknTy_Integer;
                 retOut.span.start      = startOfToken;
                 retOut.span.end        = fileSize;
                 retOut.iterateFwd      = (fileSize - i);
@@ -479,27 +479,27 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
         switch (r)
         {
-            case '+': retOut.span.type = TokenType_SymbolPlus;             break;
-            case '-': retOut.span.type = TokenType_SymbolMinus;            break;
-            case '*': retOut.span.type = TokenType_SymbolAsterisk;         break;
-            case '$': retOut.span.type = TokenType_SymbolDollar;           break;
-            case '~': retOut.span.type = TokenType_SymbolTilde;            break;
-            case ':': retOut.span.type = TokenType_SymbolColon;            break;
-            case ';': retOut.span.type = TokenType_SymbolSemicolon;        break;
-            case ',': retOut.span.type = TokenType_SymbolComma;            break;
-            case '.': retOut.span.type = TokenType_SymbolDot;              break;
-            case '#': retOut.span.type = TokenType_SymbolHash;             break;
-            case '?': retOut.span.type = TokenType_SymbolQuestion;         break;
-            case '!': retOut.span.type = TokenType_SymbolExclamation;      break;
-            case '(': retOut.span.type = TokenType_SymbolParenthesesOpen;  break;
-            case ')': retOut.span.type = TokenType_SymbolParenthesesClose; break;
-            case '{': retOut.span.type = TokenType_SymbolBracesOpen;       break;
-            case '}': retOut.span.type = TokenType_SymbolBracesClose;      break;
-            case '[': retOut.span.type = TokenType_SymbolBracketOpen;      break;
-            case ']': retOut.span.type = TokenType_SymbolBracketClose;     break;
-            case '<': retOut.span.type = TokenType_SymbolLesserThan;       break;
-            case '>': retOut.span.type = TokenType_SymbolGreaterThan;      break;
-            default:  retOut.span.type = TokenType_SymbolUnknown;          break;
+            case '+': retOut.span.type = TknTy_SymbolPlus;             break;
+            case '-': retOut.span.type = TknTy_SymbolMinus;            break;
+            case '*': retOut.span.type = TknTy_SymbolAsterisk;         break;
+            case '$': retOut.span.type = TknTy_SymbolDollar;           break;
+            case '~': retOut.span.type = TknTy_SymbolTilde;            break;
+            case ':': retOut.span.type = TknTy_SymbolColon;            break;
+            case ';': retOut.span.type = TknTy_SymbolSemicolon;        break;
+            case ',': retOut.span.type = TknTy_SymbolComma;            break;
+            case '.': retOut.span.type = TknTy_SymbolDot;              break;
+            case '#': retOut.span.type = TknTy_SymbolHash;             break;
+            case '?': retOut.span.type = TknTy_SymbolQuestion;         break;
+            case '!': retOut.span.type = TknTy_SymbolExclamation;      break;
+            case '(': retOut.span.type = TknTy_SymbolParenthesesOpen;  break;
+            case ')': retOut.span.type = TknTy_SymbolParenthesesClose; break;
+            case '{': retOut.span.type = TknTy_SymbolBracesOpen;       break;
+            case '}': retOut.span.type = TknTy_SymbolBracesClose;      break;
+            case '[': retOut.span.type = TknTy_SymbolBracketOpen;      break;
+            case ']': retOut.span.type = TknTy_SymbolBracketClose;     break;
+            case '<': retOut.span.type = TknTy_SymbolLesserThan;       break;
+            case '>': retOut.span.type = TknTy_SymbolGreaterThan;      break;
+            default:  retOut.span.type = TknTy_SymbolUnknown;          break;
         }
 
         retOut.span.start      = startOfToken;
@@ -509,8 +509,8 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
         b8 isShiftOperator = false;
         if (isLastRune)                                                              {                                                                        }
-        else if (r == '<' && nextRune == '<') { retOut.span.type = TokenType_SymbolLeftShift;  isShiftOperator = true; }
-        else if (r == '>' && nextRune == '>') { retOut.span.type = TokenType_SymbolRightShift; isShiftOperator = true; }
+        else if (r == '<' && nextRune == '<') { retOut.span.type = TknTy_SymbolLeftShift;  isShiftOperator = true; }
+        else if (r == '>' && nextRune == '>') { retOut.span.type = TknTy_SymbolRightShift; isShiftOperator = true; }
 
         if (isShiftOperator)
         {
@@ -520,7 +520,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             retOut.iterateFwd      += nextRuneWidth;
             retOut.newStartOfToken += nextRuneWidth;
         }
-        else if (retOut.span.type == TokenType_SymbolHash) // check for preprocessors
+        else if (retOut.span.type == TknTy_SymbolHash) // check for preprocessors
         {
             FileIterInfo iterCpy = {.contents = fileContents, .i = i + width, .startOfToken = i + width};
             TokenSpan nextTokenSpan = {0};
@@ -529,13 +529,13 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
                 utf8str nextTokenStr = (utf8str){.data = fileContents.data + nextTokenSpan.start, .count = nextTokenSpan.end - nextTokenSpan.start};
 
                 b8 successfulPreprocessorCheck = true;
-                if (nextTokenSpan.type != TokenType_Identifier)                                   { successfulPreprocessorCheck = false;              }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define" ), 0)) { retOut.span.type = TokenType_PreprocessorDefine;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef" ), 0)) { retOut.span.type = TokenType_PreprocessorIfndef;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"  ), 0)) { retOut.span.type = TokenType_PreprocessorIfdef;   }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"     ), 0)) { retOut.span.type = TokenType_PreprocessorIf;      }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"  ), 0)) { retOut.span.type = TokenType_PreprocessorEndif;   }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TokenType_PreprocessorInclude; }
+                if (nextTokenSpan.type != TknTy_Identifier)                                   { successfulPreprocessorCheck = false;              }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define" ), 0)) { retOut.span.type = TknTy_PreprocessorDefine;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef" ), 0)) { retOut.span.type = TknTy_PreprocessorIfndef;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"  ), 0)) { retOut.span.type = TknTy_PreprocessorIfdef;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"     ), 0)) { retOut.span.type = TknTy_PreprocessorIf;      }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"  ), 0)) { retOut.span.type = TknTy_PreprocessorEndif;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TknTy_PreprocessorInclude; }
                 else                                                                              { successfulPreprocessorCheck = false;              }
 
                 if (successfulPreprocessorCheck)
@@ -565,7 +565,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             {
                 if (hasDecimalPt)
                 {
-                    retOut.span.type       = TokenType_Float;
+                    retOut.span.type       = TknTy_Float;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -581,7 +581,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             {
                 if (isHex)
                 {
-                    retOut.span.type       = TokenType_HexNumber;
+                    retOut.span.type       = TknTy_HexNumber;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -591,7 +591,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
                 if (hasDecimalPt) // multiple decimal pts ??
                 {
-                    retOut.span.type       = TokenType_Float;
+                    retOut.span.type       = TknTy_Float;
                     retOut.span.start      = startOfToken;
                     retOut.span.end        = j;
                     retOut.iterateFwd      = (j - i);
@@ -607,15 +607,15 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
             {
                 if (isHex)
                 {
-                    retOut.span.type   = TokenType_HexNumber;
+                    retOut.span.type   = TknTy_HexNumber;
                 }
                 else if (hasDecimalPt)
                 {
-                    retOut.span.type   = TokenType_Float;
+                    retOut.span.type   = TknTy_Float;
                 }
                 else
                 {
-                    retOut.span.type   = TokenType_Integer;
+                    retOut.span.type   = TknTy_Integer;
                 }
 
                 retOut.span.start      = startOfToken;
@@ -629,15 +629,15 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         // reached end of file but number didn't finish
         if (isHex)
         {
-            retOut.span.type   = TokenType_HexNumber;
+            retOut.span.type   = TknTy_HexNumber;
         }
         else if (hasDecimalPt)
         {
-            retOut.span.type   = TokenType_Float;
+            retOut.span.type   = TknTy_Float;
         }
         else
         {
-            retOut.span.type   = TokenType_Integer;
+            retOut.span.type   = TknTy_Integer;
         }
 
         retOut.span.start      = startOfToken;
@@ -653,31 +653,31 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
 
         if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("true"), 0))
         {
-            retOut.span.type = TokenType_BooleanTrue;
+            retOut.span.type = TknTy_BooleanTrue;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("false"), 0))
         {
-            retOut.span.type = TokenType_BooleanFalse;
+            retOut.span.type = TknTy_BooleanFalse;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_BEGIN"), 0))
         {
-            retOut.span.type = TokenType_MetaExternCBegin;
+            retOut.span.type = TknTy_MetaExternCBegin;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_END"), 0))
         {
-            retOut.span.type = TokenType_MetaExternCEnd;
+            retOut.span.type = TknTy_MetaExternCEnd;
         }
         else if (IsValidHexNumber(currentSpanStr))
         {
-            retOut.span.type = TokenType_IdentifierButCouldBeHexNumber;
+            retOut.span.type = TknTy_IdentifierButCouldBeHexNumber;
         }
         else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("_"), 0))
         {
-            retOut.span.type = TokenType_SymbolUnderscore;
+            retOut.span.type = TknTy_SymbolUnderscore;
         }
         else
         {
-            retOut.span.type = TokenType_Identifier;
+            retOut.span.type = TknTy_Identifier;
         }
 
         retOut.span.start      = startOfToken;
@@ -687,7 +687,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i,
         return retOut;
     }
 
-    retOut.span.type       = TokenType_Invalid;
+    retOut.span.type       = TknTy_Invalid;
     retOut.iterateFwd      = width;
     retOut.newStartOfToken = startOfToken;
     return retOut;

@@ -36,7 +36,7 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getExecBuildCommand(
         plt,
         True,
-        [TEST_RUNNER_MAIN_FILE, MAIN_FILE],
+        [TEST_RUNNER_MAIN_FILE],
         ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
         FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('TestRunner', plt),
     )
@@ -45,8 +45,8 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
     return buildutils.getExecBuildCommand(
         plt,
         True,
-        [BINDINGS_GENERATOR_MAIN_FILE, MAIN_FILE],
-        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else [],
+        [BINDINGS_GENERATOR_MAIN_FILE],
+        ['iphlpapi.lib', 'Ws2_32.lib'] if plt.tgt == 'windows' else ['pthread'] if plt.tgt == 'linux' else [],
         FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt),
     )
 
@@ -82,13 +82,13 @@ if __name__ == '__main__':
                 outputFile.write(f'#include "{test}.c"\n')
                 outputFile.write('#undef MAIN_TEST_FN\n\n')
 
-            outputFile.write(f'PNSLR_U64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}ULL; }}\n\n')
-            outputFile.write('void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)\n')
+            outputFile.write(f'u64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}ULL; }}\n\n')
+            outputFile.write('void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)\n')
             outputFile.write('{\n')
 
             i: int = 0
             for test in tests:
-                outputFile.write(f'    fns.data[{i}].name = PNSLR_StringLiteral("{test}");\n')
+                outputFile.write(f'    fns.data[{i}].name = PNSLR_STRING_LITERAL("{test}");\n')
                 outputFile.write(f'    fns.data[{i}].fn   = ZZZZ_Test_{test};\n\n')
                 i += 1
 

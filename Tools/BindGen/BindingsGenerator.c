@@ -2,9 +2,9 @@
     #pragma warning(disable: 4464) // relative include path contains '..'
 #endif
 
+#define PNSLR_IMPLEMENTATION
 #include "../../Source/Dependencies/PNSLR_Intrinsics/Compiler.h"
 #include "../../Source/Dependencies/PNSLR_Intrinsics/Warnings.h"
-
 PNSLR_SUPPRESS_WARN
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,3 +112,4 @@ i32 main(i32 argc, cstring* argv)
 #include "GeneratorC.c"
 #include "GeneratorCxx.c"
 #include "GeneratorOdn.c"
+#include "../../Source/zzzz_Unity.c"

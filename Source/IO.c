@@ -1067,7 +1067,7 @@ b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst)
     return success;
 }
 
-#if PNSLR_UNIX && !PNSLR_ANDROID
+#if PNSLR_UNIX && !PNSLR_ANDROID && !defined(_STDIO_H)
     i32 rename(cstring oldPath, cstring newPath); // from stdio.h, which is not an included header
 #endif
 

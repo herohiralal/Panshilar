@@ -53,17 +53,17 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
         {
             if (!hasInclude)
             {
-                if (nextTokenInCurrentLine.type == TokenType_PreprocessorInclude) { hasInclude = true; continue; }
-                else                                                              {                    break;    }
+                if (nextTokenInCurrentLine.type == TknTy_PreprocessorInclude) { hasInclude = true; continue; }
+                else                                                          {                    break;    }
             }
 
             if (!hasSpace)
             {
-                if (nextTokenInCurrentLine.type == TokenType_Spaces) { hasSpace = true; continue; }
-                else                                                 {                  break;    }
+                if (nextTokenInCurrentLine.type == TknTy_Spaces) { hasSpace = true; continue; }
+                else                                             {                  break;    }
             }
 
-            if (nextTokenInCurrentLine.type == TokenType_String)
+            if (nextTokenInCurrentLine.type == TknTy_String)
             {
                 utf8str fileNameStr = (utf8str) {.data = line.data + nextTokenInCurrentLine.start + 1, .count = nextTokenInCurrentLine.end - nextTokenInCurrentLine.start - 2};
                 GatherSourceFilesInternal(collectedFiles, numCollectedFiles, relDir, fileNameStr, globalAllocator);

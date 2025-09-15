@@ -1,45 +1,44 @@
 #ifndef PNSLR_TEST_RUNNER_H // =====================================================
 #define PNSLR_TEST_RUNNER_H
 
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Macros.h"
-#include "../../Bindings/C/Panshilar.h"
+#include "../../Source/Panshilar.h"
 
 #undef true
 #undef false
 #undef nullptr
-#define true    ((PNSLR_B8) 1)
-#define false   ((PNSLR_B8) 0)
-#define nullptr ((void*)    0)
+#define true    ((b8)    1)
+#define false   ((b8)    0)
+#define nullptr ((void*) 0)
 
 typedef struct
 {
-    PNSLR_Path                      tgtDir;
-    PNSLR_Allocator                 testAllocator;
-    PNSLR_ArraySlice(PNSLR_UTF8STR) args;
+    PNSLR_Path          tgtDir;
+    PNSLR_Allocator     testAllocator;
+    ArraySlice(utf8str) args;
 } TestContext;
 
-PNSLR_B8 AssertInternal(PNSLR_B8 condition, PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location);
+b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Assert(cond) \
-    AssertInternal((PNSLR_B8) (cond), PNSLR_StringLiteral("Assertion failed: " #cond), PNSLR_GET_LOC())
+    AssertInternal((b8) (cond), PNSLR_STRING_LITERAL("Assertion failed: " #cond), CURRENT_LOC())
 
 #define AssertMsg(cond, msg) \
-    AssertInternal((PNSLR_B8) (cond), PNSLR_StringLiteral("Assertion failed: " msg), PNSLR_GET_LOC())
+    AssertInternal((b8) (cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
 
-void LogInternal(PNSLR_UTF8STR message, PNSLR_SourceCodeLocation location);
+void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Log(msg) \
-    LogInternal(PNSLR_StringLiteral(msg), PNSLR_GET_LOC())
+    LogInternal(PNSLR_STRING_LITERAL(msg), CURRENT_LOC())
 
 typedef void (*TestFunction)(const TestContext* ctx);
 
 typedef struct
 {
-    PNSLR_UTF8STR      name;
+    utf8str      name;
     TestFunction fn;
 } TestFunctionInfo;
 
-PNSLR_DECLARE_ARRAY_SLICE(TestFunctionInfo);
+DECLARE_ARRAY_SLICE(TestFunctionInfo);
 
 #endif // PNSLR_TEST_RUNNER_H ======================================================
 
