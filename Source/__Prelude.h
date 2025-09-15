@@ -5,6 +5,11 @@
 #include "Dependencies/PNSLR_Intrinsics/Compiler.h"
 #include "Dependencies/PNSLR_Intrinsics/Warnings.h"
 
+#if PNSLR_WINDOWS
+    #pragma comment(lib, "iphlpapi.lib")
+    #pragma comment(lib, "Ws2_32.lib")
+#endif
+
 #ifdef PNSLR_IMPLEMENTATION
 
     PNSLR_SUPPRESS_WARN
