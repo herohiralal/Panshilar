@@ -5,19 +5,29 @@
 #ifndef PANSHILAR_CXX_MAIN
 #define PANSHILAR_CXX_MAIN
 
+typedef bool                b8;
+typedef unsigned char       u8;
+typedef unsigned short int  u16;
+typedef unsigned int        u32;
+typedef unsigned long long  u64;
+typedef signed char         i8;
+typedef signed short int    i16;
+typedef signed int          i32;
+typedef signed long long    i64;
+typedef float               f32;
+typedef double              f64;
+typedef char*               cstring;
+typedef void*               rawptr;
+template <typename T> struct ArraySlice { T* data; i64 count; };
+struct utf8str : public ArraySlice<u8>
+{
+    utf8str() = default;
+    utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }
+    b8 operator==(const utf8str& other) const;
+    b8 operator!=(const utf8str& other) const;
+};
 namespace Panshilar
 {
-    typedef bool                b8;
-    typedef unsigned char       u8;
-    typedef unsigned short int  u16;
-    typedef unsigned int        u32;
-    typedef unsigned long long  u64;
-    typedef signed char         i8;
-    typedef signed short int    i16;
-    typedef signed int          i32;
-    typedef signed long long    i64;
-    template <typename T> struct ArraySlice { T* data; i64 count; };
-
     // #######################################################################################
     // Collections
     // #######################################################################################
@@ -27,20 +37,14 @@ namespace Panshilar
      */
     struct RawArraySlice
     {
-       void* data;
+       rawptr data;
        i64 count;
     };
 
     /**
      * UTF-8 string type, with length info (not necessarily null-terminated).
      */
-    struct utf8str : ArraySlice<u8>
-    {
-        utf8str() = default;
-        utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }
-        b8 operator==(const utf8str& other) const;
-        b8 operator!=(const utf8str& other) const;
-    };
+    // typedef ArraySlice<u8> utf8str;
 
     // #######################################################################################
     // Environment
@@ -339,7 +343,7 @@ namespace Panshilar
      * Set a block of memory to a specific value.
      */
     void MemSet(
-        void* memory,
+        rawptr memory,
         i32 value,
         i32 size
     );
@@ -348,8 +352,8 @@ namespace Panshilar
      * Copy a block of memory from source to destination.
      */
     void MemCopy(
-        void* destination,
-        void* source,
+        rawptr destination,
+        rawptr source,
         i32 size
     );
 
@@ -357,8 +361,8 @@ namespace Panshilar
      * Copy a block of memory from source to destination, handling overlapping regions.
      */
     void MemMove(
-        void* destination,
-        void* source,
+        rawptr destination,
+        rawptr source,
         i32 size
     );
 
@@ -418,12 +422,12 @@ namespace Panshilar
     /**
      * Defines the delegate type for the allocator function.
      */
-    typedef void* (*AllocatorProcedure)(
-        void* allocatorData,
+    typedef rawptr (*AllocatorProcedure)(
+        rawptr allocatorData,
         AllocatorMode mode,
         i32 size,
         i32 alignment,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         SourceCodeLocation location,
         AllocatorError* error
@@ -435,7 +439,7 @@ namespace Panshilar
     struct Allocator
     {
        AllocatorProcedure procedure;
-       void* data;
+       rawptr data;
     };
 
     // Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -443,7 +447,7 @@ namespace Panshilar
     /**
      * Allocate memory using the provided allocator.
      */
-    void* Allocate(
+    rawptr Allocate(
         Allocator allocator,
         b8 zeroed,
         i32 size,
@@ -455,10 +459,10 @@ namespace Panshilar
     /**
      * Resize memory using the provided allocator.
      */
-    void* Resize(
+    rawptr Resize(
         Allocator allocator,
         b8 zeroed,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         i32 newSize,
         i32 alignment,
@@ -469,10 +473,10 @@ namespace Panshilar
     /**
      * Fallback resize function that can be used when the allocator does not support resizing.
      */
-    void* DefaultResize(
+    rawptr DefaultResize(
         Allocator allocator,
         b8 zeroed,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         i32 newSize,
         i32 alignment,
@@ -485,7 +489,7 @@ namespace Panshilar
      */
     void Free(
         Allocator allocator,
-        void* memory,
+        rawptr memory,
         SourceCodeLocation location,
         AllocatorError* error
     );
@@ -526,12 +530,12 @@ namespace Panshilar
     /**
      * Main allocator function for the default heap allocator.
      */
-    void* AllocatorFn_DefaultHeap(
-        void* allocatorData,
+    rawptr AllocatorFn_DefaultHeap(
+        rawptr allocatorData,
         AllocatorMode mode,
         i32 size,
         i32 alignment,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         SourceCodeLocation location,
         AllocatorError* error
@@ -546,7 +550,7 @@ namespace Panshilar
     {
        ArenaAllocatorBlock* previous;
        Allocator allocator;
-       void* memory;
+       rawptr memory;
        u32 capacity;
        u32 used;
     };
@@ -590,12 +594,12 @@ namespace Panshilar
     /**
      * Main allocator function for the arena allocator.
      */
-    void* AllocatorFn_Arena(
-        void* allocatorData,
+    rawptr AllocatorFn_Arena(
+        rawptr allocatorData,
         AllocatorMode mode,
         i32 size,
         i32 alignment,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         SourceCodeLocation location,
         AllocatorError* error
@@ -675,8 +679,8 @@ namespace Panshilar
        StackAllocatorPage* page;
        i32 size;
        i32 alignment;
-       void* lastAllocation;
-       void* lastAllocationHeader;
+       rawptr lastAllocation;
+       rawptr lastAllocationHeader;
     };
 
     /**
@@ -686,7 +690,7 @@ namespace Panshilar
     {
        Allocator backingAllocator;
        StackAllocatorPage* currentPage;
-       void* lastAllocation;
+       rawptr lastAllocation;
        StackAllocationHeader* lastAllocationHeader;
     };
 
@@ -715,12 +719,12 @@ namespace Panshilar
     /**
      * Main allocator function for the stack allocator.
      */
-    void* AllocatorFn_Stack(
-        void* allocatorData,
+    rawptr AllocatorFn_Stack(
+        rawptr allocatorData,
         AllocatorMode mode,
         i32 size,
         i32 alignment,
-        void* oldMemory,
+        rawptr oldMemory,
         i32 oldSize,
         SourceCodeLocation location,
         AllocatorError* error
@@ -789,7 +793,7 @@ namespace Panshilar
     /**
      * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
      */
-    char* MakeCString(
+    cstring MakeCString(
         i64 count,
         b8 zeroed,
         Allocator allocator,
@@ -801,7 +805,7 @@ namespace Panshilar
      * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
      */
     void FreeCString(
-        char* str,
+        cstring str,
         Allocator allocator,
         SourceCodeLocation location,
         AllocatorError* error
@@ -826,21 +830,21 @@ namespace Panshilar
      * Returns the length of the given C-style null-terminated string, excluding the null terminator.
      */
     i32 GetCStringLength(
-        char* str
+        cstring str
     );
 
     /**
      * Clone a C-style string into a new allocated string.
      */
     utf8str StringFromCString(
-        char* str
+        cstring str
     );
 
     /**
      * Clones a UTF-8 string to a C-style null-terminated string.
      * The returned string is allocated using the specified allocator.
      */
-    char* CStringFromString(
+    cstring CStringFromString(
         utf8str str,
         Allocator allocator
     );
@@ -913,7 +917,7 @@ namespace Panshilar
      */
     b8 AreStringAndCStringEqual(
         utf8str str1,
-        char* str2,
+        cstring str2,
         StringComparisonType comparisonType
     );
 
@@ -922,8 +926,8 @@ namespace Panshilar
      * Returns true if they are equal, false otherwise.
      */
     b8 AreCStringsEqual(
-        char* str1,
-        char* str2,
+        cstring str1,
+        cstring str2,
         StringComparisonType comparisonType
     );
 
@@ -952,7 +956,7 @@ namespace Panshilar
      */
     b8 StringStartsWithCString(
         utf8str str,
-        char* prefix,
+        cstring prefix,
         StringComparisonType comparisonType
     );
 
@@ -961,7 +965,7 @@ namespace Panshilar
      */
     b8 StringEndsWithCString(
         utf8str str,
-        char* suffix,
+        cstring suffix,
         StringComparisonType comparisonType
     );
 
@@ -969,7 +973,7 @@ namespace Panshilar
      * Returns the length of the given C-style null-terminated string, excluding the null terminator.
      */
     b8 CStringStartsWith(
-        char* str,
+        cstring str,
         utf8str prefix,
         StringComparisonType comparisonType
     );
@@ -978,7 +982,7 @@ namespace Panshilar
      * Checks if a C-style null-terminated string ends with the specified UTF-8 suffix.
      */
     b8 CStringEndsWith(
-        char* str,
+        cstring str,
         utf8str suffix,
         StringComparisonType comparisonType
     );
@@ -988,7 +992,7 @@ namespace Panshilar
      */
     b8 CStringStartsWithCString(
         utf8str str,
-        char* prefix,
+        cstring prefix,
         StringComparisonType comparisonType
     );
 
@@ -997,7 +1001,7 @@ namespace Panshilar
      */
     b8 CStringEndsWithCString(
         utf8str str,
-        char* suffix,
+        cstring suffix,
         StringComparisonType comparisonType
     );
 
@@ -1169,7 +1173,7 @@ namespace Panshilar
      * The signature of the delegate that's supposed to be called for iterating over a directory.
      */
     typedef b8 (*DirectoryIterationVisitorDelegate)(
-        void* payload,
+        rawptr payload,
         Path path,
         b8 isDirectory,
         b8* exploreCurrentDirectory
@@ -1182,7 +1186,7 @@ namespace Panshilar
     void IterateDirectory(
         Path path,
         b8 recursive,
-        void* visitorPayload,
+        rawptr visitorPayload,
         DirectoryIterationVisitorDelegate visitorFunc
     );
 
@@ -1239,7 +1243,7 @@ namespace Panshilar
      */
     struct File
     {
-       void* handle;
+       rawptr handle;
     };
 
     /**
@@ -1403,10 +1407,6 @@ namespace Panshilar
         Allocator allocator
     );
 
-    b8 utf8str::operator==(const utf8str& other) const { return AreStringsEqual(*this, other, StringComparisonType::CaseSensitive); }
-
-    b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
-
     /** Create a utf8str from a string literal. */
     template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
@@ -1445,19 +1445,25 @@ namespace Panshilar
     }
 }//namespace end
 
+b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other, Panshilar::StringComparisonType::CaseSensitive); }
+
+b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
+
 #endif//PANSHILAR_CXX_MAIN
 
 #ifndef PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 #define PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
-    static_assert(sizeof(Panshilar::b8 ) == 1, "Size mismatch.");
-    static_assert(sizeof(Panshilar::u8 ) == 1, "Size mismatch.");
-    static_assert(sizeof(Panshilar::u16) == 2, "Size mismatch.");
-    static_assert(sizeof(Panshilar::u32) == 4, "Size mismatch.");
-    static_assert(sizeof(Panshilar::u64) == 8, "Size mismatch.");
-    static_assert(sizeof(Panshilar::i8 ) == 1, "Size mismatch.");
-    static_assert(sizeof(Panshilar::i16) == 2, "Size mismatch.");
-    static_assert(sizeof(Panshilar::i32) == 4, "Size mismatch.");
-    static_assert(sizeof(Panshilar::i64) == 8, "Size mismatch.");
+    static_assert(sizeof(b8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(u8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(u16) == 2, "Size mismatch.");
+    static_assert(sizeof(u32) == 4, "Size mismatch.");
+    static_assert(sizeof(u64) == 8, "Size mismatch.");
+    static_assert(sizeof(i8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(i16) == 2, "Size mismatch.");
+    static_assert(sizeof(i32) == 4, "Size mismatch.");
+    static_assert(sizeof(i64) == 8, "Size mismatch.");
+    static_assert(sizeof(f32) == 4, "Size mismatch.");
+    static_assert(sizeof(f64) == 8, "Size mismatch.");
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
 
 #ifndef PNSLR_IMPLEMENTATION
@@ -1470,50 +1476,32 @@ namespace Panshilar
 #ifndef PNSLR_SKIP_IMPLEMENTATION
 #define PNSLR_SKIP_IMPLEMENTATION
 
-typedef Panshilar::b8  PNSLR_B8;
-typedef Panshilar::u8  PNSLR_U8;
-typedef Panshilar::u16 PNSLR_U16;
-typedef Panshilar::u32 PNSLR_U32;
-typedef Panshilar::u64 PNSLR_U64;
-typedef Panshilar::i8  PNSLR_I8;
-typedef Panshilar::i16 PNSLR_I16;
-typedef Panshilar::i32 PNSLR_I32;
-typedef Panshilar::i64 PNSLR_I64;
-
-void*      PNSLR_Bindings_Convert(void*      x) { return x; }
-char*      PNSLR_Bindings_Convert(char*      x) { return x; }
-PNSLR_B8*  PNSLR_Bindings_Convert(PNSLR_B8*  x) { return x; }
-PNSLR_U8*  PNSLR_Bindings_Convert(PNSLR_U8*  x) { return x; }
-PNSLR_U16* PNSLR_Bindings_Convert(PNSLR_U16* x) { return x; }
-PNSLR_U32* PNSLR_Bindings_Convert(PNSLR_U32* x) { return x; }
-PNSLR_U64* PNSLR_Bindings_Convert(PNSLR_U64* x) { return x; }
-PNSLR_I8*  PNSLR_Bindings_Convert(PNSLR_I8*  x) { return x; }
-PNSLR_I16* PNSLR_Bindings_Convert(PNSLR_I16* x) { return x; }
-PNSLR_I32* PNSLR_Bindings_Convert(PNSLR_I32* x) { return x; }
-PNSLR_I64* PNSLR_Bindings_Convert(PNSLR_I64* x) { return x; }
-
-PNSLR_B8&  PNSLR_Bindings_Convert(PNSLR_B8&  x) { return x; }
-PNSLR_U8&  PNSLR_Bindings_Convert(PNSLR_U8&  x) { return x; }
-PNSLR_U16& PNSLR_Bindings_Convert(PNSLR_U16& x) { return x; }
-PNSLR_U32& PNSLR_Bindings_Convert(PNSLR_U32& x) { return x; }
-PNSLR_U64& PNSLR_Bindings_Convert(PNSLR_U64& x) { return x; }
-PNSLR_I8&  PNSLR_Bindings_Convert(PNSLR_I8&  x) { return x; }
-PNSLR_I16& PNSLR_Bindings_Convert(PNSLR_I16& x) { return x; }
-PNSLR_I32& PNSLR_Bindings_Convert(PNSLR_I32& x) { return x; }
-PNSLR_I64& PNSLR_Bindings_Convert(PNSLR_I64& x) { return x; }
+b8      PNSLR_Bindings_Convert(b8      x) { return x; }
+u8      PNSLR_Bindings_Convert(u8      x) { return x; }
+u16     PNSLR_Bindings_Convert(u16     x) { return x; }
+u32     PNSLR_Bindings_Convert(u32     x) { return x; }
+u64     PNSLR_Bindings_Convert(u64     x) { return x; }
+i8      PNSLR_Bindings_Convert(i8      x) { return x; }
+i16     PNSLR_Bindings_Convert(i16     x) { return x; }
+i32     PNSLR_Bindings_Convert(i32     x) { return x; }
+i64     PNSLR_Bindings_Convert(i64     x) { return x; }
+f32     PNSLR_Bindings_Convert(f32     x) { return x; }
+f64     PNSLR_Bindings_Convert(f64     x) { return x; }
+rawptr  PNSLR_Bindings_Convert(rawptr  x) { return x; }
+cstring PNSLR_Bindings_Convert(cstring x) { return x; }
 
 #if (_MSC_VER)
-    #define PNSLR_STRUCT_OFFSET(type, member) ((PNSLR_U64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+    #define PNSLR_STRUCT_OFFSET(type, member) ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
 #elif (__clang__) || (__GNUC__)
-    #define PNSLR_STRUCT_OFFSET(type, member) ((PNSLR_U64) offsetof(type, member))
+    #define PNSLR_STRUCT_OFFSET(type, member) ((u64) offsetof(type, member))
 #else
     #error "UNSUPPORTED COMPILER!";
 #endif
 
 struct PNSLR_RawArraySlice
 {
-   void* data;
-   PNSLR_I64 count;
+   rawptr data;
+   i64 count;
 };
 static_assert(sizeof(PNSLR_RawArraySlice) == sizeof(Panshilar::RawArraySlice), "size mismatch");
 static_assert(alignof(PNSLR_RawArraySlice) == alignof(Panshilar::RawArraySlice), "align mismatch");
@@ -1524,139 +1512,139 @@ Panshilar::RawArraySlice& PNSLR_Bindings_Convert(PNSLR_RawArraySlice& x) { retur
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_RawArraySlice, data) == PNSLR_STRUCT_OFFSET(Panshilar::RawArraySlice, data), "data offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_RawArraySlice, count) == PNSLR_STRUCT_OFFSET(Panshilar::RawArraySlice, count), "count offset mismatch");
 
-typedef struct { PNSLR_B8* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_B8;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_B8) == sizeof(Panshilar::ArraySlice<Panshilar::b8>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_B8) == alignof(Panshilar::ArraySlice<Panshilar::b8>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_B8* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::b8>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_B8*>(x); }
-Panshilar::ArraySlice<Panshilar::b8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_B8* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::b8>*>(x); }
-PNSLR_ArraySlice_PNSLR_B8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::b8>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::b8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_B8& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_B8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::b8>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_B8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::b8>, data), "data offset mismatch");
+typedef struct { b8* data; i64 count; } PNSLR_ArraySlice_b8;
+static_assert(sizeof(PNSLR_ArraySlice_b8) == sizeof(ArraySlice<b8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_b8) == alignof(ArraySlice<b8>), "align mismatch");
+PNSLR_ArraySlice_b8* PNSLR_Bindings_Convert(ArraySlice<b8>* x) { return reinterpret_cast<PNSLR_ArraySlice_b8*>(x); }
+ArraySlice<b8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_b8* x) { return reinterpret_cast<ArraySlice<b8>*>(x); }
+PNSLR_ArraySlice_b8& PNSLR_Bindings_Convert(ArraySlice<b8>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<b8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_b8& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_b8, count) == PNSLR_STRUCT_OFFSET(ArraySlice<b8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_b8, data) == PNSLR_STRUCT_OFFSET(ArraySlice<b8>, data), "data offset mismatch");
 
-typedef struct { PNSLR_U8* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_U8;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U8) == sizeof(Panshilar::ArraySlice<Panshilar::u8>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_U8) == alignof(Panshilar::ArraySlice<Panshilar::u8>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_U8* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u8>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_U8*>(x); }
-Panshilar::ArraySlice<Panshilar::u8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U8* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::u8>*>(x); }
-PNSLR_ArraySlice_PNSLR_U8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u8>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::u8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U8& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u8>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u8>, data), "data offset mismatch");
+typedef struct { u8* data; i64 count; } PNSLR_ArraySlice_u8;
+static_assert(sizeof(PNSLR_ArraySlice_u8) == sizeof(ArraySlice<u8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_u8) == alignof(ArraySlice<u8>), "align mismatch");
+PNSLR_ArraySlice_u8* PNSLR_Bindings_Convert(ArraySlice<u8>* x) { return reinterpret_cast<PNSLR_ArraySlice_u8*>(x); }
+ArraySlice<u8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_u8* x) { return reinterpret_cast<ArraySlice<u8>*>(x); }
+PNSLR_ArraySlice_u8& PNSLR_Bindings_Convert(ArraySlice<u8>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<u8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_u8& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u8, count) == PNSLR_STRUCT_OFFSET(ArraySlice<u8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u8, data) == PNSLR_STRUCT_OFFSET(ArraySlice<u8>, data), "data offset mismatch");
 
-typedef struct { PNSLR_U16* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_U16;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U16) == sizeof(Panshilar::ArraySlice<Panshilar::u16>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_U16) == alignof(Panshilar::ArraySlice<Panshilar::u16>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_U16* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u16>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_U16*>(x); }
-Panshilar::ArraySlice<Panshilar::u16>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U16* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::u16>*>(x); }
-PNSLR_ArraySlice_PNSLR_U16& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u16>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::u16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U16& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U16, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u16>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U16, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u16>, data), "data offset mismatch");
+typedef struct { u16* data; i64 count; } PNSLR_ArraySlice_u16;
+static_assert(sizeof(PNSLR_ArraySlice_u16) == sizeof(ArraySlice<u16>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_u16) == alignof(ArraySlice<u16>), "align mismatch");
+PNSLR_ArraySlice_u16* PNSLR_Bindings_Convert(ArraySlice<u16>* x) { return reinterpret_cast<PNSLR_ArraySlice_u16*>(x); }
+ArraySlice<u16>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_u16* x) { return reinterpret_cast<ArraySlice<u16>*>(x); }
+PNSLR_ArraySlice_u16& PNSLR_Bindings_Convert(ArraySlice<u16>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<u16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_u16& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u16, count) == PNSLR_STRUCT_OFFSET(ArraySlice<u16>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u16, data) == PNSLR_STRUCT_OFFSET(ArraySlice<u16>, data), "data offset mismatch");
 
-typedef struct { PNSLR_U32* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_U32;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U32) == sizeof(Panshilar::ArraySlice<Panshilar::u32>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_U32) == alignof(Panshilar::ArraySlice<Panshilar::u32>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_U32* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u32>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_U32*>(x); }
-Panshilar::ArraySlice<Panshilar::u32>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U32* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::u32>*>(x); }
-PNSLR_ArraySlice_PNSLR_U32& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u32>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::u32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U32& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U32, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u32>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U32, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u32>, data), "data offset mismatch");
+typedef struct { u32* data; i64 count; } PNSLR_ArraySlice_u32;
+static_assert(sizeof(PNSLR_ArraySlice_u32) == sizeof(ArraySlice<u32>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_u32) == alignof(ArraySlice<u32>), "align mismatch");
+PNSLR_ArraySlice_u32* PNSLR_Bindings_Convert(ArraySlice<u32>* x) { return reinterpret_cast<PNSLR_ArraySlice_u32*>(x); }
+ArraySlice<u32>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_u32* x) { return reinterpret_cast<ArraySlice<u32>*>(x); }
+PNSLR_ArraySlice_u32& PNSLR_Bindings_Convert(ArraySlice<u32>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<u32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_u32& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u32, count) == PNSLR_STRUCT_OFFSET(ArraySlice<u32>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u32, data) == PNSLR_STRUCT_OFFSET(ArraySlice<u32>, data), "data offset mismatch");
 
-typedef struct { PNSLR_U64* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_U64;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_U64) == sizeof(Panshilar::ArraySlice<Panshilar::u64>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_U64) == alignof(Panshilar::ArraySlice<Panshilar::u64>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_U64* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u64>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_U64*>(x); }
-Panshilar::ArraySlice<Panshilar::u64>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U64* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::u64>*>(x); }
-PNSLR_ArraySlice_PNSLR_U64& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::u64>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::u64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_U64& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U64, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u64>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_U64, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::u64>, data), "data offset mismatch");
+typedef struct { u64* data; i64 count; } PNSLR_ArraySlice_u64;
+static_assert(sizeof(PNSLR_ArraySlice_u64) == sizeof(ArraySlice<u64>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_u64) == alignof(ArraySlice<u64>), "align mismatch");
+PNSLR_ArraySlice_u64* PNSLR_Bindings_Convert(ArraySlice<u64>* x) { return reinterpret_cast<PNSLR_ArraySlice_u64*>(x); }
+ArraySlice<u64>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_u64* x) { return reinterpret_cast<ArraySlice<u64>*>(x); }
+PNSLR_ArraySlice_u64& PNSLR_Bindings_Convert(ArraySlice<u64>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<u64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_u64& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u64, count) == PNSLR_STRUCT_OFFSET(ArraySlice<u64>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_u64, data) == PNSLR_STRUCT_OFFSET(ArraySlice<u64>, data), "data offset mismatch");
 
-typedef struct { PNSLR_I8* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_I8;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I8) == sizeof(Panshilar::ArraySlice<Panshilar::i8>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_I8) == alignof(Panshilar::ArraySlice<Panshilar::i8>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_I8* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i8>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_I8*>(x); }
-Panshilar::ArraySlice<Panshilar::i8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I8* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::i8>*>(x); }
-PNSLR_ArraySlice_PNSLR_I8& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i8>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::i8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I8& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I8, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i8>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I8, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i8>, data), "data offset mismatch");
+typedef struct { i8* data; i64 count; } PNSLR_ArraySlice_i8;
+static_assert(sizeof(PNSLR_ArraySlice_i8) == sizeof(ArraySlice<i8>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_i8) == alignof(ArraySlice<i8>), "align mismatch");
+PNSLR_ArraySlice_i8* PNSLR_Bindings_Convert(ArraySlice<i8>* x) { return reinterpret_cast<PNSLR_ArraySlice_i8*>(x); }
+ArraySlice<i8>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_i8* x) { return reinterpret_cast<ArraySlice<i8>*>(x); }
+PNSLR_ArraySlice_i8& PNSLR_Bindings_Convert(ArraySlice<i8>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<i8>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_i8& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i8, count) == PNSLR_STRUCT_OFFSET(ArraySlice<i8>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i8, data) == PNSLR_STRUCT_OFFSET(ArraySlice<i8>, data), "data offset mismatch");
 
-typedef struct { PNSLR_I16* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_I16;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I16) == sizeof(Panshilar::ArraySlice<Panshilar::i16>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_I16) == alignof(Panshilar::ArraySlice<Panshilar::i16>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_I16* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i16>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_I16*>(x); }
-Panshilar::ArraySlice<Panshilar::i16>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I16* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::i16>*>(x); }
-PNSLR_ArraySlice_PNSLR_I16& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i16>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::i16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I16& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I16, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i16>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I16, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i16>, data), "data offset mismatch");
+typedef struct { i16* data; i64 count; } PNSLR_ArraySlice_i16;
+static_assert(sizeof(PNSLR_ArraySlice_i16) == sizeof(ArraySlice<i16>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_i16) == alignof(ArraySlice<i16>), "align mismatch");
+PNSLR_ArraySlice_i16* PNSLR_Bindings_Convert(ArraySlice<i16>* x) { return reinterpret_cast<PNSLR_ArraySlice_i16*>(x); }
+ArraySlice<i16>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_i16* x) { return reinterpret_cast<ArraySlice<i16>*>(x); }
+PNSLR_ArraySlice_i16& PNSLR_Bindings_Convert(ArraySlice<i16>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<i16>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_i16& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i16, count) == PNSLR_STRUCT_OFFSET(ArraySlice<i16>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i16, data) == PNSLR_STRUCT_OFFSET(ArraySlice<i16>, data), "data offset mismatch");
 
-typedef struct { PNSLR_I32* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_I32;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I32) == sizeof(Panshilar::ArraySlice<Panshilar::i32>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_I32) == alignof(Panshilar::ArraySlice<Panshilar::i32>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_I32* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i32>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_I32*>(x); }
-Panshilar::ArraySlice<Panshilar::i32>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I32* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::i32>*>(x); }
-PNSLR_ArraySlice_PNSLR_I32& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i32>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::i32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I32& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I32, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i32>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I32, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i32>, data), "data offset mismatch");
+typedef struct { i32* data; i64 count; } PNSLR_ArraySlice_i32;
+static_assert(sizeof(PNSLR_ArraySlice_i32) == sizeof(ArraySlice<i32>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_i32) == alignof(ArraySlice<i32>), "align mismatch");
+PNSLR_ArraySlice_i32* PNSLR_Bindings_Convert(ArraySlice<i32>* x) { return reinterpret_cast<PNSLR_ArraySlice_i32*>(x); }
+ArraySlice<i32>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_i32* x) { return reinterpret_cast<ArraySlice<i32>*>(x); }
+PNSLR_ArraySlice_i32& PNSLR_Bindings_Convert(ArraySlice<i32>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<i32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_i32& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i32, count) == PNSLR_STRUCT_OFFSET(ArraySlice<i32>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i32, data) == PNSLR_STRUCT_OFFSET(ArraySlice<i32>, data), "data offset mismatch");
 
-typedef struct { PNSLR_I64* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_I64;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_I64) == sizeof(Panshilar::ArraySlice<Panshilar::i64>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_I64) == alignof(Panshilar::ArraySlice<Panshilar::i64>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_I64* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i64>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_I64*>(x); }
-Panshilar::ArraySlice<Panshilar::i64>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I64* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::i64>*>(x); }
-PNSLR_ArraySlice_PNSLR_I64& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::i64>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::i64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_I64& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I64, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i64>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_I64, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::i64>, data), "data offset mismatch");
+typedef struct { i64* data; i64 count; } PNSLR_ArraySlice_i64;
+static_assert(sizeof(PNSLR_ArraySlice_i64) == sizeof(ArraySlice<i64>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_i64) == alignof(ArraySlice<i64>), "align mismatch");
+PNSLR_ArraySlice_i64* PNSLR_Bindings_Convert(ArraySlice<i64>* x) { return reinterpret_cast<PNSLR_ArraySlice_i64*>(x); }
+ArraySlice<i64>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_i64* x) { return reinterpret_cast<ArraySlice<i64>*>(x); }
+PNSLR_ArraySlice_i64& PNSLR_Bindings_Convert(ArraySlice<i64>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<i64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_i64& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i64, count) == PNSLR_STRUCT_OFFSET(ArraySlice<i64>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_i64, data) == PNSLR_STRUCT_OFFSET(ArraySlice<i64>, data), "data offset mismatch");
 
-typedef struct { float* data; PNSLR_I64 count; } PNSLR_ArraySlice_float;
-static_assert(sizeof(PNSLR_ArraySlice_float) == sizeof(Panshilar::ArraySlice<float>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_float) == alignof(Panshilar::ArraySlice<float>), "align mismatch");
-PNSLR_ArraySlice_float* PNSLR_Bindings_Convert(Panshilar::ArraySlice<float>* x) { return reinterpret_cast<PNSLR_ArraySlice_float*>(x); }
-Panshilar::ArraySlice<float>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_float* x) { return reinterpret_cast<Panshilar::ArraySlice<float>*>(x); }
-PNSLR_ArraySlice_float& PNSLR_Bindings_Convert(Panshilar::ArraySlice<float>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<float>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_float& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_float, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<float>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_float, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<float>, data), "data offset mismatch");
+typedef struct { f32* data; i64 count; } PNSLR_ArraySlice_f32;
+static_assert(sizeof(PNSLR_ArraySlice_f32) == sizeof(ArraySlice<f32>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_f32) == alignof(ArraySlice<f32>), "align mismatch");
+PNSLR_ArraySlice_f32* PNSLR_Bindings_Convert(ArraySlice<f32>* x) { return reinterpret_cast<PNSLR_ArraySlice_f32*>(x); }
+ArraySlice<f32>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_f32* x) { return reinterpret_cast<ArraySlice<f32>*>(x); }
+PNSLR_ArraySlice_f32& PNSLR_Bindings_Convert(ArraySlice<f32>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<f32>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_f32& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_f32, count) == PNSLR_STRUCT_OFFSET(ArraySlice<f32>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_f32, data) == PNSLR_STRUCT_OFFSET(ArraySlice<f32>, data), "data offset mismatch");
 
-typedef struct { double* data; PNSLR_I64 count; } PNSLR_ArraySlice_double;
-static_assert(sizeof(PNSLR_ArraySlice_double) == sizeof(Panshilar::ArraySlice<double>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_double) == alignof(Panshilar::ArraySlice<double>), "align mismatch");
-PNSLR_ArraySlice_double* PNSLR_Bindings_Convert(Panshilar::ArraySlice<double>* x) { return reinterpret_cast<PNSLR_ArraySlice_double*>(x); }
-Panshilar::ArraySlice<double>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_double* x) { return reinterpret_cast<Panshilar::ArraySlice<double>*>(x); }
-PNSLR_ArraySlice_double& PNSLR_Bindings_Convert(Panshilar::ArraySlice<double>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<double>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_double& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_double, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<double>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_double, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<double>, data), "data offset mismatch");
+typedef struct { f64* data; i64 count; } PNSLR_ArraySlice_f64;
+static_assert(sizeof(PNSLR_ArraySlice_f64) == sizeof(ArraySlice<f64>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_f64) == alignof(ArraySlice<f64>), "align mismatch");
+PNSLR_ArraySlice_f64* PNSLR_Bindings_Convert(ArraySlice<f64>* x) { return reinterpret_cast<PNSLR_ArraySlice_f64*>(x); }
+ArraySlice<f64>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_f64* x) { return reinterpret_cast<ArraySlice<f64>*>(x); }
+PNSLR_ArraySlice_f64& PNSLR_Bindings_Convert(ArraySlice<f64>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<f64>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_f64& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_f64, count) == PNSLR_STRUCT_OFFSET(ArraySlice<f64>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_f64, data) == PNSLR_STRUCT_OFFSET(ArraySlice<f64>, data), "data offset mismatch");
 
-typedef struct { char* data; PNSLR_I64 count; } PNSLR_ArraySlice_char;
-static_assert(sizeof(PNSLR_ArraySlice_char) == sizeof(Panshilar::ArraySlice<char>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_char) == alignof(Panshilar::ArraySlice<char>), "align mismatch");
-PNSLR_ArraySlice_char* PNSLR_Bindings_Convert(Panshilar::ArraySlice<char>* x) { return reinterpret_cast<PNSLR_ArraySlice_char*>(x); }
-Panshilar::ArraySlice<char>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_char* x) { return reinterpret_cast<Panshilar::ArraySlice<char>*>(x); }
-PNSLR_ArraySlice_char& PNSLR_Bindings_Convert(Panshilar::ArraySlice<char>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<char>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_char& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<char>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<char>, data), "data offset mismatch");
+typedef struct { char* data; i64 count; } PNSLR_ArraySlice_char;
+static_assert(sizeof(PNSLR_ArraySlice_char) == sizeof(ArraySlice<char>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_char) == alignof(ArraySlice<char>), "align mismatch");
+PNSLR_ArraySlice_char* PNSLR_Bindings_Convert(ArraySlice<char>* x) { return reinterpret_cast<PNSLR_ArraySlice_char*>(x); }
+ArraySlice<char>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_char* x) { return reinterpret_cast<ArraySlice<char>*>(x); }
+PNSLR_ArraySlice_char& PNSLR_Bindings_Convert(ArraySlice<char>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<char>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_char& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, count) == PNSLR_STRUCT_OFFSET(ArraySlice<char>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_char, data) == PNSLR_STRUCT_OFFSET(ArraySlice<char>, data), "data offset mismatch");
 
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_UTF8STR;
+typedef PNSLR_ArraySlice_u8 PNSLR_UTF8STR;
 
-typedef struct { PNSLR_UTF8STR* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_UTF8STR;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_UTF8STR) == sizeof(Panshilar::ArraySlice<Panshilar::utf8str>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_UTF8STR) == alignof(Panshilar::ArraySlice<Panshilar::utf8str>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_UTF8STR* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::utf8str>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_UTF8STR*>(x); }
-Panshilar::ArraySlice<Panshilar::utf8str>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_UTF8STR* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::utf8str>*>(x); }
-PNSLR_ArraySlice_PNSLR_UTF8STR& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::utf8str>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::utf8str>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_UTF8STR& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::utf8str>, data), "data offset mismatch");
+typedef struct { PNSLR_UTF8STR* data; i64 count; } PNSLR_ArraySlice_PNSLR_UTF8STR;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_UTF8STR) == sizeof(ArraySlice<utf8str>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_UTF8STR) == alignof(ArraySlice<utf8str>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_UTF8STR* PNSLR_Bindings_Convert(ArraySlice<utf8str>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_UTF8STR*>(x); }
+ArraySlice<utf8str>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_UTF8STR* x) { return reinterpret_cast<ArraySlice<utf8str>*>(x); }
+PNSLR_ArraySlice_PNSLR_UTF8STR& PNSLR_Bindings_Convert(ArraySlice<utf8str>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<utf8str>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_UTF8STR& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, count) == PNSLR_STRUCT_OFFSET(ArraySlice<utf8str>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_UTF8STR, data) == PNSLR_STRUCT_OFFSET(ArraySlice<utf8str>, data), "data offset mismatch");
 
-enum class PNSLR_Platform : Panshilar::u8 { };
+enum class PNSLR_Platform : u8 { };
 static_assert(sizeof(PNSLR_Platform) == sizeof(Panshilar::Platform), "size mismatch");
 static_assert(alignof(PNSLR_Platform) == alignof(Panshilar::Platform), "align mismatch");
 PNSLR_Platform* PNSLR_Bindings_Convert(Panshilar::Platform* x) { return reinterpret_cast<PNSLR_Platform*>(x); }
@@ -1664,7 +1652,7 @@ Panshilar::Platform* PNSLR_Bindings_Convert(PNSLR_Platform* x) { return reinterp
 PNSLR_Platform& PNSLR_Bindings_Convert(Panshilar::Platform& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::Platform& PNSLR_Bindings_Convert(PNSLR_Platform& x) { return *PNSLR_Bindings_Convert(&x); }
 
-enum class PNSLR_Architecture : Panshilar::u8 { };
+enum class PNSLR_Architecture : u8 { };
 static_assert(sizeof(PNSLR_Architecture) == sizeof(Panshilar::Architecture), "size mismatch");
 static_assert(alignof(PNSLR_Architecture) == alignof(Panshilar::Architecture), "align mismatch");
 PNSLR_Architecture* PNSLR_Bindings_Convert(Panshilar::Architecture* x) { return reinterpret_cast<PNSLR_Architecture*>(x); }
@@ -1687,8 +1675,8 @@ Panshilar::Architecture Panshilar::GetArchitecture()
 struct PNSLR_SourceCodeLocation
 {
    PNSLR_UTF8STR file;
-   PNSLR_I32 line;
-   PNSLR_I32 column;
+   i32 line;
+   i32 column;
    PNSLR_UTF8STR function;
 };
 static_assert(sizeof(PNSLR_SourceCodeLocation) == sizeof(Panshilar::SourceCodeLocation), "size mismatch");
@@ -1704,7 +1692,7 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SourceCodeLocation, function) == PNSLR_S
 
 struct alignas(8) PNSLR_Mutex
 {
-   PNSLR_U8 buffer[64];
+   u8 buffer[64];
 };
 static_assert(sizeof(PNSLR_Mutex) == sizeof(Panshilar::Mutex), "size mismatch");
 static_assert(alignof(PNSLR_Mutex) == alignof(Panshilar::Mutex), "align mismatch");
@@ -1738,15 +1726,15 @@ void Panshilar::UnlockMutex(Panshilar::Mutex* mutex)
     PNSLR_UnlockMutex(PNSLR_Bindings_Convert(mutex));
 }
 
-extern "C" PNSLR_B8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
-Panshilar::b8 Panshilar::TryLockMutex(Panshilar::Mutex* mutex)
+extern "C" b8 PNSLR_TryLockMutex(PNSLR_Mutex* mutex);
+b8 Panshilar::TryLockMutex(Panshilar::Mutex* mutex)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockMutex(PNSLR_Bindings_Convert(mutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockMutex(PNSLR_Bindings_Convert(mutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct alignas(8) PNSLR_RWMutex
 {
-   PNSLR_U8 buffer[200];
+   u8 buffer[200];
 };
 static_assert(sizeof(PNSLR_RWMutex) == sizeof(Panshilar::RWMutex), "size mismatch");
 static_assert(alignof(PNSLR_RWMutex) == alignof(Panshilar::RWMutex), "align mismatch");
@@ -1792,21 +1780,21 @@ void Panshilar::UnlockRWMutexExclusive(Panshilar::RWMutex* rwmutex)
     PNSLR_UnlockRWMutexExclusive(PNSLR_Bindings_Convert(rwmutex));
 }
 
-extern "C" PNSLR_B8 PNSLR_TryLockRWMutexShared(PNSLR_RWMutex* rwmutex);
-Panshilar::b8 Panshilar::TryLockRWMutexShared(Panshilar::RWMutex* rwmutex)
+extern "C" b8 PNSLR_TryLockRWMutexShared(PNSLR_RWMutex* rwmutex);
+b8 Panshilar::TryLockRWMutexShared(Panshilar::RWMutex* rwmutex)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockRWMutexShared(PNSLR_Bindings_Convert(rwmutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockRWMutexShared(PNSLR_Bindings_Convert(rwmutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
-Panshilar::b8 Panshilar::TryLockRWMutexExclusive(Panshilar::RWMutex* rwmutex)
+extern "C" b8 PNSLR_TryLockRWMutexExclusive(PNSLR_RWMutex* rwmutex);
+b8 Panshilar::TryLockRWMutexExclusive(Panshilar::RWMutex* rwmutex)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockRWMutexExclusive(PNSLR_Bindings_Convert(rwmutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryLockRWMutexExclusive(PNSLR_Bindings_Convert(rwmutex)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct alignas(8) PNSLR_Semaphore
 {
-   PNSLR_U8 buffer[32];
+   u8 buffer[32];
 };
 static_assert(sizeof(PNSLR_Semaphore) == sizeof(Panshilar::Semaphore), "size mismatch");
 static_assert(alignof(PNSLR_Semaphore) == alignof(Panshilar::Semaphore), "align mismatch");
@@ -1816,8 +1804,8 @@ PNSLR_Semaphore& PNSLR_Bindings_Convert(Panshilar::Semaphore& x) { return *PNSLR
 Panshilar::Semaphore& PNSLR_Bindings_Convert(PNSLR_Semaphore& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Semaphore, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::Semaphore, buffer), "buffer offset mismatch");
 
-extern "C" PNSLR_Semaphore PNSLR_CreateSemaphore(PNSLR_I32 initialCount);
-Panshilar::Semaphore Panshilar::CreateSemaphore(Panshilar::i32 initialCount)
+extern "C" PNSLR_Semaphore PNSLR_CreateSemaphore(i32 initialCount);
+Panshilar::Semaphore Panshilar::CreateSemaphore(i32 initialCount)
 {
     PNSLR_Semaphore zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateSemaphore(PNSLR_Bindings_Convert(initialCount)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
@@ -1834,21 +1822,21 @@ void Panshilar::WaitSemaphore(Panshilar::Semaphore* semaphore)
     PNSLR_WaitSemaphore(PNSLR_Bindings_Convert(semaphore));
 }
 
-extern "C" PNSLR_B8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, PNSLR_I32 timeoutNs);
-Panshilar::b8 Panshilar::WaitSemaphoreTimeout(Panshilar::Semaphore* semaphore, Panshilar::i32 timeoutNs)
+extern "C" b8 PNSLR_WaitSemaphoreTimeout(PNSLR_Semaphore* semaphore, i32 timeoutNs);
+b8 Panshilar::WaitSemaphoreTimeout(Panshilar::Semaphore* semaphore, i32 timeoutNs)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WaitSemaphoreTimeout(PNSLR_Bindings_Convert(semaphore), PNSLR_Bindings_Convert(timeoutNs)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WaitSemaphoreTimeout(PNSLR_Bindings_Convert(semaphore), PNSLR_Bindings_Convert(timeoutNs)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, PNSLR_I32 count);
-void Panshilar::SignalSemaphore(Panshilar::Semaphore* semaphore, Panshilar::i32 count)
+extern "C" void PNSLR_SignalSemaphore(PNSLR_Semaphore* semaphore, i32 count);
+void Panshilar::SignalSemaphore(Panshilar::Semaphore* semaphore, i32 count)
 {
     PNSLR_SignalSemaphore(PNSLR_Bindings_Convert(semaphore), PNSLR_Bindings_Convert(count));
 }
 
 struct alignas(8) PNSLR_ConditionVariable
 {
-   PNSLR_U8 buffer[48];
+   u8 buffer[48];
 };
 static_assert(sizeof(PNSLR_ConditionVariable) == sizeof(Panshilar::ConditionVariable), "size mismatch");
 static_assert(alignof(PNSLR_ConditionVariable) == alignof(Panshilar::ConditionVariable), "align mismatch");
@@ -1876,10 +1864,10 @@ void Panshilar::WaitConditionVariable(Panshilar::ConditionVariable* condvar, Pan
     PNSLR_WaitConditionVariable(PNSLR_Bindings_Convert(condvar), PNSLR_Bindings_Convert(mutex));
 }
 
-extern "C" PNSLR_B8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable* condvar, PNSLR_Mutex* mutex, PNSLR_I32 timeoutNs);
-Panshilar::b8 Panshilar::WaitConditionVariableTimeout(Panshilar::ConditionVariable* condvar, Panshilar::Mutex* mutex, Panshilar::i32 timeoutNs)
+extern "C" b8 PNSLR_WaitConditionVariableTimeout(PNSLR_ConditionVariable* condvar, PNSLR_Mutex* mutex, i32 timeoutNs);
+b8 Panshilar::WaitConditionVariableTimeout(Panshilar::ConditionVariable* condvar, Panshilar::Mutex* mutex, i32 timeoutNs)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WaitConditionVariableTimeout(PNSLR_Bindings_Convert(condvar), PNSLR_Bindings_Convert(mutex), PNSLR_Bindings_Convert(timeoutNs)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WaitConditionVariableTimeout(PNSLR_Bindings_Convert(condvar), PNSLR_Bindings_Convert(mutex), PNSLR_Bindings_Convert(timeoutNs)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
@@ -1894,25 +1882,25 @@ void Panshilar::BroadcastConditionVariable(Panshilar::ConditionVariable* condvar
     PNSLR_BroadcastConditionVariable(PNSLR_Bindings_Convert(condvar));
 }
 
-extern "C" void PNSLR_MemSet(void* memory, PNSLR_I32 value, PNSLR_I32 size);
-void Panshilar::MemSet(void* memory, Panshilar::i32 value, Panshilar::i32 size)
+extern "C" void PNSLR_MemSet(rawptr memory, i32 value, i32 size);
+void Panshilar::MemSet(rawptr memory, i32 value, i32 size)
 {
     PNSLR_MemSet(PNSLR_Bindings_Convert(memory), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(size));
 }
 
-extern "C" void PNSLR_MemCopy(void* destination, void* source, PNSLR_I32 size);
-void Panshilar::MemCopy(void* destination, void* source, Panshilar::i32 size)
+extern "C" void PNSLR_MemCopy(rawptr destination, rawptr source, i32 size);
+void Panshilar::MemCopy(rawptr destination, rawptr source, i32 size)
 {
     PNSLR_MemCopy(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
 }
 
-extern "C" void PNSLR_MemMove(void* destination, void* source, PNSLR_I32 size);
-void Panshilar::MemMove(void* destination, void* source, Panshilar::i32 size)
+extern "C" void PNSLR_MemMove(rawptr destination, rawptr source, i32 size);
+void Panshilar::MemMove(rawptr destination, rawptr source, i32 size)
 {
     PNSLR_MemMove(PNSLR_Bindings_Convert(destination), PNSLR_Bindings_Convert(source), PNSLR_Bindings_Convert(size));
 }
 
-enum class PNSLR_AllocatorMode : Panshilar::u8 { };
+enum class PNSLR_AllocatorMode : u8 { };
 static_assert(sizeof(PNSLR_AllocatorMode) == sizeof(Panshilar::AllocatorMode), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorMode) == alignof(Panshilar::AllocatorMode), "align mismatch");
 PNSLR_AllocatorMode* PNSLR_Bindings_Convert(Panshilar::AllocatorMode* x) { return reinterpret_cast<PNSLR_AllocatorMode*>(x); }
@@ -1920,7 +1908,7 @@ Panshilar::AllocatorMode* PNSLR_Bindings_Convert(PNSLR_AllocatorMode* x) { retur
 PNSLR_AllocatorMode& PNSLR_Bindings_Convert(Panshilar::AllocatorMode& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::AllocatorMode& PNSLR_Bindings_Convert(PNSLR_AllocatorMode& x) { return *PNSLR_Bindings_Convert(&x); }
 
-enum class PNSLR_AllocatorCapability : Panshilar::u64 { };
+enum class PNSLR_AllocatorCapability : u64 { };
 static_assert(sizeof(PNSLR_AllocatorCapability) == sizeof(Panshilar::AllocatorCapability), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorCapability) == alignof(Panshilar::AllocatorCapability), "align mismatch");
 PNSLR_AllocatorCapability* PNSLR_Bindings_Convert(Panshilar::AllocatorCapability* x) { return reinterpret_cast<PNSLR_AllocatorCapability*>(x); }
@@ -1928,7 +1916,7 @@ Panshilar::AllocatorCapability* PNSLR_Bindings_Convert(PNSLR_AllocatorCapability
 PNSLR_AllocatorCapability& PNSLR_Bindings_Convert(Panshilar::AllocatorCapability& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::AllocatorCapability& PNSLR_Bindings_Convert(PNSLR_AllocatorCapability& x) { return *PNSLR_Bindings_Convert(&x); }
 
-enum class PNSLR_AllocatorError : Panshilar::u8 { };
+enum class PNSLR_AllocatorError : u8 { };
 static_assert(sizeof(PNSLR_AllocatorError) == sizeof(Panshilar::AllocatorError), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorError) == alignof(Panshilar::AllocatorError), "align mismatch");
 PNSLR_AllocatorError* PNSLR_Bindings_Convert(Panshilar::AllocatorError* x) { return reinterpret_cast<PNSLR_AllocatorError*>(x); }
@@ -1936,7 +1924,7 @@ Panshilar::AllocatorError* PNSLR_Bindings_Convert(PNSLR_AllocatorError* x) { ret
 PNSLR_AllocatorError& PNSLR_Bindings_Convert(Panshilar::AllocatorError& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::AllocatorError& PNSLR_Bindings_Convert(PNSLR_AllocatorError& x) { return *PNSLR_Bindings_Convert(&x); }
 
-extern "C" typedef void* (*PNSLR_AllocatorProcedure)(void* allocatorData, PNSLR_AllocatorMode mode, PNSLR_I32 size, PNSLR_I32 alignment, void* oldMemory, PNSLR_I32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+extern "C" typedef rawptr (*PNSLR_AllocatorProcedure)(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
 static_assert(sizeof(PNSLR_AllocatorProcedure) == sizeof(Panshilar::AllocatorProcedure), "size mismatch");
 static_assert(alignof(PNSLR_AllocatorProcedure) == alignof(Panshilar::AllocatorProcedure), "align mismatch");
 PNSLR_AllocatorProcedure* PNSLR_Bindings_Convert(Panshilar::AllocatorProcedure* x) { return reinterpret_cast<PNSLR_AllocatorProcedure*>(x); }
@@ -1947,7 +1935,7 @@ Panshilar::AllocatorProcedure& PNSLR_Bindings_Convert(PNSLR_AllocatorProcedure& 
 struct PNSLR_Allocator
 {
    PNSLR_AllocatorProcedure procedure;
-   void* data;
+   rawptr data;
 };
 static_assert(sizeof(PNSLR_Allocator) == sizeof(Panshilar::Allocator), "size mismatch");
 static_assert(alignof(PNSLR_Allocator) == alignof(Panshilar::Allocator), "align mismatch");
@@ -1958,36 +1946,36 @@ Panshilar::Allocator& PNSLR_Bindings_Convert(PNSLR_Allocator& x) { return *PNSLR
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Allocator, procedure) == PNSLR_STRUCT_OFFSET(Panshilar::Allocator, procedure), "procedure offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Allocator, data) == PNSLR_STRUCT_OFFSET(Panshilar::Allocator, data), "data offset mismatch");
 
-typedef struct { PNSLR_Allocator* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_Allocator;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_Allocator) == sizeof(Panshilar::ArraySlice<Panshilar::Allocator>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_Allocator) == alignof(Panshilar::ArraySlice<Panshilar::Allocator>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_Allocator* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::Allocator>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_Allocator*>(x); }
-Panshilar::ArraySlice<Panshilar::Allocator>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Allocator* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::Allocator>*>(x); }
-PNSLR_ArraySlice_PNSLR_Allocator& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::Allocator>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::Allocator>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Allocator& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::Allocator>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::Allocator>, data), "data offset mismatch");
+typedef struct { PNSLR_Allocator* data; i64 count; } PNSLR_ArraySlice_PNSLR_Allocator;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_Allocator) == sizeof(ArraySlice<Panshilar::Allocator>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_Allocator) == alignof(ArraySlice<Panshilar::Allocator>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_Allocator* PNSLR_Bindings_Convert(ArraySlice<Panshilar::Allocator>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_Allocator*>(x); }
+ArraySlice<Panshilar::Allocator>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Allocator* x) { return reinterpret_cast<ArraySlice<Panshilar::Allocator>*>(x); }
+PNSLR_ArraySlice_PNSLR_Allocator& PNSLR_Bindings_Convert(ArraySlice<Panshilar::Allocator>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<Panshilar::Allocator>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Allocator& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, count) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::Allocator>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Allocator, data) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::Allocator>, data), "data offset mismatch");
 
-extern "C" void* PNSLR_Allocate(PNSLR_Allocator allocator, PNSLR_B8 zeroed, PNSLR_I32 size, PNSLR_I32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::Allocate(Panshilar::Allocator allocator, Panshilar::b8 zeroed, Panshilar::i32 size, Panshilar::i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_Allocate(PNSLR_Allocator allocator, b8 zeroed, i32 size, i32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::Allocate(Panshilar::Allocator allocator, b8 zeroed, i32 size, i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_Allocate(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_Allocate(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void* PNSLR_Resize(PNSLR_Allocator allocator, PNSLR_B8 zeroed, void* oldMemory, PNSLR_I32 oldSize, PNSLR_I32 newSize, PNSLR_I32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::Resize(Panshilar::Allocator allocator, Panshilar::b8 zeroed, void* oldMemory, Panshilar::i32 oldSize, Panshilar::i32 newSize, Panshilar::i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_Resize(PNSLR_Allocator allocator, b8 zeroed, rawptr oldMemory, i32 oldSize, i32 newSize, i32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::Resize(Panshilar::Allocator allocator, b8 zeroed, rawptr oldMemory, i32 oldSize, i32 newSize, i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_Resize(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(newSize), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_Resize(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(newSize), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void* PNSLR_DefaultResize(PNSLR_Allocator allocator, PNSLR_B8 zeroed, void* oldMemory, PNSLR_I32 oldSize, PNSLR_I32 newSize, PNSLR_I32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::DefaultResize(Panshilar::Allocator allocator, Panshilar::b8 zeroed, void* oldMemory, Panshilar::i32 oldSize, Panshilar::i32 newSize, Panshilar::i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_DefaultResize(PNSLR_Allocator allocator, b8 zeroed, rawptr oldMemory, i32 oldSize, i32 newSize, i32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::DefaultResize(Panshilar::Allocator allocator, b8 zeroed, rawptr oldMemory, i32 oldSize, i32 newSize, i32 alignment, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DefaultResize(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(newSize), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DefaultResize(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(newSize), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void PNSLR_Free(PNSLR_Allocator allocator, void* memory, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void Panshilar::Free(Panshilar::Allocator allocator, void* memory, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" void PNSLR_Free(PNSLR_Allocator allocator, rawptr memory, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::Free(Panshilar::Allocator allocator, rawptr memory, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_Free(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(memory), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
@@ -1998,10 +1986,10 @@ void Panshilar::FreeAll(Panshilar::Allocator allocator, Panshilar::SourceCodeLoc
     PNSLR_FreeAll(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" PNSLR_U64 PNSLR_QueryAllocatorCapabilities(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-Panshilar::u64 Panshilar::QueryAllocatorCapabilities(Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" u64 PNSLR_QueryAllocatorCapabilities(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+u64 Panshilar::QueryAllocatorCapabilities(Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    PNSLR_U64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_QueryAllocatorCapabilities(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    u64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_QueryAllocatorCapabilities(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_Allocator PNSLR_GetAllocator_Nil();
@@ -2016,19 +2004,19 @@ Panshilar::Allocator Panshilar::GetAllocator_DefaultHeap()
     PNSLR_Allocator zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetAllocator_DefaultHeap(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void* PNSLR_AllocatorFn_DefaultHeap(void* allocatorData, PNSLR_AllocatorMode mode, PNSLR_I32 size, PNSLR_I32 alignment, void* oldMemory, PNSLR_I32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::AllocatorFn_DefaultHeap(void* allocatorData, Panshilar::AllocatorMode mode, Panshilar::i32 size, Panshilar::i32 alignment, void* oldMemory, Panshilar::i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::AllocatorFn_DefaultHeap(rawptr allocatorData, Panshilar::AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_DefaultHeap(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_DefaultHeap(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_ArenaAllocatorBlock
 {
    PNSLR_ArenaAllocatorBlock* previous;
    PNSLR_Allocator allocator;
-   void* memory;
-   PNSLR_U32 capacity;
-   PNSLR_U32 used;
+   rawptr memory;
+   u32 capacity;
+   u32 used;
 };
 static_assert(sizeof(PNSLR_ArenaAllocatorBlock) == sizeof(Panshilar::ArenaAllocatorBlock), "size mismatch");
 static_assert(alignof(PNSLR_ArenaAllocatorBlock) == alignof(Panshilar::ArenaAllocatorBlock), "align mismatch");
@@ -2046,10 +2034,10 @@ struct PNSLR_ArenaAllocatorPayload
 {
    PNSLR_Allocator backingAllocator;
    PNSLR_ArenaAllocatorBlock* currentBlock;
-   PNSLR_U32 totalUsed;
-   PNSLR_U32 totalCapacity;
-   PNSLR_U32 minimumBlockSize;
-   PNSLR_U32 numSnapshots;
+   u32 totalUsed;
+   u32 totalCapacity;
+   u32 minimumBlockSize;
+   u32 numSnapshots;
 };
 static_assert(sizeof(PNSLR_ArenaAllocatorPayload) == sizeof(Panshilar::ArenaAllocatorPayload), "size mismatch");
 static_assert(alignof(PNSLR_ArenaAllocatorPayload) == alignof(Panshilar::ArenaAllocatorPayload), "align mismatch");
@@ -2064,8 +2052,8 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorPayload, totalCapacity) ==
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorPayload, minimumBlockSize) == PNSLR_STRUCT_OFFSET(Panshilar::ArenaAllocatorPayload, minimumBlockSize), "minimumBlockSize offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorPayload, numSnapshots) == PNSLR_STRUCT_OFFSET(Panshilar::ArenaAllocatorPayload, numSnapshots), "numSnapshots offset mismatch");
 
-extern "C" PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, PNSLR_U32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-Panshilar::Allocator Panshilar::NewAllocator_Arena(Panshilar::Allocator backingAllocator, Panshilar::u32 pageSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+Panshilar::Allocator Panshilar::NewAllocator_Arena(Panshilar::Allocator backingAllocator, u32 pageSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_Allocator zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_NewAllocator_Arena(PNSLR_Bindings_Convert(backingAllocator), PNSLR_Bindings_Convert(pageSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
@@ -2076,13 +2064,13 @@ void Panshilar::DestroyAllocator_Arena(Panshilar::Allocator allocator, Panshilar
     PNSLR_DestroyAllocator_Arena(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" void* PNSLR_AllocatorFn_Arena(void* allocatorData, PNSLR_AllocatorMode mode, PNSLR_I32 size, PNSLR_I32 alignment, void* oldMemory, PNSLR_I32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::AllocatorFn_Arena(void* allocatorData, Panshilar::AllocatorMode mode, Panshilar::i32 size, Panshilar::i32 alignment, void* oldMemory, Panshilar::i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::AllocatorFn_Arena(rawptr allocatorData, Panshilar::AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Arena(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Arena(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-enum class PNSLR_ArenaSnapshotError : Panshilar::u8 { };
+enum class PNSLR_ArenaSnapshotError : u8 { };
 static_assert(sizeof(PNSLR_ArenaSnapshotError) == sizeof(Panshilar::ArenaSnapshotError), "size mismatch");
 static_assert(alignof(PNSLR_ArenaSnapshotError) == alignof(Panshilar::ArenaSnapshotError), "align mismatch");
 PNSLR_ArenaSnapshotError* PNSLR_Bindings_Convert(Panshilar::ArenaSnapshotError* x) { return reinterpret_cast<PNSLR_ArenaSnapshotError*>(x); }
@@ -2092,10 +2080,10 @@ Panshilar::ArenaSnapshotError& PNSLR_Bindings_Convert(PNSLR_ArenaSnapshotError& 
 
 struct PNSLR_ArenaAllocatorSnapshot
 {
-   PNSLR_B8 valid;
+   b8 valid;
    PNSLR_ArenaAllocatorPayload* payload;
    PNSLR_ArenaAllocatorBlock* block;
-   PNSLR_U32 used;
+   u32 used;
 };
 static_assert(sizeof(PNSLR_ArenaAllocatorSnapshot) == sizeof(Panshilar::ArenaAllocatorSnapshot), "size mismatch");
 static_assert(alignof(PNSLR_ArenaAllocatorSnapshot) == alignof(Panshilar::ArenaAllocatorSnapshot), "align mismatch");
@@ -2108,10 +2096,10 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorSnapshot, payload) == PNSL
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorSnapshot, block) == PNSLR_STRUCT_OFFSET(Panshilar::ArenaAllocatorSnapshot, block), "block offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArenaAllocatorSnapshot, used) == PNSLR_STRUCT_OFFSET(Panshilar::ArenaAllocatorSnapshot, used), "used offset mismatch");
 
-extern "C" PNSLR_B8 PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Allocator allocator);
-Panshilar::b8 Panshilar::ValidateArenaAllocatorSnapshotState(Panshilar::Allocator allocator)
+extern "C" b8 PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Allocator allocator);
+b8 Panshilar::ValidateArenaAllocatorSnapshotState(Panshilar::Allocator allocator)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ValidateArenaAllocatorSnapshotState(PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_ArenaAllocatorSnapshot PNSLR_CaptureArenaAllocatorSnapshot(PNSLR_Allocator allocator);
@@ -2135,8 +2123,8 @@ Panshilar::ArenaSnapshotError Panshilar::DiscardArenaAllocatorSnapshot(Panshilar
 struct alignas(8) PNSLR_StackAllocatorPage
 {
    PNSLR_StackAllocatorPage* previousPage;
-   PNSLR_U64 usedBytes;
-   PNSLR_U8 buffer[8192];
+   u64 usedBytes;
+   u8 buffer[8192];
 };
 static_assert(sizeof(PNSLR_StackAllocatorPage) == sizeof(Panshilar::StackAllocatorPage), "size mismatch");
 static_assert(alignof(PNSLR_StackAllocatorPage) == alignof(Panshilar::StackAllocatorPage), "align mismatch");
@@ -2151,10 +2139,10 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StackAllocatorPage, buffer) == PNSLR_STR
 struct PNSLR_StackAllocationHeader
 {
    PNSLR_StackAllocatorPage* page;
-   PNSLR_I32 size;
-   PNSLR_I32 alignment;
-   void* lastAllocation;
-   void* lastAllocationHeader;
+   i32 size;
+   i32 alignment;
+   rawptr lastAllocation;
+   rawptr lastAllocationHeader;
 };
 static_assert(sizeof(PNSLR_StackAllocationHeader) == sizeof(Panshilar::StackAllocationHeader), "size mismatch");
 static_assert(alignof(PNSLR_StackAllocationHeader) == alignof(Panshilar::StackAllocationHeader), "align mismatch");
@@ -2172,7 +2160,7 @@ struct PNSLR_StackAllocatorPayload
 {
    PNSLR_Allocator backingAllocator;
    PNSLR_StackAllocatorPage* currentPage;
-   void* lastAllocation;
+   rawptr lastAllocation;
    PNSLR_StackAllocationHeader* lastAllocationHeader;
 };
 static_assert(sizeof(PNSLR_StackAllocatorPayload) == sizeof(Panshilar::StackAllocatorPayload), "size mismatch");
@@ -2198,14 +2186,14 @@ void Panshilar::DestroyAllocator_Stack(Panshilar::Allocator allocator, Panshilar
     PNSLR_DestroyAllocator_Stack(PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" void* PNSLR_AllocatorFn_Stack(void* allocatorData, PNSLR_AllocatorMode mode, PNSLR_I32 size, PNSLR_I32 alignment, void* oldMemory, PNSLR_I32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void* Panshilar::AllocatorFn_Stack(void* allocatorData, Panshilar::AllocatorMode mode, Panshilar::i32 size, Panshilar::i32 alignment, void* oldMemory, Panshilar::i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" rawptr PNSLR_AllocatorFn_Stack(rawptr allocatorData, PNSLR_AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+rawptr Panshilar::AllocatorFn_Stack(rawptr allocatorData, Panshilar::AllocatorMode mode, i32 size, i32 alignment, rawptr oldMemory, i32 oldSize, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    void* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Stack(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AllocatorFn_Stack(PNSLR_Bindings_Convert(allocatorData), PNSLR_Bindings_Convert(mode), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(alignment), PNSLR_Bindings_Convert(oldMemory), PNSLR_Bindings_Convert(oldSize), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_RawArraySlice PNSLR_MakeRawSlice(PNSLR_I32 tySize, PNSLR_I32 tyAlign, PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-Panshilar::RawArraySlice Panshilar::MakeRawSlice(Panshilar::i32 tySize, Panshilar::i32 tyAlign, Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" PNSLR_RawArraySlice PNSLR_MakeRawSlice(i32 tySize, i32 tyAlign, i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+Panshilar::RawArraySlice Panshilar::MakeRawSlice(i32 tySize, i32 tyAlign, i64 count, b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_RawArraySlice zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeRawSlice(PNSLR_Bindings_Convert(tySize), PNSLR_Bindings_Convert(tyAlign), PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
@@ -2216,85 +2204,85 @@ void Panshilar::FreeRawSlice(Panshilar::RawArraySlice* slice, Panshilar::Allocat
     PNSLR_FreeRawSlice(PNSLR_Bindings_Convert(slice), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_I32 tySize, PNSLR_I32 tyAlign, PNSLR_I64 newCount, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void Panshilar::ResizeRawSlice(Panshilar::RawArraySlice* slice, Panshilar::i32 tySize, Panshilar::i32 tyAlign, Panshilar::i64 newCount, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, i32 tySize, i32 tyAlign, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::ResizeRawSlice(Panshilar::RawArraySlice* slice, i32 tySize, i32 tyAlign, i64 newCount, b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_ResizeRawSlice(PNSLR_Bindings_Convert(slice), PNSLR_Bindings_Convert(tySize), PNSLR_Bindings_Convert(tyAlign), PNSLR_Bindings_Convert(newCount), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_MakeString(PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-Panshilar::utf8str Panshilar::MakeString(Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" PNSLR_UTF8STR PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+utf8str Panshilar::MakeString(i64 count, b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeString(PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" void PNSLR_FreeString(PNSLR_UTF8STR str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void Panshilar::FreeString(Panshilar::utf8str str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+void Panshilar::FreeString(utf8str str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_FreeString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" char* PNSLR_MakeCString(PNSLR_I64 count, PNSLR_B8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-char* Panshilar::MakeCString(Panshilar::i64 count, Panshilar::b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+cstring Panshilar::MakeCString(i64 count, b8 zeroed, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
-    char* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeCString(PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    cstring zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MakeCString(PNSLR_Bindings_Convert(count), PNSLR_Bindings_Convert(zeroed), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void PNSLR_FreeCString(char* str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
-void Panshilar::FreeCString(char* str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
+extern "C" void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void Panshilar::FreeCString(cstring str, Panshilar::Allocator allocator, Panshilar::SourceCodeLocation location, Panshilar::AllocatorError* error)
 {
     PNSLR_FreeCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(location), PNSLR_Bindings_Convert(error));
 }
 
-extern "C" PNSLR_I64 PNSLR_NanosecondsSinceUnixEpoch();
-Panshilar::i64 Panshilar::NanosecondsSinceUnixEpoch()
+extern "C" i64 PNSLR_NanosecondsSinceUnixEpoch();
+i64 Panshilar::NanosecondsSinceUnixEpoch()
 {
-    PNSLR_I64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_NanosecondsSinceUnixEpoch(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_NanosecondsSinceUnixEpoch(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I32 PNSLR_GetCStringLength(char* str);
-Panshilar::i32 Panshilar::GetCStringLength(char* str)
+extern "C" i32 PNSLR_GetCStringLength(cstring str);
+i32 Panshilar::GetCStringLength(cstring str)
 {
-    PNSLR_I32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCStringLength(PNSLR_Bindings_Convert(str)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCStringLength(PNSLR_Bindings_Convert(str)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromCString(char* str);
-Panshilar::utf8str Panshilar::StringFromCString(char* str)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromCString(cstring str);
+utf8str Panshilar::StringFromCString(cstring str)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromCString(PNSLR_Bindings_Convert(str)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" char* PNSLR_CStringFromString(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
-char* Panshilar::CStringFromString(Panshilar::utf8str str, Panshilar::Allocator allocator)
+extern "C" cstring PNSLR_CStringFromString(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
+cstring Panshilar::CStringFromString(utf8str str, Panshilar::Allocator allocator)
 {
-    char* zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringFromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    cstring zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringFromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_CloneString(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
-Panshilar::utf8str Panshilar::CloneString(Panshilar::utf8str str, Panshilar::Allocator allocator)
+utf8str Panshilar::CloneString(utf8str str, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CloneString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_ConcatenateStrings(PNSLR_UTF8STR str1, PNSLR_UTF8STR str2, PNSLR_Allocator allocator);
-Panshilar::utf8str Panshilar::ConcatenateStrings(Panshilar::utf8str str1, Panshilar::utf8str str2, Panshilar::Allocator allocator)
+utf8str Panshilar::ConcatenateStrings(utf8str str1, utf8str str2, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ConcatenateStrings(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_UpperString(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
-Panshilar::utf8str Panshilar::UpperString(Panshilar::utf8str str, Panshilar::Allocator allocator)
+utf8str Panshilar::UpperString(utf8str str, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UpperString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_LowerString(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
-Panshilar::utf8str Panshilar::LowerString(Panshilar::utf8str str, Panshilar::Allocator allocator)
+utf8str Panshilar::LowerString(utf8str str, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_LowerString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-enum class PNSLR_StringComparisonType : Panshilar::u8 { };
+enum class PNSLR_StringComparisonType : u8 { };
 static_assert(sizeof(PNSLR_StringComparisonType) == sizeof(Panshilar::StringComparisonType), "size mismatch");
 static_assert(alignof(PNSLR_StringComparisonType) == alignof(Panshilar::StringComparisonType), "align mismatch");
 PNSLR_StringComparisonType* PNSLR_Bindings_Convert(Panshilar::StringComparisonType* x) { return reinterpret_cast<PNSLR_StringComparisonType*>(x); }
@@ -2302,94 +2290,94 @@ Panshilar::StringComparisonType* PNSLR_Bindings_Convert(PNSLR_StringComparisonTy
 PNSLR_StringComparisonType& PNSLR_Bindings_Convert(Panshilar::StringComparisonType& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::StringComparisonType& PNSLR_Bindings_Convert(PNSLR_StringComparisonType& x) { return *PNSLR_Bindings_Convert(&x); }
 
-extern "C" PNSLR_B8 PNSLR_AreStringsEqual(PNSLR_UTF8STR str1, PNSLR_UTF8STR str2, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::AreStringsEqual(Panshilar::utf8str str1, Panshilar::utf8str str2, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_AreStringsEqual(PNSLR_UTF8STR str1, PNSLR_UTF8STR str2, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::AreStringsEqual(utf8str str1, utf8str str2, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreStringsEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreStringsEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_AreStringAndCStringEqual(PNSLR_UTF8STR str1, char* str2, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::AreStringAndCStringEqual(Panshilar::utf8str str1, char* str2, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_AreStringAndCStringEqual(PNSLR_UTF8STR str1, cstring str2, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::AreStringAndCStringEqual(utf8str str1, cstring str2, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreStringAndCStringEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreStringAndCStringEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_AreCStringsEqual(char* str1, char* str2, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::AreCStringsEqual(char* str1, char* str2, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::AreCStringsEqual(cstring str1, cstring str2, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreCStringsEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AreCStringsEqual(PNSLR_Bindings_Convert(str1), PNSLR_Bindings_Convert(str2), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_StringStartsWith(PNSLR_UTF8STR str, PNSLR_UTF8STR prefix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::StringStartsWith(Panshilar::utf8str str, Panshilar::utf8str prefix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_StringStartsWith(PNSLR_UTF8STR str, PNSLR_UTF8STR prefix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::StringStartsWith(utf8str str, utf8str prefix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringStartsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringStartsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_StringEndsWith(PNSLR_UTF8STR str, PNSLR_UTF8STR suffix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::StringEndsWith(Panshilar::utf8str str, Panshilar::utf8str suffix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_StringEndsWith(PNSLR_UTF8STR str, PNSLR_UTF8STR suffix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::StringEndsWith(utf8str str, utf8str suffix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringEndsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringEndsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_StringStartsWithCString(PNSLR_UTF8STR str, char* prefix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::StringStartsWithCString(Panshilar::utf8str str, char* prefix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_StringStartsWithCString(PNSLR_UTF8STR str, cstring prefix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::StringStartsWithCString(utf8str str, cstring prefix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringStartsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringStartsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_StringEndsWithCString(PNSLR_UTF8STR str, char* suffix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::StringEndsWithCString(Panshilar::utf8str str, char* suffix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_StringEndsWithCString(PNSLR_UTF8STR str, cstring suffix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::StringEndsWithCString(utf8str str, cstring suffix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringEndsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringEndsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CStringStartsWith(char* str, PNSLR_UTF8STR prefix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::CStringStartsWith(char* str, Panshilar::utf8str prefix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_CStringStartsWith(cstring str, PNSLR_UTF8STR prefix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::CStringStartsWith(cstring str, utf8str prefix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringStartsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringStartsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CStringEndsWith(char* str, PNSLR_UTF8STR suffix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::CStringEndsWith(char* str, Panshilar::utf8str suffix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_CStringEndsWith(cstring str, PNSLR_UTF8STR suffix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::CStringEndsWith(cstring str, utf8str suffix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringEndsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringEndsWith(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CStringStartsWithCString(PNSLR_UTF8STR str, char* prefix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::CStringStartsWithCString(Panshilar::utf8str str, char* prefix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_CStringStartsWithCString(PNSLR_UTF8STR str, cstring prefix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::CStringStartsWithCString(utf8str str, cstring prefix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringStartsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringStartsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(prefix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CStringEndsWithCString(PNSLR_UTF8STR str, char* suffix, PNSLR_StringComparisonType comparisonType);
-Panshilar::b8 Panshilar::CStringEndsWithCString(Panshilar::utf8str str, char* suffix, Panshilar::StringComparisonType comparisonType)
+extern "C" b8 PNSLR_CStringEndsWithCString(PNSLR_UTF8STR str, cstring suffix, PNSLR_StringComparisonType comparisonType);
+b8 Panshilar::CStringEndsWithCString(utf8str str, cstring suffix, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringEndsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CStringEndsWithCString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(suffix), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I32 PNSLR_SearchFirstIndexInString(PNSLR_UTF8STR str, PNSLR_UTF8STR substring, PNSLR_StringComparisonType comparisonType);
-Panshilar::i32 Panshilar::SearchFirstIndexInString(Panshilar::utf8str str, Panshilar::utf8str substring, Panshilar::StringComparisonType comparisonType)
+extern "C" i32 PNSLR_SearchFirstIndexInString(PNSLR_UTF8STR str, PNSLR_UTF8STR substring, PNSLR_StringComparisonType comparisonType);
+i32 Panshilar::SearchFirstIndexInString(utf8str str, utf8str substring, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_I32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SearchFirstIndexInString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(substring), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SearchFirstIndexInString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(substring), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I32 PNSLR_SearchLastIndexInString(PNSLR_UTF8STR str, PNSLR_UTF8STR substring, PNSLR_StringComparisonType comparisonType);
-Panshilar::i32 Panshilar::SearchLastIndexInString(Panshilar::utf8str str, Panshilar::utf8str substring, Panshilar::StringComparisonType comparisonType)
+extern "C" i32 PNSLR_SearchLastIndexInString(PNSLR_UTF8STR str, PNSLR_UTF8STR substring, PNSLR_StringComparisonType comparisonType);
+i32 Panshilar::SearchLastIndexInString(utf8str str, utf8str substring, Panshilar::StringComparisonType comparisonType)
 {
-    PNSLR_I32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SearchLastIndexInString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(substring), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SearchLastIndexInString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(substring), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_ReplaceInString(PNSLR_UTF8STR str, PNSLR_UTF8STR oldValue, PNSLR_UTF8STR newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType);
-Panshilar::utf8str Panshilar::ReplaceInString(Panshilar::utf8str str, Panshilar::utf8str oldValue, Panshilar::utf8str newValue, Panshilar::Allocator allocator, Panshilar::StringComparisonType comparisonType)
+utf8str Panshilar::ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, Panshilar::Allocator allocator, Panshilar::StringComparisonType comparisonType)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReplaceInString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(oldValue), PNSLR_Bindings_Convert(newValue), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(comparisonType)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_EncodedRune
 {
-   PNSLR_U8 data[4];
-   PNSLR_I32 length;
+   u8 data[4];
+   i32 length;
 };
 static_assert(sizeof(PNSLR_EncodedRune) == sizeof(Panshilar::EncodedRune), "size mismatch");
 static_assert(alignof(PNSLR_EncodedRune) == alignof(Panshilar::EncodedRune), "align mismatch");
@@ -2402,8 +2390,8 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_EncodedRune, length) == PNSLR_STRUCT_OFF
 
 struct PNSLR_DecodedRune
 {
-   PNSLR_U32 rune;
-   PNSLR_I32 length;
+   u32 rune;
+   i32 length;
 };
 static_assert(sizeof(PNSLR_DecodedRune) == sizeof(Panshilar::DecodedRune), "size mismatch");
 static_assert(alignof(PNSLR_DecodedRune) == alignof(Panshilar::DecodedRune), "align mismatch");
@@ -2414,32 +2402,32 @@ Panshilar::DecodedRune& PNSLR_Bindings_Convert(PNSLR_DecodedRune& x) { return *P
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_DecodedRune, rune) == PNSLR_STRUCT_OFFSET(Panshilar::DecodedRune, rune), "rune offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_DecodedRune, length) == PNSLR_STRUCT_OFFSET(Panshilar::DecodedRune, length), "length offset mismatch");
 
-extern "C" PNSLR_I32 PNSLR_GetRuneLength(PNSLR_U32 r);
-Panshilar::i32 Panshilar::GetRuneLength(Panshilar::u32 r)
+extern "C" i32 PNSLR_GetRuneLength(u32 r);
+i32 Panshilar::GetRuneLength(u32 r)
 {
-    PNSLR_I32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetRuneLength(PNSLR_Bindings_Convert(r)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetRuneLength(PNSLR_Bindings_Convert(r)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_EncodedRune PNSLR_EncodeRune(PNSLR_U32 c);
-Panshilar::EncodedRune Panshilar::EncodeRune(Panshilar::u32 c)
+extern "C" PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
+Panshilar::EncodedRune Panshilar::EncodeRune(u32 c)
 {
     PNSLR_EncodedRune zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_EncodeRune(PNSLR_Bindings_Convert(c)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice_PNSLR_U8 s);
-Panshilar::DecodedRune Panshilar::DecodeRune(Panshilar::ArraySlice<Panshilar::u8> s)
+extern "C" PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice_u8 s);
+Panshilar::DecodedRune Panshilar::DecodeRune(ArraySlice<u8> s)
 {
     PNSLR_DecodedRune zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DecodeRune(PNSLR_Bindings_Convert(s)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_ArraySlice_PNSLR_U16 PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
-Panshilar::ArraySlice<Panshilar::u16> Panshilar::UTF16FromUTF8WindowsOnly(Panshilar::utf8str str, Panshilar::Allocator allocator)
+extern "C" PNSLR_ArraySlice_u16 PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_UTF8STR str, PNSLR_Allocator allocator);
+ArraySlice<u16> Panshilar::UTF16FromUTF8WindowsOnly(utf8str str, Panshilar::Allocator allocator)
 {
-    PNSLR_ArraySlice_PNSLR_U16 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_ArraySlice_u16 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice_PNSLR_U16 utf16str, PNSLR_Allocator allocator);
-Panshilar::utf8str Panshilar::UTF8FromUTF16WindowsOnly(Panshilar::ArraySlice<Panshilar::u16> utf16str, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice_u16 utf16str, PNSLR_Allocator allocator);
+utf8str Panshilar::UTF8FromUTF16WindowsOnly(ArraySlice<u16> utf16str, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_Bindings_Convert(utf16str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
@@ -2456,7 +2444,7 @@ PNSLR_Path& PNSLR_Bindings_Convert(Panshilar::Path& x) { return *PNSLR_Bindings_
 Panshilar::Path& PNSLR_Bindings_Convert(PNSLR_Path& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Path, path) == PNSLR_STRUCT_OFFSET(Panshilar::Path, path), "path offset mismatch");
 
-enum class PNSLR_PathNormalisationType : Panshilar::u8 { };
+enum class PNSLR_PathNormalisationType : u8 { };
 static_assert(sizeof(PNSLR_PathNormalisationType) == sizeof(Panshilar::PathNormalisationType), "size mismatch");
 static_assert(alignof(PNSLR_PathNormalisationType) == alignof(Panshilar::PathNormalisationType), "align mismatch");
 PNSLR_PathNormalisationType* PNSLR_Bindings_Convert(Panshilar::PathNormalisationType* x) { return reinterpret_cast<PNSLR_PathNormalisationType*>(x); }
@@ -2465,30 +2453,30 @@ PNSLR_PathNormalisationType& PNSLR_Bindings_Convert(Panshilar::PathNormalisation
 Panshilar::PathNormalisationType& PNSLR_Bindings_Convert(PNSLR_PathNormalisationType& x) { return *PNSLR_Bindings_Convert(&x); }
 
 extern "C" PNSLR_Path PNSLR_NormalisePath(PNSLR_UTF8STR path, PNSLR_PathNormalisationType type, PNSLR_Allocator allocator);
-Panshilar::Path Panshilar::NormalisePath(Panshilar::utf8str path, Panshilar::PathNormalisationType type, Panshilar::Allocator allocator)
+Panshilar::Path Panshilar::NormalisePath(utf8str path, Panshilar::PathNormalisationType type, Panshilar::Allocator allocator)
 {
     PNSLR_Path zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_NormalisePath(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(type), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_UTF8STR* selfNameWithExtension, PNSLR_UTF8STR* selfName, PNSLR_UTF8STR* extension);
-Panshilar::b8 Panshilar::SplitPath(Panshilar::Path path, Panshilar::Path* parent, Panshilar::utf8str* selfNameWithExtension, Panshilar::utf8str* selfName, Panshilar::utf8str* extension)
+extern "C" b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, PNSLR_UTF8STR* selfNameWithExtension, PNSLR_UTF8STR* selfName, PNSLR_UTF8STR* extension);
+b8 Panshilar::SplitPath(Panshilar::Path path, Panshilar::Path* parent, utf8str* selfNameWithExtension, utf8str* selfName, utf8str* extension)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SplitPath(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(parent), PNSLR_Bindings_Convert(selfNameWithExtension), PNSLR_Bindings_Convert(selfName), PNSLR_Bindings_Convert(extension)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SplitPath(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(parent), PNSLR_Bindings_Convert(selfNameWithExtension), PNSLR_Bindings_Convert(selfName), PNSLR_Bindings_Convert(extension)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, PNSLR_UTF8STR fileNameWithExtension, PNSLR_Allocator allocator);
-Panshilar::Path Panshilar::GetPathForChildFile(Panshilar::Path dir, Panshilar::utf8str fileNameWithExtension, Panshilar::Allocator allocator)
+Panshilar::Path Panshilar::GetPathForChildFile(Panshilar::Path dir, utf8str fileNameWithExtension, Panshilar::Allocator allocator)
 {
     PNSLR_Path zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetPathForChildFile(PNSLR_Bindings_Convert(dir), PNSLR_Bindings_Convert(fileNameWithExtension), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, PNSLR_UTF8STR dirName, PNSLR_Allocator allocator);
-Panshilar::Path Panshilar::GetPathForSubdirectory(Panshilar::Path dir, Panshilar::utf8str dirName, Panshilar::Allocator allocator)
+Panshilar::Path Panshilar::GetPathForSubdirectory(Panshilar::Path dir, utf8str dirName, Panshilar::Allocator allocator)
 {
     PNSLR_Path zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetPathForSubdirectory(PNSLR_Bindings_Convert(dir), PNSLR_Bindings_Convert(dirName), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" typedef PNSLR_B8 (*PNSLR_DirectoryIterationVisitorDelegate)(void* payload, PNSLR_Path path, PNSLR_B8 isDirectory, PNSLR_B8* exploreCurrentDirectory);
+extern "C" typedef b8 (*PNSLR_DirectoryIterationVisitorDelegate)(rawptr payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory);
 static_assert(sizeof(PNSLR_DirectoryIterationVisitorDelegate) == sizeof(Panshilar::DirectoryIterationVisitorDelegate), "size mismatch");
 static_assert(alignof(PNSLR_DirectoryIterationVisitorDelegate) == alignof(Panshilar::DirectoryIterationVisitorDelegate), "align mismatch");
 PNSLR_DirectoryIterationVisitorDelegate* PNSLR_Bindings_Convert(Panshilar::DirectoryIterationVisitorDelegate* x) { return reinterpret_cast<PNSLR_DirectoryIterationVisitorDelegate*>(x); }
@@ -2496,13 +2484,13 @@ Panshilar::DirectoryIterationVisitorDelegate* PNSLR_Bindings_Convert(PNSLR_Direc
 PNSLR_DirectoryIterationVisitorDelegate& PNSLR_Bindings_Convert(Panshilar::DirectoryIterationVisitorDelegate& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::DirectoryIterationVisitorDelegate& PNSLR_Bindings_Convert(PNSLR_DirectoryIterationVisitorDelegate& x) { return *PNSLR_Bindings_Convert(&x); }
 
-extern "C" void PNSLR_IterateDirectory(PNSLR_Path path, PNSLR_B8 recursive, void* visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc);
-void Panshilar::IterateDirectory(Panshilar::Path path, Panshilar::b8 recursive, void* visitorPayload, Panshilar::DirectoryIterationVisitorDelegate visitorFunc)
+extern "C" void PNSLR_IterateDirectory(PNSLR_Path path, b8 recursive, rawptr visitorPayload, PNSLR_DirectoryIterationVisitorDelegate visitorFunc);
+void Panshilar::IterateDirectory(Panshilar::Path path, b8 recursive, rawptr visitorPayload, Panshilar::DirectoryIterationVisitorDelegate visitorFunc)
 {
     PNSLR_IterateDirectory(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(recursive), PNSLR_Bindings_Convert(visitorPayload), PNSLR_Bindings_Convert(visitorFunc));
 }
 
-enum class PNSLR_PathExistsCheckType : Panshilar::u8 { };
+enum class PNSLR_PathExistsCheckType : u8 { };
 static_assert(sizeof(PNSLR_PathExistsCheckType) == sizeof(Panshilar::PathExistsCheckType), "size mismatch");
 static_assert(alignof(PNSLR_PathExistsCheckType) == alignof(Panshilar::PathExistsCheckType), "align mismatch");
 PNSLR_PathExistsCheckType* PNSLR_Bindings_Convert(Panshilar::PathExistsCheckType* x) { return reinterpret_cast<PNSLR_PathExistsCheckType*>(x); }
@@ -2510,39 +2498,39 @@ Panshilar::PathExistsCheckType* PNSLR_Bindings_Convert(PNSLR_PathExistsCheckType
 PNSLR_PathExistsCheckType& PNSLR_Bindings_Convert(Panshilar::PathExistsCheckType& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::PathExistsCheckType& PNSLR_Bindings_Convert(PNSLR_PathExistsCheckType& x) { return *PNSLR_Bindings_Convert(&x); }
 
-extern "C" PNSLR_B8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type);
-Panshilar::b8 Panshilar::PathExists(Panshilar::Path path, Panshilar::PathExistsCheckType type)
+extern "C" b8 PNSLR_PathExists(PNSLR_Path path, PNSLR_PathExistsCheckType type);
+b8 Panshilar::PathExists(Panshilar::Path path, Panshilar::PathExistsCheckType type)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PathExists(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(type)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PathExists(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(type)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_DeletePath(PNSLR_Path path);
-Panshilar::b8 Panshilar::DeletePath(Panshilar::Path path)
+extern "C" b8 PNSLR_DeletePath(PNSLR_Path path);
+b8 Panshilar::DeletePath(Panshilar::Path path)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DeletePath(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DeletePath(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I64 PNSLR_GetFileTimestamp(PNSLR_Path path);
-Panshilar::i64 Panshilar::GetFileTimestamp(Panshilar::Path path)
+extern "C" i64 PNSLR_GetFileTimestamp(PNSLR_Path path);
+i64 Panshilar::GetFileTimestamp(Panshilar::Path path)
 {
-    PNSLR_I64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetFileTimestamp(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetFileTimestamp(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I64 PNSLR_GetFileSize(PNSLR_Path path);
-Panshilar::i64 Panshilar::GetFileSize(Panshilar::Path path)
+extern "C" i64 PNSLR_GetFileSize(PNSLR_Path path);
+i64 Panshilar::GetFileSize(Panshilar::Path path)
 {
-    PNSLR_I64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetFileSize(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetFileSize(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CreateDirectoryTree(PNSLR_Path path);
-Panshilar::b8 Panshilar::CreateDirectoryTree(Panshilar::Path path)
+extern "C" b8 PNSLR_CreateDirectoryTree(PNSLR_Path path);
+b8 Panshilar::CreateDirectoryTree(Panshilar::Path path)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateDirectoryTree(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateDirectoryTree(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_File
 {
-   void* handle;
+   rawptr handle;
 };
 static_assert(sizeof(PNSLR_File) == sizeof(Panshilar::File), "size mismatch");
 static_assert(alignof(PNSLR_File) == alignof(Panshilar::File), "align mismatch");
@@ -2552,52 +2540,52 @@ PNSLR_File& PNSLR_Bindings_Convert(Panshilar::File& x) { return *PNSLR_Bindings_
 Panshilar::File& PNSLR_Bindings_Convert(PNSLR_File& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_File, handle) == PNSLR_STRUCT_OFFSET(Panshilar::File, handle), "handle offset mismatch");
 
-extern "C" PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, PNSLR_B8 allowWrite);
-Panshilar::File Panshilar::OpenFileToRead(Panshilar::Path path, Panshilar::b8 allowWrite)
+extern "C" PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite);
+Panshilar::File Panshilar::OpenFileToRead(Panshilar::Path path, b8 allowWrite)
 {
     PNSLR_File zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_OpenFileToRead(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(allowWrite)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, PNSLR_B8 append, PNSLR_B8 allowRead);
-Panshilar::File Panshilar::OpenFileToWrite(Panshilar::Path path, Panshilar::b8 append, Panshilar::b8 allowRead)
+extern "C" PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
+Panshilar::File Panshilar::OpenFileToWrite(Panshilar::Path path, b8 append, b8 allowRead)
 {
     PNSLR_File zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_OpenFileToWrite(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(append), PNSLR_Bindings_Convert(allowRead)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I64 PNSLR_GetSizeOfFile(PNSLR_File handle);
-Panshilar::i64 Panshilar::GetSizeOfFile(Panshilar::File handle)
+extern "C" i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
+i64 Panshilar::GetSizeOfFile(Panshilar::File handle)
 {
-    PNSLR_I64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetSizeOfFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetSizeOfFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_SeekPositionInFile(PNSLR_File handle, PNSLR_I64 newPos, PNSLR_B8 relative);
-Panshilar::b8 Panshilar::SeekPositionInFile(Panshilar::File handle, Panshilar::i64 newPos, Panshilar::b8 relative)
+extern "C" b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
+b8 Panshilar::SeekPositionInFile(Panshilar::File handle, i64 newPos, b8 relative)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SeekPositionInFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(newPos), PNSLR_Bindings_Convert(relative)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SeekPositionInFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(newPos), PNSLR_Bindings_Convert(relative)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice_PNSLR_U8 dst);
-Panshilar::b8 Panshilar::ReadFromFile(Panshilar::File handle, Panshilar::ArraySlice<Panshilar::u8> dst)
+extern "C" b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice_u8 dst);
+b8 Panshilar::ReadFromFile(Panshilar::File handle, ArraySlice<u8> dst)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice_PNSLR_U8 src);
-Panshilar::b8 Panshilar::WriteToFile(Panshilar::File handle, Panshilar::ArraySlice<Panshilar::u8> src)
+extern "C" b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice_u8 src);
+b8 Panshilar::WriteToFile(Panshilar::File handle, ArraySlice<u8> src)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteToFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(src)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteToFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(src)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_TruncateFile(PNSLR_File handle, PNSLR_I64 newSize);
-Panshilar::b8 Panshilar::TruncateFile(Panshilar::File handle, Panshilar::i64 newSize)
+extern "C" b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize);
+b8 Panshilar::TruncateFile(Panshilar::File handle, i64 newSize)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TruncateFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(newSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TruncateFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(newSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_FlushFile(PNSLR_File handle);
-Panshilar::b8 Panshilar::FlushFile(Panshilar::File handle)
+extern "C" b8 PNSLR_FlushFile(PNSLR_File handle);
+b8 Panshilar::FlushFile(Panshilar::File handle)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FlushFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FlushFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" void PNSLR_CloseFileHandle(PNSLR_File handle);
@@ -2606,45 +2594,45 @@ void Panshilar::CloseFileHandle(Panshilar::File handle)
     PNSLR_CloseFileHandle(PNSLR_Bindings_Convert(handle));
 }
 
-extern "C" PNSLR_B8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice_PNSLR_U8* dst, PNSLR_Allocator allocator);
-Panshilar::b8 Panshilar::ReadAllContentsFromFile(Panshilar::Path path, Panshilar::ArraySlice<Panshilar::u8>* dst, Panshilar::Allocator allocator)
+extern "C" b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice_u8* dst, PNSLR_Allocator allocator);
+b8 Panshilar::ReadAllContentsFromFile(Panshilar::Path path, ArraySlice<u8>* dst, Panshilar::Allocator allocator)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadAllContentsFromFile(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(dst), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadAllContentsFromFile(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(dst), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice_PNSLR_U8 src, PNSLR_B8 append);
-Panshilar::b8 Panshilar::WriteAllContentsToFile(Panshilar::Path path, Panshilar::ArraySlice<Panshilar::u8> src, Panshilar::b8 append)
+extern "C" b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice_u8 src, b8 append);
+b8 Panshilar::WriteAllContentsToFile(Panshilar::Path path, ArraySlice<u8> src, b8 append)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteAllContentsToFile(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(append)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteAllContentsToFile(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(append)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst);
-Panshilar::b8 Panshilar::CopyFile(Panshilar::Path src, Panshilar::Path dst)
+extern "C" b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst);
+b8 Panshilar::CopyFile(Panshilar::Path src, Panshilar::Path dst)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CopyFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CopyFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_B8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
-Panshilar::b8 Panshilar::MoveFile(Panshilar::Path src, Panshilar::Path dst)
+extern "C" b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
+b8 Panshilar::MoveFile(Panshilar::Path src, Panshilar::Path dst)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MoveFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MoveFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_I32 PNSLR_PrintToStdOut(PNSLR_UTF8STR message);
-Panshilar::i32 Panshilar::PrintToStdOut(Panshilar::utf8str message)
+extern "C" i32 PNSLR_PrintToStdOut(PNSLR_UTF8STR message);
+i32 Panshilar::PrintToStdOut(utf8str message)
 {
-    PNSLR_I32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrintToStdOut(PNSLR_Bindings_Convert(message)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrintToStdOut(PNSLR_Bindings_Convert(message)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" void PNSLR_ExitProcess(PNSLR_I32 exitCode);
-void Panshilar::ExitProcess(Panshilar::i32 exitCode)
+extern "C" void PNSLR_ExitProcess(i32 exitCode);
+void Panshilar::ExitProcess(i32 exitCode)
 {
     PNSLR_ExitProcess(PNSLR_Bindings_Convert(exitCode));
 }
 
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPAddress;
+typedef PNSLR_ArraySlice_u8 PNSLR_IPAddress;
 
-typedef PNSLR_ArraySlice_PNSLR_U8 PNSLR_IPMask;
+typedef PNSLR_ArraySlice_u8 PNSLR_IPMask;
 
 struct PNSLR_IPNetwork
 {
@@ -2660,20 +2648,20 @@ Panshilar::IPNetwork& PNSLR_Bindings_Convert(PNSLR_IPNetwork& x) { return *PNSLR
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_IPNetwork, address) == PNSLR_STRUCT_OFFSET(Panshilar::IPNetwork, address), "address offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_IPNetwork, mask) == PNSLR_STRUCT_OFFSET(Panshilar::IPNetwork, mask), "mask offset mismatch");
 
-typedef struct { PNSLR_IPNetwork* data; PNSLR_I64 count; } PNSLR_ArraySlice_PNSLR_IPNetwork;
-static_assert(sizeof(PNSLR_ArraySlice_PNSLR_IPNetwork) == sizeof(Panshilar::ArraySlice<Panshilar::IPNetwork>), "size mismatch");
-static_assert(alignof(PNSLR_ArraySlice_PNSLR_IPNetwork) == alignof(Panshilar::ArraySlice<Panshilar::IPNetwork>), "align mismatch");
-PNSLR_ArraySlice_PNSLR_IPNetwork* PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPNetwork>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_IPNetwork*>(x); }
-Panshilar::ArraySlice<Panshilar::IPNetwork>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork* x) { return reinterpret_cast<Panshilar::ArraySlice<Panshilar::IPNetwork>*>(x); }
-PNSLR_ArraySlice_PNSLR_IPNetwork& PNSLR_Bindings_Convert(Panshilar::ArraySlice<Panshilar::IPNetwork>& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::ArraySlice<Panshilar::IPNetwork>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, count) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPNetwork>, count), "count offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, data) == PNSLR_STRUCT_OFFSET(Panshilar::ArraySlice<Panshilar::IPNetwork>, data), "data offset mismatch");
+typedef struct { PNSLR_IPNetwork* data; i64 count; } PNSLR_ArraySlice_PNSLR_IPNetwork;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_IPNetwork) == sizeof(ArraySlice<Panshilar::IPNetwork>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_IPNetwork) == alignof(ArraySlice<Panshilar::IPNetwork>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_IPNetwork* PNSLR_Bindings_Convert(ArraySlice<Panshilar::IPNetwork>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_IPNetwork*>(x); }
+ArraySlice<Panshilar::IPNetwork>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork* x) { return reinterpret_cast<ArraySlice<Panshilar::IPNetwork>*>(x); }
+PNSLR_ArraySlice_PNSLR_IPNetwork& PNSLR_Bindings_Convert(ArraySlice<Panshilar::IPNetwork>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<Panshilar::IPNetwork>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_IPNetwork& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, count) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::IPNetwork>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_IPNetwork, data) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::IPNetwork>, data), "data offset mismatch");
 
-extern "C" PNSLR_B8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice_PNSLR_IPNetwork* networks, PNSLR_Allocator allocator);
-Panshilar::b8 Panshilar::GetInterfaceIPAddresses(Panshilar::ArraySlice<Panshilar::IPNetwork>* networks, Panshilar::Allocator allocator)
+extern "C" b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice_PNSLR_IPNetwork* networks, PNSLR_Allocator allocator);
+b8 Panshilar::GetInterfaceIPAddresses(ArraySlice<Panshilar::IPNetwork>* networks, Panshilar::Allocator allocator)
 {
-    PNSLR_B8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetInterfaceIPAddresses(PNSLR_Bindings_Convert(networks), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetInterfaceIPAddresses(PNSLR_Bindings_Convert(networks), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 

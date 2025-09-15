@@ -170,7 +170,7 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     }
 
     u32 typeIdxTemp = U32_MAX;
-    if (PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("ArraySlice"), 0)) // is an array slice
+    if (PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("PNSLR_ArraySlice"), 0)) // is an array slice
     {
         b8 success = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)
                   && ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str) {0}, &typeIdxTemp, allocator)
