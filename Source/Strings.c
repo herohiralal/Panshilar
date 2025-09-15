@@ -21,7 +21,7 @@ utf8str PNSLR_StringFromCString(cstring str)
 
 cstring PNSLR_CStringFromString(utf8str str, PNSLR_Allocator allocator)
 {
-    cstring result = PNSLR_MakeCString(str.count, false, allocator, CURRENT_LOC(), nil);
+    cstring result = PNSLR_MakeCString(str.count, false, allocator, PNSLR_GET_LOC(), nil);
     if (result == nil) { return nil; } // allocation failed
 
     PNSLR_MemCopy(result, str.data, (i32) str.count);
@@ -37,7 +37,7 @@ utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
         return (utf8str) {0};
     }
 
-    utf8str result = PNSLR_MakeString(str.count, false, allocator, CURRENT_LOC(), nil);
+    utf8str result = PNSLR_MakeString(str.count, false, allocator, PNSLR_GET_LOC(), nil);
     if (result.data == nil) { return (utf8str) {0}; } // allocation failed
 
     PNSLR_MemCopy(result.data, str.data, (i32) str.count);
@@ -46,7 +46,7 @@ utf8str PNSLR_CloneString(utf8str str, PNSLR_Allocator allocator)
 
 utf8str PNSLR_ConcatenateStrings(utf8str str1, utf8str str2, PNSLR_Allocator allocator)
 {
-    utf8str result = PNSLR_MakeString(str1.count + str2.count, false, allocator, CURRENT_LOC(), nil);
+    utf8str result = PNSLR_MakeString(str1.count + str2.count, false, allocator, PNSLR_GET_LOC(), nil);
     if (result.data == nil) { return (utf8str) {0}; } // allocation failed
 
     PNSLR_MemCopy(result.data,              str1.data, (i32) str1.count);
@@ -264,7 +264,7 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
     utf8str output = {0};
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
 
-    PNSLR_ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, PNSLR_GET_LOC(), nil);
     i64                   numReplacementIndices = 0;
 
     i64 searchSpaceOffset = 0;
@@ -276,7 +276,7 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
 
         if (numReplacementIndices >= replacementIndices.count)
         {
-            PNSLR_ResizeSlice(u32, &replacementIndices, (numReplacementIndices + 64), false, internalAllocator, CURRENT_LOC(), nil);
+            PNSLR_ResizeSlice(u32, &replacementIndices, (numReplacementIndices + 64), false, internalAllocator, PNSLR_GET_LOC(), nil);
         }
 
         replacementIndices.data[numReplacementIndices] = (u32) (searchSpaceOffset + idx);
@@ -292,7 +292,7 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
     else
     {
         i64 newSize = str.count + ((newValue.count - oldValue.count) * numReplacementIndices);
-        output = PNSLR_MakeString(newSize, false, allocator, CURRENT_LOC(), nil);
+        output = PNSLR_MakeString(newSize, false, allocator, PNSLR_GET_LOC(), nil);
         if (output.data && output.count)
         {
             i64 srcIndex = 0;
@@ -497,12 +497,12 @@ PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocato
         i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
         if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
 
-        PNSLR_ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, PNSLR_GET_LOC(), nil);
 
         i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
         if (n1 == 0)
         {
-            PNSLR_FreeSlice(&output, allocator, CURRENT_LOC(), nil);
+            PNSLR_FreeSlice(&output, allocator, PNSLR_GET_LOC(), nil);
             return (PNSLR_ArraySlice(u16)) {0}; // conversion failed
         }
 
@@ -535,13 +535,13 @@ utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_All
         i32 n = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, nil, 0, nil, nil);
         if (n <= 0) { return (utf8str) {0}; } // conversion failed
 
-        utf8str output = PNSLR_MakeString(n, false, allocator, CURRENT_LOC(), nil);
+        utf8str output = PNSLR_MakeString(n, false, allocator, PNSLR_GET_LOC(), nil);
         if (!output.data) { return (utf8str) {0}; } // allocation failed
 
         i32 n1 = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, (LPCWSTR) utf16str.data, (i32) utf16str.count, (LPSTR) output.data, (i32) n, nil, nil);
         if (n1 == 0)
         {
-            PNSLR_FreeString(output, allocator, CURRENT_LOC(), nil);
+            PNSLR_FreeString(output, allocator, PNSLR_GET_LOC(), nil);
             return (utf8str) {0}; // conversion failed
         }
 

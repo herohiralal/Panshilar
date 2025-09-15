@@ -41,7 +41,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
     if (G_NumBufferedMessages >= (u64) G_BufferedMessages.count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_ResizeSlice(BufferedMessage, &G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), &err);
+        PNSLR_ResizeSlice(BufferedMessage, &G_BufferedMessages, (G_BufferedMessages.count * 2), true, G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), &err);
 
         if (err != PNSLR_AllocatorError_None)
         {
@@ -94,11 +94,11 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         {
             utf8str executableName = {0};
 
-            if (plt == PNSLR_Platform_Windows) { executableName = PNSLR_STRING_LITERAL("Binaries\\TestRunner-windows-x64.exe"); }
-            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_X64) { executableName = PNSLR_STRING_LITERAL("Binaries/TestRunner-linux-x64"); }
-            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64) { executableName = PNSLR_STRING_LITERAL("Binaries/TestRunner-linux-arm64"); }
-            else if (plt == PNSLR_Platform_OSX) { executableName = PNSLR_STRING_LITERAL("Binaries/TestRunner-osx-arm64"); }
-            else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64) { executableName = PNSLR_STRING_LITERAL("Binaries/TestRunner-osx-x64"); }
+            if (plt == PNSLR_Platform_Windows) { executableName = PNSLR_StringLiteral("Binaries\\TestRunner-windows-x64.exe"); }
+            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-x64"); }
+            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-arm64"); }
+            else if (plt == PNSLR_Platform_OSX) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-arm64"); }
+            else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-x64"); }
             else { printf("Unsupported platform or architecture."); PNSLR_ExitProcess(1); return; }
 
             if (!args.count) { printf("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
@@ -130,7 +130,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
     {
         u64                                testsCount = ZZZZ_GetTestsCount();
         PNSLR_AllocatorError               err        = PNSLR_AllocatorError_None;
-        PNSLR_ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+        PNSLR_ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
 
         tests = tests2;
     }
@@ -145,15 +145,15 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
     ZZZZ_GetAllTests(tests);
     b8 success = true;
 
-    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8 * 1024 * 1024, CURRENT_LOC(), nullptr);
+    G_CurrentTestRunnerAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8 * 1024 * 1024, PNSLR_GET_LOC(), nullptr);
 
     for (i32 i = 0; i < (i32) tests.count; ++i)
     {
         TestContext      ctx  = {.tgtDir = tgtDir,.testAllocator = G_CurrentTestRunnerAllocator, .args = args};
         TestFunctionInfo info = tests.data[i];
 
-        PNSLR_FreeAll(ctx.testAllocator, CURRENT_LOC(), nullptr);
-        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, CURRENT_LOC(), nullptr);
+        PNSLR_FreeAll(ctx.testAllocator, PNSLR_GET_LOC(), nullptr);
+        G_BufferedMessages    = PNSLR_MakeSlice(BufferedMessage, 128, true, G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
         G_NumBufferedMessages = 0;
 
         info.fn(&ctx);
@@ -196,7 +196,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         printf("======\n\n");
     }
 
-    PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, CURRENT_LOC(), nullptr);
+    PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
 
     if (!success)
     {
@@ -211,7 +211,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
 i32 main(i32 argc, char** argv)
 {
-    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nullptr);
+    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
     for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
     TestRunnerMain(args);
     return 0;

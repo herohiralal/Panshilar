@@ -20,7 +20,7 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 dir
     b8 skippedDirectory = false;
 
     #define SKIP_DIR(x) \
-        if (!skippedDirectory && directory && PNSLR_StringEndsWith(path.path, PNSLR_STRING_LITERAL("/" x "/"), PNSLR_StringComparisonType_CaseInsensitive)) \
+        if (!skippedDirectory && directory && PNSLR_StringEndsWith(path.path, PNSLR_StringLiteral("/" x "/"), PNSLR_StringComparisonType_CaseInsensitive)) \
         { \
             skippedDirectory = true; \
         }
@@ -52,8 +52,8 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 dir
 MAIN_TEST_FN(ctx)
 {
     DirectoryStuffListerForFilePresentTestPayload data = {0};
-    data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nullptr);
-    data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, CURRENT_LOC(), nullptr);
+    data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
+    data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, PNSLR_GET_LOC(), nullptr);
     PNSLR_IterateDirectory(ctx->tgtDir, true, &data, DirectoryStuffListerForFilePresentTest);
 
     b8 pnslrHeaderFound = false, pnslrUnityFound = false;
@@ -63,27 +63,27 @@ MAIN_TEST_FN(ctx)
 
         if (!pnslrHeaderFound)
         {
-            pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseInsensitive);
+            pnslrHeaderFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/Panshilar.h"), PNSLR_StringComparisonType_CaseInsensitive);
         }
 
         if (!pnslrUnityFound)
         {
-            pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_STRING_LITERAL("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseInsensitive);
+            pnslrUnityFound = PNSLR_StringEndsWith(path, PNSLR_StringLiteral("Source/zzzz_Unity.c"), PNSLR_StringComparisonType_CaseInsensitive);
         }
 
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_FreeString(path, data.allocator, CURRENT_LOC(), &err);
+        PNSLR_FreeString(path, data.allocator, PNSLR_GET_LOC(), &err);
         AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing last path.");
         err = PNSLR_AllocatorError_None;
 
-        utf8str pollute = PNSLR_CloneString(PNSLR_STRING_LITERAL("POLLUTION_TEST"), data.allocator);
+        utf8str pollute = PNSLR_CloneString(PNSLR_StringLiteral("POLLUTION_TEST"), data.allocator);
         AssertMsg(pollute.data && pollute.count, "Failed to pollute.");
-        PNSLR_FreeString(pollute, data.allocator, CURRENT_LOC(), &err);
+        PNSLR_FreeString(pollute, data.allocator, PNSLR_GET_LOC(), &err);
         AssertMsg(err == PNSLR_AllocatorError_None, "Error freeing pollution string.");
         err = PNSLR_AllocatorError_None;
     }
 
-    PNSLR_DestroyAllocator_Stack(data.allocator, CURRENT_LOC(), nullptr);
+    PNSLR_DestroyAllocator_Stack(data.allocator, PNSLR_GET_LOC(), nullptr);
 
     Assert(pnslrHeaderFound);
     Assert(pnslrUnityFound);

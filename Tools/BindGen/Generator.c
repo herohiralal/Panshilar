@@ -10,6 +10,6 @@ void RunGenerator(GeneratorFn generator, PNSLR_Path tgtDir, utf8str subDirName, 
 
     generator(actualTgt, content, allocator);
 
-    PNSLR_ArenaSnapshotError err = PNSLR_RestoreArenaAllocatorSnapshot(&snapshot, CURRENT_LOC());
+    PNSLR_ArenaSnapshotError err = PNSLR_RestoreArenaAllocatorSnapshot(&snapshot, PNSLR_GET_LOC());
     if (err != PNSLR_ArenaSnapshotError_None) FORCE_DBG_TRAP;
 }

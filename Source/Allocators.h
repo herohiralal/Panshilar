@@ -545,7 +545,7 @@ EXTERN_C_BEGIN
         PNSLR_ArenaAllocatorSnapshot varName##Snapshot = PNSLR_CaptureArenaAllocatorSnapshot(varName);
 
     #define PNSLR_INTERNAL_ALLOCATOR_RESET(name, varName) \
-        PNSLR_ArenaSnapshotError varName##SnapshotErr = PNSLR_RestoreArenaAllocatorSnapshot(&varName##Snapshot, CURRENT_LOC()); \
+        PNSLR_ArenaSnapshotError varName##SnapshotErr = PNSLR_RestoreArenaAllocatorSnapshot(&varName##Snapshot, PNSLR_GET_LOC()); \
         if (PNSLR_ArenaSnapshotError_None != varName##SnapshotErr) { FORCE_DBG_TRAP; } else { }
 
 #endif

@@ -7,7 +7,7 @@ MAIN_TEST_FN(ctx)
     i64 intsCount  = bytesCount / (i64) sizeof(u32);
 
     PNSLR_AllocatorError  err  = PNSLR_AllocatorError_None;
-    PNSLR_ArraySlice(u64) data = PNSLR_MakeSlice(u64, longsCount, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+    PNSLR_ArraySlice(u64) data = PNSLR_MakeSlice(u64, longsCount, true, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
     if (!Assert(err == PNSLR_AllocatorError_None)) return;
     if (!Assert(!!data.data )) return;
     if (!Assert(!!data.count)) return;
@@ -36,7 +36,7 @@ MAIN_TEST_FN(ctx)
     }
 
     err = PNSLR_AllocatorError_None;
-    PNSLR_ResizeSlice(u64, &data, longsCount * 2, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+    PNSLR_ResizeSlice(u64, &data, longsCount * 2, true, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
     if (!Assert(err == PNSLR_AllocatorError_None)) return;
 
     // ensure allocated memory is read-write accessible
@@ -48,6 +48,6 @@ MAIN_TEST_FN(ctx)
     }
 
     err = PNSLR_AllocatorError_None;
-    PNSLR_FreeSlice(&data, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+    PNSLR_FreeSlice(&data, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), &err);
     Assert(err == PNSLR_AllocatorError_None);
 }

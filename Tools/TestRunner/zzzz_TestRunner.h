@@ -20,15 +20,15 @@ typedef struct
 b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Assert(cond) \
-    AssertInternal((b8) (cond), PNSLR_STRING_LITERAL("Assertion failed: " #cond), CURRENT_LOC())
+    AssertInternal((b8) (cond), PNSLR_StringLiteral("Assertion failed: " #cond), PNSLR_GET_LOC())
 
 #define AssertMsg(cond, msg) \
-    AssertInternal((b8) (cond), PNSLR_STRING_LITERAL("Assertion failed: " msg), CURRENT_LOC())
+    AssertInternal((b8) (cond), PNSLR_StringLiteral("Assertion failed: " msg), PNSLR_GET_LOC())
 
 void LogInternal(utf8str message, PNSLR_SourceCodeLocation location);
 
 #define Log(msg) \
-    LogInternal(PNSLR_STRING_LITERAL(msg), CURRENT_LOC())
+    LogInternal(PNSLR_StringLiteral(msg), PNSLR_GET_LOC())
 
 typedef void (*TestFunction)(const TestContext* ctx);
 

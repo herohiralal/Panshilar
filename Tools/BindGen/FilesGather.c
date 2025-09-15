@@ -75,7 +75,7 @@ void GatherSourceFilesInternal(PNSLR_ArraySlice(CollectedFile)* collectedFiles, 
     if (*numCollectedFiles >= collectedFiles->count)
     {
         PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
-        PNSLR_ResizeSlice(CollectedFile, collectedFiles, (*numCollectedFiles) + 16, true, globalAllocator, CURRENT_LOC(), &err);
+        PNSLR_ResizeSlice(CollectedFile, collectedFiles, (*numCollectedFiles) + 16, true, globalAllocator, PNSLR_GET_LOC(), &err);
         if (err != PNSLR_AllocatorError_None)
         {
             printf("Failed to resize collected files array.\n");
@@ -89,7 +89,7 @@ void GatherSourceFilesInternal(PNSLR_ArraySlice(CollectedFile)* collectedFiles, 
 
 PNSLR_ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator)
 {
-    PNSLR_ArraySlice(CollectedFile) collectedFiles    = PNSLR_MakeSlice(CollectedFile, 64, true, globalAllocator, CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(CollectedFile) collectedFiles    = PNSLR_MakeSlice(CollectedFile, 64, true, globalAllocator, PNSLR_GET_LOC(), nil);
     i64                       numCollectedFiles = 0;
     GatherSourceFilesInternal(&collectedFiles, &numCollectedFiles, srcDir, startingPath, globalAllocator);
     collectedFiles.count = numCollectedFiles;

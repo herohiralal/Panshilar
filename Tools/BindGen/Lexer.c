@@ -2,7 +2,7 @@
 
 utf8str GetTokenTypeString(TknTy type)
 {
-    #define TOKEN_VALUE(x) case TknTy_##x: return PNSLR_STRING_LITERAL(#x);
+    #define TOKEN_VALUE(x) case TknTy_##x: return PNSLR_StringLiteral(#x);
     switch (type)
     {
         TOKEN_VALUE(Invalid                       )
@@ -59,7 +59,7 @@ utf8str GetTokenTypeString(TknTy type)
     }
     #undef TOKEN_VALUE
 
-    return PNSLR_STRING_LITERAL("__UNKNOWN_TOKEN_TYPE__");
+    return PNSLR_StringLiteral("__UNKNOWN_TOKEN_TYPE__");
 }
 
 utf8str GetTokenTypeMaskString(TknTy type, utf8str joiner, PNSLR_Allocator allocator)
@@ -74,7 +74,7 @@ utf8str GetTokenTypeMaskString(TknTy type, utf8str joiner, PNSLR_Allocator alloc
     }
 
     allocSize -= joiner.count;
-    utf8str output = PNSLR_MakeString(allocSize, false, allocator, CURRENT_LOC(), nil);
+    utf8str output = PNSLR_MakeString(allocSize, false, allocator, PNSLR_GET_LOC(), nil);
     if (output.data && output.count)
     {
         i64 iterator = 0;
@@ -328,11 +328,11 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, 
                 retOut.span.end        = j + (r2 == '\r' ? 0 : w2);
                 {
                     utf8str spanStr = (utf8str) {.count = retOut.span.end - retOut.span.start, .data = fileContents.data + retOut.span.start};
-                    if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//+skipreflect"), 0))
+                    if (PNSLR_AreStringsEqual(spanStr, PNSLR_StringLiteral("//+skipreflect"), 0))
                     {
                         retOut.span.type = TknTy_MetaSkipReflectBegin;
                     }
-                    else if (PNSLR_AreStringsEqual(spanStr, PNSLR_STRING_LITERAL("//-skipreflect"), 0))
+                    else if (PNSLR_AreStringsEqual(spanStr, PNSLR_StringLiteral("//-skipreflect"), 0))
                     {
                         retOut.span.type = TknTy_MetaSkipReflectEnd;
                     }
@@ -530,12 +530,12 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, 
 
                 b8 successfulPreprocessorCheck = true;
                 if (nextTokenSpan.type != TknTy_Identifier)                                   { successfulPreprocessorCheck = false;              }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("define" ), 0)) { retOut.span.type = TknTy_PreprocessorDefine;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifndef" ), 0)) { retOut.span.type = TknTy_PreprocessorIfndef;  }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("ifdef"  ), 0)) { retOut.span.type = TknTy_PreprocessorIfdef;   }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("if"     ), 0)) { retOut.span.type = TknTy_PreprocessorIf;      }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("endif"  ), 0)) { retOut.span.type = TknTy_PreprocessorEndif;   }
-                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_STRING_LITERAL("include"), 0)) { retOut.span.type = TknTy_PreprocessorInclude; }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("define" ), 0)) { retOut.span.type = TknTy_PreprocessorDefine;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("ifndef" ), 0)) { retOut.span.type = TknTy_PreprocessorIfndef;  }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("ifdef"  ), 0)) { retOut.span.type = TknTy_PreprocessorIfdef;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("if"     ), 0)) { retOut.span.type = TknTy_PreprocessorIf;      }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("endif"  ), 0)) { retOut.span.type = TknTy_PreprocessorEndif;   }
+                else if (PNSLR_AreStringsEqual(nextTokenStr, PNSLR_StringLiteral("include"), 0)) { retOut.span.type = TknTy_PreprocessorInclude; }
                 else                                                                              { successfulPreprocessorCheck = false;              }
 
                 if (successfulPreprocessorCheck)
@@ -651,19 +651,19 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, 
     {
         utf8str currentSpanStr = (utf8str) {.data = fileContents.data + startOfToken, .count = (i64) (i + width - startOfToken)};
 
-        if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("true"), 0))
+        if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_StringLiteral("true"), 0))
         {
             retOut.span.type = TknTy_BooleanTrue;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("false"), 0))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_StringLiteral("false"), 0))
         {
             retOut.span.type = TknTy_BooleanFalse;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_BEGIN"), 0))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_StringLiteral("EXTERN_C_BEGIN"), 0))
         {
             retOut.span.type = TknTy_MetaExternCBegin;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("EXTERN_C_END"), 0))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_StringLiteral("EXTERN_C_END"), 0))
         {
             retOut.span.type = TknTy_MetaExternCEnd;
         }
@@ -671,7 +671,7 @@ static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, 
         {
             retOut.span.type = TknTy_IdentifierButCouldBeHexNumber;
         }
-        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_STRING_LITERAL("_"), 0))
+        else if (PNSLR_AreStringsEqual(currentSpanStr, PNSLR_StringLiteral("_"), 0))
         {
             retOut.span.type = TknTy_SymbolUnderscore;
         }

@@ -21,17 +21,21 @@ cstring G_GenCPrefix = ""
 "\n"
 "/** Declare an array slice of type 'ty'. */\n"
 "#define PNSLR_DECLARE_ARRAY_SLICE(ty) \\\n"
-"    typedef union PNSLR_ArraySlice(ty) { struct { ty* data; PNSLR_I64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice(ty);\n"
+"    typedef union PNSLR_ArraySlice(ty) { struct { ty* data; i64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice(ty);\n"
 "\n"
-"typedef unsigned char       PNSLR_B8;\n"
-"typedef unsigned char       PNSLR_U8;\n"
-"typedef unsigned short int  PNSLR_U16;\n"
-"typedef unsigned int        PNSLR_U32;\n"
-"typedef unsigned long long  PNSLR_U64;\n"
-"typedef signed char         PNSLR_I8;\n"
-"typedef signed short int    PNSLR_I16;\n"
-"typedef signed int          PNSLR_I32;\n"
-"typedef signed long long    PNSLR_I64;\n"
+"typedef unsigned char       b8;\n"
+"typedef unsigned char       u8;\n"
+"typedef unsigned short int  u16;\n"
+"typedef unsigned int        u32;\n"
+"typedef unsigned long long  u64;\n"
+"typedef signed char         i8;\n"
+"typedef signed short int    i16;\n"
+"typedef signed int          i32;\n"
+"typedef signed long long    i64;\n"
+"typedef float               f32;\n"
+"typedef double              f64;\n"
+"typedef char*               cstring;\n"
+"typedef void*               rawptr;\n"
 "\n"
 "";
 
@@ -39,7 +43,7 @@ cstring G_GenCSuffix = ""
 "#undef PNSLR_ALIGNAS\n"
 "\n"
 "/** Create a utf8str from a string literal. */\n"
-"#define PNSLR_StringLiteral(str) (PNSLR_UTF8STR) {.count = sizeof(str) - 1, .data = (PNSLR_U8*) str}\n"
+"#define PNSLR_StringLiteral(str) (utf8str) {.count = sizeof(str) - 1, .data = (u8*) str}\n"
 "\n"
 "/** Get the current source code location. */\n"
 "#define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) \\\n"
@@ -59,7 +63,7 @@ cstring G_GenCSuffix = ""
 "\n"
 "/** Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
 "#define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \\\n"
-"    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((PNSLR_I32) sizeof(ty), (PNSLR_I32) alignof(ty), (PNSLR_I64) count, zeroed, allocator, loc, error__)}\n"
+"    (PNSLR_ArraySlice_##ty) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}\n"
 "\n"
 "/** Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator. */\n"
 "#define PNSLR_FreeSlice(slice, allocator, loc, error__) \\\n"
@@ -67,7 +71,7 @@ cstring G_GenCSuffix = ""
 "\n"
 "/** Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed. */\n"
 "#define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \\\n"
-"    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (PNSLR_I32) sizeof(ty), (PNSLR_I32) alignof(ty), (PNSLR_I64) newCount, zeroed, allocator, loc, error__); } while(0)\n"
+"    do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)\n"
 "\n"
 "#ifdef __cplusplus\n"
 "} // extern c\n"
@@ -77,27 +81,26 @@ cstring G_GenCSuffix = ""
 "\n"
 "#ifndef PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
 "#define PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
-"    #ifndef __cplusplus\n"
-"        _Static_assert(sizeof(PNSLR_B8 ) == 1, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_U8 ) == 1, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_U16) == 2, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_U32) == 4, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_U64) == 8, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_I8 ) == 1, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_I16) == 2, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
-"        _Static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
-"    #else //__cplusplus\n"
-"        static_assert(sizeof(PNSLR_B8 ) == 1, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_U8 ) == 1, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_U16) == 2, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_U32) == 4, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_U64) == 8, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_I8 ) == 1, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_I16) == 2, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_I32) == 4, \"Size mismatch.\");\n"
-"        static_assert(sizeof(PNSLR_I64) == 8, \"Size mismatch.\");\n"
-"    #endif//__cplusplus\n"
+"    #if !defined(__cplusplus) && !defined(static_assert)\n"
+"        #define static_assert _Static_assert\n"
+"        #define PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT\n"
+"    #endif\n"
+"\n"
+"        static_assert(sizeof(b8 ) == 1, \"Size mismatch.\");\n"
+"        static_assert(sizeof(u8 ) == 1, \"Size mismatch.\");\n"
+"        static_assert(sizeof(u16) == 2, \"Size mismatch.\");\n"
+"        static_assert(sizeof(u32) == 4, \"Size mismatch.\");\n"
+"        static_assert(sizeof(u64) == 8, \"Size mismatch.\");\n"
+"        static_assert(sizeof(i8 ) == 1, \"Size mismatch.\");\n"
+"        static_assert(sizeof(i16) == 2, \"Size mismatch.\");\n"
+"        static_assert(sizeof(i32) == 4, \"Size mismatch.\");\n"
+"        static_assert(sizeof(i64) == 8, \"Size mismatch.\");\n"
+"        static_assert(sizeof(f32) == 4, \"Size mismatch.\");\n"
+"        static_assert(sizeof(f64) == 8, \"Size mismatch.\");\n"
+"    #ifdef PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT\n"
+"        #undef PNSLR_INTRINSIC_CUSTOM_TEMP_STATIC_ASSERT\n"
+"        #undef static_assert\n"
+"    #endif\n"
 "#endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
 "";
 
@@ -114,32 +117,11 @@ void WriteCTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 t
     {
         case PolymorphicDeclType_None:
         {
-            utf8str nameStr = declTy.u.name;
-            if (false) { }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("void"), nameStr, 0)) { }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("b8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_B8"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U8"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U16"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u32"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U32"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("u64"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_U64"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i8"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I8"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i16"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I16"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i32"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I32"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("i64"), nameStr, 0)) {nameStr = PNSLR_STRING_LITERAL("PNSLR_I64"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f32"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("float"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("f64"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("double"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("cstring"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("char*"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("rawptr"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("void*"); }
-            else if (PNSLR_AreStringsEqual(PNSLR_STRING_LITERAL("utf8str"), nameStr, 0)) { nameStr = PNSLR_STRING_LITERAL("PNSLR_UTF8STR"); }
-            else { }
-
-            PNSLR_WriteToFile(file, ARR_FROM_STR(nameStr));
+            PNSLR_WriteToFile(file, ARR_FROM_STR(declTy.u.name));
             break;
         }
         case PolymorphicDeclType_Slice:
         {
-            // WILL NOT WORK FOR `cstring` AND `rawptr` WHICH ARE TYPEDEF'D PTR TYPES
-            // but should be fine for now because we're not using arrays of them anyway
             PNSLR_WriteToFile(file, ARR_STR_LIT("PNSLR_ArraySlice("));
             WriteCTypeName(file, types, (u32) declTy.u.polyTgtIdx);
             PNSLR_WriteToFile(file, ARR_STR_LIT(")"));
@@ -157,7 +139,7 @@ void WriteCTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 t
 
 void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
 {
-    PNSLR_Path headerPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_STRING_LITERAL("Panshilar.h"), allocator);
+    PNSLR_Path headerPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_StringLiteral("Panshilar.h"), allocator);
     PNSLR_File headerFile = PNSLR_OpenFileToWrite(headerPath, false, false);
 
     utf8str prefixStr = PNSLR_StringFromCString(G_GenCPrefix);
@@ -221,10 +203,10 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                     {
                         switch (enm->size)
                         {
-                            case  8: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I8" ) : PNSLR_STRING_LITERAL("PNSLR_U8" ); break;
-                            case 16: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I16") : PNSLR_STRING_LITERAL("PNSLR_U16"); break;
-                            case 32: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I32") : PNSLR_STRING_LITERAL("PNSLR_U32"); break;
-                            case 64: backing = enm->negative ? PNSLR_STRING_LITERAL("PNSLR_I64") : PNSLR_STRING_LITERAL("PNSLR_U64"); break;
+                            case  8: backing = enm->negative ? PNSLR_StringLiteral("i8" ) : PNSLR_StringLiteral("u8" ); break;
+                            case 16: backing = enm->negative ? PNSLR_StringLiteral("i16") : PNSLR_StringLiteral("u16"); break;
+                            case 32: backing = enm->negative ? PNSLR_StringLiteral("i32") : PNSLR_StringLiteral("u32"); break;
+                            case 64: backing = enm->negative ? PNSLR_StringLiteral("i64") : PNSLR_StringLiteral("u64"); break;
                             default: FORCE_DBG_TRAP; break;
                         }
                     }

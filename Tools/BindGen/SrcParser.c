@@ -3,14 +3,14 @@
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
 {
-    PNSLR_ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, PNSLR_GET_LOC(), nil);
     if (!tt.data || !tt.count) FORCE_DBG_TRAP;
 
     i64 cnt = 0;
 
     #define DECLARE_TYPE_TABLE_ENTRY(xxxx) \
         i64 xxxx##Idx = cnt; \
-        /*regular*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_STRING_LITERAL(#xxxx)}; \
+        /*regular*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None,  .u.name = PNSLR_StringLiteral(#xxxx)}; \
         /*ptr2reg*/ tt.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = xxxx##Idx};
 
     DECLARE_TYPE_TABLE_ENTRY(void   ); // void must be the 0th type
@@ -135,7 +135,7 @@ TknTy ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask ign
         if (typeMask & TknTy_EOF) { return TknTy_EOF; } // user expecting EOF
 
         // user not expecting EOF
-        PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, PNSLR_STRING_LITERAL("Not expecting EOF."));
+        PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, PNSLR_StringLiteral("Not expecting EOF."));
         return TknTy_Invalid;
     }
 
@@ -143,8 +143,8 @@ TknTy ForceGetNextToken(utf8str pathRel, FileIterInfo* iter, TokenIgnoreMask ign
     if (tokenStr) *tokenStr = tokenStr2;
     if (!(currSpan.type & typeMask)) // an unexpected token type encountered
     {
-        utf8str errorPrefix = PNSLR_STRING_LITERAL("Unexpected token encountered, expecting one of: ");
-        utf8str maskStr = GetTokenTypeMaskString(typeMask, PNSLR_STRING_LITERAL(", "), allocator);
+        utf8str errorPrefix = PNSLR_StringLiteral("Unexpected token encountered, expecting one of: ");
+        utf8str maskStr = GetTokenTypeMaskString(typeMask, PNSLR_StringLiteral(", "), allocator);
         utf8str errorFull = PNSLR_ConcatenateStrings(errorPrefix, maskStr, allocator);
         PrintParseError(pathRel, iter->contents, currSpan.start, currSpan.end, errorFull);
         return TknTy_Invalid;
@@ -170,7 +170,7 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     }
 
     u32 typeIdxTemp = U32_MAX;
-    if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ArraySlice"), 0)) // is an array slice
+    if (PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("ArraySlice"), 0)) // is an array slice
     {
         b8 success = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)
                   && ProcessIdentifierAsTypeName(parsedContent, pathRel, iter, (utf8str) {0}, &typeIdxTemp, allocator)
@@ -196,7 +196,7 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
     }
     else // is not an array slice
     {
-        if (PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("struct"), 0))
+        if (PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("struct"), 0))
         {
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &tokenStr, allocator)) return false;
@@ -218,7 +218,7 @@ b8 ProcessIdentifierAsTypeName(ParsedContent* parsedContent, utf8str pathRel, Fi
 
         if (!success)
         {
-            PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_STRING_LITERAL("Type name not found."));
+            PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_StringLiteral("Type name not found."));
             return false;
         }
     }
@@ -252,7 +252,7 @@ b8 ConsumeFileIntro(utf8str pathRel, FileIterInfo* iter, utf8str* includeGuardId
     i64 expectedCommentLength = (84 - (((i64) sizeof("#define") - 1) + 1 /*space*/ + includeGuardIdentifier->count + 1 /*space*/));
     if (beginComment.count != expectedCommentLength)
     {
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) beginComment.count, iter->i, PNSLR_STRING_LITERAL("Begin comment does not match expected length."));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) beginComment.count, iter->i, PNSLR_StringLiteral("Begin comment does not match expected length."));
         return false;
     }
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
@@ -262,7 +262,7 @@ b8 ConsumeFileIntro(utf8str pathRel, FileIterInfo* iter, utf8str* includeGuardId
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &includeGuardIdentifierDecl, allocator)) return false;
     if (!PNSLR_AreStringsEqual(*includeGuardIdentifier, includeGuardIdentifierDecl, 0))
     {
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) includeGuardIdentifierDecl.count, iter->i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) includeGuardIdentifierDecl.count, iter->i, PNSLR_StringLiteral("Include guard identifiers do not match."));
         return false;
     }
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
@@ -284,7 +284,7 @@ b8 ConsumeSkipReflectBlock(utf8str pathRel, FileIterInfo* iter)
     }
 
     // file finished but block didn't end
-    PrintParseError(pathRel, iter->contents, skipReflectStart, skipReflectEnd, PNSLR_STRING_LITERAL("skip reflect block not closed."));
+    PrintParseError(pathRel, iter->contents, skipReflectStart, skipReflectEnd, PNSLR_StringLiteral("skip reflect block not closed."));
     return false;
 }
 
@@ -292,7 +292,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
 {
     i32 enumStart = iter->startOfToken - 1, enumEnd = iter->i;
 
-    ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, CURRENT_LOC(), nil);
+    ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, PNSLR_GET_LOC(), nil);
     if (!enm) FORCE_DBG_TRAP;
 
     enm->header.type = DeclType_Enum;
@@ -313,23 +313,23 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &enumBacking, allocator)) return false;
 
     if (false) { }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u8"),  0)) { enm->size =  8; enm->negative = false; }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u16"), 0)) { enm->size = 16; enm->negative = false; }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u32"), 0)) { enm->size = 32; enm->negative = false; }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("u64"), 0)) { enm->size = 64; enm->negative = false; }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i8"),  0)) { enm->size =  8; enm->negative = true;  }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i16"), 0)) { enm->size = 16; enm->negative = true;  }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i32"), 0)) { enm->size = 32; enm->negative = true;  }
-    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_STRING_LITERAL("i64"), 0)) { enm->size = 64; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("u8"),  0)) { enm->size =  8; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("u16"), 0)) { enm->size = 16; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("u32"), 0)) { enm->size = 32; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("u64"), 0)) { enm->size = 64; enm->negative = false; }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("i8"),  0)) { enm->size =  8; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("i16"), 0)) { enm->size = 16; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("i32"), 0)) { enm->size = 32; enm->negative = true;  }
+    else if (PNSLR_AreStringsEqual(enumBacking, PNSLR_StringLiteral("i64"), 0)) { enm->size = 64; enm->negative = true;  }
     else
     {
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) enumBacking.count, iter->i, PNSLR_STRING_LITERAL("Invalid enum backing type."));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) enumBacking.count, iter->i, PNSLR_StringLiteral("Invalid enum backing type."));
         return false;
     }
 
     if (isFlags && enm->negative)
     {
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) enumBacking.count, iter->i, PNSLR_STRING_LITERAL("Negative flags enums are not allowed."));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) enumBacking.count, iter->i, PNSLR_StringLiteral("Negative flags enums are not allowed."));
         return false;
     }
 
@@ -351,7 +351,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
         );
         if (!rec) return false;
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_END"), 0)) // end
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("ENUM_END"), 0)) // end
         {
             return true;
         }
@@ -361,7 +361,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_PreprocessorDefine, nil, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
 
-            ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, CURRENT_LOC(), nil);
+            ParsedEnumVariant* var = PNSLR_New(ParsedEnumVariant, allocator, PNSLR_GET_LOC(), nil);
             if (!var) FORCE_DBG_TRAP;
 
             if (cachedLasts->lastVariant) cachedLasts->lastVariant->next = var;
@@ -373,7 +373,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &(var->name), allocator)) return false;
             if (!PNSLR_StringStartsWith(var->name, enm->header.name, 0))
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) var->name.count, iter->i, PNSLR_STRING_LITERAL("Enum variant name does not start with enum name as prefix."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) var->name.count, iter->i, PNSLR_StringLiteral("Enum variant name does not start with enum name as prefix."));
                 return false;
             }
 
@@ -384,7 +384,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &nameMatch, allocator)) return false;
             if (!PNSLR_AreStringsEqual(nameMatch, enm->header.name, 0))
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameMatch.count, iter->i, PNSLR_STRING_LITERAL("Enum variant cast does not match enum name."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameMatch.count, iter->i, PNSLR_StringLiteral("Enum variant cast does not match enum name."));
                 return false;
             }
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
@@ -396,7 +396,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &mustBe1, allocator)) return false;
                 if (mustBe1.count != 1 || !mustBe1.data)
                 {
-                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBe1.count, iter->i, PNSLR_STRING_LITERAL("Expected '1' or '0' for flags enum variant."));
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBe1.count, iter->i, PNSLR_StringLiteral("Expected '1' or '0' for flags enum variant."));
                     return false;
                 }
 
@@ -415,15 +415,15 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
                 }
                 else
                 {
-                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBe1.count, iter->i, PNSLR_STRING_LITERAL("Expected '1' or '0' for flags enum variant."));
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBe1.count, iter->i, PNSLR_StringLiteral("Expected '1' or '0' for flags enum variant."));
                     return false;
                 }
 
                 utf8str mustBeULL = {0};
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier, &mustBeULL, allocator)) return false;
-                if (!PNSLR_AreStringsEqual(mustBeULL, PNSLR_STRING_LITERAL("ULL"), 0))
+                if (!PNSLR_AreStringsEqual(mustBeULL, PNSLR_StringLiteral("ULL"), 0))
                 {
-                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBeULL.count, iter->i, PNSLR_STRING_LITERAL("Expected 'ULL' suffix for flags enum variant."));
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) mustBeULL.count, iter->i, PNSLR_StringLiteral("Expected 'ULL' suffix for flags enum variant."));
                 }
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Spaces, nil, allocator)) return false;
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolLeftShift, nil, allocator)) return false;
@@ -448,11 +448,11 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             continue;
         }
 
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_StringLiteral("unexpected token"));
         return false;
     }
 
-    PrintParseError(pathRel, iter->contents, enumStart, enumEnd, PNSLR_STRING_LITERAL("Incomplete enum declaration."));
+    PrintParseError(pathRel, iter->contents, enumStart, enumEnd, PNSLR_StringLiteral("Incomplete enum declaration."));
     return false;
 }
 
@@ -460,7 +460,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 {
     i32 structStart = iter->startOfToken - 1, structEnd = iter->i;
 
-    ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, CURRENT_LOC(), nil);
+    ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, PNSLR_GET_LOC(), nil);
     if (!strct) FORCE_DBG_TRAP;
 
     strct->header.type = DeclType_Struct;
@@ -473,12 +473,12 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
     cachedLasts->lastDecl                                          = &(strct->header);
 
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_Identifier, &(strct->header.name), allocator)) return false;
-    if (PNSLR_AreStringsEqual(strct->header.name, PNSLR_STRING_LITERAL("alignas"), 0))
+    if (PNSLR_AreStringsEqual(strct->header.name, PNSLR_StringLiteral("alignas"), 0))
     {
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesOpen, nil, allocator)) return false;
         utf8str alignasVal = {0};
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_Identifier | TknTy_Integer, &alignasVal, allocator)) return false;
-        if (PNSLR_AreStringsEqual(alignasVal, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
+        if (PNSLR_AreStringsEqual(alignasVal, PNSLR_StringLiteral("PNSLR_PTR_SIZE"), 0))
         {
             strct->alignasVal = sizeof(rawptr);
         }
@@ -487,7 +487,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
             strct->alignasVal = (i32) strtoull(PNSLR_CStringFromString(alignasVal, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
             if (!strct->alignasVal)
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) alignasVal.count, iter->i, PNSLR_STRING_LITERAL("Invalid alignas value."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) alignasVal.count, iter->i, PNSLR_StringLiteral("Invalid alignas value."));
                 return false;
             }
         }
@@ -518,7 +518,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_Identifier, &nameCheck, allocator)) return false;
             if (!PNSLR_AreStringsEqual(nameCheck, strct->header.name, 0))
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameCheck.count, iter->i, PNSLR_STRING_LITERAL("Struct name does not match."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) nameCheck.count, iter->i, PNSLR_StringLiteral("Struct name does not match."));
                 return false;
             }
 
@@ -529,7 +529,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 
         if (rec == TknTy_Identifier)
         {
-            ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, CURRENT_LOC(), nil);
+            ParsedStructMember* mem = PNSLR_New(ParsedStructMember, allocator, PNSLR_GET_LOC(), nil);
             if (!mem) FORCE_DBG_TRAP;
 
             mem->arrSize = -1;
@@ -540,7 +540,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
 
             if (!ProcessIdentifierAsTypeName(content, pathRel, iter, tokenStr, &(mem->ty), allocator))
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_STRING_LITERAL("Invalid type name."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_StringLiteral("Invalid type name."));
                 return false;
             }
 
@@ -560,9 +560,9 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
                 {
                     utf8str secondPart = {0};
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Identifier, &secondPart, allocator)) return false;
-                    if (!PNSLR_AreStringsEqual(secondPart, PNSLR_STRING_LITERAL("PNSLR_PTR_SIZE"), 0))
+                    if (!PNSLR_AreStringsEqual(secondPart, PNSLR_StringLiteral("PNSLR_PTR_SIZE"), 0))
                     {
-                        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) secondPart.count, iter->i, PNSLR_STRING_LITERAL("invalid multiplication syntax type thing"));
+                        PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) secondPart.count, iter->i, PNSLR_StringLiteral("invalid multiplication syntax type thing"));
                         return false;
                     }
 
@@ -576,7 +576,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
         }
     }
 
-    PrintParseError(pathRel, iter->contents, structStart, structEnd, PNSLR_STRING_LITERAL("Incomplete struct declaration."));
+    PrintParseError(pathRel, iter->contents, structStart, structEnd, PNSLR_StringLiteral("Incomplete struct declaration."));
     return false;
 }
 
@@ -584,7 +584,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 {
     i32 fnStart = iter->startOfToken - 1, fnEnd = iter->i;
 
-    ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, CURRENT_LOC(), nil);
+    ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, PNSLR_GET_LOC(), nil);
     if (!fn) FORCE_DBG_TRAP;
 
     fn->header.type = DeclType_Function;
@@ -622,7 +622,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
         {
             if (fn->args != nil) // there has been an arg before
             {
-                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("there are already actual args, void not expected here."));
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_StringLiteral("there are already actual args, void not expected here."));
                 return false;
             }
 
@@ -630,7 +630,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
         }
         else // is an actual arg and not just `void`
         {
-            ParsedFnArg* arg = PNSLR_New(ParsedFnArg, allocator, CURRENT_LOC(), nil);
+            ParsedFnArg* arg = PNSLR_New(ParsedFnArg, allocator, PNSLR_GET_LOC(), nil);
             if (!arg) FORCE_DBG_TRAP;
 
             arg->ty = tyIdx;
@@ -662,7 +662,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
         FORCE_DBG_TRAP; // shoulddn't reach
     }
 
-    PrintParseError(pathRel, iter->contents, fnStart, fnEnd, PNSLR_STRING_LITERAL("Incomplete fn declaration."));
+    PrintParseError(pathRel, iter->contents, fnStart, fnEnd, PNSLR_StringLiteral("Incomplete fn declaration."));
     return false;
 }
 
@@ -701,9 +701,9 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
 
         if (rec == TknTy_LineEndComment)
         {
-            if (tokenStr.count == 84 && PNSLR_StringEndsWith(tokenStr, PNSLR_STRING_LITERAL("======="), 0))
+            if (tokenStr.count == 84 && PNSLR_StringEndsWith(tokenStr, PNSLR_StringLiteral("======="), 0))
             {
-                ParsedSection* sec = PNSLR_New(ParsedSection, allocator, CURRENT_LOC(), nil);
+                ParsedSection* sec = PNSLR_New(ParsedSection, allocator, PNSLR_GET_LOC(), nil);
                 if (!sec) FORCE_DBG_TRAP;
 
                 i64 firstSpaceIdx = tokenStr.count - 1;
@@ -731,9 +731,9 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("PNSLR_DECLARE_ARRAY_SLICE"), 0)) // slice
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("PNSLR_DECLARE_ARRAY_SLICE"), 0)) // slice
         {
-            ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, CURRENT_LOC(), nil);
+            ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, PNSLR_GET_LOC(), nil);
             if (!arr) FORCE_DBG_TRAP;
 
             arr->header.type = DeclType_Array;
@@ -757,7 +757,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_START"), 0)) // enum
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("ENUM_START"), 0)) // enum
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, false, allocator)) return false;
 
@@ -765,7 +765,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("ENUM_FLAGS_START"), 0)) // enum flags
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("ENUM_FLAGS_START"), 0)) // enum flags
         {
             if (!ConsumeEnumDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, true, allocator)) return false;
 
@@ -773,14 +773,14 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("typedef"), 0)) // delegate or struct or type alias
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_StringLiteral("typedef"), 0)) // delegate or struct or type alias
         {
             utf8str nextToken = {0};
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_Identifier, &nextToken, allocator))
                 return false;
 
             u32 delRetTyIdx = U32_MAX;
-            if (PNSLR_AreStringsEqual(nextToken, PNSLR_STRING_LITERAL("struct"), 0)) // struct
+            if (PNSLR_AreStringsEqual(nextToken, PNSLR_StringLiteral("struct"), 0)) // struct
             {
                 if (!ConsumeStructDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, allocator)) return false;
 
@@ -792,11 +792,11 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 utf8str nextTokenAfterTypedef = {0};
                 if (!PeekNextToken(iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, &nextTokenAfterTypedef))
                 {
-                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("not expecting EOF"));
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_StringLiteral("not expecting EOF"));
                     return false;
                 }
 
-                if (PNSLR_AreStringsEqual(nextTokenAfterTypedef, PNSLR_STRING_LITERAL("("), 0)) // delegate
+                if (PNSLR_AreStringsEqual(nextTokenAfterTypedef, PNSLR_StringLiteral("("), 0)) // delegate
                 {
                     if (!ConsumeFnDeclBlock(parsedContent, cachedLasts, pathRel, iter, &lastDoc, delRetTyIdx, true, allocator)) return false;
 
@@ -805,7 +805,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 }
                 else // type alias
                 {
-                    ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, CURRENT_LOC(), nil);
+                    ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, PNSLR_GET_LOC(), nil);
                     if (!tyAl) FORCE_DBG_TRAP;
 
                     tyAl->header.type = DeclType_TyAlias;
@@ -826,7 +826,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 }
             }
 
-            PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+            PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_StringLiteral("unexpected token"));
             return false;
         }
 
@@ -839,24 +839,24 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_STRING_LITERAL("unexpected token"));
+        PrintParseError(pathRel, iter->contents, iter->startOfToken - 1, iter->i, PNSLR_StringLiteral("unexpected token"));
         return false;
     }
 
     // file finished but block didn't end
-    PrintParseError(pathRel, iter->contents, externCStart, externCEnd, PNSLR_STRING_LITERAL("extern c block not closed."));
+    PrintParseError(pathRel, iter->contents, externCStart, externCEnd, PNSLR_StringLiteral("extern c block not closed."));
     return false;
 }
 
 b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
-    ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, CURRENT_LOC(), nil);
+    ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, PNSLR_GET_LOC(), nil);
     if (!file) FORCE_DBG_TRAP;
 
     // gather file name
     {
-        i32 lastIdxOfSlash = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("/"), 0);
-        i32 lastIdxOfDot   = PNSLR_SearchLastIndexInString(pathRel, PNSLR_STRING_LITERAL("."), 0);
+        i32 lastIdxOfSlash = PNSLR_SearchLastIndexInString(pathRel, PNSLR_StringLiteral("/"), 0);
+        i32 lastIdxOfDot   = PNSLR_SearchLastIndexInString(pathRel, PNSLR_StringLiteral("."), 0);
         if (lastIdxOfDot < 0) lastIdxOfDot = (i32) pathRel.count;
         file->name = (utf8str) {.data = pathRel.data + lastIdxOfSlash + 1, .count = (i64) (lastIdxOfDot - lastIdxOfSlash - 1)};
     }
@@ -926,14 +926,14 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str p
                 i64 expectedLength = (84 - (((i64) sizeof("#endif") - 1) + 1 /*space*/));
                 if (endComment.count != expectedLength)
                 {
-                    PrintParseError(pathRel, iter.contents, iter.startOfToken - (i32) endComment.count, iter.i, PNSLR_STRING_LITERAL("End comment does not match expected length."));
+                    PrintParseError(pathRel, iter.contents, iter.startOfToken - (i32) endComment.count, iter.i, PNSLR_StringLiteral("End comment does not match expected length."));
                     return false;
                 }
 
                 utf8str endCommentIncludeGuardIdentifierPart = (utf8str){.data = endComment.data + 3, .count = endComment.count - 3};
                 if (!PNSLR_StringStartsWith(endCommentIncludeGuardIdentifierPart, includeGuardIdentifier, 0))
                 {
-                    PrintParseError(pathRel, iter.contents, iter.startOfToken - (i32) endCommentIncludeGuardIdentifierPart.count, iter.i, PNSLR_STRING_LITERAL("Include guard identifiers do not match."));
+                    PrintParseError(pathRel, iter.contents, iter.startOfToken - (i32) endCommentIncludeGuardIdentifierPart.count, iter.i, PNSLR_StringLiteral("Include guard identifiers do not match."));
                     return false;
                 }
             }

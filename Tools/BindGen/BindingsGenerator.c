@@ -25,15 +25,15 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
         utf8str executableName = {0};
 
         #if PNSLR_WINDOWS
-            executableName = PNSLR_STRING_LITERAL("Binaries\\BindingsGenerator-windows-x64.exe");
+            executableName = PNSLR_StringLiteral("Binaries\\BindingsGenerator-windows-x64.exe");
         #elif PNSLR_LINUX && PNSLR_X64
-            executableName = PNSLR_STRING_LITERAL("Binaries/BindingsGenerator-linux-x64");
+            executableName = PNSLR_StringLiteral("Binaries/BindingsGenerator-linux-x64");
         #elif PNSLR_LINUX && PNSLR_ARM64
-            executableName = PNSLR_STRING_LITERAL("Binaries/BindingsGenerator-linux-arm64");
+            executableName = PNSLR_StringLiteral("Binaries/BindingsGenerator-linux-arm64");
         #elif PNSLR_OSX && PNSLR_X64
-            executableName = PNSLR_STRING_LITERAL("Binaries/BindingsGenerator-osx-x64");
+            executableName = PNSLR_StringLiteral("Binaries/BindingsGenerator-osx-x64");
         #elif PNSLR_OSX && PNSLR_ARM64
-            executableName = PNSLR_STRING_LITERAL("Binaries/BindingsGenerator-osx-arm64");
+            executableName = PNSLR_StringLiteral("Binaries/BindingsGenerator-osx-arm64");
         #else
             #error "Unsupported desktop platform."
         #endif
@@ -53,12 +53,12 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
     // initialise global main thread allocator
     PNSLR_Allocator appArena = {0};
     {
-        appArena = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 16 * 1024 * 1024 /* 16 MiB */, CURRENT_LOC(), nil);
+        appArena = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 16 * 1024 * 1024 /* 16 MiB */, PNSLR_GET_LOC(), nil);
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
-    PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
-    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_STRING_LITERAL(".h"), appArena);
+    PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
+    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
 
     PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 
@@ -83,12 +83,12 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
     if (parsingSuccessful) // TODO: make this multithreaded
     {
         // create main bindings dir
-        PNSLR_Path bindingsDir = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Bindings"), appArena);
+        PNSLR_Path bindingsDir = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Bindings"), appArena);
         if (!PNSLR_PathExists(bindingsDir, PNSLR_PathExistsCheckType_Directory)) { PNSLR_CreateDirectoryTree(bindingsDir); }
 
-        RunGenerator(GenerateCBindings,   bindingsDir, PNSLR_STRING_LITERAL("C"),    &parsedStuff, appArena);
-        RunGenerator(GenerateCxxBindings, bindingsDir, PNSLR_STRING_LITERAL("Cxx"),  &parsedStuff, appArena);
-        RunGenerator(GenerateOdnBindings, bindingsDir, PNSLR_STRING_LITERAL("Odin"), &parsedStuff, appArena);
+        RunGenerator(GenerateCBindings,   bindingsDir, PNSLR_StringLiteral("C"),    &parsedStuff, appArena);
+        RunGenerator(GenerateCxxBindings, bindingsDir, PNSLR_StringLiteral("Cxx"),  &parsedStuff, appArena);
+        RunGenerator(GenerateOdnBindings, bindingsDir, PNSLR_StringLiteral("Odin"), &parsedStuff, appArena);
     }
 
     PNSLR_ArenaAllocatorPayload* pl = (PNSLR_ArenaAllocatorPayload*) appArena.data;
@@ -97,7 +97,7 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
 
 i32 main(i32 argc, cstring* argv)
 {
-    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
     for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
     BindGenMain(args);
     return 0;

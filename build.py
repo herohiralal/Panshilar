@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
             i: int = 0
             for test in tests:
-                outputFile.write(f'    fns.data[{i}].name = PNSLR_STRING_LITERAL("{test}");\n')
+                outputFile.write(f'    fns.data[{i}].name = PNSLR_StringLiteral("{test}");\n')
                 outputFile.write(f'    fns.data[{i}].fn   = ZZZZ_Test_{test};\n\n')
                 i += 1
 

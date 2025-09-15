@@ -64,11 +64,11 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
 
 //+skipreflect
 #ifdef __cplusplus
-    #define PNSLR_STRING_LITERAL(str) \
+    #define PNSLR_StringLiteral(str) \
         utf8str {(u8*) str, sizeof(str) - 1}
 #else
     // Create a utf8str from a string literal.
-    #define PNSLR_STRING_LITERAL(str) \
+    #define PNSLR_StringLiteral(str) \
         (utf8str) {.count = sizeof(str) - 1, .data = (u8*) str}
 #endif
 //-skipreflect

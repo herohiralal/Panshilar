@@ -9,7 +9,7 @@ EXTERN_C_BEGIN
 typedef struct PNSLR_SourceCodeLocation
 {
     /*
-    KEEP THE FUCKING ORDER IN SYNC WITH `CURRENT_LOC()` MACRO
+    KEEP THE FUCKING ORDER IN SYNC WITH `PNSLR_GET_LOC()` MACRO
     */
 
     utf8str file;     // File name
@@ -25,12 +25,12 @@ typedef struct PNSLR_SourceCodeLocation
     /**
      * Get the current source code location.
      */
-    #define CURRENT_LOC() PNSLR_SourceCodeLocation \
+    #define PNSLR_GET_LOC() PNSLR_SourceCodeLocation \
     { \
-        PNSLR_STRING_LITERAL(__FILE__), \
+        PNSLR_StringLiteral(__FILE__), \
         __LINE__, \
         0, /* not available but might get forwarded from somewhere */ \
-        PNSLR_STRING_LITERAL(__FUNCTION__) \
+        PNSLR_StringLiteral(__FUNCTION__) \
     }
 
 #else
@@ -38,12 +38,12 @@ typedef struct PNSLR_SourceCodeLocation
     /**
      * Get the current source code location.
      */
-    #define CURRENT_LOC() (PNSLR_SourceCodeLocation) \
+    #define PNSLR_GET_LOC() (PNSLR_SourceCodeLocation) \
     { \
-        .file     = PNSLR_STRING_LITERAL(__FILE__), \
+        .file     = PNSLR_StringLiteral(__FILE__), \
         .line     = __LINE__, \
         .column   = 0, /* not available but might get forwarded from somewhere */ \
-        .function = PNSLR_STRING_LITERAL(__FUNCTION__) \
+        .function = PNSLR_StringLiteral(__FUNCTION__) \
     }
 
 #endif

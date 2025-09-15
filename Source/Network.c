@@ -9,7 +9,7 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
     #if PNSLR_WINDOWS
     {
         ULONG outBufLen = 15000;
-        PNSLR_ArraySlice(u8) b = PNSLR_MakeSlice(u8, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(u8) b = PNSLR_MakeSlice(u8, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
 
         while (true)
         {
@@ -25,15 +25,15 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
 
             if (err == ERROR_BUFFER_OVERFLOW)
             {
-                PNSLR_ResizeSlice(u8, &b, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+                PNSLR_ResizeSlice(u8, &b, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
                 continue; // try again with the new size
             }
 
-            PNSLR_FreeSlice(&b, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+            PNSLR_FreeSlice(&b, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
             return false; // some other error
         }
 
-        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
         i64 countTrack = 0;
 
         for (IP_ADAPTER_ADDRESSES_LH* adapter = (IP_ADAPTER_ADDRESSES_LH*) b.data; adapter != nil; adapter = adapter->Next)
@@ -52,8 +52,8 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
                 {
                     case AF_INET:
                     {
-                        ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
-                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
+                        ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, PNSLR_GET_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, PNSLR_GET_LOC(), nil);
                         PNSLR_MemCopy(ipAddr.data, &(((SOCKADDR_IN*) addr)->sin_addr), 4);
                         if (puni->OnLinkPrefixLength <= 32)
                         {
@@ -67,8 +67,8 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
                     }
                     case AF_INET6:
                     {
-                        ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
-                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
+                        ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, PNSLR_GET_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, PNSLR_GET_LOC(), nil);
                         PNSLR_MemCopy(ipAddr.data, &(((SOCKADDR_IN6*) addr)->sin6_addr), 16);
                         if (puni->OnLinkPrefixLength <= 128)
                         {
@@ -91,7 +91,7 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
 
                 if (countTrack >= networksTemp.count)
                 {
-                    PNSLR_ResizeSlice(PNSLR_IPNetwork, &networksTemp, networksTemp.count + 8, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+                    PNSLR_ResizeSlice(PNSLR_IPNetwork, &networksTemp, networksTemp.count + 8, true, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
                 }
 
                 networksTemp.data[countTrack] = (PNSLR_IPNetwork) {.address = ipAddr, .mask = ipMask};
@@ -109,16 +109,16 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
                 {
                     case AF_INET:
                     {
-                        ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
-                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, CURRENT_LOC(), nil);
+                        ipAddr = PNSLR_MakeSlice(u8, 4, false, allocator, PNSLR_GET_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 4, false, allocator, PNSLR_GET_LOC(), nil);
                         PNSLR_MemCopy(ipAddr.data, &(((SOCKADDR_IN*) addr)->sin_addr), 4);
                         *(DWORD*) ipMask.data = 0xFFFFFFFF; // Windows does not provide a mask for anycast addresses, so we set it to all ones
                         break;
                     }
                     case AF_INET6:
                     {
-                        ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
-                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, CURRENT_LOC(), nil);
+                        ipAddr = PNSLR_MakeSlice(u8, 16, false, allocator, PNSLR_GET_LOC(), nil);
+                        ipMask = PNSLR_MakeSlice(u8, 16, false, allocator, PNSLR_GET_LOC(), nil);
                         PNSLR_MemCopy(ipAddr.data, &(((SOCKADDR_IN6*) addr)->sin6_addr), 16);
                         for (i32 i = 0; i < 16; i++) { ipMask.data[i] = 0xFF; } // Windows does not provide a mask for anycast addresses, so we set it to all ones
                         break;
@@ -128,7 +128,7 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
 
                 if (countTrack >= networksTemp.count)
                 {
-                    PNSLR_ResizeSlice(PNSLR_IPNetwork, &networksTemp, networksTemp.count + 8, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+                    PNSLR_ResizeSlice(PNSLR_IPNetwork, &networksTemp, networksTemp.count + 8, true, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
                 }
 
                 networksTemp.data[countTrack] = (PNSLR_IPNetwork) {.address = ipAddr, .mask = ipMask};
@@ -136,11 +136,11 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
             }
         }
 
-        *networks = PNSLR_MakeSlice(PNSLR_IPNetwork, countTrack, false, allocator, CURRENT_LOC(), nil);
+        *networks = PNSLR_MakeSlice(PNSLR_IPNetwork, countTrack, false, allocator, PNSLR_GET_LOC(), nil);
         for (i64 i = 0; i < countTrack; i++) { networks->data[i] = networksTemp.data[i]; }
 
-        PNSLR_FreeSlice(&networksTemp, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
-        PNSLR_FreeSlice(&b, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+        PNSLR_FreeSlice(&networksTemp, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
+        PNSLR_FreeSlice(&b, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
 
         return true;
     }
@@ -149,7 +149,7 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
         struct ifaddrs* ifaddr = nil;
         if (getifaddrs(&ifaddr) != 0) return false;
 
-        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, allocator, CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, allocator, PNSLR_GET_LOC(), nil);
         i64 countTrack = 0;
 
         for (struct ifaddrs* ifa = ifaddr; ifa != nil; ifa = ifa->ifa_next)
@@ -171,7 +171,7 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
                     ipBytes = (const u8*) &ipv4->sin_addr;
 
                     struct sockaddr_in* netmask4 = (struct sockaddr_in*) ifa->ifa_netmask;
-                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, PNSLR_GET_LOC(), nil);
                     PNSLR_MemCopy(ipMask.data, &netmask4->sin_addr, (i32) ipLen);
                     break;
                 }
@@ -182,19 +182,19 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
                     ipBytes = (const u8*) &ipv6->sin6_addr;
 
                     struct sockaddr_in6* netmask6 = (struct sockaddr_in6*) ifa->ifa_netmask;
-                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+                    ipMask = PNSLR_MakeSlice(u8, ipLen, false, allocator, PNSLR_GET_LOC(), nil);
                     PNSLR_MemCopy(ipMask.data, &netmask6->sin6_addr, (i32) ipLen);
                     break;
                 }
                 default: continue;
             }
 
-            ipAddr = PNSLR_MakeSlice(u8, ipLen, false, allocator, CURRENT_LOC(), nil);
+            ipAddr = PNSLR_MakeSlice(u8, ipLen, false, allocator, PNSLR_GET_LOC(), nil);
             PNSLR_MemCopy(ipAddr.data, (rawptr) ipBytes, (i32) ipLen);
 
             if (countTrack >= networksTemp.count)
             {
-                PNSLR_ResizeSlice(PNSLR_IPAddress, &networksTemp, networksTemp.count + 8, true, allocator, CURRENT_LOC(), nil);
+                PNSLR_ResizeSlice(PNSLR_IPAddress, &networksTemp, networksTemp.count + 8, true, allocator, PNSLR_GET_LOC(), nil);
             }
 
             networksTemp.data[countTrack] = (PNSLR_IPNetwork) {.address = ipAddr, .mask = ipMask};
@@ -205,17 +205,17 @@ b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PN
 
         if (countTrack == 0)
         {
-            PNSLR_FreeSlice(&networksTemp, allocator, CURRENT_LOC(), nil);
+            PNSLR_FreeSlice(&networksTemp, allocator, PNSLR_GET_LOC(), nil);
             return true; // no addresses found, but success
         }
 
-        *networks = PNSLR_MakeSlice(PNSLR_IPNetwork, countTrack, false, allocator, CURRENT_LOC(), nil);
+        *networks = PNSLR_MakeSlice(PNSLR_IPNetwork, countTrack, false, allocator, PNSLR_GET_LOC(), nil);
         for (i64 i = 0; i < countTrack; i++)
         {
             (*networks).data[i] = networksTemp.data[i];
         }
 
-        PNSLR_FreeSlice(&networksTemp, allocator, CURRENT_LOC(), nil);
+        PNSLR_FreeSlice(&networksTemp, allocator, PNSLR_GET_LOC(), nil);
         return true;
     }
     #else
