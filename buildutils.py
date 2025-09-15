@@ -210,8 +210,10 @@ def getPlatformArchDefine(plt: Platform) -> str:
 def getCCompiler(plt: Platform) -> str:
     if plt.tgt == 'windows':
         return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'cl.exe')
-    elif plt.tgt == 'linux' or plt.tgt == 'android' :
+    elif plt.tgt == 'linux':
         return os.path.join(plt.toolch, 'bin', 'clang.exe')
+    elif plt.tgt == 'android':
+        return os.path.join(plt.toolch, 'toolchains', 'llvm', 'prebuilt', 'windows-x86_64', 'bin', 'clang.exe')
     elif plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'clang')
     else:
@@ -220,8 +222,10 @@ def getCCompiler(plt: Platform) -> str:
 def getCxxCompiler(plt: Platform) -> str:
     if plt.tgt == 'windows':
         return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'cl.exe')
-    elif plt.tgt == 'linux' or plt.tgt == 'android' :
+    elif plt.tgt == 'linux':
         return os.path.join(plt.toolch, 'bin', 'clang++.exe')
+    elif plt.tgt == 'android':
+        return os.path.join(plt.toolch, 'toolchains', 'llvm', 'prebuilt', 'windows-x86_64', 'bin', 'clang++.exe')
     elif plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'clang++')
     else:
@@ -230,8 +234,10 @@ def getCxxCompiler(plt: Platform) -> str:
 def getStaticLibLinker(plt: Platform) -> str:
     if plt.tgt == 'windows':
         return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'lib.exe')
-    elif plt.tgt == 'linux' or plt.tgt == 'android':
+    elif plt.tgt == 'linux':
         return os.path.join(plt.toolch, 'bin', 'llvm-ar.exe')
+    elif plt.tgt == 'android':
+        return os.path.join(plt.toolch, 'toolchains', 'llvm', 'prebuilt', 'windows-x86_64', 'bin', 'llvm-ar.exe')
     elif plt.tgt == 'osx':
         return os.path.join(TOOLCHAINS.osxTools, 'usr', 'bin', 'libtool')
     elif plt.tgt == 'ios' or plt.tgt == 'iossimulator':
@@ -321,7 +327,11 @@ def getCommonCompilationArgs(
         else:
             raise NotImplementedError(f'Unsupported architecture for Linux: {plt.arch}')
     elif plt.tgt == 'android':
-        output += [f'--sysroot={plt.toolch}\\sysroot\\', '-fPIC']
+        output += [
+            f'--sysroot={plt.toolch}\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\',
+            '-fPIC',
+            f'-I{plt.toolch}\\sources\\android\\native_app_glue\\',
+        ]
         if plt.arch == 'x64':
             output += ['--target=x86_64-none-linux-android28']
         elif plt.arch == 'arm64':
@@ -485,7 +495,10 @@ def setupVsCodeLspStuff():
 
         if plt.tgt == 'android':
             config.defines += ['ANDROID=1', '_FORTIFY_SOURCE=2']
-            config.includePath += [f'{plt.toolch}\\sysroot\\usr\\include'.replace('\\', '/')]
+            config.includePath += [
+                f'{plt.toolch}\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\include'.replace('\\', '/'),
+                f'{plt.toolch}\\sources\\android\\native_app_glue'.replace('\\', '/'),
+            ]
 
         if plt.tgt == 'linux':
             config.includePath += [f'{plt.toolch}\\usr\\include'.replace('\\', '/')]

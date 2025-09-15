@@ -61,7 +61,7 @@ if "!ANDROID_NDK_HOME!" equ "" (
         )
 
         if "!ANDROID_NDK_HOME!" neq "" (
-            set ANDROID_TOOLCHAIN=!ANDROID_NDK_HOME!\toolchains\llvm\prebuilt\windows-x86_64
+            set ANDROID_TOOLCHAIN=!ANDROID_NDK_HOME!
             set ANDROID_TOOLCHAIN_FOUND=1
         )
     )
