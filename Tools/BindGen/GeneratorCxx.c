@@ -145,11 +145,11 @@ cstring G_GenCxxSourceSuffix = ""
 "#endif//__cplusplus\n"
 "";
 
-#define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
-#define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
-#define ARR_STR_LIT(str__) (ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
+#define ARR_FROM_STR(str__) (PNSLR_ArraySlice(u8)){.count = str__.count, .data = str__.data}
+#define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (PNSLR_ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
+#define ARR_STR_LIT(str__) (PNSLR_ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
 
-void WriteCxxTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty, b8 addNamespace)
+void WriteCxxTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, b8 addNamespace)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -202,7 +202,7 @@ void WriteCxxTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty, b
     }
 }
 
-void WriteCTypeNameForCxx(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
+void WriteCTypeNameForCxx(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -253,7 +253,7 @@ void WriteCTypeNameForCxx(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 t
     }
 }
 
-void WriteCxxReinterpretBoilerplate(PNSLR_File f, ArraySlice(DeclTypeInfo) types, u32 ty)
+void WriteCxxReinterpretBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
 {
     PNSLR_WriteToFile(f, ARR_STR_LIT("static_assert(sizeof("));
     WriteCTypeNameForCxx(f, types, ty);
@@ -292,7 +292,7 @@ void WriteCxxReinterpretBoilerplate(PNSLR_File f, ArraySlice(DeclTypeInfo) types
     PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *PNSLR_Bindings_Convert(&x); }\n"));
 }
 
-void WriteCxxMemberParityBoilerplate(PNSLR_File f, ArraySlice(DeclTypeInfo) types, u32 ty, utf8str memberName)
+void WriteCxxMemberParityBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, utf8str memberName)
 {
     PNSLR_WriteToFile(f, ARR_STR_LIT("static_assert(PNSLR_STRUCT_OFFSET("));
     WriteCTypeNameForCxx(f, types, ty);
@@ -337,7 +337,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 FileIterInfo docIter = {.contents = ARR_FROM_STR(decl->doc)};
                 while (DequeueNextLineSpan(&docIter, &lineStart, &lineEnd))
                 {
-                    ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
+                    PNSLR_ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
                     PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
                     PNSLR_WriteToFile(f, lineSlice);
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
@@ -408,7 +408,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         if (var->negative) { PNSLR_WriteToFile(f, ARR_STR_LIT("-")); }
                         char idxPrintBuff[16];
                         i32 idxPrintFilled = snprintf(idxPrintBuff, sizeof(idxPrintBuff), "%llu", var->idx);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
+                        PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(",\n"));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT("    };\n"));
@@ -424,7 +424,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("alignas("));
                         char alignPrintBuff[16];
                         i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
                     }
                     WriteCxxTypeName(f, content->types, strct->header.ty, false);
@@ -440,7 +440,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                             PNSLR_WriteToFile(f, ARR_STR_LIT("["));
                             char arrSizePrintBuff[32];
                             i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
-                            PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
                             PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
                         }
                         PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
@@ -560,7 +560,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("alignas("));
                         char alignPrintBuff[16];
                         i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
                     }
                     WriteCTypeNameForCxx(f, content->types, strct->header.ty);
@@ -576,7 +576,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                             PNSLR_WriteToFile(f, ARR_STR_LIT("["));
                             char arrSizePrintBuff[32];
                             i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
-                            PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
                             PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
                         }
                         PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));

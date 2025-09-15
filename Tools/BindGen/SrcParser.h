@@ -78,7 +78,7 @@ typedef struct
     } u;
 } DeclTypeInfo;
 
-DECLARE_ARRAY_SLICE(DeclTypeInfo);
+PNSLR_DECLARE_ARRAY_SLICE(DeclTypeInfo);
 
 typedef struct ParsedStructMember
 {
@@ -132,9 +132,9 @@ typedef struct ParsedFileContents
 
 typedef struct
 {
-    ArraySlice(DeclTypeInfo) types;
-    i64                      typesCount;
-    ParsedFileContents*      files; // linked list
+    PNSLR_ArraySlice(DeclTypeInfo) types;
+    i64                            typesCount;
+    ParsedFileContents*            files; // linked list
 } ParsedContent;
 
 // some cached 'current' addresses for the linked lists that'll be updated on successful parsing
@@ -149,6 +149,6 @@ typedef struct
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator);
 
-b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator);
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator);
 
 #endif

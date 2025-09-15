@@ -1,15 +1,15 @@
 #define PNSLR_IMPLEMENTATION
 #include "Network.h"
 
-b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Allocator allocator)
+b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Allocator allocator)
 {
     if (!networks) return false;
-    *networks = (ArraySlice(PNSLR_IPNetwork)) {0};
+    *networks = (PNSLR_ArraySlice(PNSLR_IPNetwork)) {0};
 
     #if PNSLR_WINDOWS
     {
         ULONG outBufLen = 15000;
-        ArraySlice(u8) b = PNSLR_MakeSlice(u8, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(u8) b = PNSLR_MakeSlice(u8, outBufLen, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
 
         while (true)
         {
@@ -33,7 +33,7 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
             return false; // some other error
         }
 
-        ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
         i64 countTrack = 0;
 
         for (IP_ADAPTER_ADDRESSES_LH* adapter = (IP_ADAPTER_ADDRESSES_LH*) b.data; adapter != nil; adapter = adapter->Next)
@@ -149,7 +149,7 @@ b8 PNSLR_GetInterfaceIPAddresses(ArraySlice(PNSLR_IPNetwork)* networks, PNSLR_Al
         struct ifaddrs* ifaddr = nil;
         if (getifaddrs(&ifaddr) != 0) return false;
 
-        ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, allocator, CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(PNSLR_IPNetwork) networksTemp = PNSLR_MakeSlice(PNSLR_IPNetwork, 0, true, allocator, CURRENT_LOC(), nil);
         i64 countTrack = 0;
 
         for (struct ifaddrs* ifa = ifaddr; ifa != nil; ifa = ifa->ifa_next)

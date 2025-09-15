@@ -7,7 +7,7 @@ MAIN_TEST_FN(ctx)
     i64 intsCount  = bytesCount / (i64) sizeof(u32);
 
     PNSLR_AllocatorError  err  = PNSLR_AllocatorError_None;
-    ArraySlice(u64) data = PNSLR_MakeSlice(u64, longsCount, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+    PNSLR_ArraySlice(u64) data = PNSLR_MakeSlice(u64, longsCount, true, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
     if (!Assert(err == PNSLR_AllocatorError_None)) return;
     if (!Assert(!!data.data )) return;
     if (!Assert(!!data.count)) return;

@@ -101,10 +101,10 @@ cstring G_GenCSuffix = ""
 "#endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS\n"
 "";
 
-#define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
-#define ARR_STR_LIT(str__) (ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
+#define ARR_FROM_STR(str__) (PNSLR_ArraySlice(u8)){.count = str__.count, .data = str__.data}
+#define ARR_STR_LIT(str__) (PNSLR_ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
 
-void WriteCTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
+void WriteCTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -246,7 +246,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         if (var->negative) { PNSLR_WriteToFile(headerFile, ARR_STR_LIT("-")); }
                         char idxPrintBuff[16];
                         i32 idxPrintFilled = snprintf(idxPrintBuff, sizeof(idxPrintBuff), "%llu", var->idx);
-                        PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
+                        PNSLR_WriteToFile(headerFile, (PNSLR_ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(")\n"));
                     }
                     break;
@@ -261,7 +261,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT("PNSLR_ALIGNAS("));
                         char alignPrintBuff[16];
                         i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
-                        PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(headerFile, (PNSLR_ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(") "));
                     }
                     WriteCTypeName(headerFile, content->types, strct->header.ty);
@@ -279,7 +279,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
                             PNSLR_WriteToFile(headerFile, ARR_STR_LIT("["));
                             char arrSizePrintBuff[32];
                             i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
-                            PNSLR_WriteToFile(headerFile, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(headerFile, (PNSLR_ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
                             PNSLR_WriteToFile(headerFile, ARR_STR_LIT("]"));
                         }
                         PNSLR_WriteToFile(headerFile, ARR_STR_LIT(";\n"));

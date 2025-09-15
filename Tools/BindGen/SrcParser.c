@@ -3,7 +3,7 @@
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
 {
-    ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(DeclTypeInfo) tt = PNSLR_MakeSlice(DeclTypeInfo, 512, false, allocator, CURRENT_LOC(), nil);
     if (!tt.data || !tt.count) FORCE_DBG_TRAP;
 
     i64 cnt = 0;
@@ -69,14 +69,14 @@ u32 AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
     return (u32) idx;
 }
 
-void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 end, utf8str err)
+void PrintParseError(utf8str pathRel, PNSLR_ArraySlice(u8) contents, i32 start, i32 end, utf8str err)
 {
     i32 errLineStart = -1, errLineEnd = -1;
     i32 lineIdx = 0;
     for (i32 j = 0, w = 0; j < start; j += w)
     {
         u32 r;
-        PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
+        PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
         r = rDecoded.rune; w = rDecoded.length;
         if (r == '\n')
         {
@@ -88,7 +88,7 @@ void PrintParseError(utf8str pathRel, ArraySlice(u8) contents, i32 start, i32 en
     for (i32 j = start, w = 0; j < contents.count; j += w)
     {
         u32 r;
-        PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
+        PNSLR_DecodedRune rDecoded = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)) {.data = contents.data + j, .count = contents.count - (i64) j});
         r = rDecoded.rune; w = rDecoded.length;
         if (r == '\n')
         {
@@ -731,7 +731,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             continue;
         }
 
-        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("DECLARE_ARRAY_SLICE"), 0)) // slice
+        if (rec == TknTy_Identifier && PNSLR_AreStringsEqual(tokenStr, PNSLR_STRING_LITERAL("PNSLR_DECLARE_ARRAY_SLICE"), 0)) // slice
         {
             ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, CURRENT_LOC(), nil);
             if (!arr) FORCE_DBG_TRAP;
@@ -848,7 +848,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
     return false;
 }
 
-b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, ArraySlice(u8) contents, PNSLR_Allocator allocator)
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
     ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, CURRENT_LOC(), nil);
     if (!file) FORCE_DBG_TRAP;

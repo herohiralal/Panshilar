@@ -2,9 +2,9 @@
 
 typedef struct
 {
-    PNSLR_Allocator     allocator;
-    ArraySlice(utf8str) paths;
-    u64                 pathsCount;
+    PNSLR_Allocator           allocator;
+    PNSLR_ArraySlice(utf8str) paths;
+    u64                       pathsCount;
 } DirectoryStuffListerForFilePresentTestPayload;
 
 b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 directory, b8* exploreCurrentDirectory)

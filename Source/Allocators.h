@@ -73,7 +73,7 @@ typedef struct PNSLR_Allocator
     rawptr                   data; // Optional data for the allocator function
 } PNSLR_Allocator;
 
-DECLARE_ARRAY_SLICE(PNSLR_Allocator);
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_Allocator);
 
 // Allocation ease-of-use functions ================================================
 
@@ -381,39 +381,42 @@ EXTERN_C_END
 
 #ifdef __cplusplus
 
-    template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+    namespace Panshilar
     {
-        return (T*) PNSLR_Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
-    }
+        template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        {
+            return (T*) PNSLR_Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
+        }
 
-    template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
-    {
-        if (obj) { PNSLR_Free(allocator, obj, loc, err); }
-    }
+        template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        {
+            if (obj) { PNSLR_Free(allocator, obj, loc, err); }
+        }
 
-    template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
-    {
-        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
-        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+        template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        {
+            static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+            static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
 
-        PNSLR_RawArraySlice raw = PNSLR_MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
-        return *reinterpret_cast<ArraySlice<T>*>(&raw);
-    }
+            PNSLR_RawArraySlice raw = PNSLR_MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
+            return *reinterpret_cast<ArraySlice<T>*>(&raw);
+        }
 
-    template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
-    {
-        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
-        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+        template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        {
+            static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+            static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
 
-        if (slice) PNSLR_FreeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), allocator, loc, err);
-    }
+            if (slice) PNSLR_FreeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), allocator, loc, err);
+        }
 
-    template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
-    {
-        static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
-        static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
+        template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        {
+            static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
+            static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
 
-        if (slice) PNSLR_ResizeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
+            if (slice) PNSLR_ResizeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
+        }
     }
 
 #endif
@@ -472,7 +475,7 @@ EXTERN_C_BEGIN
      * Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed.
      */
     #define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
-        (ArraySlice(ty)) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
+        (PNSLR_ArraySlice(ty)) {.raw = PNSLR_MakeRawSlice((i32) sizeof(ty), (i32) alignof(ty), (i64) count, zeroed, allocator, loc, error__)}
 
     /**
      * Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator.

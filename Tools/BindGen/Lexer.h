@@ -5,9 +5,9 @@
 
 typedef struct
 {
-    ArraySlice(u8) contents;
-    i32            i;
-    i32            startOfToken;
+    PNSLR_ArraySlice(u8) contents;
+    i32                  i;
+    i32                  startOfToken;
 } FileIterInfo;
 
 ENUM_START(TknTy, u64)

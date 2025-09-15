@@ -4,12 +4,12 @@
 
 typedef struct
 {
-    utf8str        pathRel;
-    ArraySlice(u8) contents;
+    utf8str              pathRel;
+    PNSLR_ArraySlice(u8) contents;
 } CollectedFile;
 
-DECLARE_ARRAY_SLICE(CollectedFile);
+PNSLR_DECLARE_ARRAY_SLICE(CollectedFile);
 
-ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator);
+PNSLR_ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator);
 
 #endif

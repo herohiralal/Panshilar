@@ -1,7 +1,7 @@
 #include "FilesGather.h"
 #include "Lexer.h"
 
-void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* numCollectedFiles, PNSLR_Path srcDir, utf8str pathRel, PNSLR_Allocator globalAllocator)
+void GatherSourceFilesInternal(PNSLR_ArraySlice(CollectedFile)* collectedFiles, i64* numCollectedFiles, PNSLR_Path srcDir, utf8str pathRel, PNSLR_Allocator globalAllocator)
 {
     b8 collected = false;
     for (i64 i = 0; i < *numCollectedFiles; i++)
@@ -28,7 +28,7 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
         FORCE_DBG_TRAP;
     }
 
-    ArraySlice(u8) contents;
+    PNSLR_ArraySlice(u8) contents;
     if (!PNSLR_ReadAllContentsFromFile(srcFile, &contents, globalAllocator))
     {
         printf("Failed to read source file '%.*s'.\n", (i32) pathRel.count, pathRel.data);
@@ -41,7 +41,7 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
     i32 lineStart = 0, lineEnd = 0;
     while (DequeueNextLineSpan(&iter, &lineStart, &lineEnd))
     {
-        ArraySlice(u8) line = (ArraySlice(u8)) {.data = contents.data + lineStart, .count = lineEnd - lineStart};
+        PNSLR_ArraySlice(u8) line = (PNSLR_ArraySlice(u8)) {.data = contents.data + lineStart, .count = lineEnd - lineStart};
 
         FileIterInfo lineIterInfo = {0};
         lineIterInfo.contents     = line;
@@ -87,9 +87,9 @@ void GatherSourceFilesInternal(ArraySlice(CollectedFile)* collectedFiles, i64* n
     (*numCollectedFiles)++;
 }
 
-ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator)
+PNSLR_ArraySlice(CollectedFile) GatherSourceFiles(PNSLR_Path srcDir, utf8str startingPath, PNSLR_Allocator globalAllocator)
 {
-    ArraySlice(CollectedFile) collectedFiles    = PNSLR_MakeSlice(CollectedFile, 64, true, globalAllocator, CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(CollectedFile) collectedFiles    = PNSLR_MakeSlice(CollectedFile, 64, true, globalAllocator, CURRENT_LOC(), nil);
     i64                       numCollectedFiles = 0;
     GatherSourceFilesInternal(&collectedFiles, &numCollectedFiles, srcDir, startingPath, globalAllocator);
     collectedFiles.count = numCollectedFiles;

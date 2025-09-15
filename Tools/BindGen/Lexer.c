@@ -93,7 +93,7 @@ utf8str GetTokenTypeMaskString(TknTy type, utf8str joiner, PNSLR_Allocator alloc
     return output;
 }
 
-static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask);
+static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask);
 
 b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
 {
@@ -104,7 +104,7 @@ b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
     i32 fileSize = (i32) file->contents.count;
     for (i32 i = file->startOfToken, w = 0; i < fileSize; i += w)
     {
-        PNSLR_DecodedRune decodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - i, .data = file->contents.data + i});
+        PNSLR_DecodedRune decodedRune = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = file->contents.count - i, .data = file->contents.data + i});
         w = decodedRune.length;
 
         b8 isLastRune = ((i + w) == fileSize);
@@ -112,7 +112,7 @@ b8 DequeueNextLineSpan(FileIterInfo* file, i32* outLineStart, i32* outLineEnd)
         u32 r2 = 0;
         if (!isLastRune)
         {
-            PNSLR_DecodedRune nextDecodedRune = PNSLR_DecodeRune((ArraySlice(u8)){.count = file->contents.count - (i + w), .data = file->contents.data + (i + w)});
+            PNSLR_DecodedRune nextDecodedRune = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = file->contents.count - (i + w), .data = file->contents.data + (i + w)});
             r2 = nextDecodedRune.rune;
         }
 
@@ -209,12 +209,12 @@ b8 IterateNextTokenSpan(FileIterInfo* file, b8 moveFwd, TokenIgnoreMask ignoreMa
 #define LEXER_DECODE_RUNE(runeVarName, widthVarName, contents, contentsStart) \
     do \
     { \
-        PNSLR_DecodedRune tempXXX##__LINE__ = PNSLR_DecodeRune((ArraySlice(u8)){.count = contents.count - (i64)(contentsStart), .data = contents.data + contentsStart}); \
+        PNSLR_DecodedRune tempXXX##__LINE__ = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = contents.count - (i64)(contentsStart), .data = contents.data + contentsStart}); \
         runeVarName = tempXXX##__LINE__.rune; \
         widthVarName = tempXXX##__LINE__.length; \
     } while (false); \
 
-static TokenSpanInfo GetCurrentTokenSpanInfo(ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask)
+static TokenSpanInfo GetCurrentTokenSpanInfo(PNSLR_ArraySlice(u8) fileContents, i32 i, i32 startOfToken, TokenIgnoreMask ignoreMask)
 {
     TokenSpanInfo retOut = {0};
 

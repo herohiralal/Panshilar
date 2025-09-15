@@ -264,8 +264,8 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
     utf8str output = {0};
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
 
-    ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, CURRENT_LOC(), nil);
-    i64             numReplacementIndices = 0;
+    PNSLR_ArraySlice(u32) replacementIndices    = PNSLR_MakeSlice(u32, 64, false, internalAllocator, CURRENT_LOC(), nil);
+    i64                   numReplacementIndices = 0;
 
     i64 searchSpaceOffset = 0;
     while (true)
@@ -399,7 +399,7 @@ PNSLR_EncodedRune PNSLR_EncodeRune(u32 c) {
     return result;
 }
 
-PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
+PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice(u8) s) {
     i64 n = s.count;
     PNSLR_DecodedRune result;
 
@@ -485,25 +485,25 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s) {
 #undef PNSLR_LOCB
 #undef PNSLR_HICB
 
-ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator)
+PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator)
 {
     #if PNSLR_WINDOWS
     {
         if (!str.data || !str.count)
         {
-            return (ArraySlice(u16)) {0};
+            return (PNSLR_ArraySlice(u16)) {0};
         }
 
         i32 n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, nil, 0);
-        if (n <= 0) { return (ArraySlice(u16)) {0}; } // conversion failed
+        if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
 
-        ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
+        PNSLR_ArraySlice(u16) output = PNSLR_MakeSlice(u16, (n + 1), false, allocator, CURRENT_LOC(), nil);
 
         i32 n1 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (cstring) str.data, (i32) str.count, (LPWSTR) output.data, (i32) n);
         if (n1 == 0)
         {
             PNSLR_FreeSlice(&output, allocator, CURRENT_LOC(), nil);
-            return (ArraySlice(u16)) {0}; // conversion failed
+            return (PNSLR_ArraySlice(u16)) {0}; // conversion failed
         }
 
         output.data[n] = 0; // null-terminate the UTF-16 string
@@ -518,12 +518,12 @@ ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allo
     }
     #else
     {
-        return (ArraySlice(u16)) {0};
+        return (PNSLR_ArraySlice(u16)) {0};
     }
     #endif
 }
 
-utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator)
+utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_Allocator allocator)
 {
     #if PNSLR_WINDOWS
     {

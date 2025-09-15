@@ -285,12 +285,12 @@ static void DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_S
     }
 }
 
-static ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, u32 minSize, u32 alignment, PNSLR_AllocatorError* error)
+static PNSLR_ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, u32 minSize, u32 alignment, PNSLR_AllocatorError* error)
 {
     if (!block)
     {
         if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
-        return (ArraySlice(u8)) {0};
+        return (PNSLR_ArraySlice(u8)) {0};
     }
 
     u64 alignmentOffset = 0;
@@ -305,22 +305,22 @@ static ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock*
     if (size < minSize || size < alignmentOffset)
     {
         if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
-        return (ArraySlice(u8)) {0};
+        return (PNSLR_ArraySlice(u8)) {0};
     }
 
     u64 toBeUsed = block->used + size;
     if (toBeUsed > block->capacity || toBeUsed < block->used || toBeUsed < size)
     {
         if (error) { *error = PNSLR_AllocatorError_OutOfMemory; }
-        return (ArraySlice(u8)) {0};
+        return (PNSLR_ArraySlice(u8)) {0};
     }
 
-    ArraySlice(u8) output = (ArraySlice(u8)) { .data = ((u8*) block->memory) + block->used + alignmentOffset, .count = (i64) minSize };
+    PNSLR_ArraySlice(u8) output = (PNSLR_ArraySlice(u8)) { .data = ((u8*) block->memory) + block->used + alignmentOffset, .count = (i64) minSize };
     block->used += (u32) size;
     return output;
 }
 
-static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, u32 size, u32 alignment, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* error)
+static PNSLR_ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, u32 size, u32 alignment, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* error)
 {
     u64 needed = AlignU64Forward((u64) size, (u64) alignment);
     b8 createNewBlock = false;
@@ -348,7 +348,7 @@ static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* da
         if (err2 != PNSLR_AllocatorError_None)
         {
             if (error) { *error = err2; }
-            return (ArraySlice(u8)) {0};
+            return (PNSLR_ArraySlice(u8)) {0};
         }
 
         newBlock->previous = data->currentBlock;
@@ -357,7 +357,7 @@ static ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* da
     }
 
     u32 previousUsed = data->currentBlock->used;
-    ArraySlice(u8) output = AllocateFromArenaAllocatorBlock(data->currentBlock, (u32) size, (u32) alignment, error);
+    PNSLR_ArraySlice(u8) output = AllocateFromArenaAllocatorBlock(data->currentBlock, (u32) size, (u32) alignment, error);
     data->totalUsed += data->currentBlock->used - previousUsed;
     return output;
 }

@@ -14,7 +14,7 @@ PNSLR_UNSUPPRESS_WARN
 #include "SrcParser.h"
 #include "Generator.h"
 
-void BindGenMain(ArraySlice(utf8str) args)
+void BindGenMain(PNSLR_ArraySlice(utf8str) args)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -60,7 +60,7 @@ void BindGenMain(ArraySlice(utf8str) args)
     PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_STRING_LITERAL("Source"), appArena);
     utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_STRING_LITERAL(".h"), appArena);
 
-    ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
+    PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 
     b8 parsingSuccessful = true;
     ParsedContent parsedStuff = {0};
@@ -97,7 +97,7 @@ void BindGenMain(ArraySlice(utf8str) args)
 
 i32 main(i32 argc, cstring* argv)
 {
-    ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
+    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nil);
     for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
     BindGenMain(args);
     return 0;

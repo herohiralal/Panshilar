@@ -5,30 +5,33 @@
 #include "Macros.h"
 
 //+skipreflect
-#define ArraySlice(ty) ArraySlice_##ty
+#define PNSLR_ArraySlice(ty) PNSLR_ArraySlice_##ty
 
 #ifdef __cplusplus
 
     template <typename T> struct ArraySlice { T* data; i64 count; };
 
-    #define DECLARE_ARRAY_SLICE(ty) \
-        typedef struct { ty* data; i64 count; } ArraySlice(ty); \
+    #define PNSLR_DECLARE_ARRAY_SLICE(ty) \
+        typedef struct { ty* data; i64 count; } PNSLR_ArraySlice(ty); \
         EXTERN_C_END \
-        template<> struct ArraySlice<ty> \
+        namespace Panshilar \
         { \
-            ty* data; \
-            i64 count; \
-            ArraySlice<ty>() = default; \
-            ArraySlice<ty>(i64 inCount, ty* inData) : count(inCount), data(inData) { } \
-            ArraySlice<ty>(const ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
-            operator ArraySlice(ty)() const { return {data, count}; } \
-        }; \
+            template<> struct ArraySlice<ty> \
+            { \
+                ty* data; \
+                i64 count; \
+                ArraySlice<ty>() = default; \
+                ArraySlice<ty>(i64 inCount, ty* inData) : count(inCount), data(inData) { } \
+                ArraySlice<ty>(const PNSLR_ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
+                operator PNSLR_ArraySlice(ty)() const { return {data, count}; } \
+            }; \
+        } \
         EXTERN_C_BEGIN
 
 #else
 
-    #define DECLARE_ARRAY_SLICE(ty) \
-        typedef union { struct { ty* data; i64 count; }; PNSLR_RawArraySlice raw; } ArraySlice(ty);
+    #define PNSLR_DECLARE_ARRAY_SLICE(ty) \
+        typedef union { struct { ty* data; i64 count; }; PNSLR_RawArraySlice raw; } PNSLR_ArraySlice(ty);
 
 #endif
 //-skipreflect
@@ -40,24 +43,24 @@ EXTERN_C_BEGIN
  */
 typedef struct PNSLR_RawArraySlice { rawptr data; i64 count; } PNSLR_RawArraySlice;
 
-DECLARE_ARRAY_SLICE(  b8);
-DECLARE_ARRAY_SLICE(  u8);
-DECLARE_ARRAY_SLICE( u16);
-DECLARE_ARRAY_SLICE( u32);
-DECLARE_ARRAY_SLICE( u64);
-DECLARE_ARRAY_SLICE(  i8);
-DECLARE_ARRAY_SLICE( i16);
-DECLARE_ARRAY_SLICE( i32);
-DECLARE_ARRAY_SLICE( i64);
-DECLARE_ARRAY_SLICE( f32);
-DECLARE_ARRAY_SLICE( f64);
-DECLARE_ARRAY_SLICE(char);
+PNSLR_DECLARE_ARRAY_SLICE(  b8);
+PNSLR_DECLARE_ARRAY_SLICE(  u8);
+PNSLR_DECLARE_ARRAY_SLICE( u16);
+PNSLR_DECLARE_ARRAY_SLICE( u32);
+PNSLR_DECLARE_ARRAY_SLICE( u64);
+PNSLR_DECLARE_ARRAY_SLICE(  i8);
+PNSLR_DECLARE_ARRAY_SLICE( i16);
+PNSLR_DECLARE_ARRAY_SLICE( i32);
+PNSLR_DECLARE_ARRAY_SLICE( i64);
+PNSLR_DECLARE_ARRAY_SLICE( f32);
+PNSLR_DECLARE_ARRAY_SLICE( f64);
+PNSLR_DECLARE_ARRAY_SLICE(char);
 
 /**
  * UTF-8 string type, with length info (not necessarily null-terminated).
  */
-typedef ArraySlice(u8) utf8str;
-DECLARE_ARRAY_SLICE(utf8str);
+typedef PNSLR_ArraySlice(u8) utf8str;
+PNSLR_DECLARE_ARRAY_SLICE(utf8str);
 
 //+skipreflect
 #ifdef __cplusplus

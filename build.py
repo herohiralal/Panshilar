@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 outputFile.write('#undef MAIN_TEST_FN\n\n')
 
             outputFile.write(f'u64 ZZZZ_GetTestsCount(void) {{ return {len(tests)}ULL; }}\n\n')
-            outputFile.write('void ZZZZ_GetAllTests(ArraySlice(TestFunctionInfo) fns)\n')
+            outputFile.write('void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)\n')
             outputFile.write('{\n')
 
             i: int = 0

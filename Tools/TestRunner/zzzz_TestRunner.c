@@ -30,11 +30,11 @@ typedef struct
     PNSLR_SourceCodeLocation loc;
 } BufferedMessage;
 
-DECLARE_ARRAY_SLICE(BufferedMessage);
+PNSLR_DECLARE_ARRAY_SLICE(BufferedMessage);
 
-static thread_local ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
-static thread_local u64                         G_NumBufferedMessages        = {0};
-static thread_local PNSLR_Allocator             G_CurrentTestRunnerAllocator = {0};
+static thread_local PNSLR_ArraySlice(BufferedMessage) G_BufferedMessages           = {0};
+static thread_local u64                               G_NumBufferedMessages        = {0};
+static thread_local PNSLR_Allocator                   G_CurrentTestRunnerAllocator = {0};
 
 static inline void BufferMessage(const BufferedMessage* msg)
 {
@@ -81,7 +81,7 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 }
 
 // TODO: make the test runner multi-threaded
-void TestRunnerMain(ArraySlice(utf8str) args)
+void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 {
     setvbuf(stdout, NULL, _IONBF, 0); // disable stdout buffering
 
@@ -126,11 +126,11 @@ void TestRunnerMain(ArraySlice(utf8str) args)
         }
     }
 
-    ArraySlice(TestFunctionInfo) tests = {0};
+    PNSLR_ArraySlice(TestFunctionInfo) tests = {0};
     {
-        u64                          testsCount = ZZZZ_GetTestsCount();
-        PNSLR_AllocatorError         err        = PNSLR_AllocatorError_None;
-        ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
+        u64                                testsCount = ZZZZ_GetTestsCount();
+        PNSLR_AllocatorError               err        = PNSLR_AllocatorError_None;
+        PNSLR_ArraySlice(TestFunctionInfo) tests2     = PNSLR_MakeSlice(TestFunctionInfo, testsCount, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), &err);
 
         tests = tests2;
     }
@@ -211,7 +211,7 @@ void TestRunnerMain(ArraySlice(utf8str) args)
 
 i32 main(i32 argc, char** argv)
 {
-    ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nullptr);
+    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), CURRENT_LOC(), nullptr);
     for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
     TestRunnerMain(args);
     return 0;

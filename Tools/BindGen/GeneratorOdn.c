@@ -24,11 +24,11 @@ cstring G_GenOdnSuffix = ""
 "ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}\n"
 "";
 
-#define ARR_FROM_STR(str__) (ArraySlice(u8)){.count = str__.count, .data = str__.data}
-#define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
-#define ARR_STR_LIT(str__) (ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
+#define ARR_FROM_STR(str__) (PNSLR_ArraySlice(u8)){.count = str__.count, .data = str__.data}
+#define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (PNSLR_ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
+#define ARR_STR_LIT(str__) (PNSLR_ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
 
-void WriteOdnTypeName(PNSLR_File file, ArraySlice(DeclTypeInfo) types, u32 ty)
+void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -178,7 +178,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         if (var->negative) { PNSLR_WriteToFile(f, ARR_STR_LIT("-")); }
                         char idxPrintBuff[16];
                         i32 idxPrintFilled = snprintf(idxPrintBuff, sizeof(idxPrintBuff), "%llu", enm->flags ? (u64) var->flagsOffset : var->idx);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
+                        PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) idxPrintFilled, .data = (u8*) idxPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(",\n"));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT("}\n"));
@@ -195,7 +195,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("#align("));
                         char alignPrintBuff[16];
                         i32 alignPrintFilled = snprintf(alignPrintBuff, sizeof(alignPrintBuff), "%d", strct->alignasVal);
-                        PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
+                        PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" {\n"));
@@ -209,7 +209,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                             PNSLR_WriteToFile(f, ARR_STR_LIT("["));
                             char arrSizePrintBuff[32];
                             i32 arrSizePrintFilled = snprintf(arrSizePrintBuff, sizeof(arrSizePrintBuff), "%lld", member->arrSize);
-                            PNSLR_WriteToFile(f, (ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
+                            PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
                             PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
                         }
                         WriteOdnTypeName(f, content->types, member->ty);
@@ -233,7 +233,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                             FileIterInfo docIter = {.contents = ARR_FROM_STR(decl->doc)};
                             while (DequeueNextLineSpan(&docIter, &lineStart, &lineEnd))
                             {
-                                ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
+                                PNSLR_ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
                                 PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
                                 PNSLR_WriteToFile(f, lineSlice);
                                 PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));

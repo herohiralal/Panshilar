@@ -118,12 +118,12 @@ b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
 /**
  * Reads data from an opened file at the current position.
  */
-b8 PNSLR_ReadFromFile(PNSLR_File handle, ArraySlice(u8) dst);
+b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst);
 
 /**
  * Writes data to an opened file at the current position.
  */
-b8 PNSLR_WriteToFile(PNSLR_File handle, ArraySlice(u8) src);
+b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice(u8) src);
 
 /**
  * Truncates an opened file to a specific size.
@@ -144,12 +144,12 @@ void PNSLR_CloseFileHandle(PNSLR_File handle);
  * Reads a file fully end-to-end and stores in a buffer. Won't work if dst is nil.
  * Provided allocator is used for creating the buffer.
  */
-b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, ArraySlice(u8)* dst, PNSLR_Allocator allocator);
+b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice(u8)* dst, PNSLR_Allocator allocator);
 
 /**
  * Dump a bunch of data into a file. Optionally append it instead of overwriting.
  */
-b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, ArraySlice(u8) src, b8 append);
+b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice(u8) src, b8 append);
 
 /**
  * Copies a file from src to dst. If dst exists, it will be overwritten.

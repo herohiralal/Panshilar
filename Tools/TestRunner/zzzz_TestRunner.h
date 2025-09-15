@@ -12,9 +12,9 @@
 
 typedef struct
 {
-    PNSLR_Path          tgtDir;
-    PNSLR_Allocator     testAllocator;
-    ArraySlice(utf8str) args;
+    PNSLR_Path                tgtDir;
+    PNSLR_Allocator           testAllocator;
+    PNSLR_ArraySlice(utf8str) args;
 } TestContext;
 
 b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation location);
@@ -38,7 +38,7 @@ typedef struct
     TestFunction fn;
 } TestFunctionInfo;
 
-DECLARE_ARRAY_SLICE(TestFunctionInfo);
+PNSLR_DECLARE_ARRAY_SLICE(TestFunctionInfo);
 
 #endif // PNSLR_TEST_RUNNER_H ======================================================
 

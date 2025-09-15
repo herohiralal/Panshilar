@@ -169,7 +169,7 @@ PNSLR_EncodedRune PNSLR_EncodeRune(u32 c);
  * Decodes a UTF-8 byte sequence into a rune and returns the structure containing the rune/length.
  * Returns error rune (U+FFFD) for invalid sequences.
  */
-PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
+PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice(u8) s);
 
 // Windows-specific bs for UTF-16 conversions ======================================
 
@@ -178,14 +178,14 @@ PNSLR_DecodedRune PNSLR_DecodeRune(ArraySlice(u8) s);
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
  */
-ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
+PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
 
 /**
  * Converts a UTF-16 string to a UTF-8 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
  */
-utf8str PNSLR_UTF8FromUTF16WindowsOnly(ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
+utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
 
 EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================

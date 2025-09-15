@@ -91,7 +91,7 @@ b8 IsValidName(utf8str str)
 
     while (pos < str.count)
     {
-        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
         u32 r = decoded.rune;
@@ -134,7 +134,7 @@ b8 IsValidNumber(utf8str str)
 
     while (pos < str.count)
     {
-        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
         u32 r = decoded.rune;
@@ -181,7 +181,7 @@ b8 IsValidHexNumber(utf8str str)
     i64 pos = 0;
     while (pos < str.count)
     {
-        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
+        PNSLR_DecodedRune decoded = PNSLR_DecodeRune((PNSLR_ArraySlice(u8)){.count = str.count - pos, .data = str.data + pos});
         if (decoded.length <= 0) { return false; }
 
         u32 r = decoded.rune;
