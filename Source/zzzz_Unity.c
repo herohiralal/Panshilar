@@ -1,3 +1,6 @@
+#ifndef PNSLR_UNITY_C
+#define PNSLR_UNITY_C
+
 #define PNSLR_IMPLEMENTATION
 #include "__Prelude.h"
 
@@ -13,3 +16,5 @@
 #include "Console.c"
 #include "Process.c"
 #include "Network.c"
+
+#endif//PNSLR_UNITY_C
