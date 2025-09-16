@@ -398,24 +398,22 @@ b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, utf8str* selfNameWithExt
 
 PNSLR_Path PNSLR_GetPathForChildFile(PNSLR_Path dir, utf8str fileNameWithExtension, PNSLR_Allocator allocator)
 {
-    utf8str output = PNSLR_MakeString((dir.path.count + fileNameWithExtension.count + 1), false, allocator, PNSLR_GET_LOC(), nil); // +1 for joining slash
+    utf8str output = PNSLR_MakeString((dir.path.count + fileNameWithExtension.count), false, allocator, PNSLR_GET_LOC(), nil);
     if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
 
     PNSLR_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
-    output.data[dir.path.count] = '/';
-    PNSLR_MemCopy(output.data + dir.path.count + 1, fileNameWithExtension.data, (i32) fileNameWithExtension.count);
+    PNSLR_MemCopy(output.data + dir.path.count, fileNameWithExtension.data, (i32) fileNameWithExtension.count);
 
     return (PNSLR_Path) { .path = output };
 }
 
 PNSLR_Path PNSLR_GetPathForSubdirectory(PNSLR_Path dir, utf8str dirName, PNSLR_Allocator allocator)
 {
-    utf8str output = PNSLR_MakeString((dir.path.count + dirName.count + 2), false, allocator, PNSLR_GET_LOC(), nil); // +1 for joining slash; +1 for trailing slash
+    utf8str output = PNSLR_MakeString((dir.path.count + dirName.count + 1), false, allocator, PNSLR_GET_LOC(), nil); // +1 for trailing slash
     if (!output.data || !output.count) { return (PNSLR_Path) {0}; }
 
     PNSLR_MemCopy(output.data, dir.path.data, (i32) dir.path.count);
-    output.data[dir.path.count] = '/';
-    PNSLR_MemCopy(output.data + dir.path.count + 1, dirName.data, (i32) dirName.count);
+    PNSLR_MemCopy(output.data + dir.path.count, dirName.data, (i32) dirName.count);
     output.data[output.count - 1] = '/';
 
     return (PNSLR_Path) { .path = output };
