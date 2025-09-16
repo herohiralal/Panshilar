@@ -1,7 +1,3 @@
-$$$PACKAGE_NAME
-Intrinsics
-$$$NAMESPACE
-$$$C_CXX_HEADER_PREFIX
 #ifndef PNSLR_INTRINSICS_MAIN_H
 #define PNSLR_INTRINSICS_MAIN_H
 
@@ -26,8 +22,70 @@ typedef double              f64;
 typedef char*               cstring;
 typedef void*               rawptr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-$$$C_CXX_HEADER_SUFFIX
+#if defined(__cplusplus)
+    #define PNSLR_ALIGNAS(x) alignas(x)
+#elif defined(_MSC_VER)
+    #define PNSLR_ALIGNAS(x) __declspec(align(x))
+#elif defined(__clang__) || defined(__GNUC__)
+    #define PNSLR_ALIGNAS(x) __attribute__((aligned(x)))
+#else
+    #error "UNSUPPORTED COMPILER!";
+#endif
+
+// #######################################################################################
+// Collections
+// #######################################################################################
+
+/**
+ * A raw type-unspecific array slice.
+ */
+typedef struct PNSLR_RawArraySlice
+{
+    rawptr data;
+    i64 count;
+} PNSLR_RawArraySlice;
+
+PNSLR_DECLARE_ARRAY_SLICE(b8);
+
+PNSLR_DECLARE_ARRAY_SLICE(u8);
+
+PNSLR_DECLARE_ARRAY_SLICE(u16);
+
+PNSLR_DECLARE_ARRAY_SLICE(u32);
+
+PNSLR_DECLARE_ARRAY_SLICE(u64);
+
+PNSLR_DECLARE_ARRAY_SLICE(i8);
+
+PNSLR_DECLARE_ARRAY_SLICE(i16);
+
+PNSLR_DECLARE_ARRAY_SLICE(i32);
+
+PNSLR_DECLARE_ARRAY_SLICE(i64);
+
+PNSLR_DECLARE_ARRAY_SLICE(f32);
+
+PNSLR_DECLARE_ARRAY_SLICE(f64);
+
+PNSLR_DECLARE_ARRAY_SLICE(char);
+
+/**
+ * UTF-8 string type, with length info (not necessarily null-terminated).
+ */
+typedef PNSLR_ArraySlice(u8) utf8str;
+
+PNSLR_DECLARE_ARRAY_SLICE(utf8str);
+
+#undef PNSLR_ALIGNAS
+
+#ifdef __cplusplus
+} // extern c
+#endif
+
 
 #endif//PNSLR_INTRINSICS_MAIN_H
 
@@ -55,5 +113,3 @@ $$$C_CXX_HEADER_SUFFIX
         #undef static_assert
     #endif
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
-
-$$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END
