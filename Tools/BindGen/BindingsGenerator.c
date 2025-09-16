@@ -13,6 +13,7 @@ PNSLR_UNSUPPRESS_WARN
 #include "FilesGather.h"
 #include "SrcParser.h"
 #include "Generator.h"
+#include "BindMetaParser.h"
 
 void BindGenMain(PNSLR_ArraySlice(utf8str) args)
 {
@@ -59,6 +60,12 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
 
     PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
     utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
+    BindMeta bindMeta = {0};
+    if (!LoadBindMeta(srcDir, &bindMeta, appArena))
+    {
+        printf("No .bindmeta.txt file found in Source directory. Stopping.\n");
+        return;
+    }
 
     PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 
@@ -109,6 +116,7 @@ i32 main(i32 argc, cstring* argv)
 #include "FilesGather.c"
 #include "SrcParser.c"
 #include "Generator.c"
+#include "BindMetaParser.c"
 #include "GeneratorC.c"
 #include "GeneratorCxx.c"
 #include "GeneratorOdn.c"

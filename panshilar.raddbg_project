@@ -1,0 +1,14 @@
+// raddbg 0.9.21 project file
+
+target:
+{
+  executable: "Binaries/BindingsGenerator-windows-x64.exe"
+  working_directory: ""
+  enabled: 0
+}
+target:
+{
+  executable: "Binaries/TestRunner-windows-x64.exe"
+  working_directory: ""
+  enabled: 0
+}

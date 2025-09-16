@@ -1,0 +1,4 @@
+$$$PACKAGE_NAME
+Panshilar
+$$$NAMESPACE
+PNSLR
