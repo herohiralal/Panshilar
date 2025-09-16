@@ -1,4 +1,3 @@
-#define PNSLR_CXX_IMPL
 #ifndef __cplusplus
     #error "Please use the C bindings.";
 #endif
@@ -1421,7 +1420,6 @@ namespace Panshilar
 #endif
 
 #endif//PNSLR_CXX_MAIN_H
-
 #ifdef PNSLR_CXX_IMPL
 
 #if (_MSC_VER)

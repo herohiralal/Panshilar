@@ -1,34 +1,61 @@
 #include "Generator.h"
 #include "Lexer.h"
 
-cstring G_GenOdnPrefix = ""
-"package Panshilar\n"
-"";
-
-cstring G_GenOdnSuffix = ""
-"#assert(size_of(int)  == 8, \" int must be 8 bytes\")\n"
-"#assert(size_of(uint) == 8, \"uint must be 8 bytes\")\n"
-"\n"
-"GET_LOC :: proc(loc := #caller_location) -> SourceCodeLocation {\n"
-"\treturn {file = loc.file_path, line = loc.line, column = loc.column, function = loc.procedure}\n"
-"}\n"
-"\n"
-"New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}\n"
-"\n"
-"Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if obj != nil {Free(allocator, obj, loc, err)}}\n"
-"\n"
-"MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}\n"
-"\n"
-"FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}\n"
-"\n"
-"ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}\n"
-"";
-
 #define ARR_FROM_STR(str__) (PNSLR_ArraySlice(u8)){.count = str__.count, .data = str__.data}
 #define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (PNSLR_ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
 #define ARR_STR_LIT(str__) (PNSLR_ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
 
-void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
+void BeginOdnBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, const BindMeta* meta, PNSLR_Allocator allocator)
+{
+    utf8str pkgName = {0};
+    if (!ResolveMetaKey(meta, PNSLR_StringLiteral("PACKAGE_NAME"), &pkgName))
+    {
+        printf("Error: Missing PACKAGE_NAME in binding meta.\n");
+        FORCE_DBG_TRAP;
+        return;
+    }
+
+    PNSLR_Path pkgPath = PNSLR_GetPathForSubdirectory(tgtDir, pkgName, allocator);
+    PNSLR_CreateDirectoryTree(pkgPath);
+    PNSLR_Path fPath = PNSLR_GetPathForChildFile(pkgPath, PNSLR_ConcatenateStrings(pkgName, PNSLR_StringLiteral(".odin"), allocator), allocator);
+    *f = PNSLR_OpenFileToWrite(fPath, false, false);
+
+    PNSLR_WriteToFile(*f, ARR_STR_LIT("package "));
+    PNSLR_WriteToFile(*f, ARR_FROM_STR(pkgName));
+    PNSLR_WriteToFile(*f, ARR_STR_LIT("\n\n"));
+
+    if (lastPkgName)
+    {
+        if (lastPkgName->data && lastPkgName->count)
+        {
+            PNSLR_WriteToFile(*f, ARR_STR_LIT("import \"../"));
+            PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
+            PNSLR_WriteToFile(*f, ARR_STR_LIT("\"\n\n"));
+        }
+
+        *lastPkgName = pkgName;
+    }
+
+    utf8str pref = {0};
+    if (ResolveMetaKey(meta, PNSLR_StringLiteral("ODN_SRC_PREFIX"), &pref))
+    {
+        PNSLR_WriteToFile(*f, ARR_FROM_STR(pref));
+    }
+}
+
+void EndOdnBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_Allocator allocator)
+{
+    utf8str suff = {0};
+    if (ResolveMetaKey(meta, PNSLR_StringLiteral("ODN_SRC_SUFFIX"), &suff))
+    {
+        PNSLR_WriteToFile(*f, ARR_FROM_STR(suff));
+    }
+
+    PNSLR_CloseFileHandle(*f);
+    *f = (PNSLR_File) {0};
+}
+
+void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, utf8str lastPkgName)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -38,6 +65,7 @@ void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
     {
         case PolymorphicDeclType_None:
         {
+            b8 addNs = false;
             b8 skipPrefix = false;
             utf8str nameStr = declTy.u.name;
             if (false) { }
@@ -57,21 +85,27 @@ void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
             else if (PNSLR_AreStringsEqual(PNSLR_StringLiteral("rawptr"), nameStr, 0)) { }
             else if (PNSLR_AreStringsEqual(PNSLR_StringLiteral("utf8str"), nameStr, 0)) { nameStr = PNSLR_StringLiteral("string"); }
             else if (PNSLR_AreStringsEqual(PNSLR_StringLiteral("char"), nameStr, 0)) { nameStr = PNSLR_StringLiteral("#error"); }
-            else { skipPrefix = true; }
+            else { skipPrefix = true; addNs = true; }
 
-            PNSLR_WriteToFile(file, ARR_FROM_STR_SKIP_PREFIX(nameStr, (skipPrefix ? 6 : 0)));
+            if (addNs && !PNSLR_AreStringsEqual(declTy.pkgName, lastPkgName, 0) && declTy.pkgName.count > 0)
+            {
+                PNSLR_WriteToFile(file, ARR_FROM_STR(declTy.pkgName));
+                PNSLR_WriteToFile(file, ARR_STR_LIT("."));
+            }
+
+            PNSLR_WriteToFile(file, ARR_FROM_STR_SKIP_PREFIX(nameStr, (skipPrefix ? (declTy.namespace.count + 1) : 0)));
             break;
         }
         case PolymorphicDeclType_Slice:
         {
             PNSLR_WriteToFile(file, ARR_STR_LIT("[]"));
-            WriteOdnTypeName(file, types, (u32) declTy.u.polyTgtIdx);
+            WriteOdnTypeName(file, types, (u32) declTy.u.polyTgtIdx, lastPkgName);
             break;
         }
         case PolymorphicDeclType_Ptr:
         {
             PNSLR_WriteToFile(file, ARR_STR_LIT("^"));
-            WriteOdnTypeName(file, types, (u32) declTy.u.polyTgtIdx);
+            WriteOdnTypeName(file, types, (u32) declTy.u.polyTgtIdx, lastPkgName);
             break;
         }
         default: FORCE_DBG_TRAP; break;
@@ -80,14 +114,19 @@ void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
 
 void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
 {
-    PNSLR_Path headerPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_StringLiteral("Panshilar.odin"), allocator);
-    PNSLR_File f = PNSLR_OpenFileToWrite(headerPath, false, false);
+    PNSLR_File f = {0};
+    utf8str lastPkgName = {0};
 
-    utf8str prefixStr = PNSLR_StringFromCString(G_GenOdnPrefix);
-    PNSLR_WriteToFile(f, ARR_FROM_STR(prefixStr));
-
+    BindMeta* bm = nil;
     for (ParsedFileContents* file = content->files; file != nil; file = file->next)
     {
+        if (bm != file->associatedMeta)
+        {
+            if (bm != nil) EndOdnBindMeta(tgtDir, &f, bm, allocator);
+            bm = file->associatedMeta;
+            BeginOdnBindMeta(tgtDir, &f, &lastPkgName, bm, allocator);
+        }
+
         if (file->declarations != nil)
         {
             PNSLR_WriteToFile(f, ARR_STR_LIT("// #######################################################################################\n"));
@@ -123,7 +162,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 {
                     ParsedArrayDecl* arr = (ParsedArrayDecl*) decl;
                     PNSLR_WriteToFile(f, ARR_STR_LIT("// declare "));
-                    WriteOdnTypeName(f, content->types, arr->header.ty);
+                    WriteOdnTypeName(f, content->types, arr->header.ty, lastPkgName);
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
                     break;
                 }
@@ -131,9 +170,9 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 {
                     ParsedTypeAlias* tyAl = (ParsedTypeAlias*) decl;
                     if (PNSLR_AreStringsEqual(PNSLR_StringLiteral("utf8str"), tyAl->header.name, 0)) { PNSLR_WriteToFile(f, ARR_STR_LIT("// ")); }
-                    WriteOdnTypeName(f, content->types, tyAl->header.ty);
+                    WriteOdnTypeName(f, content->types, tyAl->header.ty, lastPkgName);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" :: "));
-                    WriteOdnTypeName(f, content->types, tyAl->tgt);
+                    WriteOdnTypeName(f, content->types, tyAl->tgt, lastPkgName);
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
                     break;
                 }
@@ -154,15 +193,15 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
 
                     if (enm->flags) // kept at the top because the doc is right before this.
                     {
-                        WriteOdnTypeName(f, content->types, enm->header.ty);
+                        WriteOdnTypeName(f, content->types, enm->header.ty, lastPkgName);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" :: distinct bit_set["));
-                        WriteOdnTypeName(f, content->types, enm->header.ty);
+                        WriteOdnTypeName(f, content->types, enm->header.ty, lastPkgName);
                         PNSLR_WriteToFile(f, ARR_STR_LIT("Values; "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(backing));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("]\n\n"));
                     }
 
-                    WriteOdnTypeName(f, content->types, enm->header.ty);
+                    WriteOdnTypeName(f, content->types, enm->header.ty, lastPkgName);
                     if (enm->flags) PNSLR_WriteToFile(f, ARR_STR_LIT("Values"));
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" :: enum "));
                     if (enm->flags) PNSLR_WriteToFile(f, ARR_STR_LIT("u8")); // don't need a larger space for flags container
@@ -188,7 +227,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                 {
                     ParsedStruct* strct = (ParsedStruct*) decl;
 
-                    WriteOdnTypeName(f, content->types, strct->header.ty);
+                    WriteOdnTypeName(f, content->types, strct->header.ty, lastPkgName);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" :: struct "));
                     if (strct->alignasVal != 0)
                     {
@@ -212,7 +251,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                             PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) arrSizePrintFilled, .data = (u8*) arrSizePrintBuff});
                             PNSLR_WriteToFile(f, ARR_STR_LIT("]"));
                         }
-                        WriteOdnTypeName(f, content->types, member->ty);
+                        WriteOdnTypeName(f, content->types, member->ty, lastPkgName);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(",\n"));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT("}\n"));
@@ -241,7 +280,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         }
                         PNSLR_WriteToFile(f, ARR_STR_LIT("\t"));
                     }
-                    if (fn->isDelegate) WriteOdnTypeName(f, content->types, fn->header.ty);
+                    if (fn->isDelegate) WriteOdnTypeName(f, content->types, fn->header.ty, lastPkgName);
                     else                PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(fn->header.name, 6));
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" :: "));
                     if (fn->isDelegate) PNSLR_WriteToFile(f, ARR_STR_LIT("#type "));
@@ -253,7 +292,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("\t"));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
                         PNSLR_WriteToFile(f, ARR_STR_LIT(": "));
-                        WriteOdnTypeName(f, content->types, arg->ty);
+                        WriteOdnTypeName(f, content->types, arg->ty, lastPkgName);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(","));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
                         if (!fn->isDelegate) PNSLR_WriteToFile(f, ARR_STR_LIT("\t"));
@@ -262,7 +301,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     if (fn->retTy)
                     {
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" -> "));
-                        WriteOdnTypeName(f, content->types, fn->retTy);
+                        WriteOdnTypeName(f, content->types, fn->retTy, lastPkgName);
                     }
                     if (!fn->isDelegate) PNSLR_WriteToFile(f, ARR_STR_LIT(" ---"));
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
@@ -278,10 +317,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
         }
     }
 
-    utf8str suffixStr = PNSLR_StringFromCString(G_GenOdnSuffix);
-    PNSLR_WriteToFile(f, ARR_FROM_STR(suffixStr));
-
-    PNSLR_CloseFileHandle(f);
+    if (bm != nil) { EndOdnBindMeta(tgtDir, &f, bm, allocator); }
 }
 
 #undef ARR_STR_LIT

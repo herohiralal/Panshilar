@@ -94,7 +94,20 @@ namespace Panshilar
 
 #endif//PNSLR_CXX_MAIN_H
 
+$$$ODN_SRC_SUFFIX
+#assert(size_of(int)  == 8, " int must be 8 bytes")
+#assert(size_of(uint) == 8, "uint must be 8 bytes")
 
-$$$CXX_SOURCE_PREFIX
-$$$CXX_SOURCE_SUFFIX
+GET_LOC :: proc(loc := #caller_location) -> SourceCodeLocation {return {file = loc.file_path, line = loc.line, column = loc.column, function = loc.procedure}}
+
+New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
+
+Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if obj != nil {Free(allocator, obj, loc, err)}}
+
+MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
+
+FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
+
+ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}
+
 $$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END
