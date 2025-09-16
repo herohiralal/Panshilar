@@ -1,3 +1,4 @@
+#define PNSLR_CXX_IMPL
 #ifndef __cplusplus
     #error "Please use the C bindings.";
 #endif
@@ -9,6 +10,8 @@
 
 namespace Panshilar
 {
+    using namespace Intrinsics;
+
     // #######################################################################################
     // Environment
     // #######################################################################################
@@ -698,7 +701,7 @@ namespace Panshilar
     /**
      * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
      */
-    Intrinsics::RawArraySlice MakeRawSlice(
+    RawArraySlice MakeRawSlice(
         i32 tySize,
         i32 tyAlign,
         i64 count,
@@ -712,7 +715,7 @@ namespace Panshilar
      * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
      */
     void FreeRawSlice(
-        Intrinsics::RawArraySlice* slice,
+        RawArraySlice* slice,
         Allocator allocator,
         SourceCodeLocation location,
         AllocatorError* error
@@ -722,7 +725,7 @@ namespace Panshilar
      * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
      */
     void ResizeRawSlice(
-        Intrinsics::RawArraySlice* slice,
+        RawArraySlice* slice,
         i32 tySize,
         i32 tyAlign,
         i64 newCount,

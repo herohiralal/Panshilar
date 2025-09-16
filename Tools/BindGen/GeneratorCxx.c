@@ -40,13 +40,23 @@ void BeginCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgNa
             PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
             PNSLR_WriteToFile(*f, ARR_STR_LIT(".hpp\"\n\n"));
         }
-
-        *lastPkgName = pkgName;
     }
 
     PNSLR_WriteToFile(*f, ARR_STR_LIT("namespace "));
     PNSLR_WriteToFile(*f, ARR_FROM_STR(pkgName));
     PNSLR_WriteToFile(*f, ARR_STR_LIT("\n{\n"));
+
+    if (lastPkgName)
+    {
+        if (lastPkgName->data && lastPkgName->count)
+        {
+            PNSLR_WriteToFile(*f, ARR_STR_LIT("    using namespace "));
+            PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
+            PNSLR_WriteToFile(*f, ARR_STR_LIT(";\n\n"));
+        }
+
+        *lastPkgName = pkgName;
+    }
 }
 
 void EndCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_Allocator allocator)
@@ -96,8 +106,6 @@ void BeginCxxSourceBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgNa
     {
         PNSLR_WriteToFile(*f, ARR_FROM_STR(sPrefix));
     }
-
-    if (lastPkgName) *lastPkgName = pkgName;
 }
 
 void EndCxxSourceBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_Allocator allocator)
@@ -118,7 +126,7 @@ void EndCxxSourceBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta
     *f = (PNSLR_File) {0};
 }
 
-void WriteCxxTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, b8 addNamespace, utf8str lastPkgName)
+void WriteCxxTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, b8 addNamespace)
 {
     if (ty >= (u32) types.count) FORCE_DBG_TRAP;
 
@@ -128,7 +136,7 @@ void WriteCxxTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
     {
         case PolymorphicDeclType_None:
         {
-            b8 addNsOriginalVal = addNamespace || (!PNSLR_AreStringsEqual(declTy.pkgName, lastPkgName, 0));
+            b8 addNsOriginalVal = addNamespace;
             addNamespace = false; // avoids a bunch of boilerplate in a few lines
 
             b8 skipPrefix = false;
@@ -163,13 +171,13 @@ void WriteCxxTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
         case PolymorphicDeclType_Slice:
         {
             PNSLR_WriteToFile(file, ARR_STR_LIT("ArraySlice<"));
-            WriteCxxTypeName(file, types, (u32) declTy.u.polyTgtIdx, addNamespace, lastPkgName);
+            WriteCxxTypeName(file, types, (u32) declTy.u.polyTgtIdx, addNamespace);
             PNSLR_WriteToFile(file, ARR_STR_LIT(">"));
             break;
         }
         case PolymorphicDeclType_Ptr:
         {
-            WriteCxxTypeName(file, types, (u32) declTy.u.polyTgtIdx, addNamespace, lastPkgName);
+            WriteCxxTypeName(file, types, (u32) declTy.u.polyTgtIdx, addNamespace);
             PNSLR_WriteToFile(file, ARR_STR_LIT("*"));
             break;
         }
@@ -211,53 +219,53 @@ void WriteCTypeNameForCxx(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types,
     }
 }
 
-void WriteCxxReinterpretBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, utf8str lastPkgName)
+void WriteCxxReinterpretBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty)
 {
     PNSLR_WriteToFile(f, ARR_STR_LIT("static_assert(sizeof("));
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT(") == sizeof("));
-    WriteCxxTypeName(f, types, ty, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("), \"size mismatch\");\n"));
 
     PNSLR_WriteToFile(f, ARR_STR_LIT("static_assert(alignof("));
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT(") == alignof("));
-    WriteCxxTypeName(f, types, ty, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("), \"align mismatch\");\n"));
 
     WriteCTypeNameForCxx(f, types, ty + 1);
     PNSLR_WriteToFile(f, ARR_STR_LIT(" PNSLR_Bindings_Convert("));
-    WriteCxxTypeName(f, types, ty + 1, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty + 1, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT(" x) { return reinterpret_cast<"));
     WriteCTypeNameForCxx(f, types, ty + 1);
     PNSLR_WriteToFile(f, ARR_STR_LIT(">(x); }\n"));
 
-    WriteCxxTypeName(f, types, ty + 1, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty + 1, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT(" PNSLR_Bindings_Convert("));
     WriteCTypeNameForCxx(f, types, ty + 1);
     PNSLR_WriteToFile(f, ARR_STR_LIT(" x) { return reinterpret_cast<"));
-    WriteCxxTypeName(f, types, ty + 1, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty + 1, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT(">(x); }\n"));
 
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& PNSLR_Bindings_Convert("));
-    WriteCxxTypeName(f, types, ty, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *PNSLR_Bindings_Convert(&x); }\n"));
 
-    WriteCxxTypeName(f, types, ty, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& PNSLR_Bindings_Convert("));
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT("& x) { return *PNSLR_Bindings_Convert(&x); }\n"));
 }
 
-void WriteCxxMemberParityBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, utf8str memberName, utf8str lastPkgName)
+void WriteCxxMemberParityBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo) types, u32 ty, utf8str memberName)
 {
     PNSLR_WriteToFile(f, ARR_STR_LIT("static_assert(PNSLR_STRUCT_OFFSET("));
     WriteCTypeNameForCxx(f, types, ty);
     PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
     PNSLR_WriteToFile(f, ARR_FROM_STR(memberName));
     PNSLR_WriteToFile(f, ARR_STR_LIT(") == PNSLR_STRUCT_OFFSET("));
-    WriteCxxTypeName(f, types, ty, true, lastPkgName);
+    WriteCxxTypeName(f, types, ty, true);
     PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
     PNSLR_WriteToFile(f, ARR_FROM_STR(memberName));
     PNSLR_WriteToFile(f, ARR_STR_LIT("), \""));
@@ -326,9 +334,9 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     if (PNSLR_AreStringsEqual(tyAl->header.name, PNSLR_StringLiteral("utf8str"), 0))
                         PNSLR_WriteToFile(f, ARR_STR_LIT("// "));
                     PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
-                    WriteCxxTypeName(f, content->types, tyAl->tgt, false, lastPkgName);
+                    WriteCxxTypeName(f, content->types, tyAl->tgt, false);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
-                    WriteCxxTypeName(f, content->types, tyAl->header.ty, false, lastPkgName);
+                    WriteCxxTypeName(f, content->types, tyAl->header.ty, false);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
                     break;
                 }
@@ -348,7 +356,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     }
 
                     PNSLR_WriteToFile(f, ARR_STR_LIT("    enum class "));
-                    WriteCxxTypeName(f, content->types, enm->header.ty, false, lastPkgName);
+                    WriteCxxTypeName(f, content->types, enm->header.ty, false);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" : "));
                     PNSLR_WriteToFile(f, ARR_FROM_STR(backing));
                     if (enm->flags) PNSLR_WriteToFile(f, ARR_STR_LIT(" /* use as flags */"));
@@ -381,12 +389,12 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, (PNSLR_ArraySlice(u8)){.count = (i64) alignPrintFilled, .data = (u8*) alignPrintBuff});
                         PNSLR_WriteToFile(f, ARR_STR_LIT(") "));
                     }
-                    WriteCxxTypeName(f, content->types, strct->header.ty, false, lastPkgName);
+                    WriteCxxTypeName(f, content->types, strct->header.ty, false);
                     PNSLR_WriteToFile(f, ARR_STR_LIT("\n    {\n"));
                     for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
                     {
                         PNSLR_WriteToFile(f, ARR_STR_LIT("       "));
-                        WriteCxxTypeName(f, content->types, member->ty, false, lastPkgName);
+                        WriteCxxTypeName(f, content->types, member->ty, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(member->name));
                         if (member->arrSize > 0)
@@ -410,14 +418,14 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     if (fn->isDelegate)
                     {
                         PNSLR_WriteToFile(f, ARR_STR_LIT("typedef "));
-                        WriteCxxTypeName(f, content->types, fn->retTy, false, lastPkgName);
+                        WriteCxxTypeName(f, content->types, fn->retTy, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" (*"));
-                        WriteCxxTypeName(f, content->types, fn->header.ty, false, lastPkgName);
+                        WriteCxxTypeName(f, content->types, fn->header.ty, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(")"));
                     }
                     else
                     {
-                        WriteCxxTypeName(f, content->types, fn->retTy, false, lastPkgName);
+                        WriteCxxTypeName(f, content->types, fn->retTy, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR_SKIP_PREFIX(fn->header.name, (fn->header.namespace.count + 1)));
                     }
@@ -426,7 +434,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
                     {
                         PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
-                        WriteCxxTypeName(f, content->types, arg->ty, false, lastPkgName);
+                        WriteCxxTypeName(f, content->types, arg->ty, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
                         if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(","));
@@ -470,9 +478,9 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" data; i64 count; } "));
                     WriteCTypeNameForCxx(f, content->types, arr->header.ty);
                     PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
-                    WriteCxxReinterpretBoilerplate(f, content->types, arr->header.ty, lastPkgName);
-                    WriteCxxMemberParityBoilerplate(f, content->types, arr->header.ty, PNSLR_StringLiteral("count"), lastPkgName);
-                    WriteCxxMemberParityBoilerplate(f, content->types, arr->header.ty, PNSLR_StringLiteral("data"), lastPkgName);
+                    WriteCxxReinterpretBoilerplate(f, content->types, arr->header.ty);
+                    WriteCxxMemberParityBoilerplate(f, content->types, arr->header.ty, PNSLR_StringLiteral("count"));
+                    WriteCxxMemberParityBoilerplate(f, content->types, arr->header.ty, PNSLR_StringLiteral("data"));
                     break;
                 }
                 case DeclType_TyAlias:
@@ -505,7 +513,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" : "));
                     PNSLR_WriteToFile(f, ARR_FROM_STR(backing));
                     PNSLR_WriteToFile(f, ARR_STR_LIT(" { };\n"));
-                    WriteCxxReinterpretBoilerplate(f, content->types, enm->header.ty, lastPkgName);
+                    WriteCxxReinterpretBoilerplate(f, content->types, enm->header.ty);
                     break;
                 }
                 case DeclType_Struct:
@@ -540,9 +548,9 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT(";\n"));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT("};\n"));
-                    WriteCxxReinterpretBoilerplate(f, content->types, strct->header.ty, lastPkgName);
+                    WriteCxxReinterpretBoilerplate(f, content->types, strct->header.ty);
                     for (ParsedStructMember* member = strct->members; member != nil; member = member->next)
-                        WriteCxxMemberParityBoilerplate(f, content->types, strct->header.ty, member->name, lastPkgName);
+                        WriteCxxMemberParityBoilerplate(f, content->types, strct->header.ty, member->name);
                     break;
                 }
                 case DeclType_Function:
@@ -572,10 +580,10 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
                     }
                     PNSLR_WriteToFile(f, ARR_STR_LIT(");\n"));
-                    if (fn->isDelegate) WriteCxxReinterpretBoilerplate(f, content->types, fn->header.ty, lastPkgName);
+                    if (fn->isDelegate) WriteCxxReinterpretBoilerplate(f, content->types, fn->header.ty);
                     else
                     {
-                        WriteCxxTypeName(f, content->types, fn->retTy, true, lastPkgName);
+                        WriteCxxTypeName(f, content->types, fn->retTy, true);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(fn->header.pkgName));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("::"));
@@ -583,7 +591,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("("));
                         for (ParsedFnArg* arg = fn->args; arg != nil; arg = arg->next)
                         {
-                            WriteCxxTypeName(f, content->types, arg->ty, true, lastPkgName);
+                            WriteCxxTypeName(f, content->types, arg->ty, true);
                             PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                             PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
                             if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(", "));
@@ -624,4 +632,5 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
 }
 
 #undef ARR_STR_LIT
+#undef ARR_FROM_STR_SKIP_PREFIX
 #undef ARR_FROM_STR
