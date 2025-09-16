@@ -1,16 +1,16 @@
 #define PNSLR_IMPLEMENTATION
 #include "Allocators.h"
 
-static inline u64 AlignU64Forward(u64 value, u64 alignment)
+static inline u64 PNSLR_Internal_AlignU64Forward(u64 value, u64 alignment)
 {
     u64 modulo = value & (alignment - 1);
     if (modulo != 0) { value += (alignment - modulo); }
     return value;
 }
 
-static inline rawptr AlignRawptrForward(rawptr ptr, u64 alignment)
+static inline rawptr PNSLR_Internal_AlignRawptrForward(rawptr ptr, u64 alignment)
 {
-    return (rawptr) AlignU64Forward((u64) ptr, alignment);
+    return (rawptr) PNSLR_Internal_AlignU64Forward((u64) ptr, alignment);
 }
 
 rawptr PNSLR_Allocate(PNSLR_Allocator allocator, b8 zeroed, i32 size, i32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
@@ -249,7 +249,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
     }
 }
 
-static PNSLR_ArenaAllocatorBlock* NewArenaAllocatorBlock(PNSLR_Allocator backingAllocator, u32 capacity, u32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
+static PNSLR_ArenaAllocatorBlock* PNSLR_Internal_NewArenaAllocatorBlock(PNSLR_Allocator backingAllocator, u32 capacity, u32 alignment, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error)
 {
     u32 baseOffset = (alignment > sizeof(PNSLR_ArenaAllocatorBlock) ? alignment : sizeof(PNSLR_ArenaAllocatorBlock));
     u32 totalSize  = capacity + baseOffset;
@@ -277,7 +277,7 @@ static PNSLR_ArenaAllocatorBlock* NewArenaAllocatorBlock(PNSLR_Allocator backing
     return block;
 }
 
-static void DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_SourceCodeLocation location)
+static void PNSLR_Internal_DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_SourceCodeLocation location)
 {
     if (block)
     {
@@ -285,7 +285,7 @@ static void DestroyArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, PNSLR_S
     }
 }
 
-static PNSLR_ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, u32 minSize, u32 alignment, PNSLR_AllocatorError* error)
+static PNSLR_ArraySlice(u8) PNSLR_Internal_AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocatorBlock* block, u32 minSize, u32 alignment, PNSLR_AllocatorError* error)
 {
     if (!block)
     {
@@ -320,9 +320,9 @@ static PNSLR_ArraySlice(u8) AllocateFromArenaAllocatorBlock(PNSLR_ArenaAllocator
     return output;
 }
 
-static PNSLR_ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, u32 size, u32 alignment, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* error)
+static PNSLR_ArraySlice(u8) PNSLR_Internal_AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, u32 size, u32 alignment, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* error)
 {
-    u64 needed = AlignU64Forward((u64) size, (u64) alignment);
+    u64 needed = PNSLR_Internal_AlignU64Forward((u64) size, (u64) alignment);
     b8 createNewBlock = false;
     if (!data->currentBlock)
     {
@@ -344,7 +344,7 @@ static PNSLR_ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPaylo
         u32 blockSize = (data->minimumBlockSize < (u32) needed) ? (u32) needed : data->minimumBlockSize; // pick larger
 
         PNSLR_AllocatorError err2 = PNSLR_AllocatorError_None;
-        PNSLR_ArenaAllocatorBlock* newBlock = NewArenaAllocatorBlock(data->backingAllocator, blockSize, alignment, loc, &err2);
+        PNSLR_ArenaAllocatorBlock* newBlock = PNSLR_Internal_NewArenaAllocatorBlock(data->backingAllocator, blockSize, alignment, loc, &err2);
         if (err2 != PNSLR_AllocatorError_None)
         {
             if (error) { *error = err2; }
@@ -357,12 +357,12 @@ static PNSLR_ArraySlice(u8) AllocateFromArenaAllocator(PNSLR_ArenaAllocatorPaylo
     }
 
     u32 previousUsed = data->currentBlock->used;
-    PNSLR_ArraySlice(u8) output = AllocateFromArenaAllocatorBlock(data->currentBlock, (u32) size, (u32) alignment, error);
+    PNSLR_ArraySlice(u8) output = PNSLR_Internal_AllocateFromArenaAllocatorBlock(data->currentBlock, (u32) size, (u32) alignment, error);
     data->totalUsed += data->currentBlock->used - previousUsed;
     return output;
 }
 
-static void FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_SourceCodeLocation loc)
+static void PNSLR_Internal_FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_SourceCodeLocation loc)
 {
     while (data->currentBlock && data->currentBlock->previous)
     {
@@ -370,7 +370,7 @@ static void FreeAllFromArenaAllocator(PNSLR_ArenaAllocatorPayload* data, PNSLR_S
         data->currentBlock = freeBlock->previous;
 
         data->totalCapacity -= freeBlock->capacity;
-        DestroyArenaAllocatorBlock(freeBlock, loc);
+        PNSLR_Internal_DestroyArenaAllocatorBlock(freeBlock, loc);
     }
 
     if (data->currentBlock != nil)
@@ -395,7 +395,7 @@ PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 p
 
     if (!payload) { return PNSLR_GetAllocator_Nil(); }
 
-    PNSLR_ArenaAllocatorBlock* block = NewArenaAllocatorBlock(backingAllocator, pageSize, 0, location, error);
+    PNSLR_ArenaAllocatorBlock* block = PNSLR_Internal_NewArenaAllocatorBlock(backingAllocator, pageSize, 0, location, error);
     if (!block) { return PNSLR_GetAllocator_Nil(); }
 
     *payload = (PNSLR_ArenaAllocatorPayload)
@@ -428,7 +428,7 @@ void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLoc
         payload->currentBlock = freeBlock->previous;
 
         payload->totalCapacity -= freeBlock->capacity;
-        DestroyArenaAllocatorBlock(freeBlock, location);
+        PNSLR_Internal_DestroyArenaAllocatorBlock(freeBlock, location);
     }
 
     payload->totalUsed = 0;
@@ -462,7 +462,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
         case PNSLR_AllocatorMode_Allocate:
         case PNSLR_AllocatorMode_AllocateNoZero:
         {
-            return AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+            return PNSLR_Internal_AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
         }
         case PNSLR_AllocatorMode_Free:
         {
@@ -471,7 +471,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
         }
         case PNSLR_AllocatorMode_FreeAll:
         {
-            FreeAllFromArenaAllocator(payload, location);
+            PNSLR_Internal_FreeAllFromArenaAllocator(payload, location);
             return nil;
         }
         case PNSLR_AllocatorMode_Resize:
@@ -481,7 +481,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
 
             if (!oldData)
             {
-                return AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+                return PNSLR_Internal_AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
             }
             else if (size == oldSize)
             {
@@ -509,7 +509,7 @@ rawptr PNSLR_AllocatorFn_Arena(rawptr allocatorData, PNSLR_AllocatorMode mode, i
                 }
             }
 
-            rawptr newMemory = AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
+            rawptr newMemory = PNSLR_Internal_AllocateFromArenaAllocator(payload, (u32) size, (u32) alignment, location, error).data;
             if (!newMemory) { return nil; }
             PNSLR_MemCopy(newMemory, oldMemory, oldSize < size ? oldSize : size);
             return newMemory;
@@ -584,7 +584,7 @@ PNSLR_ArenaSnapshotError PNSLR_RestoreArenaAllocatorSnapshot(PNSLR_ArenaAllocato
             snapshot->payload->currentBlock      = tempBlock->previous;
 
             snapshot->payload->totalCapacity -= tempBlock->capacity;
-            DestroyArenaAllocatorBlock(tempBlock, loc);
+            PNSLR_Internal_DestroyArenaAllocatorBlock(tempBlock, loc);
         }
 
         PNSLR_ArenaAllocatorBlock* block = snapshot->payload->currentBlock;

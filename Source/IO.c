@@ -11,7 +11,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
 
 #if PNSLR_WINDOWS
 
-    static i32 GetVolumeLengthFromPathWindowsOnly(utf8str path)
+    static i32 PNSLR_Internal_GetVolumeLengthFromPathWindowsOnly(utf8str path)
     {
         #define IS_SLASH(c) ((c) == '/' || (c) == '\\')
 
@@ -62,7 +62,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
      * When appending, compares stuff to original str.
      * Creates a new buffer only if required.
      */
-    typedef struct LazyPathBuffer
+    typedef struct PNSLR_Internal_LazyPathBuffer
     {
         PNSLR_Allocator      allocator;
         utf8str              originalString;
@@ -70,9 +70,9 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
         i32                  writeIdx;
         utf8str              volAndPath;
         i32                  volumeLength;
-    } LazyPathBuffer;
+    } PNSLR_Internal_LazyPathBuffer;
 
-    static u8 GetIndexFromLazyPathBuffer(LazyPathBuffer* buff, i32 idx)
+    static u8 PNSLR_Internal_GetIdxFromLazyPathBuffer(PNSLR_Internal_LazyPathBuffer* buff, i32 idx)
     {
         if (buff->buffer.data != nil)
         {
@@ -82,7 +82,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
         return buff->originalString.data[idx];
     }
 
-    static b8 AppendToLazyPathBuffer(LazyPathBuffer* buff, u8 c)
+    static b8 PNSLR_Internal_AppendToLazyPathBuffer(PNSLR_Internal_LazyPathBuffer* buff, u8 c)
     {
         if (buff->buffer.data == nil)
         {
@@ -104,7 +104,7 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
         return true;
     }
 
-    static utf8str StringFromLazyPathBuffer(LazyPathBuffer* buff)
+    static utf8str PNSLR_Internal_StringFromLazyPathBuffer(PNSLR_Internal_LazyPathBuffer* buff)
     {
         if (buff->buffer.data == nil)
         {
@@ -123,10 +123,10 @@ PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Paths, 60);
         return z;
     }
 
-    static void DisposeLazyPathBuffer(LazyPathBuffer* buff)
+    static void PNSLR_Internal_DisposeLazyPathBuffer(PNSLR_Internal_LazyPathBuffer* buff)
     {
         PNSLR_FreeSlice(&(buff->buffer), buff->allocator, PNSLR_GET_LOC(), nil);
-        *buff = (LazyPathBuffer) {0}; // reset the buffer
+        *buff = (PNSLR_Internal_LazyPathBuffer) {0}; // reset the buffer
     }
 
 #endif // PNSLR_WINDOWS
@@ -135,11 +135,11 @@ typedef struct
 {
     PNSLR_Allocator        allocator;
     b8                     failedAtSomething;
-} DeleteAllContentsWhileIteratingDirectoryPayload;
+} PNSLR_Internal_DeleteAllContentsWhileIteratingDirectoryPayload;
 
-static b8 DeleteAllContentsWhileIteratingDirectory(rawptr payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
+static b8 PNSLR_Internal_DeleteAllContentsWhileIteratingDirectory(rawptr payload, PNSLR_Path path, b8 isDirectory, b8* exploreCurrentDirectory)
 {
-    DeleteAllContentsWhileIteratingDirectoryPayload* data = (DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
+    PNSLR_Internal_DeleteAllContentsWhileIteratingDirectoryPayload* data = (PNSLR_Internal_DeleteAllContentsWhileIteratingDirectoryPayload*) payload;
     #if PNSLR_WINDOWS
         PNSLR_ArraySlice(u16) path2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, data->allocator);
     #elif PNSLR_UNIX
@@ -156,7 +156,7 @@ static b8 DeleteAllContentsWhileIteratingDirectory(rawptr payload, PNSLR_Path pa
          */
         *exploreCurrentDirectory = false;
 
-        PNSLR_IterateDirectory(path, false, payload, DeleteAllContentsWhileIteratingDirectory);
+        PNSLR_IterateDirectory(path, false, payload, PNSLR_Internal_DeleteAllContentsWhileIteratingDirectory);
         #if PNSLR_WINDOWS
             data->failedAtSomething = (RemoveDirectoryW((LPCWSTR) path2.data) == 0);
         #elif PNSLR_UNIX
@@ -204,7 +204,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
             }
         }
 
-        LazyPathBuffer outputBuffer = (LazyPathBuffer) {0};
+        PNSLR_Internal_LazyPathBuffer outputBuffer = (PNSLR_Internal_LazyPathBuffer) {0};
 
         // clean the path
         #define IS_SEPARATOR(c) ((c) == '/' || (c) == '\\')
@@ -212,7 +212,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
         {
             path = tempFullPath;
             utf8str originalPath = tempFullPath;
-            i32 volumeLength = GetVolumeLengthFromPathWindowsOnly(path);
+            i32 volumeLength = PNSLR_Internal_GetVolumeLengthFromPathWindowsOnly(path);
             path = (utf8str) {.data = path.data + volumeLength, .count = path.count - volumeLength};
 
             if (path.count == 0)
@@ -230,7 +230,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 
             b8 isRooted = IS_SEPARATOR(path.data[0]);
             n = (i32) path.count;
-            outputBuffer = (LazyPathBuffer)
+            outputBuffer = (PNSLR_Internal_LazyPathBuffer)
             {
                 .originalString = path,
                 .volAndPath     = originalPath,
@@ -243,7 +243,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
             i32 r = 0, dotDot = 0;
             if (isRooted)
             {
-                if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
+                if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                 r = 1;
                 dotDot = 1;
             }
@@ -265,7 +265,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
                     {
                         outputBuffer.writeIdx -= 1;
                         while (outputBuffer.writeIdx > dotDot) {
-                            u8 idx = GetIndexFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx);
+                            u8 idx = PNSLR_Internal_GetIdxFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx);
                             if (IS_SEPARATOR(idx)) { break; }
                             outputBuffer.writeIdx -= 1; // go back until we find a separator
                         }
@@ -274,10 +274,10 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
                     {
                         if (outputBuffer.writeIdx > 0)
                         {
-                            if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
+                            if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                         }
 
-                        if (!AppendToLazyPathBuffer(&outputBuffer, '.') || !AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
+                        if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '.') || !PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
 
                         dotDot = outputBuffer.writeIdx; // remember the position of the ".."
                     }
@@ -286,31 +286,31 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
                 {
                     if (isRooted && outputBuffer.writeIdx != 1 || !isRooted && outputBuffer.writeIdx != 0)
                     {
-                        if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
+                        if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                     }
 
                     for (; r < n && !IS_SEPARATOR(path.data[r]); ++r)
                     {
-                        if (!AppendToLazyPathBuffer(&outputBuffer, path.data[r])) { goto exitFunction; }
+                        if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, path.data[r])) { goto exitFunction; }
                     }
                 }
             }
 
             if (outputBuffer.writeIdx == 0)
             {
-                if (!AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
+                if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '.')) { goto exitFunction; }
             }
 
             if (type == PNSLR_PathNormalisationType_Directory)
             {
-                u8 lastChar = outputBuffer.writeIdx > 0 ? GetIndexFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx - 1) : 0;
+                u8 lastChar = outputBuffer.writeIdx > 0 ? PNSLR_Internal_GetIdxFromLazyPathBuffer(&outputBuffer, outputBuffer.writeIdx - 1) : 0;
                 if (!IS_SEPARATOR(lastChar))
                 {
-                    if (!AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
+                    if (!PNSLR_Internal_AppendToLazyPathBuffer(&outputBuffer, '/')) { goto exitFunction; }
                 }
             }
 
-            utf8str tempResultPath = StringFromLazyPathBuffer(&outputBuffer);
+            utf8str tempResultPath = PNSLR_Internal_StringFromLazyPathBuffer(&outputBuffer);
             for (i32 i = 0; i < tempResultPath.count; ++i)
             {
                 if (tempResultPath.data[i] == '\\') { tempResultPath.data[i] = '/'; } // normalise path separators
@@ -322,7 +322,7 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 
         exitFunction:
         ;
-        DisposeLazyPathBuffer(&outputBuffer);
+        PNSLR_Internal_DisposeLazyPathBuffer(&outputBuffer);
     }
     #elif PNSLR_UNIX
     {
@@ -627,7 +627,7 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
     PNSLR_INTERNAL_ALLOCATOR_INIT(Paths, internalAllocator);
 
     b8 throwawayB8 = false;
-    DeleteAllContentsWhileIteratingDirectoryPayload payload = {.failedAtSomething = false, .allocator = internalAllocator};
+    PNSLR_Internal_DeleteAllContentsWhileIteratingDirectoryPayload payload = {.failedAtSomething = false, .allocator = internalAllocator};
     #if PNSLR_WINDOWS
         PNSLR_ArraySlice(u16) tempBuffer2 = PNSLR_UTF16FromUTF8WindowsOnly(path.path, internalAllocator);
 
@@ -635,7 +635,7 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
         if (fileAttributes != INVALID_FILE_ATTRIBUTES)
         {
             b8 isDir = (fileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-            DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
+            PNSLR_Internal_DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
         }
 
     #elif PNSLR_UNIX
@@ -647,7 +647,7 @@ b8 PNSLR_DeletePath(PNSLR_Path path)
             b8 isFile = S_ISREG(fileStat.st_mode), isDir = S_ISDIR(fileStat.st_mode);
             if (isFile || isDir)
             {
-                DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
+                PNSLR_Internal_DeleteAllContentsWhileIteratingDirectory(&payload, path, isDir, &throwawayB8);
             }
         }
 

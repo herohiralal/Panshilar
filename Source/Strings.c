@@ -86,7 +86,7 @@ utf8str PNSLR_LowerString(utf8str str, PNSLR_Allocator allocator)
     return copy;
 }
 
-static b8 AreStringsEqualInternal(cstring str1, i32 len1, cstring str2, i32 len2, PNSLR_StringComparisonType comparisonType)
+static b8 PNSLR_Internal_AreStringsEqual(cstring str1, i32 len1, cstring str2, i32 len2, PNSLR_StringComparisonType comparisonType)
 {
     if (str1 == nil) { str1 = ""; len1 = 0; }
     if (str2 == nil) { str2 = ""; len2 = 0; }
@@ -112,7 +112,7 @@ static b8 AreStringsEqualInternal(cstring str1, i32 len1, cstring str2, i32 len2
     return true;
 }
 
-static b8 StringStartsWithInternal(cstring str, i32 strLen, cstring prefix, i32 prefixLen, PNSLR_StringComparisonType comparisonType)
+static b8 PNSLR_Internal_StringStartsWith(cstring str, i32 strLen, cstring prefix, i32 prefixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str    == nil) { str = "";    strLen = 0;    }
     if (prefix == nil) { return false;               } // doesn't make sense to try for this case
@@ -136,7 +136,7 @@ static b8 StringStartsWithInternal(cstring str, i32 strLen, cstring prefix, i32 
     return true;
 }
 
-static b8 StringEndsWithInternal(cstring str, i32 strLen, cstring suffix, i32 suffixLen, PNSLR_StringComparisonType comparisonType)
+static b8 PNSLR_Internal_StringEndsWith(cstring str, i32 strLen, cstring suffix, i32 suffixLen, PNSLR_StringComparisonType comparisonType)
 {
     if (str    == nil) { str = "";    strLen = 0;    }
     if (suffix == nil) { return false;               } // doesn't make sense to try for this case
@@ -162,57 +162,57 @@ static b8 StringEndsWithInternal(cstring str, i32 strLen, cstring suffix, i32 su
 
 b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, (cstring) str2.data, (i32) str2.count, comparisonType);
+    return PNSLR_Internal_AreStringsEqual((cstring) str1.data, (i32) str1.count, (cstring) str2.data, (i32) str2.count, comparisonType);
 }
 
 b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal((cstring) str1.data, (i32) str1.count, str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
+    return PNSLR_Internal_AreStringsEqual((cstring) str1.data, (i32) str1.count, str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
 }
 
 b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType)
 {
-    return AreStringsEqualInternal(str1, (i32) PNSLR_GetCStringLength(str1), str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
+    return PNSLR_Internal_AreStringsEqual(str1, (i32) PNSLR_GetCStringLength(str1), str2, (i32) PNSLR_GetCStringLength(str2), comparisonType);
 }
 
 b8 PNSLR_StringStartsWith(utf8str str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal((cstring) str.data, (i32) str.count, (cstring) prefix.data, (i32) prefix.count, comparisonType);
+    return PNSLR_Internal_StringStartsWith((cstring) str.data, (i32) str.count, (cstring) prefix.data, (i32) prefix.count, comparisonType);
 }
 
 b8 PNSLR_StringEndsWith(utf8str str, utf8str suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal((cstring) str.data, (i32) str.count, (cstring) suffix.data, (i32) suffix.count, comparisonType);
+    return PNSLR_Internal_StringEndsWith((cstring) str.data, (i32) str.count, (cstring) suffix.data, (i32) suffix.count, comparisonType);
 }
 
 b8 PNSLR_StringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
+    return PNSLR_Internal_StringStartsWith((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_StringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
+    return PNSLR_Internal_StringEndsWith((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }
 
 b8 PNSLR_CStringStartsWith(cstring str, utf8str prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal(str, (i32) PNSLR_GetCStringLength(str), (cstring) prefix.data, (i32) prefix.count, comparisonType);
+    return PNSLR_Internal_StringStartsWith(str, (i32) PNSLR_GetCStringLength(str), (cstring) prefix.data, (i32) prefix.count, comparisonType);
 }
 
 b8 PNSLR_CStringEndsWith(cstring str, utf8str suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal(str, (i32) PNSLR_GetCStringLength(str), (cstring) suffix.data, (i32) suffix.count, comparisonType);
+    return PNSLR_Internal_StringEndsWith(str, (i32) PNSLR_GetCStringLength(str), (cstring) suffix.data, (i32) suffix.count, comparisonType);
 }
 
 b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringStartsWithInternal((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
+    return PNSLR_Internal_StringStartsWith((cstring) str.data, (i32) str.count, prefix, (i32) PNSLR_GetCStringLength(prefix), comparisonType);
 }
 
 b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType)
 {
-    return StringEndsWithInternal((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
+    return PNSLR_Internal_StringEndsWith((cstring) str.data, (i32) str.count, suffix, (i32) PNSLR_GetCStringLength(suffix), comparisonType);
 }
 
 i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType)
@@ -227,7 +227,7 @@ i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringC
 
     for (i32 i = 0; i <= strLen - subLen; ++i)
     {
-        if (AreStringsEqualInternal((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
+        if (PNSLR_Internal_AreStringsEqual((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
         {
             return i; // found at index i
         }
@@ -248,7 +248,7 @@ i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringCo
 
     for (i32 i = strLen - subLen; i >= 0; --i)
     {
-        if (AreStringsEqualInternal((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
+        if (PNSLR_Internal_AreStringsEqual((cstring) str.data + i, subLen, (cstring) substring.data, subLen, comparisonType))
         {
             return i; // found at index i
         }
@@ -335,10 +335,10 @@ utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, P
 #define PNSLR_LOCB 0x80
 #define PNSLR_HICB 0xbf
 
-typedef struct PNSLR_AcceptRange { u8 lo, hi; } PNSLR_AcceptRange;
-static PNSLR_AcceptRange G_AcceptRanges[5] = { {0x80, 0xbf}, {0xa0, 0xbf}, {0x80, 0x9f}, {0x90, 0xbf}, {0x80, 0x8f} };
+typedef struct PNSLR_Internal_AcceptRange { u8 lo, hi; } PNSLR_Internal_AcceptRange;
+static PNSLR_Internal_AcceptRange G_PNSLR_Internal_AcceptRanges[5] = { {0x80, 0xbf}, {0xa0, 0xbf}, {0x80, 0x9f}, {0x90, 0xbf}, {0x80, 0x8f} };
 
-static u8 PNSLR_GetAcceptSize(u8 byte) {
+static u8 PNSLR_Internal_GetAcceptSize(u8 byte) {
     if (byte <= 0x7f) return 0xf0;
     if (byte <= 0xc1) return 0xf1;
     if (byte <= 0xdf) return 0x02;
@@ -410,7 +410,7 @@ PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice(u8) s) {
     }
 
     u8 s0 = s.data[0];
-    u8 x = PNSLR_GetAcceptSize(s0);
+    u8 x = PNSLR_Internal_GetAcceptSize(s0);
 
     if (x >= 0xf0) {
         u32 mask = (u32) x << 31 >> 31;
@@ -420,7 +420,7 @@ PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice(u8) s) {
     }
 
     i32 sz = x & 7;
-    PNSLR_AcceptRange accept = G_AcceptRanges[x >> 4];
+    PNSLR_Internal_AcceptRange accept = G_PNSLR_Internal_AcceptRanges[x >> 4];
 
     if (n < sz) {
         result.rune = PNSLR_RUNE_ERROR;

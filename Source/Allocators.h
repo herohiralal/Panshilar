@@ -494,54 +494,54 @@ EXTERN_C_BEGIN
 #ifdef PNSLR_IMPLEMENTATION
 
     #define PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(name, pageSizeInKilobytes) \
-        typedef struct alignas(16) PNSLR_##name##InternalAllocatorBuffer \
+        typedef struct alignas(16) PNSLR_Internal_##name##InternalAllocatorBuffer \
         { \
             u8 data[pageSizeInKilobytes * 1024]; \
-        } PNSLR_##name##InternalAllocatorBuffer; \
+        } PNSLR_Internal_##name##InternalAllocatorBuffer; \
         \
-        typedef struct PNSLR_##name##InternalAllocator \
+        typedef struct PNSLR_Internal_##name##InternalAllocator \
         { \
             b8                                    initialised; \
             PNSLR_ArenaAllocatorPayload           arenaPayload; \
             PNSLR_ArenaAllocatorBlock             arenaBlock; \
-            PNSLR_##name##InternalAllocatorBuffer buffer; \
-        } PNSLR_##name##InternalAllocatorInfo; \
+            PNSLR_Internal_##name##InternalAllocatorBuffer buffer; \
+        } PNSLR_Internal_##name##InternalAllocatorInfo; \
         \
-        static thread_local PNSLR_##name##InternalAllocatorInfo G_##name##InternalAllocatorInfo = {0}; \
+        static thread_local PNSLR_Internal_##name##InternalAllocatorInfo G_PNSLR_Internal_##name##InternalAllocatorInfo = {0}; \
         \
-        static PNSLR_Allocator Acquire##name##InternalAllocator(void) \
+        static PNSLR_Allocator PNSLR_Internal_Acquire##name##InternalAllocator(void) \
         { \
-            if (!G_##name##InternalAllocatorInfo.initialised) \
+            if (!G_PNSLR_Internal_##name##InternalAllocatorInfo.initialised) \
             { \
-                G_##name##InternalAllocatorInfo.initialised = true; \
+                G_PNSLR_Internal_##name##InternalAllocatorInfo.initialised = true; \
                 \
-                G_##name##InternalAllocatorInfo.buffer = (PNSLR_##name##InternalAllocatorBuffer) {0}; \
+                G_PNSLR_Internal_##name##InternalAllocatorInfo.buffer = (PNSLR_Internal_##name##InternalAllocatorBuffer) {0}; \
                 \
-                G_##name##InternalAllocatorInfo.arenaBlock = (PNSLR_ArenaAllocatorBlock) \
+                G_PNSLR_Internal_##name##InternalAllocatorInfo.arenaBlock = (PNSLR_ArenaAllocatorBlock) \
                 { \
                     .previous  = nil, \
                     .allocator = PNSLR_GetAllocator_Nil(), \
-                    .memory    = (rawptr) &G_##name##InternalAllocatorInfo.buffer.data, \
-                    .capacity  = sizeof(G_##name##InternalAllocatorInfo.buffer.data), \
+                    .memory    = (rawptr) &G_PNSLR_Internal_##name##InternalAllocatorInfo.buffer.data, \
+                    .capacity  = sizeof(G_PNSLR_Internal_##name##InternalAllocatorInfo.buffer.data), \
                     .used      = 0, \
                 }; \
                 \
-                G_##name##InternalAllocatorInfo.arenaPayload = (PNSLR_ArenaAllocatorPayload) \
+                G_PNSLR_Internal_##name##InternalAllocatorInfo.arenaPayload = (PNSLR_ArenaAllocatorPayload) \
                 { \
                     .backingAllocator    = PNSLR_GetAllocator_Nil(), \
-                    .currentBlock        = &G_##name##InternalAllocatorInfo.arenaBlock, \
+                    .currentBlock        = &G_PNSLR_Internal_##name##InternalAllocatorInfo.arenaBlock, \
                     .totalUsed           = 0, \
-                    .totalCapacity       = sizeof(G_##name##InternalAllocatorInfo.buffer.data), \
+                    .totalCapacity       = sizeof(G_PNSLR_Internal_##name##InternalAllocatorInfo.buffer.data), \
                     .minimumBlockSize    = 0, \
                     .numSnapshots        = 0, \
                 }; \
             } \
             \
-            return (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_Arena, .data = &G_##name##InternalAllocatorInfo.arenaPayload}; \
+            return (PNSLR_Allocator) {.procedure = PNSLR_AllocatorFn_Arena, .data = &G_PNSLR_Internal_##name##InternalAllocatorInfo.arenaPayload}; \
         }
 
     #define PNSLR_INTERNAL_ALLOCATOR_INIT(name, varName) \
-        PNSLR_Allocator              varName           = Acquire##name##InternalAllocator(); \
+        PNSLR_Allocator              varName           = PNSLR_Internal_Acquire##name##InternalAllocator(); \
         PNSLR_ArenaAllocatorSnapshot varName##Snapshot = PNSLR_CaptureArenaAllocatorSnapshot(varName);
 
     #define PNSLR_INTERNAL_ALLOCATOR_RESET(name, varName) \
