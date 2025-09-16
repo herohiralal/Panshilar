@@ -818,7 +818,11 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead)
                                    FILE_ATTRIBUTE_NORMAL,
                                    NULL);
 
-        if (INVALID_HANDLE_VALUE != fileHandle) { output.handle = fileHandle; }
+        if (INVALID_HANDLE_VALUE != fileHandle)
+        {
+            output.handle = fileHandle;
+            if (append) { SetFilePointer(fileHandle, 0, NULL, FILE_END); }
+        }
 
     #elif PNSLR_UNIX
         cstring tempBuffer2 = PNSLR_CStringFromString(path.path, internalAllocator);
