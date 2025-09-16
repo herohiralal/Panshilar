@@ -146,23 +146,37 @@ b8 LoadAllBindMetas(PNSLR_Path rootDir, BindMetaCollection* outColl, PNSLR_Alloc
         {
             i64 newCount = outColl->metas.count == 0 ? 4 : outColl->metas.count * 2;
             PNSLR_ResizeSlice(BindMeta, &(outColl->metas), newCount, false, allocator, PNSLR_GET_LOC(), nil);
-            PNSLR_ResizeSlice(utf8str, &(outColl->pkgNames), newCount, false, allocator, PNSLR_GET_LOC(), nil);
         }
 
         if (srcHasPkgName)
         {
-            outColl->pkgNames.data[outColl->numMetas] = srcPkgName;
             outColl->metas.data[outColl->numMetas] = metaInSrc;
             outColl->numMetas++;
         }
 
         if (rootHasPkgName)
         {
-            outColl->pkgNames.data[outColl->numMetas] = rootPkgName;
             outColl->metas.data[outColl->numMetas] = metaInRoot;
             outColl->numMetas++;
         }
     }
 
     return true;
+}
+
+b8 ResolveMeta(const BindMetaCollection* coll, PNSLR_Path file, BindMeta** outMetaPtr)
+{
+    if (!coll || !coll->metas.data || coll->numMetas <= 0) return false;
+
+    for (i64 i = 0; i < coll->numMetas; i++)
+    {
+        BindMeta* meta = &coll->metas.data[i];
+        if (PNSLR_StringStartsWith(file.path, meta->domainDir.path, PNSLR_StringComparisonType_CaseSensitive))
+        {
+            if (outMetaPtr) *outMetaPtr = meta;
+            return true;
+        }
+    }
+
+    return false;
 }

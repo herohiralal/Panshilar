@@ -4,6 +4,7 @@
 
 typedef struct
 {
+    PNSLR_Path           pathAbs;
     utf8str              pathRel;
     PNSLR_ArraySlice(u8) contents;
 } CollectedFile;

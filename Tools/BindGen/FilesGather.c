@@ -83,7 +83,7 @@ void GatherSourceFilesInternal(PNSLR_ArraySlice(CollectedFile)* collectedFiles, 
         }
     }
 
-    collectedFiles->data[*numCollectedFiles] = (CollectedFile) {.pathRel = pathRel, .contents = contents};
+    collectedFiles->data[*numCollectedFiles] = (CollectedFile) {.pathAbs = srcFile, .pathRel = pathRel, .contents = contents};
     (*numCollectedFiles)++;
 }
 

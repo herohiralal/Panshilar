@@ -58,13 +58,6 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
-    BindMetaCollection bmc = {0};
-    if (!LoadAllBindMetas(dir, &bmc, appArena))
-    {
-        printf("Failed to load any bind meta files. Stopping.\n");
-        return;
-    }
-
     PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
     utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
 
@@ -73,13 +66,19 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
     b8 parsingSuccessful = true;
     ParsedContent parsedStuff = {0};
     {
+        if (!LoadAllBindMetas(dir, &(parsedStuff.metas), appArena))
+        {
+            printf("Failed to load any bind meta files. Stopping.\n");
+            return;
+        }
+
         InitialiseTypeTable(&parsedStuff, appArena);
 
         CachedLasts processingCache = {0};
         for (i64 i = 0; i < files.count; i++)
         {
             CollectedFile file = files.data[i];
-            if (!ProcessFile(&parsedStuff, &processingCache, file.pathRel, file.contents, appArena))
+            if (!ProcessFile(&parsedStuff, &processingCache, file.pathAbs, file.pathRel, file.contents, appArena))
             {
                 parsingSuccessful = false;
                 printf("Parsing failed. Stopping.\n");

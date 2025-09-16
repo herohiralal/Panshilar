@@ -848,7 +848,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
     return false;
 }
 
-b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator)
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, PNSLR_Path pathAbs, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator)
 {
     ParsedFileContents* file = PNSLR_New(ParsedFileContents, allocator, PNSLR_GET_LOC(), nil);
     if (!file) FORCE_DBG_TRAP;
@@ -864,6 +864,12 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str p
     if (cachedLasts->lastFile) cachedLasts->lastFile->next = file;
     else                       parsedContent->files        = file;
     cachedLasts->lastFile                                  = file;
+
+    if (!ResolveMeta(&(parsedContent->metas), pathAbs, &(file->associatedMeta)))
+    {
+        PrintParseError(pathRel, contents, 0, 1, PNSLR_StringLiteral("Failed to resolve meta file."));
+        return false;
+    }
 
     FileIterInfo iter = {0};
     iter.contents     = contents;

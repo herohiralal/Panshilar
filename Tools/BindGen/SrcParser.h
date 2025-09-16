@@ -1,6 +1,7 @@
 #ifndef PNSLR_SRC_PARSER_H
 #define PNSLR_SRC_PARSER_H
 #include "../../Source/Panshilar.h"
+#include "BindMetaParser.h"
 
 // base ============================================================================
 
@@ -128,6 +129,7 @@ typedef struct ParsedFileContents
     utf8str                    name;
     utf8str                    doc;
     DeclHeader*                declarations; // polymorphic linked list
+    BindMeta*                  associatedMeta;
 } ParsedFileContents;
 
 typedef struct
@@ -135,6 +137,7 @@ typedef struct
     PNSLR_ArraySlice(DeclTypeInfo) types;
     i64                            typesCount;
     ParsedFileContents*            files; // linked list
+    BindMetaCollection             metas;
 } ParsedContent;
 
 // some cached 'current' addresses for the linked lists that'll be updated on successful parsing
@@ -149,6 +152,6 @@ typedef struct
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator);
 
-b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator);
+b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, PNSLR_Path pathAbs, utf8str pathRel, PNSLR_ArraySlice(u8) contents, PNSLR_Allocator allocator);
 
 #endif

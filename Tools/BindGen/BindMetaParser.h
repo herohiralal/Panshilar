@@ -13,7 +13,6 @@ PNSLR_DECLARE_ARRAY_SLICE(BindMeta);
 
 typedef struct
 {
-    PNSLR_ArraySlice(utf8str)  pkgNames;
     PNSLR_ArraySlice(BindMeta) metas;
     i64                        numMetas;
 } BindMetaCollection;
@@ -21,5 +20,6 @@ typedef struct
 b8 ResolveMetaKey(const BindMeta* meta, utf8str key, utf8str* outValue);
 b8 LoadBindMeta(PNSLR_Path srcDir, BindMeta* output, PNSLR_Allocator allocator);
 b8 LoadAllBindMetas(PNSLR_Path rootDir, BindMetaCollection* outColl, PNSLR_Allocator allocator);
+b8 ResolveMeta(const BindMetaCollection* coll, PNSLR_Path file, BindMeta** outMetaPtr);
 
 #endif
