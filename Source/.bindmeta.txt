@@ -2,12 +2,12 @@ $$$PACKAGE_NAME
 Panshilar
 $$$NAMESPACE
 PNSLR
-$$$C_CXX_HEADER_PREFIX
+$$$C_HEADER_PREFIX
 #ifndef PNSLR_MAIN_H
 #define PNSLR_MAIN_H
 
 
-$$$C_CXX_HEADER_SUFFIX
+$$$C_HEADER_SUFFIX
 /** Create a utf8str from a string literal. */
 #define PNSLR_StringLiteral(str) (utf8str) {.count = sizeof(str) - 1, .data = (u8*) str}
 
@@ -41,4 +41,60 @@ $$$C_CXX_HEADER_SUFFIX
 
 #endif//PNSLR_MAIN_H
 
+$$$CXX_HEADER_PREFIX
+#ifndef PNSLR_CXX_MAIN_H
+#define PNSLR_CXX_MAIN_H
+
+
+$$$CXX_HEADER_SUFFIX
+namespace Panshilar
+{
+    /** Create a utf8str from a string literal. */
+    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+
+    /** Get the current source code location. */
+    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::STRING_LITERAL(__FILE__), __LINE__, 0, Panshilar::STRING_LITERAL(__FUNCTION__)}
+
+    /** Allocate an object of type 'ty' using the provided allocator. */
+    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        return (T*) Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
+    }
+
+    /** Delete an object allocated with `PNSLR_New`, using the provided allocator. */
+    template <typename T> void Delete(T* obj, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (obj) { Free(allocator, obj, loc, err); }
+    }
+
+    /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
+    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        RawArraySlice raw = MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
+        return *reinterpret_cast<ArraySlice<T>*>(&raw);
+    }
+
+    /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
+    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (slice) FreeRawSlice(reinterpret_cast<RawArraySlice*>(slice), allocator, loc, err);
+    }
+
+    /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
+    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    {
+        if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
+    }
+}
+
+#ifdef PNSLR_INTRINSICS_CXX_MAIN_H
+    b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other, Panshilar::StringComparisonType::CaseSensitive); }
+    b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
+#endif
+
+#endif//PNSLR_CXX_MAIN_H
+
+
+$$$CXX_SOURCE_PREFIX
+$$$CXX_SOURCE_SUFFIX
 $$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END

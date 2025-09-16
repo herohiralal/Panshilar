@@ -39,7 +39,7 @@ void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator)
     }
 }
 
-u32 AddNewType(ParsedContent* content, utf8str name)
+u32 AddNewType(ParsedContent* content, utf8str name, CachedLasts* lasts)
 {
     if (!content) return U32_MAX;
 
@@ -47,14 +47,14 @@ u32 AddNewType(ParsedContent* content, utf8str name)
     if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return U32_MAX; }
 
     i64 idx = cnt;
-    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None, .u.name       = name};
-    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,  .u.polyTgtIdx = idx };
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_None, .pkgName = lasts->lastPkgName, .namespace = lasts->lastNamespace, .u.name       = name};
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,  .pkgName = lasts->lastPkgName, .namespace = lasts->lastNamespace, .u.polyTgtIdx = idx };
 
     content->typesCount = cnt;
     return (u32) idx;
 }
 
-u32 AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
+u32 AddNewArrayType(ParsedContent* content, u32 baseTyIdx, CachedLasts* lasts)
 {
     if (!content) return U32_MAX;
 
@@ -62,8 +62,8 @@ u32 AddNewArrayType(ParsedContent* content, u32 baseTyIdx)
     if (cnt >= content->types.count) { printf("buffer size not large enough for type table"); FORCE_DBG_TRAP; return U32_MAX; }
 
     i64 idx = cnt;
-    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .u.polyTgtIdx = (i64) baseTyIdx};
-    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .u.polyTgtIdx = idx            };
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Slice, .pkgName = lasts->lastPkgName, .namespace = lasts->lastNamespace, .u.polyTgtIdx = (i64) baseTyIdx};
+    content->types.data[cnt++] = (DeclTypeInfo) {.polyTy = PolymorphicDeclType_Ptr,   .pkgName = lasts->lastPkgName, .namespace = lasts->lastNamespace, .u.polyTgtIdx = idx            };
 
     content->typesCount = cnt;
     return (u32) idx;
@@ -295,10 +295,12 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     ParsedEnum* enm = PNSLR_New(ParsedEnum, allocator, PNSLR_GET_LOC(), nil);
     if (!enm) FORCE_DBG_TRAP;
 
-    enm->header.type = DeclType_Enum;
-    enm->header.doc  = *doc;
-    enm->header.ty   = U32_MAX;
-    enm->flags       = isFlags;
+    enm->header.type      = DeclType_Enum;
+    enm->header.doc       = *doc;
+    enm->header.pkgName   = cachedLasts->lastPkgName;
+    enm->header.namespace = cachedLasts->lastNamespace;
+    enm->header.ty        = U32_MAX;
+    enm->flags            = isFlags;
     *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(enm->header);
@@ -336,7 +338,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_None, TknTy_NewLine, nil, allocator)) return false;
 
-    enm->header.ty = AddNewType(content, enm->header.name);
+    enm->header.ty = AddNewType(content, enm->header.name, cachedLasts);
 
     while (iter->i < iter->contents.count)
     {
@@ -463,9 +465,11 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
     ParsedStruct* strct = PNSLR_New(ParsedStruct, allocator, PNSLR_GET_LOC(), nil);
     if (!strct) FORCE_DBG_TRAP;
 
-    strct->header.type = DeclType_Struct;
-    strct->header.doc  = *doc;
-    strct->header.ty   = U32_MAX;
+    strct->header.type      = DeclType_Struct;
+    strct->header.doc       = *doc;
+    strct->header.pkgName   = cachedLasts->lastPkgName;
+    strct->header.namespace = cachedLasts->lastNamespace;
+    strct->header.ty        = U32_MAX;
     *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(strct->header);
@@ -496,7 +500,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Identifier, &(strct->header.name), allocator)) return false;
     }
 
-    strct->header.ty = AddNewType(content, strct->header.name);
+    strct->header.ty = AddNewType(content, strct->header.name, cachedLasts);
     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolBracesOpen, nil, allocator)) return false;
 
     while (iter->i < iter->contents.count)
@@ -587,11 +591,13 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
     ParsedFunction* fn = PNSLR_New(ParsedFunction, allocator, PNSLR_GET_LOC(), nil);
     if (!fn) FORCE_DBG_TRAP;
 
-    fn->header.type = DeclType_Function;
-    fn->header.doc  = *doc;
-    fn->header.ty   = U32_MAX;
-    fn->retTy       = retTy;
-    fn->isDelegate  = isDelegate;
+    fn->header.type      = DeclType_Function;
+    fn->header.doc       = *doc;
+    fn->header.pkgName   = cachedLasts->lastPkgName;
+    fn->header.namespace = cachedLasts->lastNamespace;
+    fn->header.ty        = U32_MAX;
+    fn->retTy            = retTy;
+    fn->isDelegate       = isDelegate;
     *doc = (utf8str) {0};
 
     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(fn->header);
@@ -608,7 +614,7 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
 
     if (isDelegate)
     {
-        fn->header.ty = AddNewType(content, fn->header.name);
+        fn->header.ty = AddNewType(content, fn->header.name, cachedLasts);
         if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
     }
 
@@ -711,9 +717,11 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 // array iteration starts from 3 because first 3 chars are `// ` (last one is space)
                 utf8str sectionName = (utf8str){.data = tokenStr.data + 3, .count = firstSpaceIdx - 3};
 
-                sec->header.type = DeclType_Section;
-                sec->header.name = sectionName;
-                sec->header.ty   = U32_MAX;
+                sec->header.type      = DeclType_Section;
+                sec->header.name      = sectionName;
+                sec->header.pkgName   = cachedLasts->lastPkgName;
+                sec->header.namespace = cachedLasts->lastNamespace;
+                sec->header.ty        = U32_MAX;
 
                 if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(sec->header);
                 else                       cachedLasts->lastFile->declarations = &(sec->header);
@@ -736,9 +744,11 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             ParsedArrayDecl* arr = PNSLR_New(ParsedArrayDecl, allocator, PNSLR_GET_LOC(), nil);
             if (!arr) FORCE_DBG_TRAP;
 
-            arr->header.type = DeclType_Array;
-            arr->header.ty   = U32_MAX;
-            arr->header.name = (utf8str) {0};
+            arr->header.type      = DeclType_Array;
+            arr->header.pkgName   = cachedLasts->lastPkgName;
+            arr->header.namespace = cachedLasts->lastNamespace;
+            arr->header.ty        = U32_MAX;
+            arr->header.name      = (utf8str) {0};
 
             if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(arr->header);
             else                       cachedLasts->lastFile->declarations = &(arr->header);
@@ -750,7 +760,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
-            arr->header.ty = AddNewArrayType(parsedContent, dstType);
+            arr->header.ty = AddNewArrayType(parsedContent, dstType, cachedLasts);
             arr->tgtTy     = dstType;
 
             lastDoc = (utf8str) {0};
@@ -808,10 +818,12 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                     ParsedTypeAlias* tyAl = PNSLR_New(ParsedTypeAlias, allocator, PNSLR_GET_LOC(), nil);
                     if (!tyAl) FORCE_DBG_TRAP;
 
-                    tyAl->header.type = DeclType_TyAlias;
-                    tyAl->header.doc  = lastDoc;
-                    tyAl->header.ty   = U32_MAX;
-                    tyAl->tgt         = delRetTyIdx;
+                    tyAl->header.type      = DeclType_TyAlias;
+                    tyAl->header.doc       = lastDoc;
+                    tyAl->header.pkgName   = cachedLasts->lastPkgName;
+                    tyAl->header.namespace = cachedLasts->lastNamespace;
+                    tyAl->header.ty        = U32_MAX;
+                    tyAl->tgt              = delRetTyIdx;
 
                     if (cachedLasts->lastDecl) cachedLasts->lastDecl->next         = &(tyAl->header);
                     else                       cachedLasts->lastFile->declarations = &(tyAl->header);
@@ -821,7 +833,7 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_Identifier, &(tyAl->header.name), allocator)) return false;
                     if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments | TokenIgnoreMask_NewLine | TokenIgnoreMask_Spaces, TknTy_SymbolSemicolon, nil, allocator)) return false;
 
-                    tyAl->header.ty = AddNewType(parsedContent, tyAl->header.name);
+                    tyAl->header.ty = AddNewType(parsedContent, tyAl->header.name, cachedLasts);
                     continue;
                 }
             }
@@ -870,6 +882,9 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, PNSLR_Pat
         PrintParseError(pathRel, contents, 0, 1, PNSLR_StringLiteral("Failed to resolve meta file."));
         return false;
     }
+
+    if (!ResolveMetaKey(file->associatedMeta, PNSLR_StringLiteral("PACKAGE_NAME"), &(cachedLasts->lastPkgName))) cachedLasts->lastPkgName = (utf8str) {0};
+    if (!ResolveMetaKey(file->associatedMeta, PNSLR_StringLiteral("NAMESPACE"), &(cachedLasts->lastNamespace))) cachedLasts->lastNamespace = (utf8str) {0};
 
     FileIterInfo iter = {0};
     iter.contents     = contents;

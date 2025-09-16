@@ -47,7 +47,7 @@ void BeginCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, cons
     *f = PNSLR_OpenFileToWrite(hPath, false, false);
 
     utf8str hPrefix = {0};
-    if (ResolveMetaKey(meta, PNSLR_StringLiteral("C_CXX_HEADER_PREFIX"), &hPrefix))
+    if (ResolveMetaKey(meta, PNSLR_StringLiteral("C_HEADER_PREFIX"), &hPrefix))
     {
         PNSLR_WriteToFile(*f, ARR_FROM_STR(hPrefix));
     }
@@ -103,7 +103,7 @@ void EndCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_
     PNSLR_WriteToFile(*f, ARR_FROM_STR(externCEndStr));
 
     utf8str hSuffix = {0};
-    if (ResolveMetaKey(meta, PNSLR_StringLiteral("C_CXX_HEADER_SUFFIX"), &hSuffix))
+    if (ResolveMetaKey(meta, PNSLR_StringLiteral("C_HEADER_SUFFIX"), &hSuffix))
     {
         PNSLR_WriteToFile(*f, ARR_FROM_STR(hSuffix));
     }

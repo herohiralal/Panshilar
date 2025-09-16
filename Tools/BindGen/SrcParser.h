@@ -22,6 +22,8 @@ typedef struct DeclHeader
     struct DeclHeader* next;
     utf8str            name;
     utf8str            doc;
+    utf8str            pkgName;
+    utf8str            namespace;
 } DeclHeader;
 
 // section =========================================================================
@@ -70,6 +72,8 @@ ENUM_END
 typedef struct
 {
     PolymorphicTypeDeclType polyTy;
+    utf8str                 pkgName;
+    utf8str                 namespace;
     union
     {
         utf8str             name;
@@ -148,6 +152,8 @@ typedef struct
     ParsedEnumVariant*  lastVariant;
     ParsedStructMember* lastMember;
     ParsedFnArg*        lastFnArg;
+    utf8str             lastPkgName;
+    utf8str             lastNamespace;
 } CachedLasts;
 
 void InitialiseTypeTable(ParsedContent* content, PNSLR_Allocator allocator);

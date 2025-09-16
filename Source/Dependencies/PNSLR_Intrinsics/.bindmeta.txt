@@ -1,7 +1,8 @@
 $$$PACKAGE_NAME
 Intrinsics
 $$$NAMESPACE
-$$$C_CXX_HEADER_PREFIX
+PNSLR
+$$$C_HEADER_PREFIX
 #ifndef PNSLR_INTRINSICS_MAIN_H
 #define PNSLR_INTRINSICS_MAIN_H
 
@@ -27,7 +28,7 @@ typedef char*               cstring;
 typedef void*               rawptr;
 
 
-$$$C_CXX_HEADER_SUFFIX
+$$$C_HEADER_SUFFIX
 
 #endif//PNSLR_INTRINSICS_MAIN_H
 
@@ -55,5 +56,70 @@ $$$C_CXX_HEADER_SUFFIX
         #undef static_assert
     #endif
 #endif//PNSLR_SKIP_PRIMITIVE_SIZE_TESTS
+
+$$$CXX_HEADER_PREFIX
+#ifndef PNSLR_INTRINSICS_CXX_MAIN_H
+#define PNSLR_INTRINSICS_CXX_MAIN_H
+
+typedef bool                b8;
+typedef unsigned char       u8;
+typedef unsigned short int  u16;
+typedef unsigned int        u32;
+typedef unsigned long long  u64;
+typedef signed char         i8;
+typedef signed short int    i16;
+typedef signed int          i32;
+typedef signed long long    i64;
+typedef float               f32;
+typedef double              f64;
+typedef char*               cstring;
+typedef void*               rawptr;
+template <typename T> struct ArraySlice { T* data; i64 count; };
+
+struct utf8str : ArraySlice<u8>
+{
+    utf8str() = default;
+    utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }
+    #ifdef PNSLR_CXX_MAIN_H
+        b8 operator==(const utf8str& other) const;
+        b8 operator!=(const utf8str& other) const;
+    #endif
+};
+
+
+$$$CXX_HEADER_SUFFIX
+#endif//PNSLR_INTRINSICS_CXX_MAIN_H
+
+
+$$$CXX_SOURCE_PREFIX
+b8      PNSLR_Bindings_Convert(b8      x) { return x; }
+u8      PNSLR_Bindings_Convert(u8      x) { return x; }
+u16     PNSLR_Bindings_Convert(u16     x) { return x; }
+u32     PNSLR_Bindings_Convert(u32     x) { return x; }
+u64     PNSLR_Bindings_Convert(u64     x) { return x; }
+i8      PNSLR_Bindings_Convert(i8      x) { return x; }
+i16     PNSLR_Bindings_Convert(i16     x) { return x; }
+i32     PNSLR_Bindings_Convert(i32     x) { return x; }
+i64     PNSLR_Bindings_Convert(i64     x) { return x; }
+f32     PNSLR_Bindings_Convert(f32     x) { return x; }
+f64     PNSLR_Bindings_Convert(f64     x) { return x; }
+rawptr  PNSLR_Bindings_Convert(rawptr  x) { return x; }
+cstring PNSLR_Bindings_Convert(cstring x) { return x; }
+
+$$$CXX_SOURCE_SUFFIX
+#ifndef PNSLR_CXX_SKIP_PRIMITIVE_SIZE_TESTS
+#define PNSLR_CXX_SKIP_PRIMITIVE_SIZE_TESTS
+    static_assert(sizeof(b8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(u8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(u16) == 2, "Size mismatch.");
+    static_assert(sizeof(u32) == 4, "Size mismatch.");
+    static_assert(sizeof(u64) == 8, "Size mismatch.");
+    static_assert(sizeof(i8 ) == 1, "Size mismatch.");
+    static_assert(sizeof(i16) == 2, "Size mismatch.");
+    static_assert(sizeof(i32) == 4, "Size mismatch.");
+    static_assert(sizeof(i64) == 8, "Size mismatch.");
+    static_assert(sizeof(f32) == 4, "Size mismatch.");
+    static_assert(sizeof(f64) == 8, "Size mismatch.");
+#endif//PNSLR_CXX_SKIP_PRIMITIVE_SIZE_TESTS
 
 $$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END
