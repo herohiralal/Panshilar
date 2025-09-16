@@ -1,10 +1,17 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "Tools/BindGen/Generator.c"
+recent_file: path: "Tools/BindGen/GeneratorC.c"
+recent_file: path: "Tools/BindGen/GeneratorOdn.c"
+recent_file: path: "Tools/BindGen/GeneratorCxx.c"
+recent_file: path: "Tools/BindGen/BindingsGenerator.c"
+recent_file: path: "Tools/BindGen/BindMetaParser.c"
+recent_file: path: "Source/IO.c"
 target:
 {
   executable: "Binaries/BindingsGenerator-windows-x64.exe"
   working_directory: ""
-  enabled: 0
+  enabled: 1
 }
 target:
 {

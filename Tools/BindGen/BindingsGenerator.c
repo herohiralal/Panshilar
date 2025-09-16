@@ -58,14 +58,15 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
         if (!appArena.data || !appArena.procedure) { printf("Failed to initialise app memory."); FORCE_DBG_TRAP; }
     }
 
-    PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
-    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
-    BindMeta bindMeta = {0};
-    if (!LoadBindMeta(srcDir, &bindMeta, appArena))
+    BindMetaCollection bmc = {0};
+    if (!LoadAllBindMetas(dir, &bmc, appArena))
     {
-        printf("No .bindmeta.txt file found in Source directory. Stopping.\n");
+        printf("Failed to load any bind meta files. Stopping.\n");
         return;
     }
+
+    PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
+    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
 
     PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
 

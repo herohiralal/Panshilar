@@ -1,5 +1,4 @@
 $$$PACKAGE_NAME
-Panshilar
+PanshilarIntrinsics
 $$$NAMESPACE
-PNSLR
 $$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END
