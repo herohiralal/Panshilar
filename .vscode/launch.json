@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Launch Test Runner",
-            "preLaunchTask": "Build All Tools (All Platforms)",
+            "preLaunchTask": "Build Test Runner (Debug)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/Binaries/TestRunner-Windows-X64",
@@ -21,7 +21,7 @@
         },
         {
             "name": "Launch Bindings Generator",
-            "preLaunchTask": "Build All Tools (All Platforms)",
+            "preLaunchTask": "Build Bindings Generator (Debug)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/Binaries/BindingsGenerator-Windows-X64",
