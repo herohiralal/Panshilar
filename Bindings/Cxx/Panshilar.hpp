@@ -1632,8 +1632,17 @@ namespace Panshilar
     );
 
     /**
+     * Gets the current position in an opened file.
+     * Returns -1 on error.
+     */
+    i64 GetCurrentPositionInFile(
+        File handle
+    );
+
+    /**
      * Seeks to a specific position in an opened file.
      * If not relative, it's absolute from the start.
+     * Returns true on success, false on failure.
      */
     b8 SeekPositionInFile(
         File handle,
@@ -1643,6 +1652,7 @@ namespace Panshilar
 
     /**
      * Reads data from an opened file at the current position.
+     * Returns true on success, false on failure.
      */
     b8 ReadFromFile(
         File handle,
@@ -1651,6 +1661,7 @@ namespace Panshilar
 
     /**
      * Writes data to an opened file at the current position.
+     * Returns true on success, false on failure.
      */
     b8 WriteToFile(
         File handle,
@@ -1659,6 +1670,7 @@ namespace Panshilar
 
     /**
      * Truncates an opened file to a specific size.
+     * Returns true on success, false on failure.
      */
     b8 TruncateFile(
         File handle,
@@ -1667,6 +1679,7 @@ namespace Panshilar
 
     /**
      * Flushes any buffered data to the file.
+     * Returns true on success, false on failure.
      */
     b8 FlushFile(
         File handle
@@ -1682,6 +1695,7 @@ namespace Panshilar
     /**
      * Reads a file fully end-to-end and stores in a buffer. Won't work if dst is nil.
      * Provided allocator is used for creating the buffer.
+     * Returns true on success, false on failure.
      */
     b8 ReadAllContentsFromFile(
         Path path,
@@ -1691,6 +1705,7 @@ namespace Panshilar
 
     /**
      * Dump a bunch of data into a file. Optionally append it instead of overwriting.
+     * Returns true on success, false on failure.
      */
     b8 WriteAllContentsToFile(
         Path path,
@@ -1700,6 +1715,7 @@ namespace Panshilar
 
     /**
      * Copies a file from src to dst. If dst exists, it will be overwritten.
+     * Returns true on success, false on failure.
      */
     b8 CopyFile(
         Path src,
@@ -1708,6 +1724,7 @@ namespace Panshilar
 
     /**
      * Moves a file from src to dst. If dst exists, it will be overwritten.
+     * Returns true on success, false on failure.
      */
     b8 MoveFile(
         Path src,
@@ -3000,6 +3017,12 @@ extern "C" i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
 i64 Panshilar::GetSizeOfFile(Panshilar::File handle)
 {
     i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetSizeOfFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" i64 PNSLR_GetCurrentPositionInFile(PNSLR_File handle);
+i64 Panshilar::GetCurrentPositionInFile(Panshilar::File handle)
+{
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCurrentPositionInFile(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);

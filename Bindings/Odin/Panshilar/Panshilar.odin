@@ -2006,8 +2006,20 @@ foreign {
 @(link_prefix="PNSLR_")
 foreign {
     /**
+     * Gets the current position in an opened file.
+     * Returns -1 on error.
+     */
+	GetCurrentPositionInFile :: proc "c" (
+		handle: File,
+	) -> i64 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
      * Seeks to a specific position in an opened file.
      * If not relative, it's absolute from the start.
+     * Returns true on success, false on failure.
      */
 	SeekPositionInFile :: proc "c" (
 		handle: File,
@@ -2020,6 +2032,7 @@ foreign {
 foreign {
     /**
      * Reads data from an opened file at the current position.
+     * Returns true on success, false on failure.
      */
 	ReadFromFile :: proc "c" (
 		handle: File,
@@ -2031,6 +2044,7 @@ foreign {
 foreign {
     /**
      * Writes data to an opened file at the current position.
+     * Returns true on success, false on failure.
      */
 	WriteToFile :: proc "c" (
 		handle: File,
@@ -2042,6 +2056,7 @@ foreign {
 foreign {
     /**
      * Truncates an opened file to a specific size.
+     * Returns true on success, false on failure.
      */
 	TruncateFile :: proc "c" (
 		handle: File,
@@ -2053,6 +2068,7 @@ foreign {
 foreign {
     /**
      * Flushes any buffered data to the file.
+     * Returns true on success, false on failure.
      */
 	FlushFile :: proc "c" (
 		handle: File,
@@ -2074,6 +2090,7 @@ foreign {
     /**
      * Reads a file fully end-to-end and stores in a buffer. Won't work if dst is nil.
      * Provided allocator is used for creating the buffer.
+     * Returns true on success, false on failure.
      */
 	ReadAllContentsFromFile :: proc "c" (
 		path: Path,
@@ -2086,6 +2103,7 @@ foreign {
 foreign {
     /**
      * Dump a bunch of data into a file. Optionally append it instead of overwriting.
+     * Returns true on success, false on failure.
      */
 	WriteAllContentsToFile :: proc "c" (
 		path: Path,
@@ -2098,6 +2116,7 @@ foreign {
 foreign {
     /**
      * Copies a file from src to dst. If dst exists, it will be overwritten.
+     * Returns true on success, false on failure.
      */
 	CopyFile :: proc "c" (
 		src: Path,
@@ -2109,6 +2128,7 @@ foreign {
 foreign {
     /**
      * Moves a file from src to dst. If dst exists, it will be overwritten.
+     * Returns true on success, false on failure.
      */
 	MoveFile :: proc "c" (
 		src: Path,

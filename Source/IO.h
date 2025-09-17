@@ -110,28 +110,39 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
 i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
 
 /**
+ * Gets the current position in an opened file.
+ * Returns -1 on error.
+ */
+i64 PNSLR_GetCurrentPositionInFile(PNSLR_File handle);
+
+/**
  * Seeks to a specific position in an opened file.
  * If not relative, it's absolute from the start.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
 
 /**
  * Reads data from an opened file at the current position.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst);
 
 /**
  * Writes data to an opened file at the current position.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice(u8) src);
 
 /**
  * Truncates an opened file to a specific size.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize);
 
 /**
  * Flushes any buffered data to the file.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_FlushFile(PNSLR_File handle);
 
@@ -143,21 +154,25 @@ void PNSLR_CloseFileHandle(PNSLR_File handle);
 /**
  * Reads a file fully end-to-end and stores in a buffer. Won't work if dst is nil.
  * Provided allocator is used for creating the buffer.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice(u8)* dst, PNSLR_Allocator allocator);
 
 /**
  * Dump a bunch of data into a file. Optionally append it instead of overwriting.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice(u8) src, b8 append);
 
 /**
  * Copies a file from src to dst. If dst exists, it will be overwritten.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst);
 
 /**
  * Moves a file from src to dst. If dst exists, it will be overwritten.
+ * Returns true on success, false on failure.
  */
 b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
 

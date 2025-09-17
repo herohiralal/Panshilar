@@ -866,6 +866,31 @@ i64 PNSLR_GetSizeOfFile(PNSLR_File handle)
     return size;
 }
 
+i64 PNSLR_GetCurrentPositionInFile(PNSLR_File handle)
+{
+    if (!handle.handle) { return -1; }
+
+    i64 pos = -1;
+    #if PNSLR_WINDOWS
+
+        LARGE_INTEGER zero = {0};
+        LARGE_INTEGER out;
+        if (SetFilePointerEx((HANDLE)handle.handle, zero, &out, FILE_CURRENT)) {
+            pos = out.QuadPart;
+        }
+
+    #elif PNSLR_UNIX
+
+        off_t off = lseek((i32)(i64)handle.handle, 0, SEEK_CUR);
+        if (off >= 0) {
+            pos = (i64)off;
+        }
+
+    #endif
+
+    return pos;
+}
+
 b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative)
 {
     if (!handle.handle) { return false; }
