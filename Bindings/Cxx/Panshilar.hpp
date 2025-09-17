@@ -1083,7 +1083,8 @@ namespace Panshilar
     {
        Allocator allocator;
        ArraySlice<u8> buffer;
-       i64 length;
+       i64 writtenSize;
+       i64 cursorPos;
     };
 
     /**
@@ -1776,6 +1777,7 @@ namespace Panshilar
 
     /**
      * Gets the size of an opened file.
+     * Returns 0 on error.
      */
     i64 GetSizeOfFile(
         File handle
@@ -1931,6 +1933,136 @@ namespace Panshilar
     b8 GetInterfaceIPAddresses(
         ArraySlice<IPNetwork>* networks,
         Allocator allocator
+    );
+
+    // #######################################################################################
+    // Stream
+    // #######################################################################################
+
+    // Stream Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Defines the mode to be used when calling the stream function.
+     */
+    enum class StreamMode : u8 /* use as value */
+    {
+        GetSize = 0,
+        GetCurrentPos = 1,
+        SeekAbsolute = 2,
+        SeekRelative = 3,
+        Read = 4,
+        Write = 5,
+        Truncate = 6,
+        Flush = 7,
+        Close = 8,
+    };
+
+    /**
+     * Defines the delegate type for the stream function
+     */
+    typedef b8 (*StreamProcedure)(
+        rawptr streamData,
+        StreamMode mode,
+        ArraySlice<u8> data,
+        i64 offset,
+        i64* extraRet
+    );
+
+    /**
+     * Defines a generic stream, that can be used for reading/writing data.
+     */
+    struct Stream
+    {
+       StreamProcedure procedure;
+       rawptr data;
+    };
+
+    // Stream ease-of-use functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Gets the size of the stream.
+     * Returns 0 on error.
+     */
+    i64 GetSizeOfStream(
+        Stream stream
+    );
+
+    /**
+     * Gets the current position in the stream.
+     * Returns -1 on error.
+     */
+    i64 GetCurrentPositionInStream(
+        Stream stream
+    );
+
+    /**
+     * Seeks to a new position in the stream.
+     * If 'relative' is true, the new position is relative to the current position.
+     * If 'relative' is false, the new position is absolute from the start.
+     * Returns true on success, false on failure.
+     */
+    b8 SeekPositionInStream(
+        Stream stream,
+        i64 newPos,
+        b8 relative
+    );
+
+    /**
+     * Reads data from the stream into the provided buffer.
+     * Returns true on success, false on failure.
+     */
+    b8 ReadFromStream(
+        Stream stream,
+        ArraySlice<u8> dst
+    );
+
+    /**
+     * Writes data from the provided buffer into the stream.
+     * Returns true on success, false on failure.
+     */
+    b8 WriteToStream(
+        Stream stream,
+        ArraySlice<u8> src
+    );
+
+    /**
+     * Truncates the stream to the specified size.
+     * Returns true on success, false on failure.
+     */
+    b8 TruncateStream(
+        Stream stream,
+        i64 newSize
+    );
+
+    /**
+     * Flushes any buffered data to the stream.
+     * Returns true on success, false on failure.
+     */
+    b8 FlushStream(
+        Stream stream
+    );
+
+    /**
+     * Closes the stream and frees any associated resources.
+     */
+    void CloseStream(
+        Stream stream
+    );
+
+    // Stream casts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Creates a stream from a file handle.
+     */
+    Stream StreamFromFile(
+        File* file
+    );
+
+    /**
+     * Creates a stream from a string builder.
+     */
+    Stream StreamFromStringBuilder(
+        StringBuilder* builder
     );
 
 } // namespace end
@@ -2783,7 +2915,8 @@ struct PNSLR_StringBuilder
 {
    PNSLR_Allocator allocator;
    PNSLR_ArraySlice_u8 buffer;
-   i64 length;
+   i64 writtenSize;
+   i64 cursorPos;
 };
 static_assert(sizeof(PNSLR_StringBuilder) == sizeof(Panshilar::StringBuilder), "size mismatch");
 static_assert(alignof(PNSLR_StringBuilder) == alignof(Panshilar::StringBuilder), "align mismatch");
@@ -2793,7 +2926,8 @@ PNSLR_StringBuilder& PNSLR_Bindings_Convert(Panshilar::StringBuilder& x) { retur
 Panshilar::StringBuilder& PNSLR_Bindings_Convert(PNSLR_StringBuilder& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, allocator) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, allocator), "allocator offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, buffer), "buffer offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, length) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, length), "length offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, writtenSize) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, writtenSize), "writtenSize offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, cursorPos) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, cursorPos), "cursorPos offset mismatch");
 
 extern "C" b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte);
 b8 Panshilar::AppendByteToStringBuilder(Panshilar::StringBuilder* builder, u8 byte)
@@ -3387,6 +3521,106 @@ extern "C" b8 PNSLR_GetInterfaceIPAddresses(PNSLR_ArraySlice_PNSLR_IPNetwork* ne
 b8 Panshilar::GetInterfaceIPAddresses(ArraySlice<Panshilar::IPNetwork>* networks, Panshilar::Allocator allocator)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetInterfaceIPAddresses(PNSLR_Bindings_Convert(networks), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+enum class PNSLR_StreamMode : u8 { };
+static_assert(sizeof(PNSLR_StreamMode) == sizeof(Panshilar::StreamMode), "size mismatch");
+static_assert(alignof(PNSLR_StreamMode) == alignof(Panshilar::StreamMode), "align mismatch");
+PNSLR_StreamMode* PNSLR_Bindings_Convert(Panshilar::StreamMode* x) { return reinterpret_cast<PNSLR_StreamMode*>(x); }
+Panshilar::StreamMode* PNSLR_Bindings_Convert(PNSLR_StreamMode* x) { return reinterpret_cast<Panshilar::StreamMode*>(x); }
+PNSLR_StreamMode& PNSLR_Bindings_Convert(Panshilar::StreamMode& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::StreamMode& PNSLR_Bindings_Convert(PNSLR_StreamMode& x) { return *PNSLR_Bindings_Convert(&x); }
+
+extern "C" typedef b8 (*PNSLR_StreamProcedure)(rawptr streamData, PNSLR_StreamMode mode, PNSLR_ArraySlice_u8 data, i64 offset, i64* extraRet);
+static_assert(sizeof(PNSLR_StreamProcedure) == sizeof(Panshilar::StreamProcedure), "size mismatch");
+static_assert(alignof(PNSLR_StreamProcedure) == alignof(Panshilar::StreamProcedure), "align mismatch");
+PNSLR_StreamProcedure* PNSLR_Bindings_Convert(Panshilar::StreamProcedure* x) { return reinterpret_cast<PNSLR_StreamProcedure*>(x); }
+Panshilar::StreamProcedure* PNSLR_Bindings_Convert(PNSLR_StreamProcedure* x) { return reinterpret_cast<Panshilar::StreamProcedure*>(x); }
+PNSLR_StreamProcedure& PNSLR_Bindings_Convert(Panshilar::StreamProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::StreamProcedure& PNSLR_Bindings_Convert(PNSLR_StreamProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+
+struct PNSLR_Stream
+{
+   PNSLR_StreamProcedure procedure;
+   rawptr data;
+};
+static_assert(sizeof(PNSLR_Stream) == sizeof(Panshilar::Stream), "size mismatch");
+static_assert(alignof(PNSLR_Stream) == alignof(Panshilar::Stream), "align mismatch");
+PNSLR_Stream* PNSLR_Bindings_Convert(Panshilar::Stream* x) { return reinterpret_cast<PNSLR_Stream*>(x); }
+Panshilar::Stream* PNSLR_Bindings_Convert(PNSLR_Stream* x) { return reinterpret_cast<Panshilar::Stream*>(x); }
+PNSLR_Stream& PNSLR_Bindings_Convert(Panshilar::Stream& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::Stream& PNSLR_Bindings_Convert(PNSLR_Stream& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Stream, procedure) == PNSLR_STRUCT_OFFSET(Panshilar::Stream, procedure), "procedure offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Stream, data) == PNSLR_STRUCT_OFFSET(Panshilar::Stream, data), "data offset mismatch");
+
+typedef struct { PNSLR_Stream* data; i64 count; } PNSLR_ArraySlice_PNSLR_Stream;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_Stream) == sizeof(ArraySlice<Panshilar::Stream>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_Stream) == alignof(ArraySlice<Panshilar::Stream>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_Stream* PNSLR_Bindings_Convert(ArraySlice<Panshilar::Stream>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_Stream*>(x); }
+ArraySlice<Panshilar::Stream>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Stream* x) { return reinterpret_cast<ArraySlice<Panshilar::Stream>*>(x); }
+PNSLR_ArraySlice_PNSLR_Stream& PNSLR_Bindings_Convert(ArraySlice<Panshilar::Stream>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<Panshilar::Stream>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_Stream& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Stream, count) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::Stream>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_Stream, data) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::Stream>, data), "data offset mismatch");
+
+extern "C" i64 PNSLR_GetSizeOfStream(PNSLR_Stream stream);
+i64 Panshilar::GetSizeOfStream(Panshilar::Stream stream)
+{
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetSizeOfStream(PNSLR_Bindings_Convert(stream)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" i64 PNSLR_GetCurrentPositionInStream(PNSLR_Stream stream);
+i64 Panshilar::GetCurrentPositionInStream(Panshilar::Stream stream)
+{
+    i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCurrentPositionInStream(PNSLR_Bindings_Convert(stream)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_SeekPositionInStream(PNSLR_Stream stream, i64 newPos, b8 relative);
+b8 Panshilar::SeekPositionInStream(Panshilar::Stream stream, i64 newPos, b8 relative)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SeekPositionInStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(newPos), PNSLR_Bindings_Convert(relative)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice_u8 dst);
+b8 Panshilar::ReadFromStream(Panshilar::Stream stream, ArraySlice<u8> dst)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice_u8 src);
+b8 Panshilar::WriteToStream(Panshilar::Stream stream, ArraySlice<u8> src)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteToStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(src)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_TruncateStream(PNSLR_Stream stream, i64 newSize);
+b8 Panshilar::TruncateStream(Panshilar::Stream stream, i64 newSize)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TruncateStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(newSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_FlushStream(PNSLR_Stream stream);
+b8 Panshilar::FlushStream(Panshilar::Stream stream)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FlushStream(PNSLR_Bindings_Convert(stream)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_CloseStream(PNSLR_Stream stream);
+void Panshilar::CloseStream(Panshilar::Stream stream)
+{
+    PNSLR_CloseStream(PNSLR_Bindings_Convert(stream));
+}
+
+extern "C" PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File* file);
+Panshilar::Stream Panshilar::StreamFromFile(Panshilar::File* file)
+{
+    PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromFile(PNSLR_Bindings_Convert(file)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_Stream PNSLR_StreamFromStringBuilder(PNSLR_StringBuilder* builder);
+Panshilar::Stream Panshilar::StreamFromStringBuilder(Panshilar::StringBuilder* builder)
+{
+    PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromStringBuilder(PNSLR_Bindings_Convert(builder)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 #undef PNSLR_STRUCT_OFFSET

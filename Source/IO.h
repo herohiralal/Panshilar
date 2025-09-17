@@ -106,6 +106,7 @@ PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
 
 /**
  * Gets the size of an opened file.
+ * Returns 0 on error.
  */
 i64 PNSLR_GetSizeOfFile(PNSLR_File handle);
 

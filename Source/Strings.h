@@ -199,7 +199,8 @@ typedef struct PNSLR_StringBuilder
 {
     PNSLR_Allocator      allocator;
     PNSLR_ArraySlice(u8) buffer;
-    i64                  length;
+    i64                  writtenSize;
+    i64                  cursorPos;
 } PNSLR_StringBuilder;
 
 /**

@@ -1301,7 +1301,8 @@ Create by setting the allocator and zeroing the rest of the fields.
 StringBuilder :: struct  {
 	allocator: Allocator,
 	buffer: []u8,
-	length: i64,
+	writtenSize: i64,
+	cursorPos: i64,
 }
 
 @(link_prefix="PNSLR_")
@@ -2187,6 +2188,7 @@ foreign {
 foreign {
 	/*
 	Gets the size of an opened file.
+	Returns 0 on error.
 	*/
 	GetSizeOfFile :: proc "c" (
 		handle: File,
@@ -2386,6 +2388,166 @@ foreign {
 		networks: ^[]IPNetwork,
 		allocator: Allocator,
 	) -> b8 ---
+}
+
+// #######################################################################################
+// Stream
+// #######################################################################################
+
+// Stream Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*
+Defines the mode to be used when calling the stream function.
+*/
+StreamMode :: enum u8 {
+	GetSize = 0,
+	GetCurrentPos = 1,
+	SeekAbsolute = 2,
+	SeekRelative = 3,
+	Read = 4,
+	Write = 5,
+	Truncate = 6,
+	Flush = 7,
+	Close = 8,
+}
+
+/*
+Defines the delegate type for the stream function
+*/
+StreamProcedure :: #type proc "c" (
+	streamData: rawptr,
+	mode: StreamMode,
+	data: []u8,
+	offset: i64,
+	extraRet: ^i64,
+) -> b8
+
+/*
+Defines a generic stream, that can be used for reading/writing data.
+*/
+Stream :: struct  {
+	procedure: StreamProcedure,
+	data: rawptr,
+}
+
+// declare []Stream
+
+// Stream ease-of-use functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets the size of the stream.
+	Returns 0 on error.
+	*/
+	GetSizeOfStream :: proc "c" (
+		stream: Stream,
+	) -> i64 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets the current position in the stream.
+	Returns -1 on error.
+	*/
+	GetCurrentPositionInStream :: proc "c" (
+		stream: Stream,
+	) -> i64 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Seeks to a new position in the stream.
+	If 'relative' is true, the new position is relative to the current position.
+	If 'relative' is false, the new position is absolute from the start.
+	Returns true on success, false on failure.
+	*/
+	SeekPositionInStream :: proc "c" (
+		stream: Stream,
+		newPos: i64,
+		relative: b8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Reads data from the stream into the provided buffer.
+	Returns true on success, false on failure.
+	*/
+	ReadFromStream :: proc "c" (
+		stream: Stream,
+		dst: []u8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Writes data from the provided buffer into the stream.
+	Returns true on success, false on failure.
+	*/
+	WriteToStream :: proc "c" (
+		stream: Stream,
+		src: []u8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Truncates the stream to the specified size.
+	Returns true on success, false on failure.
+	*/
+	TruncateStream :: proc "c" (
+		stream: Stream,
+		newSize: i64,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Flushes any buffered data to the stream.
+	Returns true on success, false on failure.
+	*/
+	FlushStream :: proc "c" (
+		stream: Stream,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Closes the stream and frees any associated resources.
+	*/
+	CloseStream :: proc "c" (
+		stream: Stream,
+	) ---
+}
+
+// Stream casts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a stream from a file handle.
+	*/
+	StreamFromFile :: proc "c" (
+		file: ^File,
+	) -> Stream ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a stream from a string builder.
+	*/
+	StreamFromStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+	) -> Stream ---
 }
 
 #assert(size_of(int)  == 8, " int must be 8 bytes")

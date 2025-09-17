@@ -16,5 +16,6 @@
 #include "Console.c"
 #include "Process.c"
 #include "Network.c"
+#include "Stream.c"
 
 #endif//PNSLR_UNITY_C

@@ -567,10 +567,10 @@ utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_All
 
 static b8 PNSLR_Internal_ResizeStringBuilderIfRequired(PNSLR_StringBuilder* builder, i64 lengthHint)
 {
-    if (builder->length + lengthHint <= builder->buffer.count) return true; // enough space already
+    if (builder->cursorPos + lengthHint <= builder->buffer.count) return true; // enough space already
 
     i64 newSize = builder->buffer.count == 0 ? 64 : builder->buffer.count;
-    while (builder->length + lengthHint > newSize) { newSize *= 2; } // double until it fits
+    while (builder->cursorPos + lengthHint > newSize) { newSize *= 2; } // double until it fits
 
     PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
     PNSLR_ResizeSlice(u8, &(builder->buffer), newSize, false, (builder->allocator), PNSLR_GET_LOC(), &err);
@@ -581,8 +581,9 @@ b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte)
 {
     if (!builder || !PNSLR_Internal_ResizeStringBuilderIfRequired(builder, 1)) return false;
 
-    builder->buffer.data[builder->length] = byte;
-    builder->length += 1;
+    builder->buffer.data[builder->cursorPos] = byte;
+    builder->cursorPos += 1;
+    if (builder->cursorPos > builder->writtenSize) { builder->writtenSize = builder->cursorPos; }
     return true;
 }
 
@@ -590,8 +591,9 @@ b8 PNSLR_AppendStringToStringBuilder(PNSLR_StringBuilder* builder, utf8str str)
 {
     if (!builder || !PNSLR_Internal_ResizeStringBuilderIfRequired(builder, str.count)) return false;
 
-    PNSLR_MemCopy(builder->buffer.data + builder->length, str.data, (i32) str.count);
-    builder->length += str.count;
+    PNSLR_MemCopy(builder->buffer.data + builder->cursorPos, str.data, (i32) str.count);
+    builder->cursorPos += str.count;
+    if (builder->cursorPos > builder->writtenSize) { builder->writtenSize = builder->cursorPos; }
     return true;
 }
 
@@ -776,13 +778,17 @@ b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR
 
 utf8str PNSLR_StringFromStringBuilder(PNSLR_StringBuilder* builder)
 {
-    if (!builder || builder->length == 0) { return (utf8str) {0}; }
-    return (utf8str) {.data = builder->buffer.data, .count = builder->length};
+    if (!builder || builder->writtenSize == 0) { return (utf8str) {0}; }
+    return (utf8str) {.data = builder->buffer.data, .count = builder->writtenSize};
 }
 
 void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder)
 {
-    if (builder) { builder->length = 0; }
+    if (builder)
+    {
+        builder->writtenSize = 0;
+        builder->cursorPos   = 0;
+    }
 }
 
 void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder)
@@ -790,8 +796,7 @@ void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder)
     if (builder)
     {
         PNSLR_FreeSlice(&(builder->buffer), builder->allocator, PNSLR_GET_LOC(), nil);
-        builder->length = 0;
-        builder->allocator = (PNSLR_Allocator) {0};
+        *builder = (PNSLR_StringBuilder) {0};
     }
 }
 
