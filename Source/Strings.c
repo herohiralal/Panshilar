@@ -915,3 +915,206 @@ utf8str PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator a
     return result;
 }
 
+b8 PNSLR_BooleanFromString(utf8str str, b8* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (b8) {0}; // zero by default
+
+    if (PNSLR_AreStringsEqual(str, PNSLR_StringLiteral("true"), PNSLR_StringComparisonType_CaseInsensitive))
+    {
+        *value = true;
+        return true;
+    }
+    else if (PNSLR_AreStringsEqual(str, PNSLR_StringLiteral("false"), PNSLR_StringComparisonType_CaseInsensitive))
+    {
+        *value = false;
+        return true;
+    }
+    else if (str.count == 1 && str.data == '1')
+    {
+        *value = true;
+        return true;
+    }
+    else if (str.count == 1 && str.data == '0')
+    {
+        *value = false;
+        return true;
+    }
+
+    return false;
+}
+
+b8 PNSLR_F32FromString(utf8str str, f32* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (f32) {0}; // zero by default
+}
+
+b8 PNSLR_F64FromString(utf8str str, f64* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (f64) {0}; // zero by default
+}
+
+b8 PNSLR_U8FromString(utf8str str, u8* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (u8) {0}; // zero by default
+    u64 tempVal = 0;
+    if (!PNSLR_U64FromString(str, &tempVal)) return false;
+    if (tempVal > U8_MAX) return false; // overflow
+    *value = (u8) tempVal;
+    return true;
+}
+
+b8 PNSLR_U16FromString(utf8str str, u16* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (u16) {0}; // zero by default
+    u64 tempVal = 0;
+    if (!PNSLR_U64FromString(str, &tempVal)) return false;
+    if (tempVal > U16_MAX) return false; // overflow
+    *value = (u16) tempVal;
+    return true;
+}
+
+b8 PNSLR_U32FromString(utf8str str, u32* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (u32) {0}; // zero by default
+    u64 tempVal = 0;
+    if (!PNSLR_U64FromString(str, &tempVal)) return false;
+    if (tempVal > U32_MAX) return false; // overflow
+    *value = (u32) tempVal;
+    return true;
+}
+
+b8 PNSLR_U64FromString(utf8str str, u64* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (u64) {0}; // zero by default
+
+    i64 i = 0;
+    u64 base = 10;
+
+    // Prefix check
+    if (str.count > 2 && str.data[0] == '0')
+    {
+        u8 p = (u8)str.data[1];
+        if (p == 'b' || p == 'B') { base = 2;  i = 2; }
+        else if (p == 'o' || p == 'O') { base = 8;  i = 2; }
+        else if (p == 'x' || p == 'X') { base = 16; i = 2; }
+    }
+
+    // If no prefix: check if hex letters appear
+    if (base == 10)
+    {
+        for (i64 j = 0; j < str.count; j++)
+        {
+            u8 c = (u8)str.data[j];
+            if ((c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
+            {
+                base = 16;
+                break;
+            }
+        }
+    }
+
+    u64 result = 0;
+
+    for (; i < str.count; i++)
+    {
+        u8 c = (u8)str.data[i];
+        u64 digit;
+
+        if (c >= '0' && c <= '9')       digit = (u64)(c - '0');
+        else if (c >= 'A' && c <= 'F')  digit = (u64)(10 + (c - 'A'));
+        else if (c >= 'a' && c <= 'f')  digit = (u64)(10 + (c - 'a'));
+        else                            return false; // invalid char
+
+        if (digit >= base) return false; // invalid digit for base
+
+        result = result * base + digit;
+    }
+
+    *value = result;
+    return true;
+}
+
+b8 PNSLR_I8FromString(utf8str str, i8* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (i8) {0}; // zero by default
+    i64 tempVal = 0;
+    if (!PNSLR_I64FromString(str, &tempVal)) return false;
+    if (tempVal < I8_MIN || tempVal > I8_MAX) return false; // overflow
+    *value = (i8) tempVal;
+    return true;
+}
+
+b8 PNSLR_I16FromString(utf8str str, i16* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (i16) {0}; // zero by default
+    i64 tempVal = 0;
+    if (!PNSLR_I64FromString(str, &tempVal)) return false;
+    if (tempVal < I16_MIN || tempVal > I16_MAX) return false; // overflow
+    *value = (i16) tempVal;
+    return true;
+}
+
+b8 PNSLR_I32FromString(utf8str str, i32* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (i32) {0}; // zero by default
+    i64 tempVal = 0;
+    if (!PNSLR_I64FromString(str, &tempVal)) return false;
+    if (tempVal < I32_MIN || tempVal > I32_MAX) return false; // overflow
+    *value = (i32) tempVal;
+    return true;
+}
+
+b8 PNSLR_I64FromString(utf8str str, i64* value)
+{
+    if (!str.data || !str.count || !value) return false;
+    *value = (i64) {0}; // zero by default
+
+    i64 i = 0;
+    b8 negative = false;
+
+    // Handle optional sign
+    if (str.data[0] == '-')
+    {
+        negative = true;
+        i = 1;
+    }
+    else if (str.data[0] == '+')
+    {
+        i = 1;
+    }
+
+    // Slice after sign
+    utf8str unsignedStr;
+    unsignedStr.data  = str.data + i;
+    unsignedStr.count = str.count - i;
+
+    u64 uval = 0;
+    if (!PNSLR_U64FromString(unsignedStr, &uval))
+    {
+        return false;
+    }
+
+    if (negative)
+    {
+        if (uval > (u64) I64_MAX + 1ULL) return false; // overflow
+        *value = -(i64)uval;
+    }
+    else
+    {
+        if (uval > (u64) I64_MAX) return false; // overflow
+        *value = (i64)uval;
+    }
+
+    return true;
+}
+

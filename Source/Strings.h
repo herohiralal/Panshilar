@@ -303,7 +303,7 @@ void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder);
  */
 void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder);
 
-// String Conversions ==============================================================
+// Conversions to strings ==========================================================
 
 /**
  * Convert a boolean value to a string ("true" or "false").
@@ -359,6 +359,89 @@ utf8str PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator a
  * Convert a signed 64-bit integer to a string in the specified base.
  */
 utf8str PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+// Conversions from strings ========================================================
+
+/**
+ * Convert a validstring (case-insensitive "true" or "false", or "1" or "0") to a boolean.
+ */
+b8 PNSLR_BooleanFromString(utf8str str, b8* value);
+
+/**
+ * Convert a valid string (numbers-only, with zero or one decimal points,
+ * optional -/+ sign at the start) to a 32-bit floating-point number.
+ */
+b8 PNSLR_F32FromString(utf8str str, f32* value);
+
+/**
+ * Convert a valid string (numbers-only, with zero or one decimal points,
+ * optional -/+ sign at the start) to a 64-bit floating-point number.
+ */
+b8 PNSLR_F64FromString(utf8str str, f64* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 8-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U8FromString(utf8str str, u8* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 16-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U16FromString(utf8str str, u16* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 32-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U32FromString(utf8str str, u32* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 64-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U64FromString(utf8str str, u64* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 8-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I8FromString(utf8str str, i8* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 16-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I16FromString(utf8str str, i16* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 32-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I32FromString(utf8str str, i32* value);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 64-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I64FromString(utf8str str, i64* value);
 
 EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================
