@@ -5,9 +5,9 @@ package Intrinsics
 // Collections
 // #######################################################################################
 
-/**
- * A raw type-unspecific array slice.
- */
+/*
+A raw type-unspecific array slice.
+*/
 RawArraySlice :: struct  {
 	data: rawptr,
 	count: i64,
@@ -37,9 +37,9 @@ RawArraySlice :: struct  {
 
 // declare []#error
 
-/**
- * UTF-8 string type, with length info (not necessarily null-terminated).
- */
+/*
+UTF-8 string type, with length info (not necessarily null-terminated).
+*/
 // string :: []u8
 
 // declare []string

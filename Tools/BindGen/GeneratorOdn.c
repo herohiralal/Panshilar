@@ -105,6 +105,23 @@ void WriteOdnTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32
     }
 }
 
+void WriteOdnDoc(PNSLR_File f, utf8str doc, u8 indentCount)
+{
+    if (!doc.data || !doc.count) return;
+    i32 lineStart = -1, lineEnd = -1;
+    FileIterInfo docIter = {.contents = ARR_FROM_STR(doc)};
+    while (DequeueNextLineSpan(&docIter, &lineStart, &lineEnd))
+    {
+        PNSLR_ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
+        for (u8 i = 0; i < indentCount; i++) { PNSLR_WriteToFile(f, ARR_STR_LIT("\t")); }
+        if (PNSLR_AreStringsEqual(lineSlice, PNSLR_StringLiteral("/**"), 0)) { lineSlice = PNSLR_StringLiteral("/*"); }
+        else if (PNSLR_StringStartsWith(lineSlice, PNSLR_StringLiteral(" * "), 0)) { lineSlice.data += 3; lineSlice.count -= 3; }
+        else if (PNSLR_AreStringsEqual(lineSlice, PNSLR_StringLiteral(" */"), 0)) { lineSlice = PNSLR_StringLiteral("*/"); }
+        PNSLR_WriteToFile(f, lineSlice);
+        PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
+    }
+}
+
 void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
 {
     PNSLR_File f = {0};
@@ -133,11 +150,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
         for (DeclHeader* decl = file->declarations; decl != nil; decl = decl->next)
         {
             b8 isFunction = decl->type == DeclType_Function && !((ParsedFunction*) decl)->isDelegate;
-            if (!isFunction && decl->doc.count > 0)
-            {
-                PNSLR_WriteToFile(f, ARR_FROM_STR(decl->doc));
-                PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
-            }
+            if (!isFunction) { WriteOdnDoc(f, decl->doc, 0); }
 
             switch (decl->type)
             {
@@ -259,18 +272,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, ARR_STR_LIT("@(link_prefix=\"PNSLR_\")\n"));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("foreign {\n"));
                         // append indented doc
-                        if (decl->doc.count > 0)
-                        {
-                            i32 lineStart = -1, lineEnd = -1;
-                            FileIterInfo docIter = {.contents = ARR_FROM_STR(decl->doc)};
-                            while (DequeueNextLineSpan(&docIter, &lineStart, &lineEnd))
-                            {
-                                PNSLR_ArraySlice(u8) lineSlice = { .count = lineEnd - lineStart, .data = docIter.contents.data + lineStart };
-                                PNSLR_WriteToFile(f, ARR_STR_LIT("    "));
-                                PNSLR_WriteToFile(f, lineSlice);
-                                PNSLR_WriteToFile(f, ARR_STR_LIT("\n"));
-                            }
-                        }
+                        WriteOdnDoc(f, decl->doc, 1);
                         PNSLR_WriteToFile(f, ARR_STR_LIT("\t"));
                     }
                     if (fn->isDelegate) WriteOdnTypeName(f, content->types, fn->header.ty, currPkgName);
