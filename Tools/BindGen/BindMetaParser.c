@@ -113,6 +113,7 @@ b8 LoadAllBindMetas(PNSLR_Path rootDir, BindMetaCollection* outColl, PNSLR_Alloc
     b8 metaInSrcFound = false, metaInRootFound = false;
     BindMeta metaInSrc = {0}, metaInRoot = {0};
 
+    u16 depsStartIdx = outColl ? (u16) outColl->numMetas : 0;
     PNSLR_Path srcDir = PNSLR_GetPathForSubdirectory(rootDir, PNSLR_StringLiteral("Source"), allocator);
     if (PNSLR_PathExists(srcDir, PNSLR_PathExistsCheckType_Directory))
     {
@@ -132,33 +133,52 @@ b8 LoadAllBindMetas(PNSLR_Path rootDir, BindMetaCollection* outColl, PNSLR_Alloc
 
     metaInRootFound = LoadBindMeta(rootDir, &metaInRoot, allocator);
 
-    if (!metaInSrcFound && !metaInRootFound) return false; // no metas found
+    BindMeta actual = {0};
+    if (metaInSrcFound && metaInRootFound)
+    {
+        printf("Ignoring %.*s bindmeta as one was found in parent dir.\n",
+            (i32) metaInSrc.domainDir.path.count, metaInSrc.domainDir.path.data);
 
-    utf8str srcPkgName = {0}, rootPkgName = {0};
-    b8 srcHasPkgName  = ResolveMetaKey(&metaInSrc,  PNSLR_StringLiteral("PACKAGE_NAME"), &srcPkgName );
-    b8 rootHasPkgName = ResolveMetaKey(&metaInRoot, PNSLR_StringLiteral("PACKAGE_NAME"), &rootPkgName);
+        actual = metaInRoot;
+    }
+    else if (metaInSrcFound ) actual = metaInSrc;
+    else if (metaInRootFound) actual = metaInRoot;
+    else return false; // no metas found
 
-    if (!srcHasPkgName && !rootHasPkgName) return false; // no package names found
+    u16 depsCount = outColl ? (u16)(outColl->numMetas) - depsStartIdx : 0;
+
+    utf8str pkgName = {0};
+    if (!ResolveMetaKey(&actual, PNSLR_StringLiteral("PACKAGE_NAME"), &pkgName))
+    {
+        printf("Error: Missing PACKAGE_NAME in binding meta located at %.*s\n",
+            (i32) actual.domainDir.path.count, actual.domainDir.path.data);
+        return false;
+    }
+
+    utf8str ns = {0};
+    if (!ResolveMetaKey(&actual, PNSLR_StringLiteral("NAMESPACE"), &ns))
+    {
+        printf("Error: Missing NAMESPACE in binding meta located at %.*s\n",
+            (i32) actual.domainDir.path.count, actual.domainDir.path.data);
+        return false;
+    }
 
     if (outColl)
     {
-        if (outColl->numMetas >= outColl->metas.count)
+        if (outColl->numMetas >= outColl->metas.count) // resize if reqd
         {
             i64 newCount = outColl->metas.count == 0 ? 4 : outColl->metas.count * 2;
             PNSLR_ResizeSlice(BindMeta, &(outColl->metas), newCount, false, allocator, PNSLR_GET_LOC(), nil);
         }
 
-        if (srcHasPkgName)
-        {
-            outColl->metas.data[outColl->numMetas] = metaInSrc;
-            outColl->numMetas++;
-        }
+        BindMeta* writeTo = &(outColl->metas.data[outColl->numMetas]);
+        *writeTo = actual;
+        writeTo->pkgName = pkgName;
+        writeTo->prefix = ns;
+        writeTo->deps = PNSLR_MakeSlice(utf8str, depsCount, false, allocator, PNSLR_GET_LOC(), nil);
+        for (u16 i = 0; i < depsCount; i++) { writeTo->deps.data[i] = outColl->metas.data[depsStartIdx + i].pkgName; }
 
-        if (rootHasPkgName)
-        {
-            outColl->metas.data[outColl->numMetas] = metaInRoot;
-            outColl->numMetas++;
-        }
+        outColl->numMetas++;
     }
 
     return true;

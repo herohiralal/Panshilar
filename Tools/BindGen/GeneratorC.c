@@ -33,15 +33,9 @@ void WriteCTypeName(PNSLR_File file, PNSLR_ArraySlice(DeclTypeInfo) types, u32 t
     }
 }
 
-void BeginCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, const BindMeta* meta, PNSLR_Allocator allocator)
+void BeginCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMetaCollection* mc, const BindMeta* meta, PNSLR_Allocator allocator)
 {
-    utf8str pkgName = {0};
-    if (!ResolveMetaKey(meta, PNSLR_StringLiteral("PACKAGE_NAME"), &pkgName))
-    {
-        printf("Error: Missing PACKAGE_NAME in binding meta.\n");
-        FORCE_DBG_TRAP;
-        return;
-    }
+    utf8str pkgName = meta->pkgName;
 
     PNSLR_Path hPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_ConcatenateStrings(pkgName, PNSLR_StringLiteral(".h"), allocator), allocator);
     *f = PNSLR_OpenFileToWrite(hPath, false, false);
@@ -52,19 +46,14 @@ void BeginCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, cons
         PNSLR_WriteToFile(*f, ARR_FROM_STR(hPrefix));
     }
 
-    if (lastPkgName)
+    for (i32 i = 0; i < (i32) meta->deps.count; i++)
     {
-        if (lastPkgName->data && lastPkgName->count)
-        {
-            PNSLR_WriteToFile(*f, ARR_STR_LIT("#include \""));
-            PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
-            PNSLR_WriteToFile(*f, ARR_STR_LIT(".h\"\n\n"));
-        }
-
-        *lastPkgName = pkgName;
+        PNSLR_WriteToFile(*f, ARR_STR_LIT("#include \""));
+        PNSLR_WriteToFile(*f, ARR_FROM_STR(meta->deps.data[i]));
+        PNSLR_WriteToFile(*f, ARR_STR_LIT(".h\"\n"));
     }
 
-    cstring externCStart = ""
+    cstring externCStart = "\n"
         "#ifdef __cplusplus\n"
         "extern \"C\" {\n"
         "#endif\n\n";
@@ -115,7 +104,6 @@ void EndCBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_
 void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
 {
     PNSLR_File f = {0};
-    utf8str lastPkgName = {0};
 
     BindMeta* bm = nil;
     for (ParsedFileContents* file = content->files; file != nil; file = file->next)
@@ -124,7 +112,7 @@ void GenerateCBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocato
         {
             if (bm != nil) EndCBindMeta(tgtDir, &f, bm, allocator);
             bm = file->associatedMeta;
-            BeginCBindMeta(tgtDir, &f, &lastPkgName, bm, allocator);
+            BeginCBindMeta(tgtDir, &f, &(content->metas), bm, allocator);
         }
 
         if (file->declarations != nil)

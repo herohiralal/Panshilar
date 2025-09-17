@@ -883,8 +883,8 @@ b8 ProcessFile(ParsedContent* parsedContent, CachedLasts* cachedLasts, PNSLR_Pat
         return false;
     }
 
-    if (!ResolveMetaKey(file->associatedMeta, PNSLR_StringLiteral("PACKAGE_NAME"), &(cachedLasts->lastPkgName))) cachedLasts->lastPkgName = (utf8str) {0};
-    if (!ResolveMetaKey(file->associatedMeta, PNSLR_StringLiteral("NAMESPACE"), &(cachedLasts->lastNamespace))) cachedLasts->lastNamespace = (utf8str) {0};
+    cachedLasts->lastPkgName = file->associatedMeta->pkgName;
+    cachedLasts->lastNamespace = file->associatedMeta->prefix;
 
     FileIterInfo iter = {0};
     iter.contents     = contents;

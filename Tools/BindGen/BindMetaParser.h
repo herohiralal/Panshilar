@@ -5,8 +5,11 @@
 typedef struct
 {
     PNSLR_Path                domainDir;
+    utf8str                   pkgName;
+    utf8str                   prefix;
     PNSLR_ArraySlice(utf8str) keys;
     PNSLR_ArraySlice(utf8str) values;
+    PNSLR_ArraySlice(utf8str) deps;
 } BindMeta;
 
 PNSLR_DECLARE_ARRAY_SLICE(BindMeta);

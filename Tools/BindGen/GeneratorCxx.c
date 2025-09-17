@@ -5,15 +5,9 @@
 #define ARR_FROM_STR_SKIP_PREFIX(str__, prefixSize__) (PNSLR_ArraySlice(u8)){.count = str__.count - (prefixSize__), .data = str__.data + (prefixSize__)}
 #define ARR_STR_LIT(str__) (PNSLR_ArraySlice(u8)){.count = sizeof(str__) - 1, .data = (u8*) str__}
 
-void BeginCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, const BindMeta* meta, PNSLR_Allocator allocator)
+void BeginCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMetaCollection* mc, const BindMeta* meta, PNSLR_Allocator allocator)
 {
-    utf8str pkgName = {0};
-    if (!ResolveMetaKey(meta, PNSLR_StringLiteral("PACKAGE_NAME"), &pkgName))
-    {
-        printf("Error: Missing PACKAGE_NAME in binding meta.\n");
-        FORCE_DBG_TRAP;
-        return;
-    }
+    utf8str pkgName = meta->pkgName;
 
     PNSLR_Path hPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_ConcatenateStrings(pkgName, PNSLR_StringLiteral(".hpp"), allocator), allocator);
     *f = PNSLR_OpenFileToWrite(hPath, false, false);
@@ -32,31 +26,25 @@ void BeginCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgNa
         PNSLR_WriteToFile(*f, ARR_FROM_STR(hPrefix));
     }
 
-    if (lastPkgName)
+    for (i32 i = 0; i < (i32) meta->deps.count; i++)
     {
-        if (lastPkgName->data && lastPkgName->count)
-        {
-            PNSLR_WriteToFile(*f, ARR_STR_LIT("#include \""));
-            PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
-            PNSLR_WriteToFile(*f, ARR_STR_LIT(".hpp\"\n\n"));
-        }
+        PNSLR_WriteToFile(*f, ARR_STR_LIT("#include \""));
+        PNSLR_WriteToFile(*f, ARR_FROM_STR(meta->deps.data[i]));
+        PNSLR_WriteToFile(*f, ARR_STR_LIT(".hpp\"\n"));
     }
 
-    PNSLR_WriteToFile(*f, ARR_STR_LIT("namespace "));
+    PNSLR_WriteToFile(*f, ARR_STR_LIT("\nnamespace "));
     PNSLR_WriteToFile(*f, ARR_FROM_STR(pkgName));
     PNSLR_WriteToFile(*f, ARR_STR_LIT("\n{\n"));
 
-    if (lastPkgName)
+    for (i32 i = 0; i < (i32) meta->deps.count; i++)
     {
-        if (lastPkgName->data && lastPkgName->count)
-        {
-            PNSLR_WriteToFile(*f, ARR_STR_LIT("    using namespace "));
-            PNSLR_WriteToFile(*f, ARR_FROM_STR((*lastPkgName)));
-            PNSLR_WriteToFile(*f, ARR_STR_LIT(";\n\n"));
-        }
-
-        *lastPkgName = pkgName;
+        PNSLR_WriteToFile(*f, ARR_STR_LIT("    using namespace "));
+        PNSLR_WriteToFile(*f, ARR_FROM_STR(meta->deps.data[i]));
+        PNSLR_WriteToFile(*f, ARR_STR_LIT(";\n"));
     }
+
+    PNSLR_WriteToFile(*f, ARR_STR_LIT("\n"));
 }
 
 void EndCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_Allocator allocator)
@@ -74,15 +62,9 @@ void EndCxxHeaderBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta
     *f = (PNSLR_File) {0};
 }
 
-void BeginCxxSourceBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, utf8str* lastPkgName, const BindMeta* meta, PNSLR_Allocator allocator)
+void BeginCxxSourceBindMeta(PNSLR_Path tgtDir, PNSLR_File* f, const BindMeta* meta, PNSLR_Allocator allocator)
 {
-    utf8str pkgName = {0};
-    if (!ResolveMetaKey(meta, PNSLR_StringLiteral("PACKAGE_NAME"), &pkgName))
-    {
-        printf("Error: Missing PACKAGE_NAME in binding meta.\n");
-        FORCE_DBG_TRAP;
-        return;
-    }
+    utf8str pkgName = meta->pkgName;
 
     PNSLR_Path hPath = PNSLR_GetPathForChildFile(tgtDir, PNSLR_ConcatenateStrings(pkgName, PNSLR_StringLiteral(".hpp"), allocator), allocator);
     *f = PNSLR_OpenFileToWrite(hPath, true, false);
@@ -276,7 +258,6 @@ void WriteCxxMemberParityBoilerplate(PNSLR_File f, PNSLR_ArraySlice(DeclTypeInfo
 void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Allocator allocator)
 {
     PNSLR_File f = {0};
-    utf8str lastPkgName = {0};
 
     BindMeta* bm = nil;
     for (ParsedFileContents* file = content->files; file != nil; file = file->next)
@@ -285,7 +266,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
         {
             if (bm != nil) EndCxxHeaderBindMeta(tgtDir, &f, bm, allocator);
             bm = file->associatedMeta;
-            BeginCxxHeaderBindMeta(tgtDir, &f, &lastPkgName, bm, allocator);
+            BeginCxxHeaderBindMeta(tgtDir, &f, &(content->metas), bm, allocator);
         }
 
         if (file->declarations != nil)
@@ -451,14 +432,14 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
 
     if (bm != nil) { EndCxxHeaderBindMeta(tgtDir, &f, bm, allocator); }
 
-    bm = nil; lastPkgName = (utf8str) {0};
+    bm = nil;
     for (ParsedFileContents* file = content->files; file != nil; file = file->next)
     {
         if (bm != file->associatedMeta)
         {
             if (bm != nil) EndCxxSourceBindMeta(tgtDir, &f, bm, allocator);
             bm = file->associatedMeta;
-            BeginCxxSourceBindMeta(tgtDir, &f, &lastPkgName, bm, allocator);
+            BeginCxxSourceBindMeta(tgtDir, &f, bm, allocator);
         }
 
         for (DeclHeader* decl = file->declarations; decl != nil; decl = decl->next)

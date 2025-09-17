@@ -22,6 +22,7 @@ typedef double              f64;
 typedef char*               cstring;
 typedef void*               rawptr;
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
