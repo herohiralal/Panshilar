@@ -1241,6 +1241,154 @@ void PNSLR_FreeStringBuilder(
     PNSLR_StringBuilder* builder
 );
 
+// String Formatting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * The possible primitive types that can be formatted.
+ */
+typedef u8 PNSLR_PrimitiveFmtType /* use as value */;
+#define PNSLR_PrimitiveFmtType_B8 ((PNSLR_PrimitiveFmtType) 0)
+#define PNSLR_PrimitiveFmtType_F32 ((PNSLR_PrimitiveFmtType) 1)
+#define PNSLR_PrimitiveFmtType_F64 ((PNSLR_PrimitiveFmtType) 2)
+#define PNSLR_PrimitiveFmtType_U8 ((PNSLR_PrimitiveFmtType) 3)
+#define PNSLR_PrimitiveFmtType_U16 ((PNSLR_PrimitiveFmtType) 4)
+#define PNSLR_PrimitiveFmtType_U32 ((PNSLR_PrimitiveFmtType) 5)
+#define PNSLR_PrimitiveFmtType_U64 ((PNSLR_PrimitiveFmtType) 6)
+#define PNSLR_PrimitiveFmtType_I8 ((PNSLR_PrimitiveFmtType) 7)
+#define PNSLR_PrimitiveFmtType_I16 ((PNSLR_PrimitiveFmtType) 8)
+#define PNSLR_PrimitiveFmtType_I32 ((PNSLR_PrimitiveFmtType) 9)
+#define PNSLR_PrimitiveFmtType_I64 ((PNSLR_PrimitiveFmtType) 10)
+#define PNSLR_PrimitiveFmtType_Rune ((PNSLR_PrimitiveFmtType) 11)
+#define PNSLR_PrimitiveFmtType_CString ((PNSLR_PrimitiveFmtType) 12)
+#define PNSLR_PrimitiveFmtType_String ((PNSLR_PrimitiveFmtType) 13)
+
+/**
+ * The internal encoding of a type-unspecific format specifier.
+ * For booleans, valueBufferA is 0 or 1.
+ * For floats, valueBufferA is the float value (reinterpret as relevant),
+ *     and valueBufferB is the number of decimal places (cast to i32).
+ * For integers, valueBufferA is the integer value (reinterpret as relevant),
+ *     and the first half of valueBufferB is the base (cast to PNSLR_IntegerBase).
+ * For runes, valueBufferA is the rune value (reinterpret as u32).
+ * For C-style strings, valueBufferA is the pointer to the string.
+ * For UTF-8 strings, valueBufferA is the pointer to the string,
+ *     and valueBufferB is the length (reinterpret as i64).
+ */
+typedef struct PNSLR_PrimitiveFmtOptions
+{
+    PNSLR_PrimitiveFmtType type;
+    u64 valueBufferA;
+    u64 valueBufferB;
+} PNSLR_PrimitiveFmtOptions;
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtB8(
+    b8 value
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtF32(
+    f32 value,
+    i32 decimalPlaces
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtF64(
+    f64 value,
+    i32 decimalPlaces
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU8(
+    u8 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU16(
+    u16 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU32(
+    u32 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(
+    u64 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(
+    i8 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(
+    i16 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(
+    i32 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI64(
+    i64 value,
+    PNSLR_IntegerBase base
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtRune(
+    u32 value
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtCString(
+    cstring value
+);
+
+/**
+ * Use when formatting a string. Pass as one of the varargs.
+ */
+PNSLR_PrimitiveFmtOptions PNSLR_FmtString(
+    utf8str value
+);
+
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**

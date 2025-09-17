@@ -1520,6 +1520,196 @@ foreign {
 	) ---
 }
 
+// String Formatting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*
+The possible primitive types that can be formatted.
+*/
+PrimitiveFmtType :: enum u8 {
+	B8 = 0,
+	F32 = 1,
+	F64 = 2,
+	U8 = 3,
+	U16 = 4,
+	U32 = 5,
+	U64 = 6,
+	I8 = 7,
+	I16 = 8,
+	I32 = 9,
+	I64 = 10,
+	Rune = 11,
+	CString = 12,
+	String = 13,
+}
+
+/*
+The internal encoding of a type-unspecific format specifier.
+For booleans, valueBufferA is 0 or 1.
+For floats, valueBufferA is the float value (reinterpret as relevant),
+    and valueBufferB is the number of decimal places (cast to i32).
+For integers, valueBufferA is the integer value (reinterpret as relevant),
+    and the first half of valueBufferB is the base (cast to PNSLR_IntegerBase).
+For runes, valueBufferA is the rune value (reinterpret as u32).
+For C-style strings, valueBufferA is the pointer to the string.
+For UTF-8 strings, valueBufferA is the pointer to the string,
+    and valueBufferB is the length (reinterpret as i64).
+*/
+PrimitiveFmtOptions :: struct  {
+	type: PrimitiveFmtType,
+	valueBufferA: u64,
+	valueBufferB: u64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtB8 :: proc "c" (
+		value: b8,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtF32 :: proc "c" (
+		value: f32,
+		decimalPlaces: i32,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtF64 :: proc "c" (
+		value: f64,
+		decimalPlaces: i32,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtU8 :: proc "c" (
+		value: u8,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtU16 :: proc "c" (
+		value: u16,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtU32 :: proc "c" (
+		value: u32,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtU64 :: proc "c" (
+		value: u64,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtI8 :: proc "c" (
+		value: i8,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtI16 :: proc "c" (
+		value: i16,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtI32 :: proc "c" (
+		value: i32,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtI64 :: proc "c" (
+		value: i64,
+		base: IntegerBase,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtRune :: proc "c" (
+		value: u32,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtCString :: proc "c" (
+		value: cstring,
+	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Use when formatting a string. Pass as one of the varargs.
+	*/
+	FmtString :: proc "c" (
+		value: string,
+	) -> PrimitiveFmtOptions ---
+}
+
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")

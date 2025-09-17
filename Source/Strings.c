@@ -794,6 +794,147 @@ void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder)
         builder->allocator = (PNSLR_Allocator) {0};
     }
 }
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtB8(b8 value)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_B8,
+        .valueBufferA = value ? 1 : 0,
+        .valueBufferB = 0,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtF32(f32 value, i32 decimalPlaces)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_F32,
+        .valueBufferA = (u64) (*(u32*) &value),
+        .valueBufferB = (u64) decimalPlaces,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtF64(f64 value, i32 decimalPlaces)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_F64,
+        .valueBufferA = *(u64*) &value,
+        .valueBufferB = (u64) decimalPlaces,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU8(u8 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_U8,
+        .valueBufferA = (u64) value,
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU16(u16 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_U16,
+        .valueBufferA = (u64) value,
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU32(u32 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_U32,
+        .valueBufferA = (u64) value,
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(u64 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_U64,
+        .valueBufferA = value,
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(i8 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_I8,
+        .valueBufferA = (u64) (*(u8*) &value),
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(i16 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_I16,
+        .valueBufferA = (u64) (*(u16*) &value),
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(i32 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_I32,
+        .valueBufferA = (u64) (*(u32*) &value),
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI64(i64 value, PNSLR_IntegerBase base)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_I64,
+        .valueBufferA = *(u64*) &value,
+        .valueBufferB = (u64) base,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtRune(u32 value)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_Rune,
+        .valueBufferA = (u64) value,
+        .valueBufferB = 0,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtCString(cstring value)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_CString,
+        .valueBufferA = *(u64*) &value,
+        .valueBufferB = 0,
+    };
+}
+
+PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value)
+{
+    return (PNSLR_PrimitiveFmtOptions)
+    {
+        .type         = PNSLR_PrimitiveFmtType_String,
+        .valueBufferA = *(u64*) &value.data,
+        .valueBufferB = *(u64*) &value.count,
+    };
+}
+
 utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);

@@ -1249,6 +1249,156 @@ namespace Panshilar
         StringBuilder* builder
     );
 
+    // String Formatting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * The possible primitive types that can be formatted.
+     */
+    enum class PrimitiveFmtType : u8 /* use as value */
+    {
+        B8 = 0,
+        F32 = 1,
+        F64 = 2,
+        U8 = 3,
+        U16 = 4,
+        U32 = 5,
+        U64 = 6,
+        I8 = 7,
+        I16 = 8,
+        I32 = 9,
+        I64 = 10,
+        Rune = 11,
+        CString = 12,
+        String = 13,
+    };
+
+    /**
+     * The internal encoding of a type-unspecific format specifier.
+     * For booleans, valueBufferA is 0 or 1.
+     * For floats, valueBufferA is the float value (reinterpret as relevant),
+     *     and valueBufferB is the number of decimal places (cast to i32).
+     * For integers, valueBufferA is the integer value (reinterpret as relevant),
+     *     and the first half of valueBufferB is the base (cast to PNSLR_IntegerBase).
+     * For runes, valueBufferA is the rune value (reinterpret as u32).
+     * For C-style strings, valueBufferA is the pointer to the string.
+     * For UTF-8 strings, valueBufferA is the pointer to the string,
+     *     and valueBufferB is the length (reinterpret as i64).
+     */
+    struct PrimitiveFmtOptions
+    {
+       PrimitiveFmtType type;
+       u64 valueBufferA;
+       u64 valueBufferB;
+    };
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtB8(
+        b8 value
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtF32(
+        f32 value,
+        i32 decimalPlaces
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtF64(
+        f64 value,
+        i32 decimalPlaces
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtU8(
+        u8 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtU16(
+        u16 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtU32(
+        u32 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtU64(
+        u64 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtI8(
+        i8 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtI16(
+        i16 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtI32(
+        i32 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtI64(
+        i64 value,
+        IntegerBase base
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtRune(
+        u32 value
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtCString(
+        cstring value
+    );
+
+    /**
+     * Use when formatting a string. Pass as one of the varargs.
+     */
+    PrimitiveFmtOptions FmtString(
+        utf8str value
+    );
+
     // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
@@ -2759,6 +2909,114 @@ extern "C" void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder);
 void Panshilar::FreeStringBuilder(Panshilar::StringBuilder* builder)
 {
     PNSLR_FreeStringBuilder(PNSLR_Bindings_Convert(builder));
+}
+
+enum class PNSLR_PrimitiveFmtType : u8 { };
+static_assert(sizeof(PNSLR_PrimitiveFmtType) == sizeof(Panshilar::PrimitiveFmtType), "size mismatch");
+static_assert(alignof(PNSLR_PrimitiveFmtType) == alignof(Panshilar::PrimitiveFmtType), "align mismatch");
+PNSLR_PrimitiveFmtType* PNSLR_Bindings_Convert(Panshilar::PrimitiveFmtType* x) { return reinterpret_cast<PNSLR_PrimitiveFmtType*>(x); }
+Panshilar::PrimitiveFmtType* PNSLR_Bindings_Convert(PNSLR_PrimitiveFmtType* x) { return reinterpret_cast<Panshilar::PrimitiveFmtType*>(x); }
+PNSLR_PrimitiveFmtType& PNSLR_Bindings_Convert(Panshilar::PrimitiveFmtType& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::PrimitiveFmtType& PNSLR_Bindings_Convert(PNSLR_PrimitiveFmtType& x) { return *PNSLR_Bindings_Convert(&x); }
+
+struct PNSLR_PrimitiveFmtOptions
+{
+   PNSLR_PrimitiveFmtType type;
+   u64 valueBufferA;
+   u64 valueBufferB;
+};
+static_assert(sizeof(PNSLR_PrimitiveFmtOptions) == sizeof(Panshilar::PrimitiveFmtOptions), "size mismatch");
+static_assert(alignof(PNSLR_PrimitiveFmtOptions) == alignof(Panshilar::PrimitiveFmtOptions), "align mismatch");
+PNSLR_PrimitiveFmtOptions* PNSLR_Bindings_Convert(Panshilar::PrimitiveFmtOptions* x) { return reinterpret_cast<PNSLR_PrimitiveFmtOptions*>(x); }
+Panshilar::PrimitiveFmtOptions* PNSLR_Bindings_Convert(PNSLR_PrimitiveFmtOptions* x) { return reinterpret_cast<Panshilar::PrimitiveFmtOptions*>(x); }
+PNSLR_PrimitiveFmtOptions& PNSLR_Bindings_Convert(Panshilar::PrimitiveFmtOptions& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::PrimitiveFmtOptions& PNSLR_Bindings_Convert(PNSLR_PrimitiveFmtOptions& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, type) == PNSLR_STRUCT_OFFSET(Panshilar::PrimitiveFmtOptions, type), "type offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, valueBufferA) == PNSLR_STRUCT_OFFSET(Panshilar::PrimitiveFmtOptions, valueBufferA), "valueBufferA offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, valueBufferB) == PNSLR_STRUCT_OFFSET(Panshilar::PrimitiveFmtOptions, valueBufferB), "valueBufferB offset mismatch");
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtB8(b8 value);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtB8(b8 value)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtB8(PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtF32(f32 value, i32 decimalPlaces);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtF32(f32 value, i32 decimalPlaces)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtF32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtF64(f64 value, i32 decimalPlaces);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtF64(f64 value, i32 decimalPlaces)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtF64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtU8(u8 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtU8(u8 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtU8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtU16(u16 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtU16(u16 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtU16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtU32(u32 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtU32(u32 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtU32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(u64 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtU64(u64 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtU64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(i8 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtI8(i8 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtI8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(i16 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtI16(i16 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtI16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(i32 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtI32(i32 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtI32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtI64(i64 value, PNSLR_IntegerBase base);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtI64(i64 value, Panshilar::IntegerBase base)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtI64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtRune(u32 value);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtRune(u32 value)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtRune(PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtCString(cstring value);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtCString(cstring value)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtCString(PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtString(PNSLR_UTF8STR value);
+Panshilar::PrimitiveFmtOptions Panshilar::FmtString(utf8str value)
+{
+    PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtString(PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
