@@ -187,5 +187,125 @@ PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocato
  */
 utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
 
+// String Builder ==================================================================
+
+/**
+ * A basic string builder. Can accept strings and characters,
+ * and build a single string from them.
+ *
+ * Create by setting the allocator and zeroing the rest of the fields.
+ */
+typedef struct PNSLR_StringBuilder
+{
+    PNSLR_Allocator      allocator;
+    PNSLR_ArraySlice(u8) buffer;
+    i64                  length;
+} PNSLR_StringBuilder;
+
+/**
+ * Append a single byte to the string builder. Could be an ANSI/ASCII character,
+ * or not. The function does not check for validity.
+ */
+b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte);
+
+/**
+ * Append a UTF-8 string to the string builder.
+ */
+b8 PNSLR_AppendStringToStringBuilder(PNSLR_StringBuilder* builder, utf8str str);
+
+/**
+ * Append a C-style null-terminated string to the string builder.
+ */
+b8 PNSLR_AppendCStringToStringBuilder(PNSLR_StringBuilder* builder, cstring str);
+
+/**
+ * Append a single character (rune) to the string builder.
+ */
+b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune);
+
+/**
+ * Append a boolean value to the string builder.
+ */
+b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
+
+/**
+ * Append a 32-bit floating-point number to the string builder.
+ */
+b8 PNSLR_AppendF32ToStringBuilder(PNSLR_StringBuilder* builder, f32 value, i32 decimalPlaces);
+
+/**
+ * Append a 64-bit floating point number to the string builder.
+ */
+b8 PNSLR_AppendF64ToStringBuilder(PNSLR_StringBuilder* builder, f64 value, i32 decimalPlaces);
+
+/**
+ * The base to use when appending integer numbers to the string builder.
+ */
+ENUM_START(PNSLR_IntegerBase, u8)
+    #define PNSLR_IntegerBase_Decimal     ((PNSLR_IntegerBase) 0) // first cuz good default
+    #define PNSLR_IntegerBase_Binary      ((PNSLR_IntegerBase) 1)
+    #define PNSLR_IntegerBase_HexaDecimal ((PNSLR_IntegerBase) 2)
+    #define PNSLR_IntegerBase_Octal       ((PNSLR_IntegerBase) 3)
+ENUM_END
+
+/**
+ * Append an unsigned 8-bit integer to the string builder.
+ */
+b8 PNSLR_AppendU8ToStringBuilder(PNSLR_StringBuilder* builder, u8 value, PNSLR_IntegerBase base);
+
+/**
+ * Append an unsigned 16-bit integer to the string builder.
+ */
+b8 PNSLR_AppendU16ToStringBuilder(PNSLR_StringBuilder* builder, u16 value, PNSLR_IntegerBase base);
+
+/**
+ * Append an unsigned 32-bit integer number to the string builder.
+ */
+b8 PNSLR_AppendU32ToStringBuilder(PNSLR_StringBuilder* builder, u32 value, PNSLR_IntegerBase base);
+
+/**
+ * Append an unsigned 64-bit integer to the string builder.
+ */
+b8 PNSLR_AppendU64ToStringBuilder(PNSLR_StringBuilder* builder, u64 value, PNSLR_IntegerBase base);
+
+/**
+ * Append a signed 8-bit integer to the string builder.
+ */
+b8 PNSLR_AppendI8ToStringBuilder(PNSLR_StringBuilder* builder, i8 value, PNSLR_IntegerBase base);
+
+/**
+ * Append a signed 16-bit integer to the string builder.
+ */
+b8 PNSLR_AppendI16ToStringBuilder(PNSLR_StringBuilder* builder, i16 value, PNSLR_IntegerBase base);
+
+/**
+ * Append a signed 32-bit integer number to the string builder.
+ */
+b8 PNSLR_AppendI32ToStringBuilder(PNSLR_StringBuilder* builder, i32 value, PNSLR_IntegerBase base);
+
+/**
+ * Append a signed 64-bit integer to the string builder.
+ */
+b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR_IntegerBase base);
+
+/**
+ * Return the string from the string builder.
+ */
+utf8str PNSLR_StringFromStringBuilder(PNSLR_StringBuilder* builder);
+
+/**
+ * Reset the string builder, clearing its contents but keeping the allocated buffer.
+ */
+void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder);
+
+/**
+ * Free the resources used by the string builder.
+ */
+void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder);
+
+// String Conversions ==============================================================
+
+// b8 PNSLR_
+
 EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================

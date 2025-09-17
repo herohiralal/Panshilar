@@ -1,5 +1,6 @@
 #define PNSLR_IMPLEMENTATION
 #include "Strings.h"
+#include "Memory.h"
 
 PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 60);
 
@@ -562,4 +563,234 @@ utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_All
         return (utf8str) {0};
     }
     #endif
+}
+
+static b8 PNSLR_Internal_ResizeStringBuilderIfRequired(PNSLR_StringBuilder* builder, i64 lengthHint)
+{
+    if (builder->length + lengthHint <= builder->buffer.count) return true; // enough space already
+
+    i64 newSize = builder->buffer.count == 0 ? 64 : builder->buffer.count;
+    while (builder->length + lengthHint > newSize) { newSize *= 2; } // double until it fits
+
+    PNSLR_AllocatorError err = PNSLR_AllocatorError_None;
+    PNSLR_ResizeSlice(u8, &(builder->buffer), newSize, false, (builder->allocator), PNSLR_GET_LOC(), &err);
+    return err == PNSLR_AllocatorError_None;
+}
+
+b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte)
+{
+    if (!builder || !PNSLR_Internal_ResizeStringBuilderIfRequired(builder, 1)) return false;
+
+    builder->buffer.data[builder->length] = byte;
+    builder->length += 1;
+    return true;
+}
+
+b8 PNSLR_AppendStringToStringBuilder(PNSLR_StringBuilder* builder, utf8str str)
+{
+    if (!builder || !PNSLR_Internal_ResizeStringBuilderIfRequired(builder, str.count)) return false;
+
+    PNSLR_MemCopy(builder->buffer.data + builder->length, str.data, (i32) str.count);
+    builder->length += str.count;
+    return true;
+}
+
+b8 PNSLR_AppendCStringToStringBuilder(PNSLR_StringBuilder* builder, cstring str)
+{
+    return PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringFromCString(str));
+}
+
+b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune)
+{
+    PNSLR_EncodedRune r = PNSLR_EncodeRune(rune);
+    utf8str rStr = {.count = (i64) r.length, .data = &(r.data[0])};
+    return PNSLR_AppendStringToStringBuilder(builder, rStr);
+}
+
+b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value)
+{
+    if (value) PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("true" ));
+    else       PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("false"));
+}
+
+b8 PNSLR_AppendF32ToStringBuilder(PNSLR_StringBuilder* builder, f32 value, i32 decimalPlaces)
+{
+    return PNSLR_AppendF64ToStringBuilder(builder, (f64) value, decimalPlaces);
+}
+
+b8 PNSLR_AppendF64ToStringBuilder(PNSLR_StringBuilder* builder, f64 value, i32 decimalPlaces)
+{
+    if (!builder) return false;
+    if (value != value) { return PNSLR_AppendCStringToStringBuilder(builder, "NaN"); } // NaN
+
+    b8 status = true;
+    if (value == 0.0)
+    {
+        status = PNSLR_AppendByteToStringBuilder(builder, '0');
+        if (decimalPlaces > 0)
+        {
+            status = status && PNSLR_AppendByteToStringBuilder(builder, '.');
+            for (i32 i = 0; i < decimalPlaces; i++)
+            {
+                status = status && PNSLR_AppendByteToStringBuilder(builder, '0');
+            }
+        }
+        return status;
+    }
+
+    // Handle sign
+    f64 absValue = value;
+    if (value < 0.0)
+    {
+        status = PNSLR_AppendByteToStringBuilder(builder, '-');
+        absValue = -value;
+    }
+
+    // Integer part
+    u64 intPart = (u64) absValue;
+    status = status && PNSLR_AppendU64ToStringBuilder(builder, intPart, PNSLR_IntegerBase_Decimal);
+
+    // Fractional part
+    if (decimalPlaces > 0)
+    {
+        status = status && PNSLR_AppendByteToStringBuilder(builder, '.');
+
+        f64 fracPart = absValue - (f64) intPart;
+
+        // Scale fractional part by 10^decimalPlaces
+        u64 factor = 1;
+        for (i32 i = 0; i < decimalPlaces; i++) factor *= 10;
+
+        u64 scaledFrac = (u64)(fracPart * (f64)factor + 0.5); // round
+
+        // Count digits of scaledFrac
+        u64 temp = scaledFrac;
+        i32 digitCount = 0;
+        if (temp == 0) { digitCount = 1; }
+        else while (temp > 0) { digitCount++; temp /= 10; }
+
+        // trailing zeroes
+        for (i32 i = 0; i < decimalPlaces - digitCount; i++) { status = status && PNSLR_AppendByteToStringBuilder(builder, '0'); }
+        if (scaledFrac > 0) { status = status && PNSLR_AppendU64ToStringBuilder(builder, scaledFrac, PNSLR_IntegerBase_Decimal); }
+    }
+
+    return status;
+}
+
+b8 PNSLR_AppendU8ToStringBuilder(PNSLR_StringBuilder* builder, u8 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendU64ToStringBuilder(builder, (u64) value, base);
+}
+
+b8 PNSLR_AppendU16ToStringBuilder(PNSLR_StringBuilder* builder, u16 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendU64ToStringBuilder(builder, (u64) value, base);
+}
+
+b8 PNSLR_AppendU32ToStringBuilder(PNSLR_StringBuilder* builder, u32 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendU64ToStringBuilder(builder, (u64) value, base);
+}
+
+b8 PNSLR_AppendU64ToStringBuilder(PNSLR_StringBuilder* builder, u64 value, PNSLR_IntegerBase base)
+{
+    u8 prefix = 0;
+    switch (base)
+    {
+        case PNSLR_IntegerBase_Binary:      prefix = 'b'; break;
+        case PNSLR_IntegerBase_HexaDecimal: prefix = 'x'; break;
+        case PNSLR_IntegerBase_Octal:       prefix = 'o'; break;
+        case PNSLR_IntegerBase_Decimal:                   break;
+        default: FORCE_DBG_TRAP; break;
+    }
+
+    if (prefix)
+    {
+        b8 prefixAdded = PNSLR_AppendByteToStringBuilder(builder, '0') && PNSLR_AppendByteToStringBuilder(builder, (u8) prefix);
+        if (!prefixAdded) { return false; }
+    }
+
+    if (value == 0)
+    {
+        return PNSLR_AppendByteToStringBuilder(builder, '0');
+    }
+
+    u8 digits[64] = {0};
+    i64 count = 0;
+
+    u64 baseInt;
+    switch (base)
+    {
+        case PNSLR_IntegerBase_Binary:      baseInt = 2;  break;
+        case PNSLR_IntegerBase_HexaDecimal: baseInt = 16; break;
+        case PNSLR_IntegerBase_Octal:       baseInt = 8;  break;
+        case PNSLR_IntegerBase_Decimal:     baseInt = 10; break;
+        default: FORCE_DBG_TRAP; return false;
+    }
+
+    u64 tempValue = value;
+    while (tempValue > 0)
+    {
+        u64 digit = (tempValue % baseInt);
+        if (digit < 10) { digits[count] = (u8) ('0' + digit);        }
+        else            { digits[count] = (u8) ('a' + (digit - 10)); }
+
+        tempValue /= baseInt;
+        count++;
+    }
+
+    for (i64 i = count - 1; i >= 0; --i)
+    {
+        if (!PNSLR_AppendByteToStringBuilder(builder, digits[i])) { return false; }
+    }
+
+    return true;
+}
+
+b8 PNSLR_AppendI8ToStringBuilder(PNSLR_StringBuilder* builder, i8 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendI64ToStringBuilder(builder, (i64) value, base);
+}
+
+b8 PNSLR_AppendI16ToStringBuilder(PNSLR_StringBuilder* builder, i16 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendI64ToStringBuilder(builder, (i64) value, base);
+}
+
+b8 PNSLR_AppendI32ToStringBuilder(PNSLR_StringBuilder* builder, i32 value, PNSLR_IntegerBase base)
+{
+    return PNSLR_AppendI64ToStringBuilder(builder, (i64) value, base);
+}
+
+b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR_IntegerBase base)
+{
+    b8 status = true;
+    if (value < 0)
+    {
+        status = PNSLR_AppendByteToStringBuilder(builder, '-');
+        value = -value;
+    }
+
+    return status && PNSLR_AppendU64ToStringBuilder(builder, (u64) value, base);
+}
+
+utf8str PNSLR_StringFromStringBuilder(PNSLR_StringBuilder* builder)
+{
+    if (!builder || builder->length == 0) { return (utf8str) {0}; }
+    return (utf8str) { builder->buffer.data, builder->length };
+}
+
+void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder)
+{
+    if (builder) { builder->length = 0; }
+}
+
+void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder)
+{
+    if (builder)
+    {
+        PNSLR_FreeSlice(&(builder->buffer), builder->allocator, PNSLR_GET_LOC(), nil);
+        builder->length = 0;
+        builder->allocator = (PNSLR_Allocator) {0};
+    }
 }
