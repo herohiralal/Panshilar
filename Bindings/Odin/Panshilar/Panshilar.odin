@@ -122,7 +122,7 @@ foreign {
 	) -> b8 ---
 }
 
-// Read-Write ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read-Write Mutex ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A read-write mutex.
@@ -284,7 +284,7 @@ foreign {
 	) ---
 }
 
-// Condition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Condition Variable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A condition variable for signaling between threads.
@@ -406,7 +406,7 @@ foreign {
 // Allocators
 // #######################################################################################
 
-// Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocator Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Defines the mode to be used when calling the allocator function.
@@ -477,7 +477,7 @@ Allocator :: struct  {
 
 // declare []Allocator
 
-// Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocation ease-of-use functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -565,7 +565,7 @@ foreign {
 	) -> u64 ---
 }
 
-// Nil ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Nil allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -576,7 +576,7 @@ foreign {
 	GetAllocator_Nil :: proc "c" () -> Allocator ---
 }
 
-// Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Default Heap Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -603,7 +603,7 @@ foreign {
 	) -> rawptr ---
 }
 
-// Arena ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Arena Alloator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A block of memory used by the arena allocator.
@@ -737,7 +737,7 @@ foreign {
 	) -> ArenaSnapshotError ---
 }
 
-// Stack ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Stack Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A page of a stack allocator.
@@ -815,7 +815,7 @@ foreign {
 	) -> rawptr ---
 }
 
-// Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Collections make/free functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -1167,7 +1167,7 @@ foreign {
 	) -> b8 ---
 }
 
-// Advanced ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Advanced comparisons ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -1210,7 +1210,7 @@ foreign {
 	) -> string ---
 }
 
-// UTF-8 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// UTF-8 functionalities ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Result structure for UTF-8 rune encoding.
@@ -1262,7 +1262,7 @@ foreign {
 	) -> DecodedRune ---
 }
 
-// Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Windows-specific bs for UTF-16 conversions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -1290,7 +1290,7 @@ foreign {
 	) -> string ---
 }
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// String Builder ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A basic string builder. Can accept strings and characters,
@@ -1520,7 +1520,7 @@ foreign {
 	) ---
 }
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -1651,6 +1651,155 @@ foreign {
 		base: IntegerBase,
 		allocator: Allocator,
 	) -> string ---
+}
+
+// Conversions from strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a validstring (case-insensitive "true" or "false", or "1" or "0") to a boolean.
+     */
+	BooleanFromString :: proc "c" (
+		str: string,
+		value: ^b8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers-only, with zero or one decimal points,
+     * optional -/+ sign at the start) to a 32-bit floating-point number.
+     */
+	F32FromString :: proc "c" (
+		str: string,
+		value: ^f32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers-only, with zero or one decimal points,
+     * optional -/+ sign at the start) to a 64-bit floating-point number.
+     */
+	F64FromString :: proc "c" (
+		str: string,
+		value: ^f64,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 8-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+	U8FromString :: proc "c" (
+		str: string,
+		value: ^u8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 16-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+	U16FromString :: proc "c" (
+		str: string,
+		value: ^u16,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 32-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+	U32FromString :: proc "c" (
+		str: string,
+		value: ^u32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 64-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+	U64FromString :: proc "c" (
+		str: string,
+		value: ^u64,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 8-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+	I8FromString :: proc "c" (
+		str: string,
+		value: ^i8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 16-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+	I16FromString :: proc "c" (
+		str: string,
+		value: ^i16,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 32-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+	I32FromString :: proc "c" (
+		str: string,
+		value: ^i32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 64-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+	I64FromString :: proc "c" (
+		str: string,
+		value: ^i64,
+	) -> b8 ---
 }
 
 // #######################################################################################

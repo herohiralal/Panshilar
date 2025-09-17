@@ -116,7 +116,7 @@ b8 PNSLR_TryLockMutex(
     PNSLR_Mutex* mutex
 );
 
-// Read-Write ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Read-Write Mutex ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A read-write mutex.
@@ -241,7 +241,7 @@ void PNSLR_SignalSemaphore(
     i32 count
 );
 
-// Condition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Condition Variable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A condition variable for signaling between threads.
@@ -337,7 +337,7 @@ void PNSLR_MemMove(
 // Allocators
 // #######################################################################################
 
-// Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocator Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Defines the mode to be used when calling the allocator function.
@@ -405,7 +405,7 @@ typedef struct PNSLR_Allocator
 
 PNSLR_DECLARE_ARRAY_SLICE(PNSLR_Allocator);
 
-// Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Allocation ease-of-use functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Allocate memory using the provided allocator.
@@ -475,7 +475,7 @@ u64 PNSLR_QueryAllocatorCapabilities(
     PNSLR_AllocatorError* error
 );
 
-// Nil ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Nil allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
@@ -483,7 +483,7 @@ u64 PNSLR_QueryAllocatorCapabilities(
  */
 PNSLR_Allocator PNSLR_GetAllocator_Nil(void);
 
-// Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Default Heap Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Get the default heap allocator.
@@ -504,7 +504,7 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(
     PNSLR_AllocatorError* error
 );
 
-// Arena ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Arena Alloator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A block of memory used by the arena allocator.
@@ -619,7 +619,7 @@ PNSLR_ArenaSnapshotError PNSLR_DiscardArenaAllocatorSnapshot(
     PNSLR_ArenaAllocatorSnapshot* snapshot
 );
 
-// Stack ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Stack Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A page of a stack allocator.
@@ -691,7 +691,7 @@ rawptr PNSLR_AllocatorFn_Stack(
     PNSLR_AllocatorError* error
 );
 
-// Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Collections make/free functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
@@ -964,7 +964,7 @@ b8 PNSLR_CStringEndsWithCString(
     PNSLR_StringComparisonType comparisonType
 );
 
-// Advanced ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Advanced comparisons ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Searches for the first occurrence of a substring within a string.
@@ -998,7 +998,7 @@ utf8str PNSLR_ReplaceInString(
     PNSLR_StringComparisonType comparisonType
 );
 
-// UTF-8 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// UTF-8 functionalities ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Result structure for UTF-8 rune encoding.
@@ -1043,7 +1043,7 @@ PNSLR_DecodedRune PNSLR_DecodeRune(
     PNSLR_ArraySlice(u8) s
 );
 
-// Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Windows-specific bs for UTF-16 conversions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Converts a UTF-8 string to a UTF-16 string.
@@ -1065,7 +1065,7 @@ utf8str PNSLR_UTF8FromUTF16WindowsOnly(
     PNSLR_Allocator allocator
 );
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// String Builder ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * A basic string builder. Can accept strings and characters,
@@ -1241,7 +1241,7 @@ void PNSLR_FreeStringBuilder(
     PNSLR_StringBuilder* builder
 );
 
-// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Convert a boolean value to a string ("true" or "false").
@@ -1339,6 +1339,122 @@ utf8str PNSLR_StringFromI64(
     i64 value,
     PNSLR_IntegerBase base,
     PNSLR_Allocator allocator
+);
+
+// Conversions from strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Convert a validstring (case-insensitive "true" or "false", or "1" or "0") to a boolean.
+ */
+b8 PNSLR_BooleanFromString(
+    utf8str str,
+    b8* value
+);
+
+/**
+ * Convert a valid string (numbers-only, with zero or one decimal points,
+ * optional -/+ sign at the start) to a 32-bit floating-point number.
+ */
+b8 PNSLR_F32FromString(
+    utf8str str,
+    f32* value
+);
+
+/**
+ * Convert a valid string (numbers-only, with zero or one decimal points,
+ * optional -/+ sign at the start) to a 64-bit floating-point number.
+ */
+b8 PNSLR_F64FromString(
+    utf8str str,
+    f64* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 8-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U8FromString(
+    utf8str str,
+    u8* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 16-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U16FromString(
+    utf8str str,
+    u16* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 32-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U32FromString(
+    utf8str str,
+    u32* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+ * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 64-bit integer.
+ * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+ * By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_U64FromString(
+    utf8str str,
+    u64* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 8-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I8FromString(
+    utf8str str,
+    i8* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 16-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I16FromString(
+    utf8str str,
+    i16* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 32-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I32FromString(
+    utf8str str,
+    i32* value
+);
+
+/**
+ * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+ * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+ * a signed 64-bit integer. Will be assumed to be hexadecimal if it contains A-F
+ * characters but no prefix. By default (no prefix), decimal base is assumed.
+ */
+b8 PNSLR_I64FromString(
+    utf8str str,
+    i64* value
 );
 
 // #######################################################################################

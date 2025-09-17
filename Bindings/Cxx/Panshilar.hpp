@@ -114,7 +114,7 @@ namespace Panshilar
         Mutex* mutex
     );
 
-    // Read-Write ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Read-Write Mutex ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A read-write mutex.
@@ -239,7 +239,7 @@ namespace Panshilar
         i32 count
     );
 
-    // Condition ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Condition Variable ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A condition variable for signaling between threads.
@@ -335,7 +335,7 @@ namespace Panshilar
     // Allocators
     // #######################################################################################
 
-    // Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Allocator Declaration ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Defines the mode to be used when calling the allocator function.
@@ -407,7 +407,7 @@ namespace Panshilar
        rawptr data;
     };
 
-    // Allocation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Allocation ease-of-use functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Allocate memory using the provided allocator.
@@ -477,7 +477,7 @@ namespace Panshilar
         AllocatorError* error
     );
 
-    // Nil ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Nil allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Get the 'nil' allocator. Reports 'out of memory' when requesting memory.
@@ -485,7 +485,7 @@ namespace Panshilar
      */
     Allocator GetAllocator_Nil();
 
-    // Default ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Default Heap Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Get the default heap allocator.
@@ -506,7 +506,7 @@ namespace Panshilar
         AllocatorError* error
     );
 
-    // Arena ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Arena Alloator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A block of memory used by the arena allocator.
@@ -623,7 +623,7 @@ namespace Panshilar
         ArenaAllocatorSnapshot* snapshot
     );
 
-    // Stack ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Stack Allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A page of a stack allocator.
@@ -695,7 +695,7 @@ namespace Panshilar
         AllocatorError* error
     );
 
-    // Collections ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Collections make/free functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
@@ -970,7 +970,7 @@ namespace Panshilar
         StringComparisonType comparisonType
     );
 
-    // Advanced ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Advanced comparisons ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Searches for the first occurrence of a substring within a string.
@@ -1004,7 +1004,7 @@ namespace Panshilar
         StringComparisonType comparisonType
     );
 
-    // UTF-8 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // UTF-8 functionalities ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Result structure for UTF-8 rune encoding.
@@ -1049,7 +1049,7 @@ namespace Panshilar
         ArraySlice<u8> s
     );
 
-    // Windows-specific ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Windows-specific bs for UTF-16 conversions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Converts a UTF-8 string to a UTF-16 string.
@@ -1071,7 +1071,7 @@ namespace Panshilar
         Allocator allocator
     );
 
-    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // String Builder ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A basic string builder. Can accept strings and characters,
@@ -1249,7 +1249,7 @@ namespace Panshilar
         StringBuilder* builder
     );
 
-    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Convert a boolean value to a string ("true" or "false").
@@ -1347,6 +1347,122 @@ namespace Panshilar
         i64 value,
         IntegerBase base,
         Allocator allocator
+    );
+
+    // Conversions from strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Convert a validstring (case-insensitive "true" or "false", or "1" or "0") to a boolean.
+     */
+    b8 BooleanFromString(
+        utf8str str,
+        b8* value
+    );
+
+    /**
+     * Convert a valid string (numbers-only, with zero or one decimal points,
+     * optional -/+ sign at the start) to a 32-bit floating-point number.
+     */
+    b8 F32FromString(
+        utf8str str,
+        f32* value
+    );
+
+    /**
+     * Convert a valid string (numbers-only, with zero or one decimal points,
+     * optional -/+ sign at the start) to a 64-bit floating-point number.
+     */
+    b8 F64FromString(
+        utf8str str,
+        f64* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 8-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+    b8 U8FromString(
+        utf8str str,
+        u8* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 16-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+    b8 U16FromString(
+        utf8str str,
+        u16* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 32-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+    b8 U32FromString(
+        utf8str str,
+        u32* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optionally
+     * starting with 0b/0o/0x prefix for alternate bases) to an unsigned 64-bit integer.
+     * Will be assumed to be hexadecimal if it contains A-F characters but no prefix.
+     * By default (no prefix), decimal base is assumed.
+     */
+    b8 U64FromString(
+        utf8str str,
+        u64* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 8-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+    b8 I8FromString(
+        utf8str str,
+        i8* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 16-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+    b8 I16FromString(
+        utf8str str,
+        i16* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 32-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+    b8 I32FromString(
+        utf8str str,
+        i32* value
+    );
+
+    /**
+     * Convert a valid string (numbers/A-F only, case-insensitive, optional -/+ sign
+     * at the start, optionally starting with 0b/0o/0x prefix for alternate bases) to
+     * a signed 64-bit integer. Will be assumed to be hexadecimal if it contains A-F
+     * characters but no prefix. By default (no prefix), decimal base is assumed.
+     */
+    b8 I64FromString(
+        utf8str str,
+        i64* value
     );
 
     // #######################################################################################
@@ -2692,6 +2808,72 @@ extern "C" PNSLR_UTF8STR PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, 
 utf8str Panshilar::StringFromI64(i64 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_BooleanFromString(PNSLR_UTF8STR str, b8* value);
+b8 Panshilar::BooleanFromString(utf8str str, b8* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_BooleanFromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_F32FromString(PNSLR_UTF8STR str, f32* value);
+b8 Panshilar::F32FromString(utf8str str, f32* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_F32FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_F64FromString(PNSLR_UTF8STR str, f64* value);
+b8 Panshilar::F64FromString(utf8str str, f64* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_F64FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_U8FromString(PNSLR_UTF8STR str, u8* value);
+b8 Panshilar::U8FromString(utf8str str, u8* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_U8FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_U16FromString(PNSLR_UTF8STR str, u16* value);
+b8 Panshilar::U16FromString(utf8str str, u16* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_U16FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_U32FromString(PNSLR_UTF8STR str, u32* value);
+b8 Panshilar::U32FromString(utf8str str, u32* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_U32FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_U64FromString(PNSLR_UTF8STR str, u64* value);
+b8 Panshilar::U64FromString(utf8str str, u64* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_U64FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_I8FromString(PNSLR_UTF8STR str, i8* value);
+b8 Panshilar::I8FromString(utf8str str, i8* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_I8FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_I16FromString(PNSLR_UTF8STR str, i16* value);
+b8 Panshilar::I16FromString(utf8str str, i16* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_I16FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_I32FromString(PNSLR_UTF8STR str, i32* value);
+b8 Panshilar::I32FromString(utf8str str, i32* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_I32FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_I64FromString(PNSLR_UTF8STR str, i64* value);
+b8 Panshilar::I64FromString(utf8str str, i64* value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_I64FromString(PNSLR_Bindings_Convert(str), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_Path

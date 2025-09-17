@@ -930,12 +930,12 @@ b8 PNSLR_BooleanFromString(utf8str str, b8* value)
         *value = false;
         return true;
     }
-    else if (str.count == 1 && str.data == '1')
+    else if (str.count == 1 && *str.data == (u8) '1')
     {
         *value = true;
         return true;
     }
-    else if (str.count == 1 && str.data == '0')
+    else if (str.count == 1 && *str.data == (u8) '0')
     {
         *value = false;
         return true;

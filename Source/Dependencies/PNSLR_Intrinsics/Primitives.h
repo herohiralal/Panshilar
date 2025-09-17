@@ -50,7 +50,7 @@ typedef char*               cstring;
 #define I8_MAX  ((i8)  (127))
 #define I16_MIN ((i16) ((-32768)))
 #define I16_MAX ((i16) (32767))
-#define I32_MIN ((i32) ((-2147483648)))
+#define I32_MIN ((i32) ((-2147483647 - 1)))
 #define I32_MAX ((i32) (2147483647))
 #define I64_MIN ((i64) ((-9223372036854775807LL - 1)))
 #define I64_MAX ((i64) (9223372036854775807LL))

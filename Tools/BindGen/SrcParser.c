@@ -445,7 +445,8 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             }
 
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces |
+            TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
 
             continue;
         }
@@ -712,10 +713,18 @@ b8 ProcessExternCBlock(ParsedContent* parsedContent, CachedLasts* cachedLasts, u
                 ParsedSection* sec = PNSLR_New(ParsedSection, allocator, PNSLR_GET_LOC(), nil);
                 if (!sec) FORCE_DBG_TRAP;
 
-                i64 firstSpaceIdx = tokenStr.count - 1;
-                for (i64 i = 3; i < tokenStr.count; i++) { if (tokenStr.data[i] == ' ') { firstSpaceIdx = i; break; } }
-                // array iteration starts from 3 because first 3 chars are `// ` (last one is space)
-                utf8str sectionName = (utf8str){.data = tokenStr.data + 3, .count = firstSpaceIdx - 3};
+                // search backwards, find first non-equals char
+                i64 endIdx = tokenStr.count - 1;
+                for (i64 i = tokenStr.count - 1; i >= 0; i--) { if (tokenStr.data[i] != '=') { endIdx = i; break; } }
+                // remove trailing spaces
+                for (i64 i = endIdx; i >= 0; i--) { if (tokenStr.data[i] != ' ') { endIdx = i; break; } }
+                if (endIdx < 3) // at least must have `// ` and one
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) tokenStr.count, iter->i, PNSLR_StringLiteral("Invalid section header."));
+                    return false;
+                }
+
+                utf8str sectionName = (utf8str){.data = tokenStr.data + 3, .count = endIdx + 1 - 3}; // +3 to skip `// `; endIdx is inclusive
 
                 sec->header.type      = DeclType_Section;
                 sec->header.name      = sectionName;
