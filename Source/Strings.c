@@ -609,8 +609,8 @@ b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune)
 
 b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value)
 {
-    if (value) PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("true" ));
-    else       PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("false"));
+    if (value) return PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("true" ));
+    else       return PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("false"));
 }
 
 b8 PNSLR_AppendF32ToStringBuilder(PNSLR_StringBuilder* builder, f32 value, i32 decimalPlaces)
@@ -777,7 +777,7 @@ b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR
 utf8str PNSLR_StringFromStringBuilder(PNSLR_StringBuilder* builder)
 {
     if (!builder || builder->length == 0) { return (utf8str) {0}; }
-    return (utf8str) { builder->buffer.data, builder->length };
+    return (utf8str) {.data = builder->buffer.data, .count = builder->length};
 }
 
 void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder)
@@ -794,3 +794,124 @@ void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder)
         builder->allocator = (PNSLR_Allocator) {0};
     }
 }
+utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendBooleanToStringBuilder(&builder, value);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromF32(f32 value, i32 decimalPlaces, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendF32ToStringBuilder(&builder, value, decimalPlaces);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromF64(f64 value, i32 decimalPlaces, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendF64ToStringBuilder(&builder, value, decimalPlaces);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromU8(u8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendU8ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromU16(u16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendU16ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromU32(u32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendU32ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromU64(u64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendU64ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromI8(i8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendI8ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromI16(i16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendI16ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendI32ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
+utf8str PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_AppendI64ToStringBuilder(&builder, value, base);
+    utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+

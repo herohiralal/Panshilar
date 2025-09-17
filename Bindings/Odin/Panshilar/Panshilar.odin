@@ -1290,6 +1290,369 @@ foreign {
 	) -> string ---
 }
 
+// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * A basic string builder. Can accept strings and characters,
+ * and build a single string from them.
+ *
+ * Create by setting the allocator and zeroing the rest of the fields.
+ */
+StringBuilder :: struct  {
+	allocator: Allocator,
+	buffer: []u8,
+	length: i64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a single byte to the string builder. Could be an ANSI/ASCII character,
+     * or not. The function does not check for validity.
+     */
+	AppendByteToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		byte: u8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a UTF-8 string to the string builder.
+     */
+	AppendStringToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		str: string,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a C-style null-terminated string to the string builder.
+     */
+	AppendCStringToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		str: cstring,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a single character (rune) to the string builder.
+     */
+	AppendRuneToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		rune: u32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a boolean value to the string builder.
+     */
+	AppendBooleanToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: b8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a 32-bit floating-point number to the string builder.
+     */
+	AppendF32ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: f32,
+		decimalPlaces: i32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a 64-bit floating point number to the string builder.
+     */
+	AppendF64ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: f64,
+		decimalPlaces: i32,
+	) -> b8 ---
+}
+
+/**
+ * The base to use when appending integer numbers to the string builder.
+ */
+IntegerBase :: enum u8 {
+	Decimal = 0,
+	Binary = 1,
+	HexaDecimal = 2,
+	Octal = 3,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append an unsigned 8-bit integer to the string builder.
+     */
+	AppendU8ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: u8,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append an unsigned 16-bit integer to the string builder.
+     */
+	AppendU16ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: u16,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append an unsigned 32-bit integer number to the string builder.
+     */
+	AppendU32ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: u32,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append an unsigned 64-bit integer to the string builder.
+     */
+	AppendU64ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: u64,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a signed 8-bit integer to the string builder.
+     */
+	AppendI8ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: i8,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a signed 16-bit integer to the string builder.
+     */
+	AppendI16ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: i16,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a signed 32-bit integer number to the string builder.
+     */
+	AppendI32ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: i32,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Append a signed 64-bit integer to the string builder.
+     */
+	AppendI64ToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		value: i64,
+		base: IntegerBase,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Return the string from the string builder.
+     */
+	StringFromStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Reset the string builder, clearing its contents but keeping the allocated buffer.
+     */
+	ResetStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Free the resources used by the string builder.
+     */
+	FreeStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+	) ---
+}
+
+// String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a boolean value to a string ("true" or "false").
+     */
+	StringFromBoolean :: proc "c" (
+		value: b8,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a 32-bit floating-point number to a string with specified decimal places.
+     */
+	StringFromF32 :: proc "c" (
+		value: f32,
+		decimalPlaces: i32,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a 64-bit floating-point number to a string with specified decimal places.
+     */
+	StringFromF64 :: proc "c" (
+		value: f64,
+		decimalPlaces: i32,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert an unsigned 8-bit integer to a string in the specified base.
+     */
+	StringFromU8 :: proc "c" (
+		value: u8,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert an unsigned 16-bit integer to a string in the specified base.
+     */
+	StringFromU16 :: proc "c" (
+		value: u16,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert an unsigned 32-bit integer to a string in the specified base.
+     */
+	StringFromU32 :: proc "c" (
+		value: u32,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert an unsigned 64-bit integer to a string in the specified base.
+     */
+	StringFromU64 :: proc "c" (
+		value: u64,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a signed 8-bit integer to a string in the specified base.
+     */
+	StringFromI8 :: proc "c" (
+		value: i8,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a signed 16-bit integer to a string in the specified base.
+     */
+	StringFromI16 :: proc "c" (
+		value: i16,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a signed 32-bit integer to a string in the specified base.
+     */
+	StringFromI32 :: proc "c" (
+		value: i32,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+    /**
+     * Convert a signed 64-bit integer to a string in the specified base.
+     */
+	StringFromI64 :: proc "c" (
+		value: i64,
+		base: IntegerBase,
+		allocator: Allocator,
+	) -> string ---
+}
+
 // #######################################################################################
 // IO
 // #######################################################################################

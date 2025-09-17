@@ -445,7 +445,7 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             }
 
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolParenthesesClose, nil, allocator)) return false;
-            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
+            if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, TknTy_NewLine, nil, allocator)) return false;
 
             continue;
         }

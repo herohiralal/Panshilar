@@ -1071,6 +1071,284 @@ namespace Panshilar
         Allocator allocator
     );
 
+    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * A basic string builder. Can accept strings and characters,
+     * and build a single string from them.
+     *
+     * Create by setting the allocator and zeroing the rest of the fields.
+     */
+    struct StringBuilder
+    {
+       Allocator allocator;
+       ArraySlice<u8> buffer;
+       i64 length;
+    };
+
+    /**
+     * Append a single byte to the string builder. Could be an ANSI/ASCII character,
+     * or not. The function does not check for validity.
+     */
+    b8 AppendByteToStringBuilder(
+        StringBuilder* builder,
+        u8 byte
+    );
+
+    /**
+     * Append a UTF-8 string to the string builder.
+     */
+    b8 AppendStringToStringBuilder(
+        StringBuilder* builder,
+        utf8str str
+    );
+
+    /**
+     * Append a C-style null-terminated string to the string builder.
+     */
+    b8 AppendCStringToStringBuilder(
+        StringBuilder* builder,
+        cstring str
+    );
+
+    /**
+     * Append a single character (rune) to the string builder.
+     */
+    b8 AppendRuneToStringBuilder(
+        StringBuilder* builder,
+        u32 rune
+    );
+
+    /**
+     * Append a boolean value to the string builder.
+     */
+    b8 AppendBooleanToStringBuilder(
+        StringBuilder* builder,
+        b8 value
+    );
+
+    /**
+     * Append a 32-bit floating-point number to the string builder.
+     */
+    b8 AppendF32ToStringBuilder(
+        StringBuilder* builder,
+        f32 value,
+        i32 decimalPlaces
+    );
+
+    /**
+     * Append a 64-bit floating point number to the string builder.
+     */
+    b8 AppendF64ToStringBuilder(
+        StringBuilder* builder,
+        f64 value,
+        i32 decimalPlaces
+    );
+
+    /**
+     * The base to use when appending integer numbers to the string builder.
+     */
+    enum class IntegerBase : u8 /* use as value */
+    {
+        Decimal = 0,
+        Binary = 1,
+        HexaDecimal = 2,
+        Octal = 3,
+    };
+
+    /**
+     * Append an unsigned 8-bit integer to the string builder.
+     */
+    b8 AppendU8ToStringBuilder(
+        StringBuilder* builder,
+        u8 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append an unsigned 16-bit integer to the string builder.
+     */
+    b8 AppendU16ToStringBuilder(
+        StringBuilder* builder,
+        u16 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append an unsigned 32-bit integer number to the string builder.
+     */
+    b8 AppendU32ToStringBuilder(
+        StringBuilder* builder,
+        u32 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append an unsigned 64-bit integer to the string builder.
+     */
+    b8 AppendU64ToStringBuilder(
+        StringBuilder* builder,
+        u64 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append a signed 8-bit integer to the string builder.
+     */
+    b8 AppendI8ToStringBuilder(
+        StringBuilder* builder,
+        i8 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append a signed 16-bit integer to the string builder.
+     */
+    b8 AppendI16ToStringBuilder(
+        StringBuilder* builder,
+        i16 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append a signed 32-bit integer number to the string builder.
+     */
+    b8 AppendI32ToStringBuilder(
+        StringBuilder* builder,
+        i32 value,
+        IntegerBase base
+    );
+
+    /**
+     * Append a signed 64-bit integer to the string builder.
+     */
+    b8 AppendI64ToStringBuilder(
+        StringBuilder* builder,
+        i64 value,
+        IntegerBase base
+    );
+
+    /**
+     * Return the string from the string builder.
+     */
+    utf8str StringFromStringBuilder(
+        StringBuilder* builder
+    );
+
+    /**
+     * Reset the string builder, clearing its contents but keeping the allocated buffer.
+     */
+    void ResetStringBuilder(
+        StringBuilder* builder
+    );
+
+    /**
+     * Free the resources used by the string builder.
+     */
+    void FreeStringBuilder(
+        StringBuilder* builder
+    );
+
+    // String ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Convert a boolean value to a string ("true" or "false").
+     */
+    utf8str StringFromBoolean(
+        b8 value,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a 32-bit floating-point number to a string with specified decimal places.
+     */
+    utf8str StringFromF32(
+        f32 value,
+        i32 decimalPlaces,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a 64-bit floating-point number to a string with specified decimal places.
+     */
+    utf8str StringFromF64(
+        f64 value,
+        i32 decimalPlaces,
+        Allocator allocator
+    );
+
+    /**
+     * Convert an unsigned 8-bit integer to a string in the specified base.
+     */
+    utf8str StringFromU8(
+        u8 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert an unsigned 16-bit integer to a string in the specified base.
+     */
+    utf8str StringFromU16(
+        u16 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert an unsigned 32-bit integer to a string in the specified base.
+     */
+    utf8str StringFromU32(
+        u32 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert an unsigned 64-bit integer to a string in the specified base.
+     */
+    utf8str StringFromU64(
+        u64 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a signed 8-bit integer to a string in the specified base.
+     */
+    utf8str StringFromI8(
+        i8 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a signed 16-bit integer to a string in the specified base.
+     */
+    utf8str StringFromI16(
+        i16 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a signed 32-bit integer to a string in the specified base.
+     */
+    utf8str StringFromI32(
+        i32 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
+    /**
+     * Convert a signed 64-bit integer to a string in the specified base.
+     */
+    utf8str StringFromI64(
+        i64 value,
+        IntegerBase base,
+        Allocator allocator
+    );
+
     // #######################################################################################
     // IO
     // #######################################################################################
@@ -2216,6 +2494,204 @@ extern "C" PNSLR_UTF8STR PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice_u16 utf
 utf8str Panshilar::UTF8FromUTF16WindowsOnly(ArraySlice<u16> utf16str, Panshilar::Allocator allocator)
 {
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_Bindings_Convert(utf16str), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+struct PNSLR_StringBuilder
+{
+   PNSLR_Allocator allocator;
+   PNSLR_ArraySlice_u8 buffer;
+   i64 length;
+};
+static_assert(sizeof(PNSLR_StringBuilder) == sizeof(Panshilar::StringBuilder), "size mismatch");
+static_assert(alignof(PNSLR_StringBuilder) == alignof(Panshilar::StringBuilder), "align mismatch");
+PNSLR_StringBuilder* PNSLR_Bindings_Convert(Panshilar::StringBuilder* x) { return reinterpret_cast<PNSLR_StringBuilder*>(x); }
+Panshilar::StringBuilder* PNSLR_Bindings_Convert(PNSLR_StringBuilder* x) { return reinterpret_cast<Panshilar::StringBuilder*>(x); }
+PNSLR_StringBuilder& PNSLR_Bindings_Convert(Panshilar::StringBuilder& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::StringBuilder& PNSLR_Bindings_Convert(PNSLR_StringBuilder& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, allocator) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, allocator), "allocator offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, buffer), "buffer offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, length) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, length), "length offset mismatch");
+
+extern "C" b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte);
+b8 Panshilar::AppendByteToStringBuilder(Panshilar::StringBuilder* builder, u8 byte)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendByteToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(byte)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendStringToStringBuilder(PNSLR_StringBuilder* builder, PNSLR_UTF8STR str);
+b8 Panshilar::AppendStringToStringBuilder(Panshilar::StringBuilder* builder, utf8str str)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendStringToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(str)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendCStringToStringBuilder(PNSLR_StringBuilder* builder, cstring str);
+b8 Panshilar::AppendCStringToStringBuilder(Panshilar::StringBuilder* builder, cstring str)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendCStringToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(str)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune);
+b8 Panshilar::AppendRuneToStringBuilder(Panshilar::StringBuilder* builder, u32 rune)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendRuneToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(rune)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
+b8 Panshilar::AppendBooleanToStringBuilder(Panshilar::StringBuilder* builder, b8 value)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendBooleanToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendF32ToStringBuilder(PNSLR_StringBuilder* builder, f32 value, i32 decimalPlaces);
+b8 Panshilar::AppendF32ToStringBuilder(Panshilar::StringBuilder* builder, f32 value, i32 decimalPlaces)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendF32ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendF64ToStringBuilder(PNSLR_StringBuilder* builder, f64 value, i32 decimalPlaces);
+b8 Panshilar::AppendF64ToStringBuilder(Panshilar::StringBuilder* builder, f64 value, i32 decimalPlaces)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendF64ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+enum class PNSLR_IntegerBase : u8 { };
+static_assert(sizeof(PNSLR_IntegerBase) == sizeof(Panshilar::IntegerBase), "size mismatch");
+static_assert(alignof(PNSLR_IntegerBase) == alignof(Panshilar::IntegerBase), "align mismatch");
+PNSLR_IntegerBase* PNSLR_Bindings_Convert(Panshilar::IntegerBase* x) { return reinterpret_cast<PNSLR_IntegerBase*>(x); }
+Panshilar::IntegerBase* PNSLR_Bindings_Convert(PNSLR_IntegerBase* x) { return reinterpret_cast<Panshilar::IntegerBase*>(x); }
+PNSLR_IntegerBase& PNSLR_Bindings_Convert(Panshilar::IntegerBase& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::IntegerBase& PNSLR_Bindings_Convert(PNSLR_IntegerBase& x) { return *PNSLR_Bindings_Convert(&x); }
+
+extern "C" b8 PNSLR_AppendU8ToStringBuilder(PNSLR_StringBuilder* builder, u8 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendU8ToStringBuilder(Panshilar::StringBuilder* builder, u8 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendU8ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendU16ToStringBuilder(PNSLR_StringBuilder* builder, u16 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendU16ToStringBuilder(Panshilar::StringBuilder* builder, u16 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendU16ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendU32ToStringBuilder(PNSLR_StringBuilder* builder, u32 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendU32ToStringBuilder(Panshilar::StringBuilder* builder, u32 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendU32ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendU64ToStringBuilder(PNSLR_StringBuilder* builder, u64 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendU64ToStringBuilder(Panshilar::StringBuilder* builder, u64 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendU64ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendI8ToStringBuilder(PNSLR_StringBuilder* builder, i8 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendI8ToStringBuilder(Panshilar::StringBuilder* builder, i8 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendI8ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendI16ToStringBuilder(PNSLR_StringBuilder* builder, i16 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendI16ToStringBuilder(Panshilar::StringBuilder* builder, i16 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendI16ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendI32ToStringBuilder(PNSLR_StringBuilder* builder, i32 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendI32ToStringBuilder(Panshilar::StringBuilder* builder, i32 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendI32ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR_IntegerBase base);
+b8 Panshilar::AppendI64ToStringBuilder(Panshilar::StringBuilder* builder, i64 value, Panshilar::IntegerBase base)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendI64ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromStringBuilder(PNSLR_StringBuilder* builder);
+utf8str Panshilar::StringFromStringBuilder(Panshilar::StringBuilder* builder)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromStringBuilder(PNSLR_Bindings_Convert(builder)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_ResetStringBuilder(PNSLR_StringBuilder* builder);
+void Panshilar::ResetStringBuilder(Panshilar::StringBuilder* builder)
+{
+    PNSLR_ResetStringBuilder(PNSLR_Bindings_Convert(builder));
+}
+
+extern "C" void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder);
+void Panshilar::FreeStringBuilder(Panshilar::StringBuilder* builder)
+{
+    PNSLR_FreeStringBuilder(PNSLR_Bindings_Convert(builder));
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromBoolean(b8 value, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromBoolean(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromF32(f32 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromF32(f32 value, i32 decimalPlaces, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromF64(f64 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromF64(f64 value, i32 decimalPlaces, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU8(u8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromU8(u8 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU16(u16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromU16(u16 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU32(u32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromU32(u32 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU64(u64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromU64(u64 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI8(i8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromI8(i8 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI16(i16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromI16(i16 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromI32(i32 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str Panshilar::StringFromI64(i64 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 struct PNSLR_Path

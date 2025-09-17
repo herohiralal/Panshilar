@@ -305,7 +305,60 @@ void PNSLR_FreeStringBuilder(PNSLR_StringBuilder* builder);
 
 // String Conversions ==============================================================
 
-// b8 PNSLR_
+/**
+ * Convert a boolean value to a string ("true" or "false").
+ */
+utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
+
+/**
+ * Convert a 32-bit floating-point number to a string with specified decimal places.
+ */
+utf8str PNSLR_StringFromF32(f32 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+
+/**
+ * Convert a 64-bit floating-point number to a string with specified decimal places.
+ */
+utf8str PNSLR_StringFromF64(f64 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+
+/**
+ * Convert an unsigned 8-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromU8(u8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert an unsigned 16-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromU16(u16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert an unsigned 32-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromU32(u32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert an unsigned 64-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromU64(u64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert a signed 8-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromI8(i8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert a signed 16-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromI16(i16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert a signed 32-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+
+/**
+ * Convert a signed 64-bit integer to a string in the specified base.
+ */
+utf8str PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
 
 EXTERN_C_END
 #endif // PNSLR_STRINGS_H ==========================================================
