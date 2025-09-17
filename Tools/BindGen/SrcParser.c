@@ -436,7 +436,12 @@ b8 ConsumeEnumDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8st
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &idxToken, allocator)) return false;
             var->negative = (idxToken.count >= 1 && idxToken.data && idxToken.data[0] == '-');
             if (var->negative) idxToken = (utf8str) {.data = idxToken.data + 1, .count = idxToken.count - 1}; // trim '-' sign
-            var->idx = (u64) strtoull(PNSLR_CStringFromString(idxToken, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+            if (!PNSLR_U64FromString(idxToken, &(var->idx)))
+            {
+                PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) idxToken.count, iter->i, PNSLR_StringLiteral("Invalid enum variant index."));
+                return false;
+            }
+
             if (isFlags) { var->flagsOffset = (u8) var->idx; var->idx = (1ULL << var->idx); }
 
             if (isFlags) // flags
@@ -489,8 +494,7 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
         }
         else
         {
-            strct->alignasVal = (i32) strtoull(PNSLR_CStringFromString(alignasVal, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
-            if (!strct->alignasVal)
+            if (!PNSLR_I32FromString(alignasVal, &(strct->alignasVal)) || strct->alignasVal <= 0 || (strct->alignasVal & (strct->alignasVal - 1)) != 0)
             {
                 PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) alignasVal.count, iter->i, PNSLR_StringLiteral("Invalid alignas value."));
                 return false;
@@ -557,7 +561,11 @@ b8 ConsumeStructDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8
             {
                 utf8str arrCount = {0};
                 if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_Integer, &arrCount, allocator)) return false;
-                mem->arrSize = (u32) strtoull(PNSLR_CStringFromString(arrCount, allocator), nil, 10); // TODO: replace with pnslr fn once implemented
+                if (!PNSLR_I64FromString(arrCount, &(mem->arrSize)) || mem->arrSize <= 0)
+                {
+                    PrintParseError(pathRel, iter->contents, iter->startOfToken - (i32) arrCount.count, iter->i, PNSLR_StringLiteral("Invalid array size."));
+                    return false;
+                }
 
                 TknTy tt2 = ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces, TknTy_SymbolBracketClose | TknTy_SymbolAsterisk, nil, allocator);
                 if (!tt2) return false;
