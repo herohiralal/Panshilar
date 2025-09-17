@@ -948,12 +948,85 @@ b8 PNSLR_F32FromString(utf8str str, f32* value)
 {
     if (!str.data || !str.count || !value) return false;
     *value = (f32) {0}; // zero by default
+    f64 tempVal = 0.0;
+    if (!PNSLR_F64FromString(str, &tempVal)) return false;
+    *value = (f32) tempVal;
+    return true;
 }
 
 b8 PNSLR_F64FromString(utf8str str, f64* value)
 {
     if (!str.data || !str.count || !value) return false;
     *value = (f64) {0}; // zero by default
+
+    i64 i = 0;
+    b8 negative = false;
+
+    // Handle optional sign
+    if (str.data[0] == '-')
+    {
+        negative = true;
+        i = 1;
+    }
+    else if (str.data[0] == '+')
+    {
+        i = 1;
+    }
+
+    // Find decimal point (if any)
+    i64 dotIndex = -1;
+    for (i64 j = i; j < str.count; j++)
+    {
+        if (str.data[j] == '.')
+        {
+            if (dotIndex != -1) return false; // multiple dots
+            dotIndex = j;
+        }
+    }
+
+    // Integer part slice
+    utf8str intStr;
+    intStr.data  = str.data + i;
+    intStr.count = (dotIndex == -1) ? (str.count - i) : (dotIndex - i);
+
+    // Fractional part slice
+    utf8str fracStr;
+    if (dotIndex != -1)
+    {
+        fracStr.data  = str.data + dotIndex + 1;
+        fracStr.count = str.count - (dotIndex + 1);
+    }
+    else
+    {
+        fracStr.data  = 0;
+        fracStr.count = 0;
+    }
+
+    // Parse integer part
+    i64 intVal = 0;
+    if (intStr.count > 0)
+    {
+        if (!PNSLR_I64FromString(intStr, &intVal)) return false;
+    }
+
+    // Parse fractional part
+    f64 fracVal = 0.0;
+    if (fracStr.count > 0)
+    {
+        u64 fracDigits = 0;
+        if (!PNSLR_U64FromString(fracStr, &fracDigits)) return false;
+
+        f64 divisor = 1.0;
+        for (i64 k = 0; k < fracStr.count; k++) divisor *= 10.0;
+
+        fracVal = (f64)fracDigits / divisor;
+    }
+
+    f64 result = (f64)intVal + fracVal;
+    if (negative) result = -result;
+
+    *value = result;
+    return true;
 }
 
 b8 PNSLR_U8FromString(utf8str str, u8* value)

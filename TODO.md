@@ -28,11 +28,11 @@ This file contains todo items for Panshilar library.
   - [x] GetParent
   - [x] GetFileName
   - [x] GetExtension
-- [ ] StrConv
-  - [ ] String <-> Boolean
-  - [ ] String <-> Enum
-  - [ ] String <-> Float
-  - [ ] String <-> Int
+- [x] StrConv
+  - [x] String <-> Boolean
+  - [ ] String <-> Enum // HOW??
+  - [x] String <-> Float
+  - [x] String <-> Int
 - [x] Disk I/O Functionality
   - [x] Iterate
   - [x] WriteStream
