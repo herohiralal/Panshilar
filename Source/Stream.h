@@ -79,6 +79,14 @@ b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst);
 b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) src);
 
 /**
+ * Formats a string and writes it to the stream.
+ * Only supports primitives, for obvious reasons.
+ * Use with `PNSLR_FmtB8`, `PNSLR_FmtI32`, etc.
+ * Returns true on success, false on failure.
+ */
+b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str format, ...);
+
+/**
  * Truncates the stream to the specified size.
  * Returns true on success, false on failure.
  */
@@ -100,7 +108,7 @@ void PNSLR_CloseStream(PNSLR_Stream stream);
 /**
  * Creates a stream from a file handle.
  */
-PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File* file);
+PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File file);
 
 /**
  * Creates a stream from a string builder.

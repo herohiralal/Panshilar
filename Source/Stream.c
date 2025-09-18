@@ -5,7 +5,7 @@ static b8 PNSLR_Internal_FileStreamProcedure(rawptr streamData, PNSLR_StreamMode
 {
     if (!streamData) { return false; }
 
-    PNSLR_File* f = (PNSLR_File*) streamData;
+    PNSLR_File f = {.handle = streamData};
 
     b8 success = true;
 
@@ -17,44 +17,44 @@ static b8 PNSLR_Internal_FileStreamProcedure(rawptr streamData, PNSLR_StreamMode
     switch (mode)
     {
         case PNSLR_StreamMode_GetSize:
-            *extraRet = PNSLR_GetSizeOfFile(*f);
+            *extraRet = PNSLR_GetSizeOfFile(f);
             if (*extraRet < 0) { success = false; }
             break;
 
         case PNSLR_StreamMode_GetCurrentPos:
-            *extraRet = PNSLR_GetCurrentPositionInFile(*f);
+            *extraRet = PNSLR_GetCurrentPositionInFile(f);
             if (*extraRet < 0) { success = false; }
             break;
 
         case PNSLR_StreamMode_SeekAbsolute:
-            success = PNSLR_SeekPositionInFile(*f, offset, false);
+            success = PNSLR_SeekPositionInFile(f, offset, false);
             break;
 
         case PNSLR_StreamMode_SeekRelative:
-            success = PNSLR_SeekPositionInFile(*f, offset, true);
+            success = PNSLR_SeekPositionInFile(f, offset, true);
             break;
 
         case PNSLR_StreamMode_Read:
-            success = PNSLR_ReadFromFile(*f, data);
+            success = PNSLR_ReadFromFile(f, data);
             if (success) { *extraRet = (i64) data.count; }
             break;
 
         case PNSLR_StreamMode_Write:
-            success = PNSLR_WriteToFile(*f, data);
+            success = PNSLR_WriteToFile(f, data);
             if (success) { *extraRet = (i64) data.count; }
             break;
 
         case PNSLR_StreamMode_Truncate:
-            success = PNSLR_TruncateFile(*f, offset);
+            success = PNSLR_TruncateFile(f, offset);
             break;
 
         case PNSLR_StreamMode_Flush:
-            success = PNSLR_FlushFile(*f);
+            success = PNSLR_FlushFile(f);
             break;
 
         case PNSLR_StreamMode_Close:
             success = true;
-            PNSLR_CloseFileHandle(*f);
+            PNSLR_CloseFileHandle(f);
             break;
 
         default:
@@ -215,6 +215,12 @@ b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) src)
     );
 }
 
+b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str format, ...)
+{
+    va_list args;
+    va_start(args, format);
+}
+
 b8 PNSLR_TruncateStream(PNSLR_Stream stream, i64 newSize)
 {
     if (!stream.procedure) { return false; }
@@ -254,16 +260,20 @@ void PNSLR_CloseStream(PNSLR_Stream stream)
     );
 }
 
-PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File* file)
+PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File file)
 {
+    static_assert(sizeof(file) == sizeof(rawptr), "PNSLR_File must be the same size as rawptr");
+
     return (PNSLR_Stream) {
         .procedure = PNSLR_Internal_FileStreamProcedure,
-        .data      = (rawptr) file
+        .data      = file.handle,
     };
 }
 
 PNSLR_Stream PNSLR_StreamFromStringBuilder(PNSLR_StringBuilder* builder)
 {
+    static_assert(sizeof(builder) == sizeof(rawptr), "PNSLR_File must be the same size as rawptr");
+
     return (PNSLR_Stream) {
         .procedure = PNSLR_Internal_StringBuilderStreamProcedure,
         .data      = (rawptr) builder

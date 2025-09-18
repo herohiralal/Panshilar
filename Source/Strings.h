@@ -345,6 +345,8 @@ typedef struct PNSLR_PrimitiveFmtOptions
     u64                    valueBufferB;
 } PNSLR_PrimitiveFmtOptions;
 
+DECLARE_ARRAY_SLICE(PNSLR_PrimitiveFmtOptions);
+
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
@@ -414,6 +416,29 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtCString(cstring value);
  * Use when formatting a string. Pass as one of the varargs.
  */
 PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value);
+
+//+skipreflect
+
+/**
+ * Helper macro to create an array slice of format options from varargs.
+ * Note that this macro creates a temporary array, so it should only be used
+ * when passing arguments to a function, not for storing the result.
+ *
+ * Use as:
+ *     PNSLR_FmtArgs(
+ *         PNSLR_FmtI32(42, PNSLR_IntegerBase_Decimal),
+ *         PNSLR_FmtString(myStr),
+ *         PNSLR_FmtF64(3.14159, 3),
+ *         ... // more args
+ *     )
+ */
+#define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+    { \
+        .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+        .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+    }
+
+//-skipreflect
 
 // Conversions to strings ==========================================================
 

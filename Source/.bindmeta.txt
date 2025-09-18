@@ -39,6 +39,13 @@ $$$C_HEADER_SUFFIX
 #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
     do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)
 
+/** Easier way to pass format arguments. */
+#define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+    { \
+        .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+        .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+    }
+
 #endif//PNSLR_MAIN_H
 
 $$$CXX_HEADER_PREFIX
@@ -50,10 +57,10 @@ $$$CXX_HEADER_SUFFIX
 namespace Panshilar
 {
     /** Create a utf8str from a string literal. */
-    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+    template <u64 N> constexpr utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
     /** Get the current source code location. */
-    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::STRING_LITERAL(__FILE__), __LINE__, 0, Panshilar::STRING_LITERAL(__FUNCTION__)}
+    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
     template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
@@ -85,6 +92,13 @@ namespace Panshilar
     {
         if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
     }
+
+    /** Easier way to pass format arguments. */
+    #define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+        { \
+            .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+            .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+        }
 }
 
 #ifdef PNSLR_INTRINSICS_CXX_MAIN_H
