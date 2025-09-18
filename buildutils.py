@@ -298,9 +298,9 @@ def getCommonCompilationArgs(
             output += ['-g', '-O0', '-DDEBUG']
     else:
         if plt.tgt == 'windows':
-            output += ['/O2', '/DNDEBUG']
+            output += ['/O2', '/DNDEBUG', '/GL']
         else:
-            output += ['-O2', '-DNDEBUG']
+            output += ['-O2', '-DNDEBUG', '-flto']
 
     if compileOnly:
         output += ['/c'] if plt.tgt == 'windows' else ['-c']
