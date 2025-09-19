@@ -345,8 +345,8 @@ b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str fmtStr, PNSLR_Array
     if (!stream.procedure || !fmtStr.data || fmtStr.count <= 0) { return false; }
 
     // formatting rules:
-    // - % is the placeholder for an argument
-    // - %% is a literal %
+    // - $ is the placeholder for an argument
+    // - $$ is a literal $
     // - anything else is written to the stream as-is
     // - if there are more placeholders than args, add `{MISSING_ARG}`
     // - if there are more args than placeholders, print the extra args as {UNUSED_ARGS: a, b, c}
@@ -364,13 +364,13 @@ b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str fmtStr, PNSLR_Array
 
     while (i < fmtStr.count)
     {
-        if (fmtStr.data[i] == '%')
+        if (fmtStr.data[i] == '$')
         {
             PNSLR_STRFMT_FLUSH_BUFFER();
 
-            if (i + 1 < fmtStr.count && fmtStr.data[i + 1] == '%')
+            if (i + 1 < fmtStr.count && fmtStr.data[i + 1] == '$')
             {
-                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("%%"))) { return false; }
+                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("$$"))) { return false; }
                 i += 2;
             }
             else
