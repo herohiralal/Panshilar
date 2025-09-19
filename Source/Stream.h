@@ -68,9 +68,10 @@ b8 PNSLR_SeekPositionInStream(PNSLR_Stream stream, i64 newPos, b8 relative);
 
 /**
  * Reads data from the stream into the provided buffer.
+ * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst);
+b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst, i64* readSize);
 
 /**
  * Writes data from the provided buffer into the stream.

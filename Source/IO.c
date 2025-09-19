@@ -915,22 +915,29 @@ b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative)
     return success;
 }
 
-b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst)
+b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst, i64* readSize)
 {
+    if (readSize) *readSize = 0;
     if (!handle.handle || !dst.data || !dst.count) { return false; }
 
     b8 success = true;
+    i64 bytesReadTotal = 0;
+
     #if PNSLR_WINDOWS
 
         DWORD bytesRead = 0;
         success = ReadFile((HANDLE) handle.handle, dst.data, (DWORD) dst.count, &bytesRead, NULL);
+        bytesReadTotal = (i64)bytesRead;
 
     #elif PNSLR_UNIX
 
         ssize_t res = read((i32) (i64) handle.handle, dst.data, (size_t) dst.count);
         success = (res == (ssize_t) dst.count);
+        bytesReadTotal = res > 0 ? (i64) res : 0;
 
     #endif
+
+    if (readSize) *readSize = bytesReadTotal;
 
     return success;
 }
@@ -1031,7 +1038,7 @@ b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice(u8)* dst, PNS
     *dst = PNSLR_MakeSlice(u8, size, false, allocator, PNSLR_GET_LOC(), nil);
     if (!dst->data || !dst->count) { PNSLR_CloseFileHandle(file); return false; }
 
-    b8 success = PNSLR_ReadFromFile(file, *dst);
+    b8 success = PNSLR_ReadFromFile(file, *dst, nil);
     PNSLR_CloseFileHandle(file);
     return success;
 }

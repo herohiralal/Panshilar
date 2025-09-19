@@ -126,9 +126,10 @@ b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
 
 /**
  * Reads data from an opened file at the current position.
+ * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst);
+b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst, i64* readSize);
 
 /**
  * Writes data to an opened file at the current position.

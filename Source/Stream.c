@@ -35,13 +35,11 @@ static b8 PNSLR_Internal_FileStreamProcedure(rawptr streamData, PNSLR_StreamMode
             break;
 
         case PNSLR_StreamMode_Read:
-            success = PNSLR_ReadFromFile(f, data);
-            if (success) { *extraRet = (i64) data.count; }
+            success = PNSLR_ReadFromFile(f, data, extraRet);
             break;
 
         case PNSLR_StreamMode_Write:
             success = PNSLR_WriteToFile(f, data);
-            if (success) { *extraRet = (i64) data.count; }
             break;
 
         case PNSLR_StreamMode_Truncate:
@@ -115,6 +113,7 @@ static b8 PNSLR_Internal_StringBuilderStreamProcedure(rawptr streamData, PNSLR_S
                     toRead = sb->writtenSize - sb->cursorPos; // clamp to available data
                 }
 
+                *extraRet = toRead;
                 PNSLR_MemCopy(data.data, sb->buffer.data + sb->cursorPos, (i32) toRead);
                 sb->cursorPos += toRead;
                 success = true;
@@ -189,7 +188,7 @@ b8 PNSLR_SeekPositionInStream(PNSLR_Stream stream, i64 newPos, b8 relative)
     );
 }
 
-b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst)
+b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst, i64* readSize)
 {
     if (!stream.procedure) { return false; }
 
@@ -198,7 +197,7 @@ b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst)
         PNSLR_StreamMode_Read,
         dst,
         0,
-        nil
+        readSize
     );
 }
 
