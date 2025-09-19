@@ -225,9 +225,9 @@ b8 PNSLR_AppendCStringToStringBuilder(PNSLR_StringBuilder* builder, cstring str)
 b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune);
 
 /**
- * Append a boolean value to the string builder.
+ * Append an 8-bit boolean value to the string builder.
  */
-b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
+b8 PNSLR_AppendB8ToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
 
 /**
  * Append a 32-bit floating-point number to the string builder.
@@ -345,7 +345,7 @@ typedef struct PNSLR_PrimitiveFmtOptions
     u64                    valueBufferB;
 } PNSLR_PrimitiveFmtOptions;
 
-DECLARE_ARRAY_SLICE(PNSLR_PrimitiveFmtOptions);
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_PrimitiveFmtOptions);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.

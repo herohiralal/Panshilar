@@ -215,10 +215,207 @@ b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) src)
     );
 }
 
-b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str format, ...)
+static b8 PNSLR_Internal_WriteFmtOptionsToStream(PNSLR_Stream stream, PNSLR_PrimitiveFmtOptions fmtOpt)
 {
-    va_list args;
-    va_start(args, format);
+    switch (fmtOpt.type)
+    {
+        case PNSLR_PrimitiveFmtType_CString:
+        {
+            utf8str data = PNSLR_StringFromCString(*(cstring*) &fmtOpt.valueBufferA);
+            return PNSLR_WriteToStream(stream, data);
+        }
+        case PNSLR_PrimitiveFmtType_String:
+        {
+            utf8str data = {.data = *(u8**) &fmtOpt.valueBufferA, .count = *(i64*) &fmtOpt.valueBufferB};
+            return PNSLR_WriteToStream(stream, data);
+        }
+        case PNSLR_PrimitiveFmtType_Rune:
+        {
+            u32 rune = (u32) fmtOpt.valueBufferA;
+            PNSLR_EncodedRune encoded = PNSLR_EncodeRune(rune);
+            utf8str rStr = {.count = (i64) encoded.length, .data = &(encoded.data[0])};
+            return PNSLR_WriteToStream(stream, rStr);
+        }
+        case PNSLR_PrimitiveFmtType_B8:
+        {
+            b8 value = (b8) (!!fmtOpt.valueBufferA);
+            if (value) return PNSLR_WriteToStream(stream, PNSLR_StringLiteral("true" ));
+            else       return PNSLR_WriteToStream(stream, PNSLR_StringLiteral("false"));
+        }
+        case PNSLR_PrimitiveFmtType_F32:
+        case PNSLR_PrimitiveFmtType_F64:
+        case PNSLR_PrimitiveFmtType_U8:
+        case PNSLR_PrimitiveFmtType_U16:
+        case PNSLR_PrimitiveFmtType_U32:
+        case PNSLR_PrimitiveFmtType_U64:
+        case PNSLR_PrimitiveFmtType_I8:
+        case PNSLR_PrimitiveFmtType_I16:
+        case PNSLR_PrimitiveFmtType_I32:
+        case PNSLR_PrimitiveFmtType_I64:
+        {
+            // all of these require formatting to a temporary buffer
+            break;
+        }
+        default:
+        {
+            FORCE_DBG_TRAP;
+            return false;
+        }
+    }
+
+    u8 tempBuffer[128] = {0};
+    PNSLR_StringBuilder tempBuilder = {
+        .allocator   = {0},
+        .buffer      = {.data = &(tempBuffer[0]), .count = sizeof(tempBuffer)},
+    };
+
+    switch (fmtOpt.type)
+    {
+        case PNSLR_PrimitiveFmtType_F32:
+        {
+            u32 tmpVal = (u32) fmtOpt.valueBufferA;
+            f32 value = *(f32*) &tmpVal;
+            i32 decimalPlaces = (i32) fmtOpt.valueBufferB;
+            if (decimalPlaces <  0) decimalPlaces =  0;
+            if (decimalPlaces > 30) decimalPlaces = 30; // clamp
+            PNSLR_AppendF32ToStringBuilder(&tempBuilder, value, decimalPlaces);
+            break;
+        }
+        case PNSLR_PrimitiveFmtType_F64:
+        {
+            f64 value = *(f64*) &fmtOpt.valueBufferA;
+            i32 decimalPlaces = (i32) fmtOpt.valueBufferB;
+            if (decimalPlaces <  0) decimalPlaces =  0;
+            if (decimalPlaces > 30) decimalPlaces = 30; // clamp
+            PNSLR_AppendF64ToStringBuilder(&tempBuilder, value, decimalPlaces);
+            break;
+        }
+        case PNSLR_PrimitiveFmtType_U8:
+        case PNSLR_PrimitiveFmtType_U16:
+        case PNSLR_PrimitiveFmtType_U32:
+        case PNSLR_PrimitiveFmtType_U64:
+        {
+            PNSLR_IntegerBase ib = (PNSLR_IntegerBase) fmtOpt.valueBufferB;
+            if (ib != PNSLR_IntegerBase_Binary &&
+                ib != PNSLR_IntegerBase_Octal  &&
+                ib != PNSLR_IntegerBase_Decimal &&
+                ib != PNSLR_IntegerBase_HexaDecimal)
+            {
+                ib = PNSLR_IntegerBase_Decimal; // default
+            }
+
+            PNSLR_AppendU64ToStringBuilder(
+                &tempBuilder,
+                fmtOpt.valueBufferA,
+                ib
+            );
+        }
+        case PNSLR_PrimitiveFmtType_I8:
+        case PNSLR_PrimitiveFmtType_I16:
+        case PNSLR_PrimitiveFmtType_I32:
+        case PNSLR_PrimitiveFmtType_I64:
+        {
+            PNSLR_IntegerBase ib = (PNSLR_IntegerBase) fmtOpt.valueBufferB;
+            if (ib != PNSLR_IntegerBase_Binary &&
+                ib != PNSLR_IntegerBase_Octal  &&
+                ib != PNSLR_IntegerBase_Decimal &&
+                ib != PNSLR_IntegerBase_HexaDecimal)
+            {
+                ib = PNSLR_IntegerBase_Decimal; // default
+            }
+
+            PNSLR_AppendI64ToStringBuilder(
+                &tempBuilder,
+                *(i64*) &fmtOpt.valueBufferA,
+                ib
+            );
+        }
+        default:
+        {
+            FORCE_DBG_TRAP;
+            return false;
+        }
+    }
+
+    utf8str result = PNSLR_StringFromStringBuilder(&tempBuilder);
+    return PNSLR_WriteToStream(stream, result);
+}
+
+b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args)
+{
+    if (!stream.procedure || !fmtStr.data || fmtStr.count <= 0) { return false; }
+
+    // formatting rules:
+    // - % is the placeholder for an argument
+    // - %% is a literal %
+    // - anything else is written to the stream as-is
+    // - if there are more placeholders than args, add `{MISSING_ARG}`
+    // - if there are more args than placeholders, print the extra args as {UNUSED_ARGS: a, b, c}
+
+    i64 argIndex = 0;
+    i64 i        = 0;
+    i64 literalStart = 0; // start of pending literal run
+
+    #define PNSLR_STRFMT_FLUSH_BUFFER() \
+        do { \
+            if (i > literalStart) { \
+                if (!PNSLR_WriteToStream(stream, (utf8str){.data = fmtStr.data + literalStart, .count = i - literalStart})) { return false; } \
+            } \
+        } while (0)
+
+    while (i < fmtStr.count)
+    {
+        if (fmtStr.data[i] == '%')
+        {
+            PNSLR_STRFMT_FLUSH_BUFFER();
+
+            if (i + 1 < fmtStr.count && fmtStr.data[i + 1] == '%')
+            {
+                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("%%"))) { return false; }
+                i += 2;
+            }
+            else
+            {
+                if (argIndex < args.count)
+                {
+                    if (!PNSLR_Internal_WriteFmtOptionsToStream(stream, args.data[argIndex++])) { return false; }
+                }
+                else
+                {
+                    if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("{MISSING_ARG}"))) { return false; }
+                }
+                i += 1;
+            }
+
+            // reset literal run after special handling
+            literalStart = i;
+        }
+        else i += 1;
+    }
+
+    PNSLR_STRFMT_FLUSH_BUFFER();
+
+    #undef PNSLR_STRFMT_FLUSH_BUFFER
+
+    // handle unused args
+    if (argIndex < args.count)
+    {
+        if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("{UNUSED_ARGS: "))) { return false; }
+
+        for (i64 j = argIndex; j < args.count; ++j)
+        {
+            if (!PNSLR_Internal_WriteFmtOptionsToStream(stream, args.data[j])) { return false; }
+
+            if (j + 1 < args.count)
+            {
+                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral(", "))) { return false; }
+            }
+        }
+
+        if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("}"))) { return false; }
+    }
+
+    return true;
 }
 
 b8 PNSLR_TruncateStream(PNSLR_Stream stream, i64 newSize)

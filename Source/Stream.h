@@ -84,7 +84,11 @@ b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) src);
  * Use with `PNSLR_FmtB8`, `PNSLR_FmtI32`, etc.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str format, ...);
+b8 PNSLR_FormatAndWriteToStream(
+    PNSLR_Stream stream,
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
 
 /**
  * Truncates the stream to the specified size.

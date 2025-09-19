@@ -609,7 +609,7 @@ b8 PNSLR_AppendRuneToStringBuilder(PNSLR_StringBuilder* builder, u32 rune)
     return PNSLR_AppendStringToStringBuilder(builder, rStr);
 }
 
-b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value)
+b8 PNSLR_AppendB8ToStringBuilder(PNSLR_StringBuilder* builder, b8 value)
 {
     if (value) return PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("true" ));
     else       return PNSLR_AppendStringToStringBuilder(builder, PNSLR_StringLiteral("false"));
@@ -872,30 +872,33 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(u64 value, PNSLR_IntegerBase base)
 
 PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(i8 value, PNSLR_IntegerBase base)
 {
+    i64 tmpVal = (i64) value;
     return (PNSLR_PrimitiveFmtOptions)
     {
         .type         = PNSLR_PrimitiveFmtType_I8,
-        .valueBufferA = (u64) (*(u8*) &value),
+        .valueBufferA = *(u64*) &tmpVal,
         .valueBufferB = (u64) base,
     };
 }
 
 PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(i16 value, PNSLR_IntegerBase base)
 {
+    i64 tmpVal = (i64) value;
     return (PNSLR_PrimitiveFmtOptions)
     {
         .type         = PNSLR_PrimitiveFmtType_I16,
-        .valueBufferA = (u64) (*(u16*) &value),
+        .valueBufferA = *(u64*) &tmpVal,
         .valueBufferB = (u64) base,
     };
 }
 
 PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(i32 value, PNSLR_IntegerBase base)
 {
+    i64 tmpVal = (i64) value;
     return (PNSLR_PrimitiveFmtOptions)
     {
         .type         = PNSLR_PrimitiveFmtType_I32,
-        .valueBufferA = (u64) (*(u32*) &value),
+        .valueBufferA = *(u64*) &tmpVal,
         .valueBufferB = (u64) base,
     };
 }
@@ -944,7 +947,7 @@ utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
     PNSLR_StringBuilder builder = {.allocator = internalAllocator};
-    PNSLR_AppendBooleanToStringBuilder(&builder, value);
+    PNSLR_AppendB8ToStringBuilder(&builder, value);
     utf8str result = PNSLR_CloneString(PNSLR_StringFromStringBuilder(&builder), allocator);
     PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
     // no need to 'free' string builder, the internal allocator reset will take care
