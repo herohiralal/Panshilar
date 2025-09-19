@@ -2239,11 +2239,13 @@ foreign {
 foreign {
 	/*
 	Reads data from an opened file at the current position.
+	Optionally stores the number of bytes read.
 	Returns true on success, false on failure.
 	*/
 	ReadFromFile :: proc "c" (
 		handle: File,
 		dst: []u8,
+		readSize: ^i64,
 	) -> b8 ---
 }
 
@@ -2504,11 +2506,13 @@ foreign {
 foreign {
 	/*
 	Reads data from the stream into the provided buffer.
+	Optionally stores the number of bytes read.
 	Returns true on success, false on failure.
 	*/
 	ReadFromStream :: proc "c" (
 		stream: Stream,
 		dst: []u8,
+		readSize: ^i64,
 	) -> b8 ---
 }
 

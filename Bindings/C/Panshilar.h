@@ -1802,11 +1802,13 @@ b8 PNSLR_SeekPositionInFile(
 
 /**
  * Reads data from an opened file at the current position.
+ * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
 b8 PNSLR_ReadFromFile(
     PNSLR_File handle,
-    PNSLR_ArraySlice(u8) dst
+    PNSLR_ArraySlice(u8) dst,
+    i64* readSize
 );
 
 /**
@@ -2020,11 +2022,13 @@ b8 PNSLR_SeekPositionInStream(
 
 /**
  * Reads data from the stream into the provided buffer.
+ * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
 b8 PNSLR_ReadFromStream(
     PNSLR_Stream stream,
-    PNSLR_ArraySlice(u8) dst
+    PNSLR_ArraySlice(u8) dst,
+    i64* readSize
 );
 
 /**

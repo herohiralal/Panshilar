@@ -1814,11 +1814,13 @@ namespace Panshilar
 
     /**
      * Reads data from an opened file at the current position.
+     * Optionally stores the number of bytes read.
      * Returns true on success, false on failure.
      */
     b8 ReadFromFile(
         File handle,
-        ArraySlice<u8> dst
+        ArraySlice<u8> dst,
+        i64* readSize
     );
 
     /**
@@ -2030,11 +2032,13 @@ namespace Panshilar
 
     /**
      * Reads data from the stream into the provided buffer.
+     * Optionally stores the number of bytes read.
      * Returns true on success, false on failure.
      */
     b8 ReadFromStream(
         Stream stream,
-        ArraySlice<u8> dst
+        ArraySlice<u8> dst,
+        i64* readSize
     );
 
     /**
@@ -3479,10 +3483,10 @@ b8 Panshilar::SeekPositionInFile(Panshilar::File handle, i64 newPos, b8 relative
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SeekPositionInFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(newPos), PNSLR_Bindings_Convert(relative)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice_u8 dst);
-b8 Panshilar::ReadFromFile(Panshilar::File handle, ArraySlice<u8> dst)
+extern "C" b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice_u8 dst, i64* readSize);
+b8 Panshilar::ReadFromFile(Panshilar::File handle, ArraySlice<u8> dst, i64* readSize)
 {
-    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(dst), PNSLR_Bindings_Convert(readSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice_u8 src);
@@ -3643,10 +3647,10 @@ b8 Panshilar::SeekPositionInStream(Panshilar::Stream stream, i64 newPos, b8 rela
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_SeekPositionInStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(newPos), PNSLR_Bindings_Convert(relative)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice_u8 dst);
-b8 Panshilar::ReadFromStream(Panshilar::Stream stream, ArraySlice<u8> dst)
+extern "C" b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice_u8 dst, i64* readSize);
+b8 Panshilar::ReadFromStream(Panshilar::Stream stream, ArraySlice<u8> dst, i64* readSize)
 {
-    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadFromStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(dst), PNSLR_Bindings_Convert(readSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" b8 PNSLR_WriteToStream(PNSLR_Stream stream, PNSLR_ArraySlice_u8 src);
