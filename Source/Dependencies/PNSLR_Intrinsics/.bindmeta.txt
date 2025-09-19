@@ -80,6 +80,10 @@ struct utf8str : ArraySlice<u8>
 {
     utf8str() = default;
     utf8str(const ArraySlice<u8>& other) : ArraySlice<u8>(other) { }
+
+    template <u64 N>
+    utf8str(const u8 (&arr)[N]) { data = (u8*) arr; count = (i64)(N - 1); }
+
     #ifdef PNSLR_CXX_MAIN_H
         b8 operator==(const utf8str& other) const;
         b8 operator!=(const utf8str& other) const;
