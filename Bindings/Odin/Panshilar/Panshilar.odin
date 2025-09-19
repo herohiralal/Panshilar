@@ -1353,9 +1353,9 @@ foreign {
 @(link_prefix="PNSLR_")
 foreign {
 	/*
-	Append a boolean value to the string builder.
+	Append an 8-bit boolean value to the string builder.
 	*/
-	AppendBooleanToStringBuilder :: proc "c" (
+	AppendB8ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: b8,
 	) -> b8 ---
@@ -1561,6 +1561,8 @@ PrimitiveFmtOptions :: struct  {
 	valueBufferB: u64,
 }
 
+// declare []PrimitiveFmtOptions
+
 @(link_prefix="PNSLR_")
 foreign {
 	/*
@@ -1709,6 +1711,19 @@ foreign {
 	FmtString :: proc "c" (
 		value: string,
 	) -> PrimitiveFmtOptions ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Format a string with the given format and arguments, appending the result
+	to the string builder.
+	*/
+	FormatAndAppendToStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+	) -> b8 ---
 }
 
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2247,6 +2262,20 @@ foreign {
 @(link_prefix="PNSLR_")
 foreign {
 	/*
+	Formats a string with the given format and arguments, writing the
+	result to the file.
+	Returns true on success, false on failure.
+	*/
+	FormatAndWriteToFile :: proc "c" (
+		handle: File,
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
 	Truncates an opened file to a specific size.
 	Returns true on success, false on failure.
 	*/
@@ -2498,6 +2527,21 @@ foreign {
 @(link_prefix="PNSLR_")
 foreign {
 	/*
+	Formats a string and writes it to the stream.
+	Only supports primitives, for obvious reasons.
+	Use with `PNSLR_FmtB8`, `PNSLR_FmtI32`, etc.
+	Returns true on success, false on failure.
+	*/
+	FormatAndWriteToStream :: proc "c" (
+		stream: Stream,
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
 	Truncates the stream to the specified size.
 	Returns true on success, false on failure.
 	*/
@@ -2536,7 +2580,7 @@ foreign {
 	Creates a stream from a file handle.
 	*/
 	StreamFromFile :: proc "c" (
-		file: ^File,
+		file: File,
 	) -> Stream ---
 }
 

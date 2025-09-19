@@ -1121,9 +1121,9 @@ namespace Panshilar
     );
 
     /**
-     * Append a boolean value to the string builder.
+     * Append an 8-bit boolean value to the string builder.
      */
-    b8 AppendBooleanToStringBuilder(
+    b8 AppendB8ToStringBuilder(
         StringBuilder* builder,
         b8 value
     );
@@ -1398,6 +1398,16 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtString(
         utf8str value
+    );
+
+    /**
+     * Format a string with the given format and arguments, appending the result
+     * to the string builder.
+     */
+    b8 FormatAndAppendToStringBuilder(
+        StringBuilder* builder,
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args
     );
 
     // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1821,6 +1831,17 @@ namespace Panshilar
     );
 
     /**
+     * Formats a string with the given format and arguments, writing the
+     * result to the file.
+     * Returns true on success, false on failure.
+     */
+    b8 FormatAndWriteToFile(
+        File handle,
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args
+    );
+
+    /**
      * Truncates an opened file to a specific size.
      * Returns true on success, false on failure.
      */
@@ -2026,6 +2047,18 @@ namespace Panshilar
     );
 
     /**
+     * Formats a string and writes it to the stream.
+     * Only supports primitives, for obvious reasons.
+     * Use with `PNSLR_FmtB8`, `PNSLR_FmtI32`, etc.
+     * Returns true on success, false on failure.
+     */
+    b8 FormatAndWriteToStream(
+        Stream stream,
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args
+    );
+
+    /**
      * Truncates the stream to the specified size.
      * Returns true on success, false on failure.
      */
@@ -2055,7 +2088,7 @@ namespace Panshilar
      * Creates a stream from a file handle.
      */
     Stream StreamFromFile(
-        File* file
+        File file
     );
 
     /**
@@ -2070,10 +2103,10 @@ namespace Panshilar
 namespace Panshilar
 {
     /** Create a utf8str from a string literal. */
-    template <u64 N> constexpr utf8str STRING_LITERAL(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+    template <u64 N> constexpr utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
     /** Get the current source code location. */
-    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::STRING_LITERAL(__FILE__), __LINE__, 0, Panshilar::STRING_LITERAL(__FUNCTION__)}
+    #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
     template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
@@ -2105,6 +2138,13 @@ namespace Panshilar
     {
         if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
     }
+
+    /** Easier way to pass format arguments. */
+    #define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+        { \
+            .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+            .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+        }
 }
 
 #ifdef PNSLR_INTRINSICS_CXX_MAIN_H
@@ -2953,10 +2993,10 @@ b8 Panshilar::AppendRuneToStringBuilder(Panshilar::StringBuilder* builder, u32 r
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendRuneToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(rune)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_AppendBooleanToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
-b8 Panshilar::AppendBooleanToStringBuilder(Panshilar::StringBuilder* builder, b8 value)
+extern "C" b8 PNSLR_AppendB8ToStringBuilder(PNSLR_StringBuilder* builder, b8 value);
+b8 Panshilar::AppendB8ToStringBuilder(Panshilar::StringBuilder* builder, b8 value)
 {
-    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendBooleanToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AppendB8ToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" b8 PNSLR_AppendF32ToStringBuilder(PNSLR_StringBuilder* builder, f32 value, i32 decimalPlaces);
@@ -3069,6 +3109,16 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, type) == PNSLR_STRU
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, valueBufferA) == PNSLR_STRUCT_OFFSET(Panshilar::PrimitiveFmtOptions, valueBufferA), "valueBufferA offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_PrimitiveFmtOptions, valueBufferB) == PNSLR_STRUCT_OFFSET(Panshilar::PrimitiveFmtOptions, valueBufferB), "valueBufferB offset mismatch");
 
+typedef struct { PNSLR_PrimitiveFmtOptions* data; i64 count; } PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions) == sizeof(ArraySlice<Panshilar::PrimitiveFmtOptions>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions) == alignof(ArraySlice<Panshilar::PrimitiveFmtOptions>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions* PNSLR_Bindings_Convert(ArraySlice<Panshilar::PrimitiveFmtOptions>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions*>(x); }
+ArraySlice<Panshilar::PrimitiveFmtOptions>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions* x) { return reinterpret_cast<ArraySlice<Panshilar::PrimitiveFmtOptions>*>(x); }
+PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions& PNSLR_Bindings_Convert(ArraySlice<Panshilar::PrimitiveFmtOptions>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<Panshilar::PrimitiveFmtOptions>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions, count) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::PrimitiveFmtOptions>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions, data) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::PrimitiveFmtOptions>, data), "data offset mismatch");
+
 extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtB8(b8 value);
 Panshilar::PrimitiveFmtOptions Panshilar::FmtB8(b8 value)
 {
@@ -3151,6 +3201,12 @@ extern "C" PNSLR_PrimitiveFmtOptions PNSLR_FmtString(PNSLR_UTF8STR value);
 Panshilar::PrimitiveFmtOptions Panshilar::FmtString(utf8str value)
 {
     PNSLR_PrimitiveFmtOptions zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FmtString(PNSLR_Bindings_Convert(value)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_FormatAndAppendToStringBuilder(PNSLR_StringBuilder* builder, PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args);
+b8 Panshilar::FormatAndAppendToStringBuilder(Panshilar::StringBuilder* builder, utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatAndAppendToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
@@ -3435,6 +3491,12 @@ b8 Panshilar::WriteToFile(Panshilar::File handle, ArraySlice<u8> src)
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteToFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(src)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
+extern "C" b8 PNSLR_FormatAndWriteToFile(PNSLR_File handle, PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args);
+b8 Panshilar::FormatAndWriteToFile(Panshilar::File handle, utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatAndWriteToFile(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
 extern "C" b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize);
 b8 Panshilar::TruncateFile(Panshilar::File handle, i64 newSize)
 {
@@ -3593,6 +3655,12 @@ b8 Panshilar::WriteToStream(Panshilar::Stream stream, ArraySlice<u8> src)
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WriteToStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(src)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
+extern "C" b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args);
+b8 Panshilar::FormatAndWriteToStream(Panshilar::Stream stream, utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatAndWriteToStream(PNSLR_Bindings_Convert(stream), PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
 extern "C" b8 PNSLR_TruncateStream(PNSLR_Stream stream, i64 newSize);
 b8 Panshilar::TruncateStream(Panshilar::Stream stream, i64 newSize)
 {
@@ -3611,8 +3679,8 @@ void Panshilar::CloseStream(Panshilar::Stream stream)
     PNSLR_CloseStream(PNSLR_Bindings_Convert(stream));
 }
 
-extern "C" PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File* file);
-Panshilar::Stream Panshilar::StreamFromFile(Panshilar::File* file)
+extern "C" PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File file);
+Panshilar::Stream Panshilar::StreamFromFile(Panshilar::File file)
 {
     PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromFile(PNSLR_Bindings_Convert(file)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }

@@ -1115,9 +1115,9 @@ b8 PNSLR_AppendRuneToStringBuilder(
 );
 
 /**
- * Append a boolean value to the string builder.
+ * Append an 8-bit boolean value to the string builder.
  */
-b8 PNSLR_AppendBooleanToStringBuilder(
+b8 PNSLR_AppendB8ToStringBuilder(
     PNSLR_StringBuilder* builder,
     b8 value
 );
@@ -1282,6 +1282,8 @@ typedef struct PNSLR_PrimitiveFmtOptions
     u64 valueBufferB;
 } PNSLR_PrimitiveFmtOptions;
 
+PNSLR_DECLARE_ARRAY_SLICE(PNSLR_PrimitiveFmtOptions);
+
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
@@ -1388,6 +1390,16 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtCString(
  */
 PNSLR_PrimitiveFmtOptions PNSLR_FmtString(
     utf8str value
+);
+
+/**
+ * Format a string with the given format and arguments, appending the result
+ * to the string builder.
+ */
+b8 PNSLR_FormatAndAppendToStringBuilder(
+    PNSLR_StringBuilder* builder,
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
 );
 
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1807,6 +1819,17 @@ b8 PNSLR_WriteToFile(
 );
 
 /**
+ * Formats a string with the given format and arguments, writing the
+ * result to the file.
+ * Returns true on success, false on failure.
+ */
+b8 PNSLR_FormatAndWriteToFile(
+    PNSLR_File handle,
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
+
+/**
  * Truncates an opened file to a specific size.
  * Returns true on success, false on failure.
  */
@@ -2014,6 +2037,18 @@ b8 PNSLR_WriteToStream(
 );
 
 /**
+ * Formats a string and writes it to the stream.
+ * Only supports primitives, for obvious reasons.
+ * Use with `PNSLR_FmtB8`, `PNSLR_FmtI32`, etc.
+ * Returns true on success, false on failure.
+ */
+b8 PNSLR_FormatAndWriteToStream(
+    PNSLR_Stream stream,
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
+
+/**
  * Truncates the stream to the specified size.
  * Returns true on success, false on failure.
  */
@@ -2043,7 +2078,7 @@ void PNSLR_CloseStream(
  * Creates a stream from a file handle.
  */
 PNSLR_Stream PNSLR_StreamFromFile(
-    PNSLR_File* file
+    PNSLR_File file
 );
 
 /**
@@ -2089,5 +2124,12 @@ PNSLR_Stream PNSLR_StreamFromStringBuilder(
 /** Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed. */
 #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
     do { if (slice) PNSLR_ResizeRawSlice(&((slice)->raw), (i32) sizeof(ty), (i32) alignof(ty), (i64) newCount, zeroed, allocator, loc, error__); } while(0)
+
+/** Easier way to pass format arguments. */
+#define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+    { \
+        .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+        .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+    }
 
 #endif//PNSLR_MAIN_H

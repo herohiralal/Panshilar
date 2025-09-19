@@ -1,7 +1,7 @@
 #define PNSLR_IMPLEMENTATION
 #include "Strings.h"
 #include "Memory.h"
-#include "Stream.c"
+#include "Stream.h"
 
 PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 60);
 
