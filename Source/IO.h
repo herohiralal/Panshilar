@@ -1,6 +1,7 @@
 #ifndef PNSLR_IO_H // ==============================================================
 #define PNSLR_IO_H
 #include "__Prelude.h"
+#include "Strings.h"
 EXTERN_C_BEGIN
 
 /**
@@ -134,6 +135,17 @@ b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst);
  * Returns true on success, false on failure.
  */
 b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice(u8) src);
+
+/**
+ * Formats a string with the given format and arguments, writing the
+ * result to the file.
+ * Returns true on success, false on failure.
+ */
+b8 PNSLR_FormatAndWriteToFile(
+    PNSLR_File handle,
+    utf8str    fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
 
 /**
  * Truncates an opened file to a specific size.

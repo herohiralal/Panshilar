@@ -2,6 +2,7 @@
 #include "IO.h"
 #include "Allocators.h"
 #include "Strings.h"
+#include "Stream.h"
 
 // internal allocator stuff ========================================================
 
@@ -952,6 +953,11 @@ b8 PNSLR_WriteToFile(PNSLR_File handle, PNSLR_ArraySlice(u8) src)
     #endif
 
     return success;
+}
+
+b8 PNSLR_FormatAndWriteToFile(PNSLR_File handle, utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args)
+{
+    return PNSLR_FormatAndWriteToStream(PNSLR_StreamFromFile(handle), fmtStr, args);
 }
 
 b8 PNSLR_TruncateFile(PNSLR_File handle, i64 newSize)

@@ -1,6 +1,7 @@
 #define PNSLR_IMPLEMENTATION
 #include "Strings.h"
 #include "Memory.h"
+#include "Stream.c"
 
 PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(Strings, 60);
 
@@ -941,6 +942,11 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value)
         .valueBufferA = *(u64*) &value.data,
         .valueBufferB = *(u64*) &value.count,
     };
+}
+
+b8 PNSLR_FormatAndAppendToStringBuilder(PNSLR_StringBuilder* builder, utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args)
+{
+    return PNSLR_FormatAndWriteToStream(PNSLR_StreamFromStringBuilder(builder), fmtStr, args);
 }
 
 utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)

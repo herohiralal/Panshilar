@@ -440,6 +440,16 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value);
 
 //-skipreflect
 
+/**
+ * Format a string with the given format and arguments, appending the result
+ * to the string builder.
+ */
+b8 PNSLR_FormatAndAppendToStringBuilder(
+    PNSLR_StringBuilder* builder,
+    utf8str              fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
+
 // Conversions to strings ==========================================================
 
 /**
