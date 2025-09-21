@@ -655,6 +655,14 @@ b8 ConsumeFnDeclBlock(ParsedContent* content, CachedLasts* cachedLasts, utf8str 
             cachedLasts->lastFnArg                                   = arg;
 
             if (!ForceGetNextToken(pathRel, iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_NewLine | TokenIgnoreMask_Comments, TknTy_Identifier, &(arg->name), allocator)) break;
+
+            utf8str optArgCheck = {0};
+            if (PeekNextToken(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, &optArgCheck) &&
+                PNSLR_AreStringsEqual(optArgCheck, PNSLR_StringLiteral("OPT_ARG"), 0))
+            {
+                DequeueNextTokenSpan(iter, TokenIgnoreMask_Spaces | TokenIgnoreMask_Comments, nil);
+                arg->isOptional = true;
+            }
         }
 
         TknTy rec = ForceGetNextToken(pathRel, iter,

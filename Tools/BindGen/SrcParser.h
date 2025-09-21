@@ -105,6 +105,7 @@ typedef struct
 typedef struct ParsedFnArg
 {
     struct ParsedFnArg* next;
+    b8                  isOptional;
     u32                 ty;
     utf8str             name;
 } ParsedFnArg;

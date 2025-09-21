@@ -418,6 +418,7 @@ void GenerateCxxBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         WriteCxxTypeName(f, content->types, arg->ty, false);
                         PNSLR_WriteToFile(f, ARR_STR_LIT(" "));
                         PNSLR_WriteToFile(f, ARR_FROM_STR(arg->name));
+                        if (arg->isOptional) PNSLR_WriteToFile(f, ARR_STR_LIT(" = { }"));
                         if (arg->next != nil) PNSLR_WriteToFile(f, ARR_STR_LIT(","));
                         PNSLR_WriteToFile(f, ARR_STR_LIT("\n    "));
                     }

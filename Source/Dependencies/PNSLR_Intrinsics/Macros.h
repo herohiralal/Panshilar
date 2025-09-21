@@ -77,6 +77,12 @@
     #define EXTERN_C_END
 #endif
 
+#ifdef __cplusplus
+    #define OPT_ARG = { }
+#else
+    #define OPT_ARG
+#endif
+
 #if PNSLR_MSVC
 
     #define FORCE_TRAP     __fastfail(FAST_FAIL_FATAL_APP_EXIT)

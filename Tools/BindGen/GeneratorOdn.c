@@ -286,6 +286,7 @@ void GenerateOdnBindings(PNSLR_Path tgtDir, ParsedContent* content, PNSLR_Alloca
                         PNSLR_WriteToFile(f, (arg->name));
                         PNSLR_WriteToFile(f, PNSLR_StringLiteral(": "));
                         WriteOdnTypeName(f, content->types, arg->ty, currPkgName);
+                        if (arg->isOptional) PNSLR_WriteToFile(f, PNSLR_StringLiteral(" = { }"));
                         PNSLR_WriteToFile(f, PNSLR_StringLiteral(","));
                         PNSLR_WriteToFile(f, PNSLR_StringLiteral("\n"));
                         if (!fn->isDelegate) PNSLR_WriteToFile(f, PNSLR_StringLiteral("\t"));
