@@ -86,7 +86,7 @@ rawptr PNSLR_Allocate(
     i32 size,
     i32 alignment,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 /**
@@ -100,7 +100,7 @@ rawptr PNSLR_Resize(
     i32    newSize,
     i32    alignment,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 /**
@@ -114,7 +114,7 @@ rawptr PNSLR_DefaultResize(
     i32    newSize,
     i32    alignment,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 /**
@@ -124,7 +124,7 @@ void PNSLR_Free(
     PNSLR_Allocator allocator,
     rawptr memory,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 /**
@@ -133,7 +133,7 @@ void PNSLR_Free(
 void PNSLR_FreeAll(
     PNSLR_Allocator allocator,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 /**
@@ -142,7 +142,7 @@ void PNSLR_FreeAll(
 u64 PNSLR_QueryAllocatorCapabilities(
     PNSLR_Allocator allocator,
     PNSLR_SourceCodeLocation location,
-    PNSLR_AllocatorError*    error
+    PNSLR_AllocatorError*    error OPT_ARG
 );
 
 // Nil allocator ===================================================================
@@ -207,13 +207,22 @@ typedef struct PNSLR_ArenaAllocatorPayload
  * The arena allocator will not free the backing allocator, so it is the caller's responsibility to
  * free the backing allocator when it is no longer needed.
  */
-PNSLR_Allocator PNSLR_NewAllocator_Arena(PNSLR_Allocator backingAllocator, u32 pageSize, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+PNSLR_Allocator PNSLR_NewAllocator_Arena(
+    PNSLR_Allocator backingAllocator,
+    u32 pageSize,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Destroy an arena allocator and free all its resources.
  * This does not free the backing allocator, only the arena allocator's own resources.
  */
-void PNSLR_DestroyAllocator_Arena(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_DestroyAllocator_Arena(
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Main allocator function for the arena allocator.
@@ -314,13 +323,21 @@ typedef struct PNSLR_StackAllocatorPayload
  * The stack allocator will not free the backing allocator, so it is the caller's responsibility to
  * free the backing allocator when it is no longer needed.
  */
-PNSLR_Allocator PNSLR_NewAllocator_Stack(PNSLR_Allocator backingAllocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+PNSLR_Allocator PNSLR_NewAllocator_Stack(
+    PNSLR_Allocator backingAllocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Destroy a stack allocator and free all its resources.
  * This does not free the backing allocator, only the stack allocator's own resources.
  */
-void PNSLR_DestroyAllocator_Stack(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_DestroyAllocator_Stack(
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Main allocator function for the stack allocator.
@@ -341,37 +358,81 @@ rawptr PNSLR_AllocatorFn_Stack(
 /**
  * Allocate a raw array slice of 'count' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
  */
-PNSLR_RawArraySlice PNSLR_MakeRawSlice(i32 tySize, i32 tyAlign, i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+PNSLR_RawArraySlice PNSLR_MakeRawSlice(
+    i32 tySize,
+    i32 tyAlign,
+    i64 count,
+    b8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Free a raw array slice allocated with `PNSLR_MakeRawSlice`, using the provided allocator.
  */
-void PNSLR_FreeRawSlice(PNSLR_RawArraySlice* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_FreeRawSlice(
+    PNSLR_RawArraySlice* slice,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Resize a raw array slice to one with 'newCount' elements, each of size 'tySize' and alignment 'tyAlign', using the provided allocator. Optionally zeroed.
  */
-void PNSLR_ResizeRawSlice(PNSLR_RawArraySlice* slice, i32 tySize, i32 tyAlign, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_ResizeRawSlice(
+    PNSLR_RawArraySlice* slice,
+    i32 tySize,
+    i32 tyAlign,
+    i64 newCount,
+    b8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Allocate a UTF-8 string of 'count__' characters using the provided allocator. Optionally zeroed.
  */
-utf8str PNSLR_MakeString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+utf8str PNSLR_MakeString(
+    i64 count,
+    b8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Free a UTF-8 string allocated with `PNSLR_MakeString`, using the provided allocator.
  */
-void PNSLR_FreeString(utf8str str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_FreeString(
+    utf8str str,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Allocate a C-style null-terminated string of 'count__' characters (excluding the null terminator) using the provided allocator. Optionally zeroed.
  */
-cstring PNSLR_MakeCString(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+cstring PNSLR_MakeCString(
+    i64 count,
+    b8 zeroed,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 /**
  * Free a C-style null-terminated string allocated with `PNSLR_MakeCString`, using the provided allocator.
  */
-void PNSLR_FreeCString(cstring str, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation location, PNSLR_AllocatorError* error);
+void PNSLR_FreeCString(
+    cstring str,
+    PNSLR_Allocator allocator,
+    PNSLR_SourceCodeLocation location,
+    PNSLR_AllocatorError* error OPT_ARG
+);
 
 //+skipreflect
 
@@ -383,17 +444,17 @@ EXTERN_C_END
 
     namespace Panshilar
     {
-        template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             return (T*) PNSLR_Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
         }
 
-        template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             if (obj) { PNSLR_Free(allocator, obj, loc, err); }
         }
 
-        template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
@@ -402,7 +463,7 @@ EXTERN_C_END
             return *reinterpret_cast<ArraySlice<T>*>(&raw);
         }
 
-        template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
@@ -410,7 +471,7 @@ EXTERN_C_END
             if (slice) PNSLR_FreeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), allocator, loc, err);
         }
 
-        template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err)
+        template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");

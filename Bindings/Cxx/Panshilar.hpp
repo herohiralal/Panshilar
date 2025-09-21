@@ -418,7 +418,7 @@ namespace Panshilar
         i32 size,
         i32 alignment,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -432,7 +432,7 @@ namespace Panshilar
         i32 newSize,
         i32 alignment,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -446,7 +446,7 @@ namespace Panshilar
         i32 newSize,
         i32 alignment,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -456,7 +456,7 @@ namespace Panshilar
         Allocator allocator,
         rawptr memory,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -465,7 +465,7 @@ namespace Panshilar
     void FreeAll(
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -474,7 +474,7 @@ namespace Panshilar
     u64 QueryAllocatorCapabilities(
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     // Nil allocator ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -543,7 +543,7 @@ namespace Panshilar
         Allocator backingAllocator,
         u32 pageSize,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -553,7 +553,7 @@ namespace Panshilar
     void DestroyAllocator_Arena(
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -668,7 +668,7 @@ namespace Panshilar
     Allocator NewAllocator_Stack(
         Allocator backingAllocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -678,7 +678,7 @@ namespace Panshilar
     void DestroyAllocator_Stack(
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -707,7 +707,7 @@ namespace Panshilar
         b8 zeroed,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -717,7 +717,7 @@ namespace Panshilar
         RawArraySlice* slice,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -731,7 +731,7 @@ namespace Panshilar
         b8 zeroed,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -742,7 +742,7 @@ namespace Panshilar
         b8 zeroed,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -752,7 +752,7 @@ namespace Panshilar
         utf8str str,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -763,7 +763,7 @@ namespace Panshilar
         b8 zeroed,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     /**
@@ -773,7 +773,7 @@ namespace Panshilar
         cstring str,
         Allocator allocator,
         SourceCodeLocation location,
-        AllocatorError* error
+        AllocatorError* error = { }
     );
 
     // #######################################################################################
@@ -873,7 +873,7 @@ namespace Panshilar
     b8 AreStringsEqual(
         utf8str str1,
         utf8str str2,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -883,7 +883,7 @@ namespace Panshilar
     b8 AreStringAndCStringEqual(
         utf8str str1,
         cstring str2,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -893,7 +893,7 @@ namespace Panshilar
     b8 AreCStringsEqual(
         cstring str1,
         cstring str2,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -903,7 +903,7 @@ namespace Panshilar
     b8 StringStartsWith(
         utf8str str,
         utf8str prefix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -913,7 +913,7 @@ namespace Panshilar
     b8 StringEndsWith(
         utf8str str,
         utf8str suffix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -922,7 +922,7 @@ namespace Panshilar
     b8 StringStartsWithCString(
         utf8str str,
         cstring prefix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -931,7 +931,7 @@ namespace Panshilar
     b8 StringEndsWithCString(
         utf8str str,
         cstring suffix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -940,7 +940,7 @@ namespace Panshilar
     b8 CStringStartsWith(
         cstring str,
         utf8str prefix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -949,7 +949,7 @@ namespace Panshilar
     b8 CStringEndsWith(
         cstring str,
         utf8str suffix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -958,7 +958,7 @@ namespace Panshilar
     b8 CStringStartsWithCString(
         utf8str str,
         cstring prefix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -967,7 +967,7 @@ namespace Panshilar
     b8 CStringEndsWithCString(
         utf8str str,
         cstring suffix,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     // Advanced comparisons ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -979,7 +979,7 @@ namespace Panshilar
     i32 SearchFirstIndexInString(
         utf8str str,
         utf8str substring,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -989,7 +989,7 @@ namespace Panshilar
     i32 SearchLastIndexInString(
         utf8str str,
         utf8str substring,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     /**
@@ -1001,7 +1001,7 @@ namespace Panshilar
         utf8str oldValue,
         utf8str newValue,
         Allocator allocator,
-        StringComparisonType comparisonType
+        StringComparisonType comparisonType = { }
     );
 
     // UTF-8 functionalities ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1163,7 +1163,7 @@ namespace Panshilar
     b8 AppendU8ToStringBuilder(
         StringBuilder* builder,
         u8 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1172,7 +1172,7 @@ namespace Panshilar
     b8 AppendU16ToStringBuilder(
         StringBuilder* builder,
         u16 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1181,7 +1181,7 @@ namespace Panshilar
     b8 AppendU32ToStringBuilder(
         StringBuilder* builder,
         u32 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1190,7 +1190,7 @@ namespace Panshilar
     b8 AppendU64ToStringBuilder(
         StringBuilder* builder,
         u64 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1199,7 +1199,7 @@ namespace Panshilar
     b8 AppendI8ToStringBuilder(
         StringBuilder* builder,
         i8 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1208,7 +1208,7 @@ namespace Panshilar
     b8 AppendI16ToStringBuilder(
         StringBuilder* builder,
         i16 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1217,7 +1217,7 @@ namespace Panshilar
     b8 AppendI32ToStringBuilder(
         StringBuilder* builder,
         i32 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1226,7 +1226,7 @@ namespace Panshilar
     b8 AppendI64ToStringBuilder(
         StringBuilder* builder,
         i64 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1320,7 +1320,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtU8(
         u8 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1328,7 +1328,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtU16(
         u16 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1336,7 +1336,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtU32(
         u32 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1344,7 +1344,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtU64(
         u64 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1352,7 +1352,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtI8(
         i8 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1360,7 +1360,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtI16(
         i16 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1368,7 +1368,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtI32(
         i32 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1376,7 +1376,7 @@ namespace Panshilar
      */
     PrimitiveFmtOptions FmtI64(
         i64 value,
-        IntegerBase base
+        IntegerBase base = { }
     );
 
     /**
@@ -1425,8 +1425,8 @@ namespace Panshilar
      */
     utf8str StringFromF32(
         f32 value,
-        i32 decimalPlaces,
-        Allocator allocator
+        Allocator allocator,
+        i32 decimalPlaces = { }
     );
 
     /**
@@ -1434,8 +1434,8 @@ namespace Panshilar
      */
     utf8str StringFromF64(
         f64 value,
-        i32 decimalPlaces,
-        Allocator allocator
+        Allocator allocator,
+        i32 decimalPlaces = { }
     );
 
     /**
@@ -1443,8 +1443,8 @@ namespace Panshilar
      */
     utf8str StringFromU8(
         u8 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1452,8 +1452,8 @@ namespace Panshilar
      */
     utf8str StringFromU16(
         u16 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1461,8 +1461,8 @@ namespace Panshilar
      */
     utf8str StringFromU32(
         u32 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1470,8 +1470,8 @@ namespace Panshilar
      */
     utf8str StringFromU64(
         u64 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1479,8 +1479,8 @@ namespace Panshilar
      */
     utf8str StringFromI8(
         i8 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1488,8 +1488,8 @@ namespace Panshilar
      */
     utf8str StringFromI16(
         i16 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1497,8 +1497,8 @@ namespace Panshilar
      */
     utf8str StringFromI32(
         i32 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     /**
@@ -1506,8 +1506,8 @@ namespace Panshilar
      */
     utf8str StringFromI64(
         i64 value,
-        IntegerBase base,
-        Allocator allocator
+        Allocator allocator,
+        IntegerBase base = { }
     );
 
     // Conversions from strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1666,9 +1666,9 @@ namespace Panshilar
     b8 SplitPath(
         Path path,
         Path* parent,
-        utf8str* selfNameWithExtension,
-        utf8str* selfName,
-        utf8str* extension
+        utf8str* selfNameWithExtension = { },
+        utf8str* selfName = { },
+        utf8str* extension = { }
     );
 
     /**
@@ -1772,7 +1772,7 @@ namespace Panshilar
      */
     File OpenFileToRead(
         Path path,
-        b8 allowWrite
+        b8 allowWrite = { }
     );
 
     /**
@@ -1781,8 +1781,8 @@ namespace Panshilar
      */
     File OpenFileToWrite(
         Path path,
-        b8 append,
-        b8 allowRead
+        b8 append = { },
+        b8 allowRead = { }
     );
 
     /**
@@ -1809,7 +1809,7 @@ namespace Panshilar
     b8 SeekPositionInFile(
         File handle,
         i64 newPos,
-        b8 relative
+        b8 relative = { }
     );
 
     /**
@@ -1820,7 +1820,7 @@ namespace Panshilar
     b8 ReadFromFile(
         File handle,
         ArraySlice<u8> dst,
-        i64* readSize
+        i64* readSize = { }
     );
 
     /**
@@ -1885,7 +1885,7 @@ namespace Panshilar
     b8 WriteAllContentsToFile(
         Path path,
         ArraySlice<u8> src,
-        b8 append
+        b8 append = { }
     );
 
     /**
@@ -2026,8 +2026,8 @@ namespace Panshilar
      */
     b8 SeekPositionInStream(
         Stream stream,
-        i64 newPos,
-        b8 relative
+        i64 newPos = { },
+        b8 relative = { }
     );
 
     /**
@@ -2038,7 +2038,7 @@ namespace Panshilar
     b8 ReadFromStream(
         Stream stream,
         ArraySlice<u8> dst,
-        i64* readSize
+        i64* readSize = { }
     );
 
     /**
@@ -2113,7 +2113,7 @@ namespace Panshilar
     #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
-    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         return (T*) Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
     }
@@ -2125,20 +2125,20 @@ namespace Panshilar
     }
 
     /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
-    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         RawArraySlice raw = MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
         return *reinterpret_cast<ArraySlice<T>*>(&raw);
     }
 
     /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
-    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         if (slice) FreeRawSlice(reinterpret_cast<RawArraySlice*>(slice), allocator, loc, err);
     }
 
     /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
-    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
     }
@@ -2152,7 +2152,7 @@ namespace Panshilar
 }
 
 #ifdef PNSLR_INTRINSICS_CXX_MAIN_H
-    b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other, Panshilar::StringComparisonType::CaseSensitive); }
+    b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other); }
     b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
 #endif
 
@@ -3219,64 +3219,64 @@ utf8str Panshilar::StringFromBoolean(b8 value, Panshilar::Allocator allocator)
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromBoolean(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromF32(f32 value, i32 decimalPlaces, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromF32(f32 value, i32 decimalPlaces, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromF32(f32 value, PNSLR_Allocator allocator, i32 decimalPlaces);
+utf8str Panshilar::StringFromF32(f32 value, Panshilar::Allocator allocator, i32 decimalPlaces)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromF64(f64 value, i32 decimalPlaces, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromF64(f64 value, i32 decimalPlaces, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromF64(f64 value, PNSLR_Allocator allocator, i32 decimalPlaces);
+utf8str Panshilar::StringFromF64(f64 value, Panshilar::Allocator allocator, i32 decimalPlaces)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(decimalPlaces), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromF64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(decimalPlaces)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromU8(u8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromU8(u8 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU8(u8 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromU8(u8 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromU16(u16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromU16(u16 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU16(u16 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromU16(u16 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromU32(u32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromU32(u32 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU32(u32 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromU32(u32 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromU64(u64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromU64(u64 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromU64(u64 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromU64(u64 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromU64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromI8(i8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromI8(i8 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI8(i8 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromI8(i8 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI8(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromI16(i16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromI16(i16 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI16(i16 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromI16(i16 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI16(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromI32(i32 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI32(i32 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromI32(i32 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI32(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" PNSLR_UTF8STR PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
-utf8str Panshilar::StringFromI64(i64 value, Panshilar::IntegerBase base, Panshilar::Allocator allocator)
+extern "C" PNSLR_UTF8STR PNSLR_StringFromI64(i64 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base);
+utf8str Panshilar::StringFromI64(i64 value, Panshilar::Allocator allocator, Panshilar::IntegerBase base)
 {
-    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(base), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StringFromI64(PNSLR_Bindings_Convert(value), PNSLR_Bindings_Convert(allocator), PNSLR_Bindings_Convert(base)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" b8 PNSLR_BooleanFromString(PNSLR_UTF8STR str, b8* value);

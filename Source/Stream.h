@@ -64,14 +64,14 @@ i64 PNSLR_GetCurrentPositionInStream(PNSLR_Stream stream);
  * If 'relative' is false, the new position is absolute from the start.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_SeekPositionInStream(PNSLR_Stream stream, i64 newPos, b8 relative);
+b8 PNSLR_SeekPositionInStream(PNSLR_Stream stream, i64 newPos OPT_ARG, b8 relative OPT_ARG);
 
 /**
  * Reads data from the stream into the provided buffer.
  * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst, i64* readSize);
+b8 PNSLR_ReadFromStream(PNSLR_Stream stream, PNSLR_ArraySlice(u8) dst, i64* readSize OPT_ARG);
 
 /**
  * Writes data from the provided buffer into the stream.

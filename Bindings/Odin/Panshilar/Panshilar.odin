@@ -490,7 +490,7 @@ foreign {
 		size: i32,
 		alignment: i32,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> rawptr ---
 }
 
@@ -507,7 +507,7 @@ foreign {
 		newSize: i32,
 		alignment: i32,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> rawptr ---
 }
 
@@ -524,7 +524,7 @@ foreign {
 		newSize: i32,
 		alignment: i32,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> rawptr ---
 }
 
@@ -537,7 +537,7 @@ foreign {
 		allocator: Allocator,
 		memory: rawptr,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -549,7 +549,7 @@ foreign {
 	FreeAll :: proc "c" (
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -561,7 +561,7 @@ foreign {
 	QueryAllocatorCapabilities :: proc "c" (
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> u64 ---
 }
 
@@ -640,7 +640,7 @@ foreign {
 		backingAllocator: Allocator,
 		pageSize: u32,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> Allocator ---
 }
 
@@ -653,7 +653,7 @@ foreign {
 	DestroyAllocator_Arena :: proc "c" (
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -781,7 +781,7 @@ foreign {
 	NewAllocator_Stack :: proc "c" (
 		backingAllocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> Allocator ---
 }
 
@@ -794,7 +794,7 @@ foreign {
 	DestroyAllocator_Stack :: proc "c" (
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -829,7 +829,7 @@ foreign {
 		zeroed: b8,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> Intrinsics.RawArraySlice ---
 }
 
@@ -842,7 +842,7 @@ foreign {
 		slice: ^Intrinsics.RawArraySlice,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -859,7 +859,7 @@ foreign {
 		zeroed: b8,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -873,7 +873,7 @@ foreign {
 		zeroed: b8,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> string ---
 }
 
@@ -886,7 +886,7 @@ foreign {
 		str: string,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -900,7 +900,7 @@ foreign {
 		zeroed: b8,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) -> cstring ---
 }
 
@@ -913,7 +913,7 @@ foreign {
 		str: cstring,
 		allocator: Allocator,
 		location: SourceCodeLocation,
-		error: ^AllocatorError,
+		error: ^AllocatorError = { },
 	) ---
 }
 
@@ -1039,7 +1039,7 @@ foreign {
 	AreStringsEqual :: proc "c" (
 		str1: string,
 		str2: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1052,7 +1052,7 @@ foreign {
 	AreStringAndCStringEqual :: proc "c" (
 		str1: string,
 		str2: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1065,7 +1065,7 @@ foreign {
 	AreCStringsEqual :: proc "c" (
 		str1: cstring,
 		str2: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1078,7 +1078,7 @@ foreign {
 	StringStartsWith :: proc "c" (
 		str: string,
 		prefix: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1091,7 +1091,7 @@ foreign {
 	StringEndsWith :: proc "c" (
 		str: string,
 		suffix: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1103,7 +1103,7 @@ foreign {
 	StringStartsWithCString :: proc "c" (
 		str: string,
 		prefix: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1115,7 +1115,7 @@ foreign {
 	StringEndsWithCString :: proc "c" (
 		str: string,
 		suffix: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1127,7 +1127,7 @@ foreign {
 	CStringStartsWith :: proc "c" (
 		str: cstring,
 		prefix: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1139,7 +1139,7 @@ foreign {
 	CStringEndsWith :: proc "c" (
 		str: cstring,
 		suffix: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1151,7 +1151,7 @@ foreign {
 	CStringStartsWithCString :: proc "c" (
 		str: string,
 		prefix: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1163,7 +1163,7 @@ foreign {
 	CStringEndsWithCString :: proc "c" (
 		str: string,
 		suffix: cstring,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> b8 ---
 }
 
@@ -1178,7 +1178,7 @@ foreign {
 	SearchFirstIndexInString :: proc "c" (
 		str: string,
 		substring: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> i32 ---
 }
 
@@ -1191,7 +1191,7 @@ foreign {
 	SearchLastIndexInString :: proc "c" (
 		str: string,
 		substring: string,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> i32 ---
 }
 
@@ -1206,7 +1206,7 @@ foreign {
 		oldValue: string,
 		newValue: string,
 		allocator: Allocator,
-		comparisonType: StringComparisonType,
+		comparisonType: StringComparisonType = { },
 	) -> string ---
 }
 
@@ -1403,7 +1403,7 @@ foreign {
 	AppendU8ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: u8,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1415,7 +1415,7 @@ foreign {
 	AppendU16ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: u16,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1427,7 +1427,7 @@ foreign {
 	AppendU32ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: u32,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1439,7 +1439,7 @@ foreign {
 	AppendU64ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: u64,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1451,7 +1451,7 @@ foreign {
 	AppendI8ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: i8,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1463,7 +1463,7 @@ foreign {
 	AppendI16ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: i16,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1475,7 +1475,7 @@ foreign {
 	AppendI32ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: i32,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1487,7 +1487,7 @@ foreign {
 	AppendI64ToStringBuilder :: proc "c" (
 		builder: ^StringBuilder,
 		value: i64,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> b8 ---
 }
 
@@ -1602,7 +1602,7 @@ foreign {
 	*/
 	FmtU8 :: proc "c" (
 		value: u8,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1613,7 +1613,7 @@ foreign {
 	*/
 	FmtU16 :: proc "c" (
 		value: u16,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1624,7 +1624,7 @@ foreign {
 	*/
 	FmtU32 :: proc "c" (
 		value: u32,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1635,7 +1635,7 @@ foreign {
 	*/
 	FmtU64 :: proc "c" (
 		value: u64,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1646,7 +1646,7 @@ foreign {
 	*/
 	FmtI8 :: proc "c" (
 		value: i8,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1657,7 +1657,7 @@ foreign {
 	*/
 	FmtI16 :: proc "c" (
 		value: i16,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1668,7 +1668,7 @@ foreign {
 	*/
 	FmtI32 :: proc "c" (
 		value: i32,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1679,7 +1679,7 @@ foreign {
 	*/
 	FmtI64 :: proc "c" (
 		value: i64,
-		base: IntegerBase,
+		base: IntegerBase = { },
 	) -> PrimitiveFmtOptions ---
 }
 
@@ -1746,8 +1746,8 @@ foreign {
 	*/
 	StringFromF32 :: proc "c" (
 		value: f32,
-		decimalPlaces: i32,
 		allocator: Allocator,
+		decimalPlaces: i32 = { },
 	) -> string ---
 }
 
@@ -1758,8 +1758,8 @@ foreign {
 	*/
 	StringFromF64 :: proc "c" (
 		value: f64,
-		decimalPlaces: i32,
 		allocator: Allocator,
+		decimalPlaces: i32 = { },
 	) -> string ---
 }
 
@@ -1770,8 +1770,8 @@ foreign {
 	*/
 	StringFromU8 :: proc "c" (
 		value: u8,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1782,8 +1782,8 @@ foreign {
 	*/
 	StringFromU16 :: proc "c" (
 		value: u16,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1794,8 +1794,8 @@ foreign {
 	*/
 	StringFromU32 :: proc "c" (
 		value: u32,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1806,8 +1806,8 @@ foreign {
 	*/
 	StringFromU64 :: proc "c" (
 		value: u64,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1818,8 +1818,8 @@ foreign {
 	*/
 	StringFromI8 :: proc "c" (
 		value: i8,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1830,8 +1830,8 @@ foreign {
 	*/
 	StringFromI16 :: proc "c" (
 		value: i16,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1842,8 +1842,8 @@ foreign {
 	*/
 	StringFromI32 :: proc "c" (
 		value: i32,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -1854,8 +1854,8 @@ foreign {
 	*/
 	StringFromI64 :: proc "c" (
 		value: i64,
-		base: IntegerBase,
 		allocator: Allocator,
+		base: IntegerBase = { },
 	) -> string ---
 }
 
@@ -2051,9 +2051,9 @@ foreign {
 	SplitPath :: proc "c" (
 		path: Path,
 		parent: ^Path,
-		selfNameWithExtension: ^string,
-		selfName: ^string,
-		extension: ^string,
+		selfNameWithExtension: ^string = { },
+		selfName: ^string = { },
+		extension: ^string = { },
 	) -> b8 ---
 }
 
@@ -2182,7 +2182,7 @@ foreign {
 	*/
 	OpenFileToRead :: proc "c" (
 		path: Path,
-		allowWrite: b8,
+		allowWrite: b8 = { },
 	) -> File ---
 }
 
@@ -2194,8 +2194,8 @@ foreign {
 	*/
 	OpenFileToWrite :: proc "c" (
 		path: Path,
-		append: b8,
-		allowRead: b8,
+		append: b8 = { },
+		allowRead: b8 = { },
 	) -> File ---
 }
 
@@ -2231,7 +2231,7 @@ foreign {
 	SeekPositionInFile :: proc "c" (
 		handle: File,
 		newPos: i64,
-		relative: b8,
+		relative: b8 = { },
 	) -> b8 ---
 }
 
@@ -2245,7 +2245,7 @@ foreign {
 	ReadFromFile :: proc "c" (
 		handle: File,
 		dst: []u8,
-		readSize: ^i64,
+		readSize: ^i64 = { },
 	) -> b8 ---
 }
 
@@ -2331,7 +2331,7 @@ foreign {
 	WriteAllContentsToFile :: proc "c" (
 		path: Path,
 		src: []u8,
-		append: b8,
+		append: b8 = { },
 	) -> b8 ---
 }
 
@@ -2497,8 +2497,8 @@ foreign {
 	*/
 	SeekPositionInStream :: proc "c" (
 		stream: Stream,
-		newPos: i64,
-		relative: b8,
+		newPos: i64 = { },
+		relative: b8 = { },
 	) -> b8 ---
 }
 
@@ -2512,7 +2512,7 @@ foreign {
 	ReadFromStream :: proc "c" (
 		stream: Stream,
 		dst: []u8,
-		readSize: ^i64,
+		readSize: ^i64 = { },
 	) -> b8 ---
 }
 
@@ -2603,12 +2603,12 @@ foreign {
 
 GET_LOC :: proc(loc := #caller_location) -> SourceCodeLocation {return {file = loc.file_path, line = loc.line, column = loc.column, function = loc.procedure}}
 
-New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
+New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
 
-Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if obj != nil {Free(allocator, obj, loc, err)}}
+Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if obj != nil {Free(allocator, obj, loc, err)}}
 
-MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
+MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
 
-FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
+FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
 
-ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}
+ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}

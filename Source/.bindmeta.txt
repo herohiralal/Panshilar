@@ -63,7 +63,7 @@ namespace Panshilar
     #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}
 
     /** Allocate an object of type 'ty' using the provided allocator. */
-    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> T* New(Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         return (T*) Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
     }
@@ -75,20 +75,20 @@ namespace Panshilar
     }
 
     /** Allocate an array of 'count__' elements of type 'ty' using the provided allocator. Optionally zeroed. */
-    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> ArraySlice<T> MakeSlice(i64 count, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         RawArraySlice raw = MakeRawSlice((i32) sizeof(T), (i32) alignof(T), count, zeroed, allocator, loc, err);
         return *reinterpret_cast<ArraySlice<T>*>(&raw);
     }
 
     /** Free a 'slice' allocated with `PNSLR_MakeSlice`, using the provided allocator. Expects a reassignable variable. */
-    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> void FreeSlice(ArraySlice<T>* slice, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         if (slice) FreeRawSlice(reinterpret_cast<RawArraySlice*>(slice), allocator, loc, err);
     }
 
     /** Resize a slice to one with 'newCount__' elements of type 'ty' using the provided allocator. Optionally zeroed. Expects a reassignable variable. */
-    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err)
+    template <typename T> void ResizeSlice(ArraySlice<T>* slice, i64 newCount, b8 zeroed, Allocator allocator, SourceCodeLocation loc, AllocatorError* err = { })
     {
         if (slice) ResizeRawSlice(reinterpret_cast<RawArraySlice*>(slice), (i32) sizeof(T), (i32) alignof(T), newCount, zeroed, allocator, loc, err);
     }
@@ -102,7 +102,7 @@ namespace Panshilar
 }
 
 #ifdef PNSLR_INTRINSICS_CXX_MAIN_H
-    b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other, Panshilar::StringComparisonType::CaseSensitive); }
+    b8 utf8str::operator==(const utf8str& other) const { return Panshilar::AreStringsEqual(*this, other); }
     b8 utf8str::operator!=(const utf8str& other) const { return !(*this == other); }
 #endif
 
@@ -114,14 +114,14 @@ $$$ODN_SRC_SUFFIX
 
 GET_LOC :: proc(loc := #caller_location) -> SourceCodeLocation {return {file = loc.file_path, line = loc.line, column = loc.column, function = loc.procedure}}
 
-New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
+New :: proc($T: typeid, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) -> ^T {return (^T)(Allocate(allocator, true, size_of(T), align_of(T), loc, err))}
 
-Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if obj != nil {Free(allocator, obj, loc, err)}}
+Delete :: proc(obj: ^$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if obj != nil {Free(allocator, obj, loc, err)}}
 
-MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
+MakeSlice :: proc($T: typeid/[]$E, count: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) -> T {return transmute(T)MakeRawSlice(size_of(E), align_of(E), count, zeroed, allocator, loc, err)}
 
-FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
+FreeSlice :: proc(slice: ^[]$T, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if slice != nil {FreeRawSlice(transmute(^RawArraySlice) slice, allocator, loc, err)}}
 
-ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}
+ResizeSlice :: proc(slice: ^[]$T, newCount: i64, zeroed: b8, allocator: Allocator, loc: SourceCodeLocation, err: ^AllocatorError = { }) {if slice != nil {ResizeRawSlice(transmute(^RawArraySlice) slice, size_of(T), align_of(T), newCount, zeroed, allocator, loc, err)}}
 
 $$$LAST_VAR_TO_CONSUME_EMPTY_LINE_AT_END

@@ -1417,8 +1417,8 @@ utf8str PNSLR_StringFromBoolean(
  */
 utf8str PNSLR_StringFromF32(
     f32 value,
-    i32 decimalPlaces,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    i32 decimalPlaces
 );
 
 /**
@@ -1426,8 +1426,8 @@ utf8str PNSLR_StringFromF32(
  */
 utf8str PNSLR_StringFromF64(
     f64 value,
-    i32 decimalPlaces,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    i32 decimalPlaces
 );
 
 /**
@@ -1435,8 +1435,8 @@ utf8str PNSLR_StringFromF64(
  */
 utf8str PNSLR_StringFromU8(
     u8 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1444,8 +1444,8 @@ utf8str PNSLR_StringFromU8(
  */
 utf8str PNSLR_StringFromU16(
     u16 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1453,8 +1453,8 @@ utf8str PNSLR_StringFromU16(
  */
 utf8str PNSLR_StringFromU32(
     u32 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1462,8 +1462,8 @@ utf8str PNSLR_StringFromU32(
  */
 utf8str PNSLR_StringFromU64(
     u64 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1471,8 +1471,8 @@ utf8str PNSLR_StringFromU64(
  */
 utf8str PNSLR_StringFromI8(
     i8 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1480,8 +1480,8 @@ utf8str PNSLR_StringFromI8(
  */
 utf8str PNSLR_StringFromI16(
     i16 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1489,8 +1489,8 @@ utf8str PNSLR_StringFromI16(
  */
 utf8str PNSLR_StringFromI32(
     i32 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 /**
@@ -1498,8 +1498,8 @@ utf8str PNSLR_StringFromI32(
  */
 utf8str PNSLR_StringFromI64(
     i64 value,
-    PNSLR_IntegerBase base,
-    PNSLR_Allocator allocator
+    PNSLR_Allocator allocator,
+    PNSLR_IntegerBase base
 );
 
 // Conversions from strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

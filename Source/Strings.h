@@ -64,61 +64,61 @@ ENUM_END
  * Checks if two UTF-8 strings contain the same data.
  * Returns true if they are equal, false otherwise.
  */
-b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_AreStringsEqual(utf8str str1, utf8str str2, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Asymmetric equality-check between a UTF-8 string and a C-style null-terminated string.
  * Returns true if they are equal, false otherwise.
  */
-b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_AreStringAndCStringEqual(utf8str str1, cstring str2, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if two C-style null-terminated strings are equal.
  * Returns true if they are equal, false otherwise.
  */
-b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_AreCStringsEqual(cstring str1, cstring str2, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a UTF-8 string starts with the specified prefix.
  * Returns true if it does, false otherwise.
  */
-b8 PNSLR_StringStartsWith(utf8str str, utf8str prefix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_StringStartsWith(utf8str str, utf8str prefix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a UTF-8 string ends with the specified suffix.
  * Returns true if it does, false otherwise.
  */
-b8 PNSLR_StringEndsWith(utf8str str, utf8str suffix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_StringEndsWith(utf8str str, utf8str suffix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a C-style null-terminated string starts with the specified prefix.
  */
-b8 PNSLR_StringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_StringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a C-style null-terminated string ends with the specified suffix.
  */
-b8 PNSLR_StringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_StringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Returns the length of the given C-style null-terminated string, excluding the null terminator.
  */
-b8 PNSLR_CStringStartsWith(cstring str, utf8str prefix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_CStringStartsWith(cstring str, utf8str prefix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a C-style null-terminated string ends with the specified UTF-8 suffix.
  */
-b8 PNSLR_CStringEndsWith(cstring str, utf8str suffix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_CStringEndsWith(cstring str, utf8str suffix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a C-style null-terminated string starts with the specified UTF-8 prefix.
  */
-b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_CStringStartsWithCString(utf8str str, cstring prefix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Checks if a C-style null-terminated string ends with the specified UTF-8 suffix.
  */
-b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType);
+b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 // Advanced comparisons ============================================================
 
@@ -126,19 +126,19 @@ b8 PNSLR_CStringEndsWithCString(utf8str str, cstring suffix, PNSLR_StringCompari
  * Searches for the first occurrence of a substring within a string.
  * Returns the index of the first occurrence, or -1 if not found.
  */
-i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType);
+i32 PNSLR_SearchFirstIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Searches for the last occurrence of a substring within a string.
  * Returns the index of the last occurrence, or -1 if not found.
  */
-i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType);
+i32 PNSLR_SearchLastIndexInString(utf8str str, utf8str substring, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 /**
  * Replaces all occurrences of a substring within a string with a new value.
  * The returned string is allocated using the specified allocator.
  */
-utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType);
+utf8str PNSLR_ReplaceInString(utf8str str, utf8str oldValue, utf8str newValue, PNSLR_Allocator allocator, PNSLR_StringComparisonType comparisonType OPT_ARG);
 
 // UTF-8 functionalities ===========================================================
 
@@ -252,42 +252,42 @@ ENUM_END
 /**
  * Append an unsigned 8-bit integer to the string builder.
  */
-b8 PNSLR_AppendU8ToStringBuilder(PNSLR_StringBuilder* builder, u8 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendU8ToStringBuilder(PNSLR_StringBuilder* builder, u8 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append an unsigned 16-bit integer to the string builder.
  */
-b8 PNSLR_AppendU16ToStringBuilder(PNSLR_StringBuilder* builder, u16 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendU16ToStringBuilder(PNSLR_StringBuilder* builder, u16 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append an unsigned 32-bit integer number to the string builder.
  */
-b8 PNSLR_AppendU32ToStringBuilder(PNSLR_StringBuilder* builder, u32 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendU32ToStringBuilder(PNSLR_StringBuilder* builder, u32 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append an unsigned 64-bit integer to the string builder.
  */
-b8 PNSLR_AppendU64ToStringBuilder(PNSLR_StringBuilder* builder, u64 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendU64ToStringBuilder(PNSLR_StringBuilder* builder, u64 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append a signed 8-bit integer to the string builder.
  */
-b8 PNSLR_AppendI8ToStringBuilder(PNSLR_StringBuilder* builder, i8 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendI8ToStringBuilder(PNSLR_StringBuilder* builder, i8 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append a signed 16-bit integer to the string builder.
  */
-b8 PNSLR_AppendI16ToStringBuilder(PNSLR_StringBuilder* builder, i16 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendI16ToStringBuilder(PNSLR_StringBuilder* builder, i16 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append a signed 32-bit integer number to the string builder.
  */
-b8 PNSLR_AppendI32ToStringBuilder(PNSLR_StringBuilder* builder, i32 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendI32ToStringBuilder(PNSLR_StringBuilder* builder, i32 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Append a signed 64-bit integer to the string builder.
  */
-b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR_IntegerBase base);
+b8 PNSLR_AppendI64ToStringBuilder(PNSLR_StringBuilder* builder, i64 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Return the string from the string builder.
@@ -365,42 +365,42 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtF64(f64 value, i32 decimalPlaces);
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtU8(u8 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU8(u8 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtU16(u16 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU16(u16 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtU32(u32 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU32(u32 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(u64 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtU64(u64 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(i8 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI8(i8 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(i16 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI16(i16 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(i32 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI32(i32 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
  */
-PNSLR_PrimitiveFmtOptions PNSLR_FmtI64(i64 value, PNSLR_IntegerBase base);
+PNSLR_PrimitiveFmtOptions PNSLR_FmtI64(i64 value, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Use when formatting a string. Pass as one of the varargs.
@@ -460,52 +460,52 @@ utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
 /**
  * Convert a 32-bit floating-point number to a string with specified decimal places.
  */
-utf8str PNSLR_StringFromF32(f32 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromF32(f32 value, PNSLR_Allocator allocator, i32 decimalPlaces OPT_ARG);
 
 /**
  * Convert a 64-bit floating-point number to a string with specified decimal places.
  */
-utf8str PNSLR_StringFromF64(f64 value, i32 decimalPlaces, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromF64(f64 value, PNSLR_Allocator allocator, i32 decimalPlaces OPT_ARG);
 
 /**
  * Convert an unsigned 8-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromU8(u8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromU8(u8 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert an unsigned 16-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromU16(u16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromU16(u16 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert an unsigned 32-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromU32(u32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromU32(u32 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert an unsigned 64-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromU64(u64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromU64(u64 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert a signed 8-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromI8(i8 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromI8(i8 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert a signed 16-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromI16(i16 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromI16(i16 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert a signed 32-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromI32(i32 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromI32(i32 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 /**
  * Convert a signed 64-bit integer to a string in the specified base.
  */
-utf8str PNSLR_StringFromI64(i64 value, PNSLR_IntegerBase base, PNSLR_Allocator allocator);
+utf8str PNSLR_StringFromI64(i64 value, PNSLR_Allocator allocator, PNSLR_IntegerBase base OPT_ARG);
 
 // Conversions from strings ========================================================
 

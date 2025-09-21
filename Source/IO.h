@@ -29,7 +29,13 @@ PNSLR_Path PNSLR_NormalisePath(utf8str path, PNSLR_PathNormalisationType type, P
 /**
  * Split a path into its components. Assumes that the path is a valid normalised path in Panshilar conventions.
  */
-b8 PNSLR_SplitPath(PNSLR_Path path, PNSLR_Path* parent, utf8str* selfNameWithExtension, utf8str* selfName, utf8str* extension);
+b8 PNSLR_SplitPath(
+    PNSLR_Path path,
+    PNSLR_Path* parent,
+    utf8str* selfNameWithExtension OPT_ARG,
+    utf8str* selfName OPT_ARG,
+    utf8str* extension OPT_ARG
+);
 
 /**
  * Returns a normalised path for a file inside a given directory.
@@ -97,13 +103,13 @@ typedef struct PNSLR_File { rawptr handle; } PNSLR_File;
  * Opens a file for reading, optionally allow writing to the stream.
  * If the file does not exist, this function will fail.
  */
-PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite);
+PNSLR_File PNSLR_OpenFileToRead(PNSLR_Path path, b8 allowWrite OPT_ARG);
 
 /**
  * Opens a file for writing (or appending), optionally allow reading from the stream.
  * If the file does not exist, it will be created.
  */
-PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append, b8 allowRead);
+PNSLR_File PNSLR_OpenFileToWrite(PNSLR_Path path, b8 append OPT_ARG, b8 allowRead OPT_ARG);
 
 /**
  * Gets the size of an opened file.
@@ -122,14 +128,14 @@ i64 PNSLR_GetCurrentPositionInFile(PNSLR_File handle);
  * If not relative, it's absolute from the start.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative);
+b8 PNSLR_SeekPositionInFile(PNSLR_File handle, i64 newPos, b8 relative OPT_ARG);
 
 /**
  * Reads data from an opened file at the current position.
  * Optionally stores the number of bytes read.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst, i64* readSize);
+b8 PNSLR_ReadFromFile(PNSLR_File handle, PNSLR_ArraySlice(u8) dst, i64* readSize OPT_ARG);
 
 /**
  * Writes data to an opened file at the current position.
@@ -176,7 +182,7 @@ b8 PNSLR_ReadAllContentsFromFile(PNSLR_Path path, PNSLR_ArraySlice(u8)* dst, PNS
  * Dump a bunch of data into a file. Optionally append it instead of overwriting.
  * Returns true on success, false on failure.
  */
-b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice(u8) src, b8 append);
+b8 PNSLR_WriteAllContentsToFile(PNSLR_Path path, PNSLR_ArraySlice(u8) src, b8 append OPT_ARG);
 
 /**
  * Copies a file from src to dst. If dst exists, it will be overwritten.
