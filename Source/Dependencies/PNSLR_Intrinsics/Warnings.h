@@ -9,6 +9,7 @@
     #pragma warning(disable: 4324) // structure was padded due to alignment specifier
     #pragma warning(disable: 4820) // bytes padding added after data member
     #pragma warning(disable: 4127) // conditional expression is constant
+    #pragma warning(disable: 4514) // unreferenced inline function has been removed
     #pragma warning(disable: 4710) // function not inlined
     #pragma warning(disable: 4711) // function selected for automatic inline expansion
     #pragma warning(disable: 4464) // relative include path contains '..'
