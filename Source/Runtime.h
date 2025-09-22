@@ -27,10 +27,10 @@ typedef struct PNSLR_SourceCodeLocation
      */
     #define PNSLR_GET_LOC() PNSLR_SourceCodeLocation \
     { \
-        PNSLR_StringLiteral(__FILE__), \
+        Panshilar::StringLiteral(__FILE__), \
         __LINE__, \
         0, /* not available but might get forwarded from somewhere */ \
-        PNSLR_StringLiteral(__FUNCTION__) \
+        Panshilar::StringLiteral(__FUNCTION__) \
     }
 
 #else

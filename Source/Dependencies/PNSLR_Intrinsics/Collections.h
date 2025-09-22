@@ -64,8 +64,18 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
 
 //+skipreflect
 #ifdef __cplusplus
-    #define PNSLR_StringLiteral(str) \
-        utf8str {(u8*) str, sizeof(str) - 1}
+    namespace Panshilar
+    {
+        // Create a utf8str from a string literal.
+        template <u64 N>
+        constexpr utf8str StringLiteral(const char (&str)[N])
+        {
+            utf8str output;
+            output.count = (i64) (N - 1);
+            output.data = (u8*) str;
+            return output;
+        }
+    }
 #else
     // Create a utf8str from a string literal.
     #define PNSLR_StringLiteral(str) \
