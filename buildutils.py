@@ -449,6 +449,32 @@ def getExecBuildCommand(
 
     return output
 
+def getDynamicLibBuildCommand(
+        plt:      Platform,
+        dbg:      bool,
+        inputFs:  list[str],
+        sysLibs:  list[str],
+        outputF:  str,
+        useCxx:   bool = False,
+    ) -> list[str]:
+    output = getExecBuildCommand(
+        plt      = plt,
+        dbg      = dbg,
+        inputFs  = inputFs,
+        sysLibs  = sysLibs,
+        outputF  = outputF,
+        useCxx   = useCxx,
+    )
+
+    if plt.tgt == 'windows':
+        output += ['/LDd'] if dbg else ['/LD']
+    else:
+        output += ['-shared']
+        if plt.tgt == 'linux':
+            output += ['-fPIC']
+
+    return output
+
 # endregion
 
 # region LSP Setup ============================================================================================================
