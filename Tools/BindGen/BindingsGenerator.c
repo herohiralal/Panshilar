@@ -21,7 +21,8 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
 
     // get target path
     PNSLR_Path dir     = {0};
-    utf8str    dirName = {0};
+
+    if (args.count == 1) // extract from executable path
     {
         utf8str executableName = {0};
 
@@ -39,17 +40,25 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
             #error "Unsupported desktop platform."
         #endif
 
-        if (!args.count) { printf("No args to extract dir path from."); FORCE_DBG_TRAP; }
-
         utf8str dirRaw = args.data[0];
         b8 firstArgIsExecutable = PNSLR_StringEndsWith(dirRaw, executableName, PNSLR_StringComparisonType_CaseInsensitive);
         if (!firstArgIsExecutable) { printf("First argument is not the executable name."); FORCE_DBG_TRAP; }
 
         dirRaw.count -= executableName.count;
         dir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_GetAllocator_DefaultHeap());
-
-        if (!PNSLR_SplitPath(dir, nil, nil, &dirName, nil)) { printf("Failed to split path."); FORCE_DBG_TRAP; }
     }
+    else if (args.count == 2) // extract from given path
+    {
+        dir = PNSLR_NormalisePath(args.data[1], PNSLR_PathNormalisationType_Directory, PNSLR_GetAllocator_DefaultHeap());
+    }
+    else
+    {
+        printf("Expected zero or one argument (path to the root of the Panshilar source tree).");
+        return;
+    }
+
+    utf8str dirName = {0};
+    if (!PNSLR_SplitPath(dir, nil, nil, &dirName, nil)) { printf("Failed to split path."); FORCE_DBG_TRAP; }
 
     // initialise global main thread allocator
     PNSLR_Allocator appArena = {0};
@@ -59,9 +68,9 @@ void BindGenMain(PNSLR_ArraySlice(utf8str) args)
     }
 
     PNSLR_Path srcDir        = PNSLR_GetPathForSubdirectory(dir, PNSLR_StringLiteral("Source"), appArena);
-    utf8str    pnslrFileName = PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena);
+    if (!PNSLR_PathExists(srcDir, PNSLR_PathExistsCheckType_Directory)) { printf("Source directory does not exist."); FORCE_DBG_TRAP; }
 
-    PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, pnslrFileName, appArena);
+    PNSLR_ArraySlice(CollectedFile) files = GatherSourceFiles(srcDir, PNSLR_ConcatenateStrings(dirName, PNSLR_StringLiteral(".h"), appArena), appArena);
 
     b8 parsingSuccessful = true;
     ParsedContent parsedStuff = {0};
