@@ -64,6 +64,8 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
 
 //+skipreflect
 #ifdef __cplusplus
+    EXTERN_C_END
+
     namespace Panshilar
     {
         // Create a utf8str from a string literal.
@@ -76,6 +78,8 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
             return output;
         }
     }
+
+    EXTERN_C_BEGIN
 #else
     // Create a utf8str from a string literal.
     #define PNSLR_StringLiteral(str) \
