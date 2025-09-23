@@ -1040,6 +1040,8 @@ def createXCodeProject(
         projName: str = "MyProject",
         pkgName:  str = "com.example.myproject",
         projDir:  str = "ProjectFiles/Xcode",
+        tempDir:  str = "Temp",
+        outDir:   str = "Binaries",
         cxxMain:  str = "",
         cMain:    str = "",
         objcMain: str = "",
@@ -1057,6 +1059,10 @@ def createXCodeProject(
 
     for dirPath in dirs:
         Path(dirPath).mkdir(parents=True, exist_ok=True)
+
+    outDirRelPath = os.path.relpath('./' + outDir, f"./{projDir}").replace('\\', '/')
+    tempDirRelPath = os.path.relpath('./' + tempDir, f"./{projDir}").replace('\\', '/')
+    outputProductName = f'{projName}-$(CONFIGURATION)-$(CURRENT_ARCH)'
 
     # Generate UUIDs for various objects
     def genUUID():
@@ -1346,10 +1352,13 @@ def createXCodeProject(
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = {pkgName};
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "{outputProductName}";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				CONFIGURATION_BUILD_DIR = "{outDirRelPath}";
+				SYMROOT = "{outDirRelPath}";
+				OBJROOT = "{tempDirRelPath}";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"PNSLR_DBG=1",
@@ -1389,11 +1398,14 @@ def createXCodeProject(
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = {pkgName};
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "{outputProductName}";
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				CONFIGURATION_BUILD_DIR = "{outDirRelPath}";
+				SYMROOT = "{outDirRelPath}";
+				OBJROOT = "{tempDirRelPath}";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PNSLR_REL=1",
 					"PNSLR_IOS=1",
@@ -1431,9 +1443,12 @@ def createXCodeProject(
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = {pkgName};
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "{outputProductName}";
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				CONFIGURATION_BUILD_DIR = "{outDirRelPath}";
+				SYMROOT = "{outDirRelPath}";
+				OBJROOT = "{tempDirRelPath}";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"PNSLR_DBG=1",
@@ -1472,9 +1487,12 @@ def createXCodeProject(
 				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = {pkgName};
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "{outputProductName}";
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				CONFIGURATION_BUILD_DIR = "{outDirRelPath}";
+				SYMROOT = "{outDirRelPath}";
+				OBJROOT = "{tempDirRelPath}";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PNSLR_REL=1",
 					"PNSLR_OSX=1",

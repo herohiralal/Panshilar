@@ -105,7 +105,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
     {
         PNSLR_Platform plt  = PNSLR_GetPlatform();
 
-        if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux || plt == PNSLR_Platform_OSX)
+        if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux)
         {
             if (!args.count) { TR_PRINTE("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
 
@@ -117,18 +117,9 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
             if (!PNSLR_SplitPath(execParent, &tgtDir, &execParentName, nil, nil)) { TR_PRINTE("Failed to split executable parent path."); PNSLR_ExitProcess(1); return; }
             if (!PNSLR_AreStringsEqual(execParentName, PNSLR_StringLiteral("Binaries"), 0)) { TR_PRINTE("Executable not in expected 'Binaries' directory."); PNSLR_ExitProcess(1); return; }
         }
-        else if (plt == PNSLR_Platform_Android)
-        {
-            tgtDir = (PNSLR_Path) {0};
-        }
-        else if (plt == PNSLR_Platform_iOS)
-        {
-            // TODO: find path
-        }
         else
         {
-            TR_PRINTE("Unsupported platform.");
-            PNSLR_ExitProcess(1); return;
+            tgtDir = (PNSLR_Path) {0};
         }
     }
 
