@@ -22,7 +22,7 @@ b8 LoadBindMeta(PNSLR_Path srcDir, BindMeta* output, PNSLR_Allocator allocator)
     PNSLR_Path filePath = PNSLR_GetPathForChildFile(srcDir, PNSLR_StringLiteral(".bindmeta.txt"), allocator);
     if (!PNSLR_PathExists(filePath, PNSLR_PathExistsCheckType_File)) { return false; }
 
-    BindMeta data = {.domainDir = PNSLR_CloneString(srcDir.path, allocator)};
+    BindMeta data = {.domainDir = {.path = PNSLR_CloneString(srcDir.path, allocator)}};
     PNSLR_ArraySlice(u8) contents = {0};
     if (!PNSLR_ReadAllContentsFromFile(filePath, &contents, allocator)) { return false; }
 
@@ -61,7 +61,7 @@ b8 LoadBindMeta(PNSLR_Path srcDir, BindMeta* output, PNSLR_Allocator allocator)
             utf8str varName = {.count = line.count - 3, .data = line.data + 3};
             data.keys.data[varIterator] = varName;
             i64 valStart = -1, valEnd = -1;
-            i32 prevLineStart = lineStart, prevLineEnd = lineEnd;
+            i32 prevLineEnd = lineEnd;
 
             FileIterInfo tempIter = iter;
             while (DequeueNextLineSpan(&tempIter, &lineStart, &lineEnd)) // TODO: optimise to not double-read lines
@@ -76,7 +76,7 @@ b8 LoadBindMeta(PNSLR_Path srcDir, BindMeta* output, PNSLR_Allocator allocator)
                     break;
                 }
 
-                prevLineStart = lineStart; prevLineEnd = lineEnd;
+                prevLineEnd = lineEnd;
             }
 
             if (valEnd == -1) { valEnd = prevLineEnd; } // last variable of file
