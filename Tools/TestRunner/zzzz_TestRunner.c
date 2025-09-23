@@ -103,29 +103,19 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
     PNSLR_Path tgtDir = {0};
     {
-        PNSLR_Platform     plt  = PNSLR_GetPlatform();
-        PNSLR_Architecture arch = PNSLR_GetArchitecture();
+        PNSLR_Platform plt  = PNSLR_GetPlatform();
 
         if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux || plt == PNSLR_Platform_OSX)
         {
-            utf8str executableName = {0};
-
-            if (plt == PNSLR_Platform_Windows) { executableName = PNSLR_StringLiteral("Binaries\\TestRunner-windows-x64.exe"); }
-            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-x64"); }
-            else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-arm64"); }
-            else if (plt == PNSLR_Platform_OSX) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-arm64"); }
-            else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-x64"); }
-            else { TR_PRINTE("Unsupported platform or architecture."); PNSLR_ExitProcess(1); return; }
-
             if (!args.count) { TR_PRINTE("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
 
-            b8 firstArgIsExecutable = PNSLR_StringEndsWith(args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
+            PNSLR_Path execPath = PNSLR_NormalisePath(args.data[0], PNSLR_PathNormalisationType_File, PNSLR_GetAllocator_DefaultHeap());
+            PNSLR_Path execParent = {0};
+            if (!PNSLR_SplitPath(execPath, &execParent, nil, nil, nil)) { TR_PRINTE("Failed to split executable path."); PNSLR_ExitProcess(1); return; }
 
-            if (!firstArgIsExecutable) { TR_PRINTE("First argument must be the executable name."); PNSLR_ExitProcess(1); return; }
-
-            utf8str dirRaw = args.data[0];
-            dirRaw.count -= executableName.count;
-            tgtDir = PNSLR_NormalisePath(dirRaw, PNSLR_PathNormalisationType_Directory, PNSLR_GetAllocator_DefaultHeap());
+            utf8str execParentName = {0};
+            if (!PNSLR_SplitPath(execParent, &tgtDir, &execParentName, nil, nil)) { TR_PRINTE("Failed to split executable parent path."); PNSLR_ExitProcess(1); return; }
+            if (!PNSLR_AreStringsEqual(execParentName, PNSLR_StringLiteral("Binaries"), 0)) { TR_PRINTE("Executable not in expected 'Binaries' directory."); PNSLR_ExitProcess(1); return; }
         }
         else if (plt == PNSLR_Platform_Android)
         {
