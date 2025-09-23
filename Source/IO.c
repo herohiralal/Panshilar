@@ -1107,10 +1107,6 @@ b8 PNSLR_CopyFile(PNSLR_Path src, PNSLR_Path dst)
     return success;
 }
 
-#if PNSLR_LINUX
-    i32 rename(cstring oldPath, cstring newPath); // from stdio.h, which is not an included header
-#endif
-
 b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst)
 {
     if (!src.path.data || !src.path.count || !dst.path.data || !dst.path.count) { return false; }

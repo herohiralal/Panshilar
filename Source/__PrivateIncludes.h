@@ -36,6 +36,7 @@ PNSLR_SUPPRESS_WARN
     #define _POSIX_C_SOURCE 200809L
     #define _XOPEN_SOURCE 700
 
+    #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
     #include <unistd.h>
