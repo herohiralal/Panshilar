@@ -1036,7 +1036,7 @@ EndGlobal
 
 #region XCode Generator =======================================================================================================
 
-def createXcodeProject(
+def createXCodeProject(
         projName: str = "MyProject",
         pkgName:  str = "com.example.myproject",
         projDir:  str = "ProjectFiles/Xcode",

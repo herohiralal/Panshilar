@@ -7,6 +7,7 @@ CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests 
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
 CMD_ARG_MAKE_ANDROID_PROJ   = '-androidproj'        in sys.argv # Create Android project structure for TestRunner
 CMD_ARG_MAKE_VS_PROJ        = '-vsproj'             in sys.argv # Create Visual Studio project structure for TestRunner
+CMD_ARG_MAKE_XCODE_PROJ     = '-xcodeproj'          in sys.argv # Create XCode project structure for TestRunner
 
 # endregion
 
@@ -103,6 +104,7 @@ if __name__ == '__main__':
             not CMD_ARG_RUN_TESTS and \
             not CMD_ARG_MAKE_ANDROID_PROJ and \
             not CMD_ARG_MAKE_VS_PROJ and \
+            not CMD_ARG_MAKE_XCODE_PROJ and \
             True: # don't build the library if we are doing something else
             buildLibrary(plt)
 
@@ -125,6 +127,15 @@ if __name__ == '__main__':
         buildutils.createVisualStudioProject(
             projName = 'PanshilarTestRunner',
             projDir  = 'Tools/TestRunner/ProjectFiles/TestRunner_VisualStudio',
+            cxxMain  = '',
+            cMain    = 'Tools/TestRunner/zzzz_TestRunner.c',
+        )
+
+    if CMD_ARG_MAKE_XCODE_PROJ:
+        buildutils.createXCodeProject(
+            projName = 'PanshilarTestRunner',
+            pkgName  = 'com.panshilar.testrunner',
+            projDir  = 'Tools/TestRunner/ProjectFiles/TestRunner_XCode',
             cxxMain  = '',
             cMain    = 'Tools/TestRunner/zzzz_TestRunner.c',
         )
