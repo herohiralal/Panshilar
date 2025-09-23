@@ -5,6 +5,7 @@ import buildutils
 
 CMD_ARG_RUN_TESTS           = '-tests'              in sys.argv # Run the tests after building
 CMD_ARG_REGENERATE_BINDINGS = '-rebind'             in sys.argv # Regenerate the bindings after building
+CMD_ARG_MAKE_ANDROID_PROJ   = '-androidproj'        in sys.argv # Create Android project structure for TestRunner
 
 # endregion
 
@@ -96,7 +97,11 @@ if __name__ == '__main__':
             outputFile.write('}\n')
 
     for plt in buildutils.PLATFORMS_TO_BUILD:
-        if not CMD_ARG_REGENERATE_BINDINGS and not CMD_ARG_RUN_TESTS: # don't build the library if we are building bindgen or testrunner
+        if True and \
+            not CMD_ARG_REGENERATE_BINDINGS and \
+            not CMD_ARG_RUN_TESTS and \
+            not CMD_ARG_MAKE_ANDROID_PROJ and \
+            True: # don't build the library if we are doing something else
             buildLibrary(plt)
 
         if CMD_ARG_REGENERATE_BINDINGS and (plt.tgt == 'windows' or plt.tgt == 'osx'): # host platforms only
@@ -104,6 +109,15 @@ if __name__ == '__main__':
 
         if CMD_ARG_RUN_TESTS and (plt.tgt == 'windows' or plt.tgt == 'linux' or plt.tgt == 'osx'): # desktop platforms only
             buildTestRunner(plt)
+
+    if CMD_ARG_MAKE_ANDROID_PROJ:
+        buildutils.createAndroidProject(
+            appName = 'PanshilarTestRunner',
+            pkgName = 'com.panshilar.testrunner',
+            projDir = 'Tools/TestRunner/ProjectFiles/TestRunner_Android',
+            cxxMain = '',
+            cMain   = 'Tools/TestRunner/zzzz_TestRunner.c',
+        )
 
     buildutils.printSummary()
 

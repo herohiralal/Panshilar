@@ -1,4 +1,5 @@
 import os, sys, subprocess
+from pathlib import Path
 from dataclasses import dataclass, asdict
 
 # region Commandline arguments ================================================================================================
@@ -561,5 +562,273 @@ def getFolderStructure(root: str) -> FolderStructure:
         srcDir = os.path.join(root, 'Source')                .replace('\\', '/') + '/',
         depDir = os.path.join(root, 'Source', 'Dependencies').replace('\\', '/') + '/',
     )
+
+# endregion
+
+# region Android Project Generator ============================================================================================
+
+def createAndroidProject(
+        appName: str = "MyApp",
+        pkgName: str = "com.example.myapp",
+        projDir: str = "ProjectFiles/Android",
+        grdlVer: str = "8.13",
+        minSdk:  int = 29,
+        tgtSdk:  int = 35,
+        verCode: int = 1,
+        verName: str = "1.0",
+        cxxMain: str = "",
+        cMain:   str = "",
+    ):
+
+    # Create directory structure
+    dirs = [
+        f"./{projDir}",
+        f"./{projDir}/app/src/main/kotlin/{pkgName.replace('.', '/')}",
+        f"./{projDir}/app/src/main/cpp",
+        f"./{projDir}/gradle/wrapper"
+    ]
+
+    for dirPath in dirs:
+        Path(dirPath).mkdir(parents=True, exist_ok=True)
+
+    # Root build.gradle.kts
+    rootBuild = f"""\
+plugins {{
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+}}
+"""
+
+    # App build.gradle.kts
+    appBuild = f"""\
+plugins {{
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}}
+
+android {{
+    namespace = "{pkgName}"
+    compileSdk = {tgtSdk}
+
+    defaultConfig {{
+        applicationId = "{pkgName}"
+        minSdk = {minSdk}
+        targetSdk = {tgtSdk}
+        versionCode = {verCode}
+        versionName = "{verName}"
+
+        ndk {{
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }}
+
+        externalNativeBuild {{
+            cmake {{
+                cFlags += "-std=c11"
+                cppFlags += "-std=c++14"
+            }}
+        }}
+    }}
+
+    buildTypes {{
+        release {{
+            isMinifyEnabled = false
+        }}
+    }}
+
+    compileOptions {{
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }}
+
+    kotlinOptions {{
+        jvmTarget = "11"
+    }}
+
+    buildFeatures {{
+        prefab = true
+    }}
+
+    externalNativeBuild {{
+        cmake {{
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }}
+    }}
+}}
+
+dependencies {{
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+}}
+"""
+
+    # settings.gradle.kts
+    settings = f"""\
+pluginManagement {{
+    repositories {{
+        google {{
+            content {{
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }}
+        }}
+        mavenCentral()
+        gradlePluginPortal()
+    }}
+}}
+dependencyResolutionManagement {{
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {{
+        google()
+        mavenCentral()
+    }}
+}}
+
+rootProject.name = "{appName}"
+include(":app")
+"""
+
+    # gradle.properties
+    gradleProps = """\
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+org.gradle.parallel=true
+android.useAndroidX=true
+kotlin.code.style=official
+android.nonTransitiveRClass=true
+"""
+
+    # gradle-wrapper.properties
+    wrapperProps = f"""\
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-{grdlVer}-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+"""
+
+    # MainActivity.kt
+    mainActivity = f"""\
+package {pkgName}
+
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+
+class MainActivity : AppCompatActivity() {{
+    companion object {{
+        init {{
+            System.loadLibrary("nativelib")
+        }}
+    }}
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {{
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {{
+            val decorView = window.decorView
+            decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
+        }}
+    }}
+}}
+"""
+
+    # AndroidManifest.xml
+    manifest = f"""\
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:label="{appName}"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="emptygameactivity" />
+        </activity>
+    </application>
+</manifest>
+"""
+
+    # CMakeLists.txt
+    cmake = f"""\
+cmake_minimum_required(VERSION 3.22.1)
+
+project("nativelib")
+
+add_library(nativelib SHARED
+{'    nativelib.cpp\n' if cxxMain else ''}
+{'    nativelib.c\n'   if cMain   else ''}
+)
+
+target_compile_options(nativelib PRIVATE -Wall)
+target_compile_definitions(nativelib PRIVATE PNSLR_ANDROID=1)
+
+if (CMAKE_ANDROID_ARCH_ABI STREQUAL "x86_64")
+    target_compile_definitions(nativelib PRIVATE PNSLR_X64=1)
+elseif (CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
+    target_compile_definitions(nativelib PRIVATE PNSLR_ARM64=1)
+endif()
+
+target_include_directories(nativelib PRIVATE
+    ${{ANDROID_NDK}}/sources/android/native_app_glue
+)
+
+set(CMAKE_SHARED_LINKER_FLAGS
+    "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate")
+
+target_link_libraries(nativelib
+    jnigraphics
+    android
+    log
+)
+
+set_source_files_properties(nativelib.c PROPERTIES
+    LANGUAGE C
+    C_STANDARD 11
+)
+
+set_source_files_properties(nativelib.cpp PROPERTIES
+    LANGUAGE CXX
+    CXX_STANDARD 14
+)
+"""
+
+    # Write all files
+    files = [
+        (f"./{projDir}/build.gradle.kts",                                                rootBuild),
+        (f"./{projDir}/settings.gradle.kts",                                             settings),
+        (f"./{projDir}/gradle.properties",                                               gradleProps),
+        (f"./{projDir}/gradle/wrapper/gradle-wrapper.properties",                        wrapperProps),
+        (f"./{projDir}/app/build.gradle.kts",                                            appBuild),
+        (f"./{projDir}/app/src/main/kotlin/{pkgName.replace('.', '/')}/MainActivity.kt", mainActivity),
+        (f"./{projDir}/app/src/main/AndroidManifest.xml",                                manifest),
+        (f"./{projDir}/app/src/main/cpp/CMakeLists.txt",                                 cmake),
+    ]
+
+    if cxxMain:
+        cxxRelPath = os.path.relpath('./' + cxxMain, f"./{projDir}/app/src/main/cpp/").replace('\\', '/')
+        nativeCpp = f'#include "{cxxRelPath}"\n'
+        files += [(f"./{projDir}/app/src/main/cpp/nativelib.cpp", nativeCpp)]
+
+    if cMain:
+        cRelPath = os.path.relpath('./' + cMain, f"./{projDir}/app/src/main/cpp/").replace('\\', '/')
+        nativeC = f'#include "{cRelPath}"\n'
+        files += [(f"./{projDir}/app/src/main/cpp/nativelib.c", nativeC)]
+
+    for filepath, content in files:
+        with open(filepath, 'w') as f:
+            f.write(content)
 
 # endregion
