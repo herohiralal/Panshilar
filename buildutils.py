@@ -832,7 +832,7 @@ local.properties
 
 # endregion
 
-# region Visual StudioGenerator ===============================================================================================
+# region Visual Studio Generator ==============================================================================================
 
 def createVisualStudioProject(
         projName: str = "MyProject",
@@ -1027,6 +1027,609 @@ EndGlobal
         (f"./{projDir}/{projName}.vcxproj", projectContent),
         (f"./{projDir}/.gitignore", gitignore),
     ]
+
+    for filepath, content in files:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+# endregion
+
+#region XCode Generator =======================================================================================================
+
+def createXcodeProject(
+        projName: str = "MyProject",
+        pkgName:  str = "com.example.myproject",
+        projDir:  str = "ProjectFiles/Xcode",
+        cxxMain:  str = "",
+        cMain:    str = "",
+        objcMain: str = "",
+        objcxxMain: str = "",
+    ):
+
+    # Create directory structure
+    dirs = [
+        f"./{projDir}",
+        f"./{projDir}/{projName}.xcodeproj",
+        f"./{projDir}/{projName}.xcodeproj/project.xcworkspace",
+        f"./{projDir}/iOS",
+        f"./{projDir}/macOS",
+    ]
+
+    for dirPath in dirs:
+        Path(dirPath).mkdir(parents=True, exist_ok=True)
+
+    def generateID():
+        """Generate Xcode-style 24-character hex ID"""
+        import random
+        return ''.join(random.choices('0123456789ABCDEF', k=24))
+
+    # Generate unique IDs
+    projectID = generateID()
+    iosTargetID = generateID()
+    macosTargetID = generateID()
+    iosInfoPlistID = generateID()
+    macosInfoPlistID = generateID()
+
+    sourceFileIDs = {}
+    buildFileIDs = {}
+
+    # Generate IDs for source files and build files
+    sources: list[tuple[str, str]] = []
+    if objcMain:
+        sources.append(('main.m', 'sourcecode.c.objc'))
+    if objcxxMain:
+        sources.append(('main.mm', 'sourcecode.cpp.objcpp'))
+    if cMain:
+        sources.append(('main.c', 'sourcecode.c.c'))
+    if cxxMain:
+        sources.append(('main.cpp', 'sourcecode.cpp.cpp'))
+
+    for filename, filetype in sources:
+        sourceFileIDs[filename] = generateID()
+        buildFileIDs[filename] = generateID()
+
+    # Build file references section
+    fileReferences = f"""\
+		{iosInfoPlistID} /* iOS/Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iOS/Info.plist"; sourceTree = "<group>"; }};
+		{macosInfoPlistID} /* macOS/Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "macOS/Info.plist"; sourceTree = "<group>"; }};"""
+
+    for filename, filetype in sources:
+        relPath = os.path.relpath('./' + globals()[filename.split('.')[0] + ('Main' if '.' in filename else '')], f"./{projDir}").replace('\\', '/')
+        fileReferences += f"\n\t\t{sourceFileIDs[filename]} /* {filename} */ = {{isa = PBXFileReference; lastKnownFileType = {filetype}; path = \"{relPath}\"; sourceTree = \"<group>\"; }};"
+
+    # Build files section
+    buildFiles = ""
+    for filename, _ in sources:
+        buildFiles += f"\n\t\t{buildFileIDs[filename]} /* {filename} in Sources */ = {{isa = PBXBuildFile; fileRef = {sourceFileIDs[filename]} /* {filename} */; }};"
+
+    # Sources build phase file list
+    sourcesList = ""
+    for filename, _ in sources:
+        sourcesList += f"\n\t\t\t\t{buildFileIDs[filename]} /* {filename} in Sources */,"
+
+    # project.pbxproj
+    projectContent = f"""\
+// !$*UTF8*$!
+{{
+	archiveVersion = 1;
+	classes = {{
+	}};
+	objectVersion = 56;
+	objects = {{
+
+/* Begin PBXBuildFile section */{buildFiles}
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+{fileReferences}
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		{generateID()} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{generateID()} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		{generateID()} = {{
+			isa = PBXGroup;
+			children = (
+				{iosInfoPlistID} /* iOS/Info.plist */,
+				{macosInfoPlistID} /* macOS/Info.plist */,""" + "".join([f"\n\t\t\t\t{sourceFileIDs[filename]} /* {filename} */," for filename, _ in sources]) + f"""
+			);
+			sourceTree = "<group>";
+		}};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		{iosTargetID} /* {projName}_iOS */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {generateID()} /* Build configuration list for PBXNativeTarget "{projName}_iOS" */;
+			buildPhases = (
+				{generateID()} /* Sources */,
+				{generateID()} /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "{projName}_iOS";
+			productName = "{projName}_iOS";
+			productReference = {generateID()} /* {projName}_iOS.app */;
+			productType = "com.apple.product-type.application";
+		}};
+		{macosTargetID} /* {projName}_macOS */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {generateID()} /* Build configuration list for PBXNativeTarget "{projName}_macOS" */;
+			buildPhases = (
+				{generateID()} /* Sources */,
+				{generateID()} /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "{projName}_macOS";
+			productName = "{projName}_macOS";
+			productReference = {generateID()} /* {projName}_macOS.app */;
+			productType = "com.apple.product-type.application";
+		}};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		{projectID} /* Project object */ = {{
+			isa = PBXProject;
+			attributes = {{
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {{
+					{iosTargetID} = {{
+						CreatedOnToolsVersion = 15.0;
+					}};
+					{macosTargetID} = {{
+						CreatedOnToolsVersion = 15.0;
+					}};
+				}};
+			}};
+			buildConfigurationList = {generateID()} /* Build configuration list for PBXProject "{projName}" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = {generateID()};
+			productRefGroup = {generateID()} /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				{iosTargetID} /* {projName}_iOS */,
+				{macosTargetID} /* {projName}_macOS */,
+			);
+		}};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		{generateID()} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ({sourcesList}
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{generateID()} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ({sourcesList}
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		{generateID()} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_DBG=1",
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+			}};
+			name = Debug;
+		}};
+		{generateID()} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_REL=1",
+					"NDEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+			}};
+			name = Release;
+		}};
+		{generateID()} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_IOS=1",
+					"PNSLR_ARM64=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "iOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "{pkgName}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			}};
+			name = Debug;
+		}};
+		{generateID()} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_IOS=1",
+					"PNSLR_ARM64=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "iOS/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
+				INFOPLIST_KEY_UIMainStoryboardFile = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "{pkgName}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			}};
+			name = Release;
+		}};
+		{generateID()} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_OSX=1",
+					"PNSLR_ARM64=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "macOS/Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "{pkgName}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			}};
+			name = Debug;
+		}};
+		{generateID()} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"PNSLR_OSX=1",
+					"PNSLR_ARM64=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "macOS/Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "{pkgName}";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			}};
+			name = Release;
+		}};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		{generateID()} /* Build configuration list for PBXProject "{projName}" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{generateID()} /* Debug */,
+				{generateID()} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{generateID()} /* Build configuration list for PBXNativeTarget "{projName}_iOS" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{generateID()} /* Debug */,
+				{generateID()} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{generateID()} /* Build configuration list for PBXNativeTarget "{projName}_macOS" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{generateID()} /* Debug */,
+				{generateID()} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+/* End XCConfigurationList section */
+	}};
+	rootObject = {projectID} /* Project object */;
+}}
+"""
+
+    # contents.xcworkspacedata
+    workspaceContent = f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "self:{projName}.xcodeproj">
+   </FileRef>
+</Workspace>
+"""
+
+    # iOS Info.plist
+    iosInfoPlist = f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string></string>
+	<key>UIMainStoryboardFile</key>
+	<string></string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
+</plist>
+"""
+
+    # macOS Info.plist
+    macosInfoPlist = f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconFile</key>
+	<string></string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSMainNibFile</key>
+	<string></string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>
+"""
+
+    # .gitignore
+    gitignore = """\
+# Xcode
+.DS_Store
+*/build/*
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+profile
+*.moved-aside
+DerivedData
+.idea/
+*.hmap
+*.xccheckout
+*.xcworkspace/xcuserdata
+
+# CocoaPods
+Pods/
+"""
+
+    # Write all files
+    files = [
+        (f"./{projDir}/{projName}.xcodeproj/project.pbxproj", projectContent),
+        (f"./{projDir}/{projName}.xcodeproj/project.xcworkspace/contents.xcworkspacedata", workspaceContent),
+        (f"./{projDir}/iOS/Info.plist", iosInfoPlist),
+        (f"./{projDir}/macOS/Info.plist", macosInfoPlist),
+        (f"./{projDir}/.gitignore", gitignore),
+    ]
+
+    # Create translation unit files
+    if objcMain:
+        objcRelPath = os.path.relpath('./' + objcMain, f"./{projDir}").replace('\\', '/')
+        mainM = f'#import "{objcRelPath}"\n'
+        files.append((f"./{projDir}/main.m", mainM))
+
+    if objcxxMain:
+        objcxxRelPath = os.path.relpath('./' + objcxxMain, f"./{projDir}").replace('\\', '/')
+        mainMM = f'#import "{objcxxRelPath}"\n'
+        files.append((f"./{projDir}/main.mm", mainMM))
+
+    if cMain:
+        cRelPath = os.path.relpath('./' + cMain, f"./{projDir}").replace('\\', '/')
+        mainC = f'#include "{cRelPath}"\n'
+        files.append((f"./{projDir}/main.c", mainC))
+
+    if cxxMain:
+        cxxRelPath = os.path.relpath('./' + cxxMain, f"./{projDir}").replace('\\', '/')
+        mainCpp = f'#include "{cxxRelPath}"\n'
+        files.append((f"./{projDir}/main.cpp", mainCpp))
 
     for filepath, content in files:
         with open(filepath, 'w', encoding='utf-8') as f:
