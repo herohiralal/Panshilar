@@ -51,6 +51,11 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 dir
 
 MAIN_TEST_FN(ctx)
 {
+    if (!ctx->tgtDir.path.data || !ctx->tgtDir.path.count)
+    {
+        return;
+    }
+
     DirectoryStuffListerForFilePresentTestPayload data = {0};
     data.allocator = PNSLR_NewAllocator_Stack(PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
     data.paths = PNSLR_MakeSlice(utf8str, 2048, false, ctx->testAllocator, PNSLR_GET_LOC(), nullptr);

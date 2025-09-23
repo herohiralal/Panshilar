@@ -58,6 +58,7 @@ PNSLR_SUPPRESS_WARN
 #endif
 
 #if PNSLR_ANDROID
+    #include <jni.h>
     #include <android/log.h>
     #include <android/asset_manager.h>
     #include <android/native_activity.h>

@@ -209,12 +209,27 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
     }
 }
 
-i32 main(i32 argc, char** argv)
-{
-    PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
-    for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
-    TestRunnerMain(args);
-    return 0;
-}
+#if PNSLR_DESKTOP
+
+    i32 main(i32 argc, char** argv)
+    {
+        PNSLR_ArraySlice(utf8str) args = PNSLR_MakeSlice(utf8str, argc, false, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nullptr);
+        for (i32 i = 0; i < argc; ++i) { args.data[i] = PNSLR_StringFromCString(argv[i]); }
+        TestRunnerMain(args);
+        return 0;
+    }
+
+#elif PNSLR_ANDROID
+
+    extern void android_main(struct android_app* app)
+    {
+        app->onAppCmd = nil;
+        __android_log_print(ANDROID_LOG_INFO, "TestRunner", "In android_main()");
+        ANativeActivity_finish(app->activity);
+    }
+
+#else
+    #error "Unsupported platform for test runner."
+#endif
 
 #include "../../Source/zzzz_Unity.c"

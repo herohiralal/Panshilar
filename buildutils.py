@@ -583,7 +583,7 @@ def createAndroidProject(
     # Create directory structure
     dirs = [
         f"./{projDir}",
-        f"./{projDir}/app/src/main/kotlin/{pkgName.replace('.', '/')}",
+        f"./{projDir}/.idea",
         f"./{projDir}/app/src/main/cpp",
         f"./{projDir}/gradle/wrapper"
     ]
@@ -595,7 +595,6 @@ def createAndroidProject(
     rootBuild = f"""\
 plugins {{
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
 }}
 """
 
@@ -603,7 +602,6 @@ plugins {{
     appBuild = f"""\
 plugins {{
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }}
 
 android {{
@@ -635,30 +633,12 @@ android {{
         }}
     }}
 
-    compileOptions {{
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }}
-
-    kotlinOptions {{
-        jvmTarget = "11"
-    }}
-
-    buildFeatures {{
-        prefab = true
-    }}
-
     externalNativeBuild {{
         cmake {{
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }}
     }}
-}}
-
-dependencies {{
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
 }}
 """
 
@@ -694,7 +674,6 @@ include(":app")
 org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 org.gradle.parallel=true
 android.useAndroidX=true
-kotlin.code.style=official
 android.nonTransitiveRClass=true
 """
 
@@ -702,17 +681,9 @@ android.nonTransitiveRClass=true
     libsVersions = f"""\
 [versions]
 agp = "8.13.0"
-kotlin = "2.0.21"
-coreKtx = "1.10.1"
-appcompat = "1.6.1"
-
-[libraries]
-androidx-core-ktx = {{ group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }}
-androidx-appcompat = {{ group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }}
 
 [plugins]
 android-application = {{ id = "com.android.application", version.ref = "agp" }}
-kotlin-android = {{ id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }}
 """
 
     # gradle-wrapper.properties
@@ -724,47 +695,19 @@ zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 """
 
-    # MainActivity.kt
-    mainActivity = f"""\
-package {pkgName}
-
-import androidx.appcompat.app.AppCompatActivity
-import android.view.View
-
-class MainActivity : AppCompatActivity() {{
-    companion object {{
-        init {{
-            System.loadLibrary("nativelib")
-        }}
-    }}
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {{
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {{
-            val decorView = window.decorView
-            decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        }}
-    }}
-}}
-"""
-
     # AndroidManifest.xml
     manifest = f"""\
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:installLocation="auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:allowBackup="true"
         android:label="{appName}"
-        android:theme="@style/Theme.AppCompat.NoActionBar">
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
-            android:name=".MainActivity"
+            android:name="android.app.NativeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -772,10 +715,25 @@ class MainActivity : AppCompatActivity() {{
             </intent-filter>
             <meta-data
                 android:name="android.app.lib_name"
-                android:value="emptygameactivity" />
+                android:value="nativelib" />
         </activity>
     </application>
 </manifest>
+"""
+
+    # workspace.xml
+    workspace = f"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RunManager">
+    <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App">
+      <module name="{appName}.app" />
+      <option name="CLEAR_LOGCAT" value="true" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
+      <option name="DEBUGGER_TYPE" value="Native" />
+    </configuration>
+  </component>
+</project>
 """
 
     # CMakeLists.txt
@@ -827,17 +785,35 @@ set_source_files_properties(nativelib.cpp PROPERTIES
 )
 """
 
+
+    gitignore = """\
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+/app/build
+/app/src/main/assets
+"""
+
     # Write all files
     files = [
-        (f"./{projDir}/build.gradle.kts",                                                rootBuild),
-        (f"./{projDir}/settings.gradle.kts",                                             settings),
-        (f"./{projDir}/gradle.properties",                                               gradleProps),
-        (f"./{projDir}/gradle/wrapper/gradle-wrapper.properties",                        wrapperProps),
-        (f"./{projDir}/gradle/libs.versions.toml",                                       libsVersions),
-        (f"./{projDir}/app/build.gradle.kts",                                            appBuild),
-        (f"./{projDir}/app/src/main/kotlin/{pkgName.replace('.', '/')}/MainActivity.kt", mainActivity),
-        (f"./{projDir}/app/src/main/AndroidManifest.xml",                                manifest),
-        (f"./{projDir}/app/src/main/cpp/CMakeLists.txt",                                 cmake),
+        (f"./{projDir}/.idea/workspace.xml",                      workspace),
+        (f"./{projDir}/.gitignore",                               gitignore),
+        (f"./{projDir}/build.gradle.kts",                         rootBuild),
+        (f"./{projDir}/settings.gradle.kts",                      settings),
+        (f"./{projDir}/gradle.properties",                        gradleProps),
+        (f"./{projDir}/gradle/wrapper/gradle-wrapper.properties", wrapperProps),
+        (f"./{projDir}/gradle/libs.versions.toml",                libsVersions),
+        (f"./{projDir}/app/build.gradle.kts",                     appBuild),
+        (f"./{projDir}/app/src/main/AndroidManifest.xml",         manifest),
+        (f"./{projDir}/app/src/main/cpp/CMakeLists.txt",          cmake),
     ]
 
     if cxxMain:
