@@ -668,8 +668,8 @@ pluginManagement {{
     repositories {{
         google {{
             content {{
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("com\\\\.android.*")
+                includeGroupByRegex("com\\\\.google.*")
                 includeGroupByRegex("androidx.*")
             }}
         }}
@@ -698,6 +698,23 @@ kotlin.code.style=official
 android.nonTransitiveRClass=true
 """
 
+    # libs.versions.toml
+    libsVersions = f"""\
+[versions]
+agp = "8.13.0"
+kotlin = "2.0.21"
+coreKtx = "1.10.1"
+appcompat = "1.6.1"
+
+[libraries]
+androidx-core-ktx = {{ group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }}
+androidx-appcompat = {{ group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }}
+
+[plugins]
+android-application = {{ id = "com.android.application", version.ref = "agp" }}
+kotlin-android = {{ id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }}
+"""
+
     # gradle-wrapper.properties
     wrapperProps = f"""\
 distributionBase=GRADLE_USER_HOME
@@ -712,7 +729,7 @@ zipStorePath=wrapper/dists
 package {pkgName}
 
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
+import android.view.View
 
 class MainActivity : AppCompatActivity() {{
     companion object {{
@@ -781,6 +798,13 @@ elseif (CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
     target_compile_definitions(nativelib PRIVATE PNSLR_ARM64=1)
 endif()
 
+target_compile_definitions(nativelib PRIVATE
+    $<$<CONFIG:Debug>:PNSLR_DBG=1>
+    $<$<CONFIG:Release>:PNSLR_REL=1>
+    $<$<CONFIG:RelWithDebInfo>:PNSLR_REL=1>
+    $<$<CONFIG:MinSizeRel>:PNSLR_REL=1>
+)
+
 target_include_directories(nativelib PRIVATE
     ${{ANDROID_NDK}}/sources/android/native_app_glue
 )
@@ -811,6 +835,7 @@ set_source_files_properties(nativelib.cpp PROPERTIES
         (f"./{projDir}/settings.gradle.kts",                                             settings),
         (f"./{projDir}/gradle.properties",                                               gradleProps),
         (f"./{projDir}/gradle/wrapper/gradle-wrapper.properties",                        wrapperProps),
+        (f"./{projDir}/gradle/libs.versions.toml",                                       libsVersions),
         (f"./{projDir}/app/build.gradle.kts",                                            appBuild),
         (f"./{projDir}/app/src/main/kotlin/{pkgName.replace('.', '/')}/MainActivity.kt", mainActivity),
         (f"./{projDir}/app/src/main/AndroidManifest.xml",                                manifest),
