@@ -226,6 +226,10 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         ANativeActivity_finish(app->activity);
     }
 
+#elif PNSLR_IOS
+
+// no op here, we'll do it in objc
+
 #else
     #error "Unsupported platform for test runner."
 #endif

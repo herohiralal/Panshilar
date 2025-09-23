@@ -133,11 +133,13 @@ if __name__ == '__main__':
 
     if CMD_ARG_MAKE_XCODE_PROJ:
         buildutils.createXCodeProject(
-            projName = 'PanshilarTestRunner',
-            pkgName  = 'com.panshilar.testrunner',
-            projDir  = 'Tools/TestRunner/ProjectFiles/TestRunner_XCode',
-            cxxMain  = '',
-            cMain    = 'Tools/TestRunner/zzzz_TestRunner.c',
+            projName   = 'PanshilarTestRunner',
+            pkgName    = 'com.panshilar.testrunner',
+            projDir    = 'Tools/TestRunner/ProjectFiles/TestRunner_XCode',
+            cMain      = 'Tools/TestRunner/zzzz_TestRunner.c',
+            objcMain   = 'Tools/TestRunner/zzzz_TestRunner.m',
+            cxxMain    = '',
+            objcxxMain = '',
         )
 
     buildutils.printSummary()
