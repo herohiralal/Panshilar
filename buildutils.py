@@ -762,7 +762,7 @@ class MainActivity : AppCompatActivity() {{
     <application
         android:allowBackup="true"
         android:label="{appName}"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        android:theme="@style/Theme.AppCompat.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -785,9 +785,7 @@ cmake_minimum_required(VERSION 3.22.1)
 project("nativelib")
 
 add_library(nativelib SHARED
-{'    nativelib.cpp\n' if cxxMain else ''}
-{'    nativelib.c\n'   if cMain   else ''}
-)
+{'    nativelib.cpp\n' if cxxMain else ''}{'    nativelib.c\n'   if cMain   else ''})
 
 target_compile_options(nativelib PRIVATE -Wall)
 target_compile_definitions(nativelib PRIVATE PNSLR_ANDROID=1)
