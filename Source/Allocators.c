@@ -165,9 +165,11 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
         case PNSLR_AllocatorMode_Allocate:
         case PNSLR_AllocatorMode_AllocateNoZero:
         {
-            #if PNSLR_APPLE
+            #if PNSLR_APPLE || PNSLR_ANDROID
                 // on apple platforms, we use posix_memalign to ensure proper alignment
                 // linux/windows work fine, but apple being apple, it doesn't
+                //
+                // same shit on android
                 alignment = alignment > PNSLR_PTR_SIZE ? alignment : PNSLR_PTR_SIZE;
                 size = (size + (alignment - 1)) & ~(alignment - 1);
             #endif
@@ -193,9 +195,11 @@ rawptr PNSLR_AllocatorFn_DefaultHeap(rawptr allocatorData, PNSLR_AllocatorMode m
         case PNSLR_AllocatorMode_Resize:
         case PNSLR_AllocatorMode_ResizeNoZero:
         {
-            #if PNSLR_APPLE
+            #if PNSLR_APPLE || PNSLR_ANDROID
                 // on apple platforms, we use posix_memalign to ensure proper alignment
                 // linux/windows work fine, but apple being apple, it doesn't
+                //
+                // same shit on android
                 alignment = alignment > PNSLR_PTR_SIZE ? alignment : PNSLR_PTR_SIZE;
                 size = (size + (alignment - 1)) & ~(alignment - 1);
             #endif

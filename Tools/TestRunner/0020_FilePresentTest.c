@@ -30,6 +30,7 @@ b8 DirectoryStuffListerForFilePresentTest(void* payload, PNSLR_Path path, b8 dir
     SKIP_DIR("Libraries");
     SKIP_DIR("Prebuilt");
     SKIP_DIR("Temp");
+    SKIP_DIR("ProjectFiles");
 
     #undef SKIP_DIR
 

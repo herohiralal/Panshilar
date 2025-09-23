@@ -1,5 +1,8 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "Tools/TestRunner/0020_FilePresentTest.c"
+recent_file: path: "Source/Allocators.c"
+recent_file: path: "Tools/TestRunner/zzzz_TestRunner.c"
 recent_file: path: "Tools/BindGen/Generator.c"
 recent_file: path: "Tools/BindGen/GeneratorC.c"
 recent_file: path: "Tools/BindGen/GeneratorOdn.c"
@@ -11,11 +14,11 @@ target:
 {
   executable: "Binaries/BindingsGenerator-windows-x64.exe"
   working_directory: ""
-  enabled: 1
+  enabled: 0
 }
 target:
 {
   executable: "Binaries/TestRunner-windows-x64.exe"
   working_directory: ""
-  enabled: 0
+  enabled: 1
 }

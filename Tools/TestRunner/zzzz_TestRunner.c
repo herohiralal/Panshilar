@@ -16,6 +16,22 @@ PNSLR_UNSUPPRESS_WARN
 #include "zzzz_TestRunner.h"
 #include "zzzz_GeneratedCombinedTests.c"
 
+#if PNSLR_ANDROID
+    #define TR_PRINTI(f)       ((void) __android_log_print(ANDROID_LOG_INFO,  "TestRunner", f             ))
+    #define TR_PRINTW(f)       ((void) __android_log_print(ANDROID_LOG_WARN,  "TestRunner", f             ))
+    #define TR_PRINTE(f)       ((void) __android_log_print(ANDROID_LOG_ERROR, "TestRunner", f             ))
+    #define TR_PRINTFI(f, ...) ((void) __android_log_print(ANDROID_LOG_INFO,  "TestRunner", f, __VA_ARGS__))
+    #define TR_PRINTFW(f, ...) ((void) __android_log_print(ANDROID_LOG_WARN,  "TestRunner", f, __VA_ARGS__))
+    #define TR_PRINTFE(f, ...) ((void) __android_log_print(ANDROID_LOG_ERROR, "TestRunner", f, __VA_ARGS__))
+#else
+    #define TR_PRINTI(f)       ((void) printf("\033[32m" f "\033[0m\n"             ))
+    #define TR_PRINTW(f)       ((void) printf("\033[33m" f "\033[0m\n"             ))
+    #define TR_PRINTE(f)       ((void) printf("\033[31m" f "\033[0m\n"             ))
+    #define TR_PRINTFI(f, ...) ((void) printf("\033[32m" f "\033[0m\n", __VA_ARGS__))
+    #define TR_PRINTFW(f, ...) ((void) printf("\033[33m" f "\033[0m\n", __VA_ARGS__))
+    #define TR_PRINTFE(f, ...) ((void) printf("\033[31m" f "\033[0m\n", __VA_ARGS__))
+#endif
+
 ENUM_START(BufferedMessageType, u8)
     #define BufferedMessageType_Invalid     ((BufferedMessageType) 0)
     #define BufferedMessageType_TestFnLog   ((BufferedMessageType) 1)
@@ -45,7 +61,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
 
         if (err != PNSLR_AllocatorError_None)
         {
-            printf("Error resizing buffered messages array.\n");
+            TR_PRINTE("Error resizing buffered messages array.");
             PNSLR_ExitProcess(1);
             return;
         }
@@ -99,13 +115,13 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
             else if (plt == PNSLR_Platform_Linux && arch == PNSLR_Architecture_ARM64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-linux-arm64"); }
             else if (plt == PNSLR_Platform_OSX) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-arm64"); }
             else if (plt == PNSLR_Platform_OSX && arch == PNSLR_Architecture_X64) { executableName = PNSLR_StringLiteral("Binaries/TestRunner-osx-x64"); }
-            else { printf("Unsupported platform or architecture."); PNSLR_ExitProcess(1); return; }
+            else { TR_PRINTE("Unsupported platform or architecture."); PNSLR_ExitProcess(1); return; }
 
-            if (!args.count) { printf("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
+            if (!args.count) { TR_PRINTE("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
 
             b8 firstArgIsExecutable = PNSLR_StringEndsWith(args.data[0], executableName, PNSLR_StringComparisonType_CaseInsensitive);
 
-            if (!firstArgIsExecutable) { printf("First argument must be the executable name."); PNSLR_ExitProcess(1); return; }
+            if (!firstArgIsExecutable) { TR_PRINTE("First argument must be the executable name."); PNSLR_ExitProcess(1); return; }
 
             utf8str dirRaw = args.data[0];
             dirRaw.count -= executableName.count;
@@ -113,7 +129,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         }
         else if (plt == PNSLR_Platform_Android)
         {
-            // TODO: find path
+            tgtDir = (PNSLR_Path) {0};
         }
         else if (plt == PNSLR_Platform_iOS)
         {
@@ -121,7 +137,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         }
         else
         {
-            printf("Unsupported platform.");
+            TR_PRINTE("Unsupported platform.");
             PNSLR_ExitProcess(1); return;
         }
     }
@@ -137,7 +153,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
     if (!tests.count || !tests.data)
     {
-        printf("No tests found.\n");
+        TR_PRINTW("No tests found.");
         PNSLR_ExitProcess(1);
         return;
     }
@@ -158,7 +174,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
         info.fn(&ctx);
 
-        printf("==== [%.*s] ====\n", (i32) info.name.count, info.name.data);
+        TR_PRINTFI("==== [%.*s] ====", (i32) info.name.count, info.name.data);
 
         i32 checkCount = 0, passCount = 0;
         for (i32 j = 0; j < (i32) G_NumBufferedMessages; ++j)
@@ -168,8 +184,8 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
             switch (msg->type)
             {
                 case BufferedMessageType_TestFnLog:
-                    printf("INFO  : %.*s\n", (i32) msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    TR_PRINTFI("INFO  : %.*s", (i32) msg->msg.count, msg->msg.data);
+                    TR_PRINTFI("        from %.*s:%d", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 case BufferedMessageType_AssertPass:
                     checkCount++;
@@ -178,34 +194,35 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
                 case BufferedMessageType_AssertFail:
                     success = false;
                     checkCount++;
-                    printf("ERROR : %.*s\n", (i32) msg->msg.count, msg->msg.data);
-                    printf("        from %.*s:%d\n", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    TR_PRINTFE("ERROR : %.*s", (i32) msg->msg.count, msg->msg.data);
+                    TR_PRINTFE("        from %.*s:%d", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
                     break;
                 default:
-                    printf("ERROR_UNKNOWN_MESSAGE\n");
+                    TR_PRINTE("ERROR_UNKNOWN_MESSAGE");
                     break;
             }
         }
 
-        printf("RESULT: (%d/%d).\n", passCount, checkCount);
-        if (checkCount == passCount) { printf("All tests passed. (^_^)        \n"); }
-        else                         { printf("One or more tests failed. (>_<)\n"); }
+        TR_PRINTFI("RESULT: (%d/%d).", passCount, checkCount);
+        if (checkCount == passCount) { TR_PRINTI("All tests passed. (^_^)        "); }
+        else                         { TR_PRINTE("One or more tests failed. (>_<)"); }
 
-        printf("======");
-        for (i32 j = 0; j < (i32) info.name.count; ++j) { printf("="); }
-        printf("======\n\n");
+        utf8str tmpEndStr = PNSLR_MakeString(info.name.count, false, ctx.testAllocator, PNSLR_GET_LOC(), nil);
+        for (i64 j = 0; j < info.name.count; ++j) { tmpEndStr.data[j] = '='; }
+        TR_PRINTFI("======%.*s======\n", (i32) tmpEndStr.count, tmpEndStr.data);
+        PNSLR_FreeString(tmpEndStr, ctx.testAllocator, PNSLR_GET_LOC(), nil);
     }
 
     PNSLR_DestroyAllocator_Arena(G_CurrentTestRunnerAllocator, PNSLR_GET_LOC(), nullptr);
 
     if (!success)
     {
-        printf("=============== One or more tests failed. (>_<) ===============\n");
+        TR_PRINTE("=============== One or more tests failed. (>_<) ===============");
         PNSLR_ExitProcess(1);
     }
     else
     {
-        printf("=================== All tests passed. (^_^) ===================\n");
+        TR_PRINTI("=================== All tests passed. (^_^) ===================");
     }
 }
 
@@ -224,7 +241,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
     extern void android_main(struct android_app* app)
     {
         app->onAppCmd = nil;
-        __android_log_print(ANDROID_LOG_INFO, "TestRunner", "In android_main()");
+        TestRunnerMain((PNSLR_ArraySlice(utf8str)) {0});
         ANativeActivity_finish(app->activity);
     }
 
