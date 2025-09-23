@@ -1074,17 +1074,18 @@ def createXCodeProject(
     buildFileIDs = {}
 
     # Generate IDs for source files and build files
-    sources: list[tuple[str, str]] = []
+    sources: list[tuple[str, str, str]] = []
     if objcMain:
-        sources.append(('main.m', 'sourcecode.c.objc'))
+        sources.append(('main.m', 'sourcecode.c.objc', objcMain))
     if objcxxMain:
-        sources.append(('main.mm', 'sourcecode.cpp.objcpp'))
+        sources.append(('main.mm', 'sourcecode.cpp.objcpp', objcxxMain))
     if cMain:
-        sources.append(('main.c', 'sourcecode.c.c'))
+        sources.append(('main.c', 'sourcecode.c.c', cMain))
     if cxxMain:
-        sources.append(('main.cpp', 'sourcecode.cpp.cpp'))
+        sources.append(('main.cpp', 'sourcecode.cpp.cpp', cxxMain))
 
-    for filename, filetype in sources:
+
+    for filename, filetype, _ in sources:
         sourceFileIDs[filename] = generateID()
         buildFileIDs[filename] = generateID()
 
@@ -1093,18 +1094,19 @@ def createXCodeProject(
 		{iosInfoPlistID} /* iOS/Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "iOS/Info.plist"; sourceTree = "<group>"; }};
 		{macosInfoPlistID} /* macOS/Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "macOS/Info.plist"; sourceTree = "<group>"; }};"""
 
-    for filename, filetype in sources:
-        relPath = os.path.relpath('./' + globals()[filename.split('.')[0] + ('Main' if '.' in filename else '')], f"./{projDir}").replace('\\', '/')
-        fileReferences += f"\n\t\t{sourceFileIDs[filename]} /* {filename} */ = {{isa = PBXFileReference; lastKnownFileType = {filetype}; path = \"{relPath}\"; sourceTree = \"<group>\"; }};"
+    for filename, filetype, originalPath in sources:
+        relPath = os.path.relpath('./' + originalPath, f"./{projDir}").replace('\\', '/')
+        fileReferences += f"\n\t\t{sourceFileIDs[filename]} /* {filename} */ = "
+        fileReferences += f"{{isa = PBXFileReference; lastKnownFileType = {filetype}; path = \"{relPath}\"; sourceTree = \"<group>\"; }};"
 
     # Build files section
     buildFiles = ""
-    for filename, _ in sources:
+    for filename, _, _ in sources:
         buildFiles += f"\n\t\t{buildFileIDs[filename]} /* {filename} in Sources */ = {{isa = PBXBuildFile; fileRef = {sourceFileIDs[filename]} /* {filename} */; }};"
 
     # Sources build phase file list
     sourcesList = ""
-    for filename, _ in sources:
+    for filename, _, _ in sources:
         sourcesList += f"\n\t\t\t\t{buildFileIDs[filename]} /* {filename} in Sources */,"
 
     # project.pbxproj
@@ -1146,7 +1148,7 @@ def createXCodeProject(
 			isa = PBXGroup;
 			children = (
 				{iosInfoPlistID} /* iOS/Info.plist */,
-				{macosInfoPlistID} /* macOS/Info.plist */,""" + "".join([f"\n\t\t\t\t{sourceFileIDs[filename]} /* {filename} */," for filename, _ in sources]) + f"""
+				{macosInfoPlistID} /* macOS/Info.plist */,""" + "".join([f"\n\t\t\t\t{sourceFileIDs[filename]} /* {filename} */," for filename, _, _ in sources]) + f"""
 			);
 			sourceTree = "<group>";
 		}};
