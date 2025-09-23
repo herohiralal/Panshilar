@@ -1353,9 +1353,16 @@ def createXCodeProject(
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"PNSLR_DBG=1",
-                    "PNSLR_ARM64=1",
 					"PNSLR_IOS=1",
 					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=arm64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_ARM64=1",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_X64=1",
 				);
 			}};
 			name = Debug;
@@ -1389,9 +1396,16 @@ def createXCodeProject(
 				VALIDATE_PRODUCT = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PNSLR_REL=1",
-                    "PNSLR_ARM64=1",
 					"PNSLR_IOS=1",
 					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=arm64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_ARM64=1",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_X64=1",
 				);
 			}};
 			name = Release;
@@ -1423,9 +1437,16 @@ def createXCodeProject(
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"PNSLR_DBG=1",
-                    "PNSLR_ARM64=1",
 					"PNSLR_OSX=1",
 					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=arm64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_ARM64=1",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_X64=1",
 				);
 			}};
 			name = Debug;
@@ -1456,9 +1477,16 @@ def createXCodeProject(
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PNSLR_REL=1",
-                    "PNSLR_ARM64=1",
 					"PNSLR_OSX=1",
 					"$(inherited)",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=arm64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_ARM64=1",
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+					"PNSLR_X64=1",
 				);
 			}};
 			name = Release;
