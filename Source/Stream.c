@@ -63,6 +63,51 @@ static b8 PNSLR_Internal_FileStreamProcedure(rawptr streamData, PNSLR_StreamMode
     return success;
 }
 
+static b8 PNSLR_Internal_PipeOutputProcedure(rawptr streamData, PNSLR_StreamMode mode, PNSLR_ArraySlice(u8) data, i64 offset, i64* extraRet)
+{
+    if (!streamData) return false;
+
+    FILE* f = (FILE*)streamData;
+    b8 success = true;
+
+    i64 retAlt = 0;
+    if (!extraRet) extraRet = &retAlt;
+    *extraRet = 0;
+
+    switch (mode)
+    {
+        case PNSLR_StreamMode_Write:
+            if (data.data && data.count > 0)
+            {
+                size_t written = fwrite(data.data, 1, (size_t)data.count, f);
+                *extraRet = (i64)written;
+                success = (written == (size_t)data.count);
+            }
+            break;
+
+        case PNSLR_StreamMode_Flush:
+            success = (fflush(f) == 0);
+            break;
+
+        case PNSLR_StreamMode_Close:
+            // Do nothing, don't close stdout/stderr
+            success = true;
+            break;
+
+        case PNSLR_StreamMode_GetSize:
+        case PNSLR_StreamMode_GetCurrentPos:
+        case PNSLR_StreamMode_SeekAbsolute:
+        case PNSLR_StreamMode_SeekRelative:
+        case PNSLR_StreamMode_Read:
+        case PNSLR_StreamMode_Truncate:
+        default:
+            success = false; // unsupported
+            break;
+    }
+
+    return success;
+}
+
 static b8 PNSLR_Internal_StringBuilderStreamProcedure(rawptr streamData, PNSLR_StreamMode mode, PNSLR_ArraySlice(u8) data, i64 offset, i64* extraRet)
 {
     if (!streamData) { return false; }
@@ -473,5 +518,27 @@ PNSLR_Stream PNSLR_StreamFromStringBuilder(PNSLR_StringBuilder* builder)
     return (PNSLR_Stream) {
         .procedure = PNSLR_Internal_StringBuilderStreamProcedure,
         .data      = (rawptr) builder
+    };
+}
+
+PNSLR_Stream PNSLR_StreamFromStdOut(b8 disableBuffering)
+{
+    static_assert(sizeof(stdout) == sizeof(rawptr), "stdout must be the same size as rawptr");
+
+    if (disableBuffering) setvbuf(stdout, NULL, _IONBF, 0);
+    return (PNSLR_Stream){
+        .procedure = PNSLR_Internal_PipeOutputProcedure,
+        .data      = (rawptr) stdout,
+    };
+}
+
+PNSLR_Stream PNSLR_StreamFromStdErr(b8 disableBuffering)
+{
+    static_assert(sizeof(stderr) == sizeof(rawptr), "stderr must be the same size as rawptr");
+
+    if (disableBuffering) setvbuf(stderr, NULL, _IONBF, 0);
+    return (PNSLR_Stream){
+        .procedure = PNSLR_Internal_PipeOutputProcedure,
+        .data      = (rawptr) stderr,
     };
 }

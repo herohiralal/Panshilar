@@ -27,6 +27,7 @@ PNSLR_SUPPRESS_WARN
         #undef RADDBG_MARKUP_IMPLEMENTATION
     #endif
 
+    #include <stdio.h>
     #undef WIN32_LEAN_AND_MEAN
 #endif
 

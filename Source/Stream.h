@@ -120,5 +120,15 @@ PNSLR_Stream PNSLR_StreamFromFile(PNSLR_File file);
  */
 PNSLR_Stream PNSLR_StreamFromStringBuilder(PNSLR_StringBuilder* builder);
 
+/**
+ * Creates a stream from the standard output pipe.
+ */
+PNSLR_Stream PNSLR_StreamFromStdOut(b8 disableBuffering OPT_ARG);
+
+/**
+ * Creates a stream from the standard error pipe.
+ */
+PNSLR_Stream PNSLR_StreamFromStdErr(b8 disableBuffering OPT_ARG);
+
 EXTERN_C_END
 #endif // PNSLR_STREAM_H ===========================================================

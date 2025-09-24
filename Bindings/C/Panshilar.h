@@ -2092,6 +2092,20 @@ PNSLR_Stream PNSLR_StreamFromStringBuilder(
     PNSLR_StringBuilder* builder
 );
 
+/**
+ * Creates a stream from the standard output pipe.
+ */
+PNSLR_Stream PNSLR_StreamFromStdOut(
+    b8 disableBuffering
+);
+
+/**
+ * Creates a stream from the standard error pipe.
+ */
+PNSLR_Stream PNSLR_StreamFromStdErr(
+    b8 disableBuffering
+);
+
 #undef PNSLR_ALIGNAS
 
 #ifdef __cplusplus

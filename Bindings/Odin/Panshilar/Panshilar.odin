@@ -2598,6 +2598,26 @@ foreign {
 	) -> Stream ---
 }
 
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a stream from the standard output pipe.
+	*/
+	StreamFromStdOut :: proc "c" (
+		disableBuffering: b8 = { },
+	) -> Stream ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a stream from the standard error pipe.
+	*/
+	StreamFromStdErr :: proc "c" (
+		disableBuffering: b8 = { },
+	) -> Stream ---
+}
+
 #assert(size_of(int)  == 8, " int must be 8 bytes")
 #assert(size_of(uint) == 8, "uint must be 8 bytes")
 

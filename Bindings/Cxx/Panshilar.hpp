@@ -2102,6 +2102,20 @@ namespace Panshilar
         StringBuilder* builder
     );
 
+    /**
+     * Creates a stream from the standard output pipe.
+     */
+    Stream StreamFromStdOut(
+        b8 disableBuffering = { }
+    );
+
+    /**
+     * Creates a stream from the standard error pipe.
+     */
+    Stream StreamFromStdErr(
+        b8 disableBuffering = { }
+    );
+
 } // namespace end
 
 namespace Panshilar
@@ -3693,6 +3707,18 @@ extern "C" PNSLR_Stream PNSLR_StreamFromStringBuilder(PNSLR_StringBuilder* build
 Panshilar::Stream Panshilar::StreamFromStringBuilder(Panshilar::StringBuilder* builder)
 {
     PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromStringBuilder(PNSLR_Bindings_Convert(builder)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_Stream PNSLR_StreamFromStdOut(b8 disableBuffering);
+Panshilar::Stream Panshilar::StreamFromStdOut(b8 disableBuffering)
+{
+    PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromStdOut(PNSLR_Bindings_Convert(disableBuffering)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_Stream PNSLR_StreamFromStdErr(b8 disableBuffering);
+Panshilar::Stream Panshilar::StreamFromStdErr(b8 disableBuffering)
+{
+    PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromStdErr(PNSLR_Bindings_Convert(disableBuffering)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 #undef PNSLR_STRUCT_OFFSET
