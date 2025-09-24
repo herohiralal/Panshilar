@@ -279,16 +279,7 @@ static void PNSLR_Internal_LoggerFn_NoOp(rawptr loggerData, PNSLR_LoggerLevel le
 
 void PNSLR_SetDefaultLogger(PNSLR_Logger logger) { G_PNSLR_Internal_DefaultLogger = logger; }
 
-void PNSLR_DisableDefaultLogger(void)
-{
-    PNSLR_SetDefaultLogger((PNSLR_Logger)
-    {
-        .procedure     = PNSLR_Internal_LoggerFn_NoOp,
-        .data          = nil,
-        .minAllowedLvl = PNSLR_LoggerLevel_Critical + 1, // effectively disables all logging
-        .options       = PNSLR_LogOption_None
-    });
-}
+void PNSLR_DisableDefaultLogger(void) { PNSLR_SetDefaultLogger(PNSLR_GetNilLogger()); }
 
 void PNSLR_LogD(utf8str msg, PNSLR_SourceCodeLocation loc) { PNSLR_LogLD(G_PNSLR_Internal_DefaultLogger, msg, loc); }
 void PNSLR_LogI( utf8str msg,                                                      PNSLR_SourceCodeLocation loc) { PNSLR_LogLI(G_PNSLR_Internal_DefaultLogger,     msg,       loc); }
@@ -360,5 +351,27 @@ PNSLR_Logger PNSLR_LoggerFromFile(PNSLR_File f, PNSLR_LoggerLevel minAllowedLeve
         .data          = f.handle,
         .minAllowedLvl = minAllowedLevel,
         .options       = options & ~(PNSLR_LogOption_IncludeColours) // no colours in files
+    };
+}
+
+PNSLR_Logger PNSLR_GetDefaultLoggerWithOptions(PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options)
+{
+    return (PNSLR_Logger)
+    {
+        .procedure     = PNSLR_Internal_LoggerFn_Default,
+        .data          = nil,
+        .minAllowedLvl = minAllowedLevel,
+        .options       = options
+    };
+}
+
+PNSLR_Logger PNSLR_GetNilLogger(void)
+{
+    return (PNSLR_Logger)
+    {
+        .procedure     = PNSLR_Internal_LoggerFn_NoOp,
+        .data          = nil,
+        .minAllowedLvl = PNSLR_LoggerLevel_Critical + 1, // effectively disables all logging
+        .options       = PNSLR_LogOption_None
     };
 }

@@ -116,5 +116,19 @@ void PNSLR_LogLf(PNSLR_Logger logger, PNSLR_LoggerLevel level, utf8str fmtMsg, P
  */
 PNSLR_Logger PNSLR_LoggerFromFile(PNSLR_File f, PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options OPT_ARG);
 
+/**
+ * Creates a logger that uses the default outputs (see `PNSLR_SetDefaultLogger()`).
+ * The returned logger is thread-safe and can be used from any thread.
+ * This can be used along with `PNSLR_SetDefaultLogger()` to customize
+ * the behaviour of the default in-built logger.
+ */
+PNSLR_Logger PNSLR_GetDefaultLoggerWithOptions(PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options OPT_ARG);
+
+/**
+ * Creates a nil logger that does nothing.
+ * This can be used to disable logging in certain parts of the code.
+ */
+PNSLR_Logger PNSLR_GetNilLogger(void);
+
 EXTERN_C_END
 #endif // PNSLR_LOGGER_H ===========================================================
