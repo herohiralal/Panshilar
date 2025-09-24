@@ -31,6 +31,10 @@ PNSLR_SUPPRESS_WARN
     #undef WIN32_LEAN_AND_MEAN
 #endif
 
+#if PNSLR_LINUX || PNSLR_ANDROID
+    #define _GNU_SOURCE
+#endif
+
 #if PNSLR_UNIX
 
     // since we're on C11
