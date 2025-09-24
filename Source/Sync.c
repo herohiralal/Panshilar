@@ -15,6 +15,9 @@
     static_assert(sizeof  (PNSLR_ConditionVariable) >= sizeof (CONDITION_VARIABLE)      , "PNSLR_ConditionVariable must be at least as ""large as CONDITION_VARIABLE.");
     static_assert((alignof(PNSLR_ConditionVariable) %  alignof(CONDITION_VARIABLE)) == 0, "PNSLR_ConditionVariable must be at least as aligned as CONDITION_VARIABLE.");
 
+    static_assert(sizeof  (PNSLR_DoOnce) >= sizeof (INIT_ONCE)      , "PNSLR_DoOnce must be at least as ""large as INIT_ONCE.");
+    static_assert((alignof(PNSLR_DoOnce) %  alignof(INIT_ONCE)) == 0, "PNSLR_DoOnce must be at least as aligned as INIT_ONCE.");
+
 #elif PNSLR_UNIX
 
     static_assert(sizeof  (PNSLR_Mutex) >= sizeof (pthread_mutex_t)      , "PNSLR_Mutex must be at least as ""large as pthread_mutex_t.");
@@ -33,6 +36,9 @@
 
     static_assert(sizeof  (PNSLR_ConditionVariable) >= sizeof (pthread_cond_t)      , "PNSLR_ConditionVariable must be at least as ""large as pthread_cond_t.");
     static_assert((alignof(PNSLR_ConditionVariable) %  alignof(pthread_cond_t)) == 0, "PNSLR_ConditionVariable must be at least as aligned as pthread_cond_t.");
+
+    static_assert(sizeof  (PNSLR_DoOnce) >= sizeof (pthread_once_t)      , "PNSLR_DoOnce must be at least as ""large as pthread_once_t.");
+    static_assert((alignof(PNSLR_DoOnce) %  alignof(pthread_once_t)) == 0, "PNSLR_DoOnce must be at least as aligned as pthread_once_t.");
 
 #else
 
@@ -405,6 +411,27 @@ void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condVar)
         WakeAllConditionVariable((CONDITION_VARIABLE*) condVar);
     #elif PNSLR_UNIX
         pthread_cond_broadcast((pthread_cond_t*) condVar);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+#if PNSLR_WINDOWS
+    static BOOL CALLBACK PNSLR_Internal_InitOnceImpl(PINIT_ONCE initOnce, PVOID parameter, PVOID* lpCtx)
+    {
+        PNSLR_DoOnceCallback callback = (PNSLR_DoOnceCallback) parameter;
+        callback();
+        return TRUE;
+    }
+#endif
+
+void PNSLR_ExecuteDoOnce(PNSLR_DoOnce* once, PNSLR_DoOnceCallback callback)
+{
+    #if PNSLR_WINDOWS
+        PINIT_ONCE_FN fn = PNSLR_Internal_InitOnceImpl;
+        InitOnceExecuteOnce((PINIT_ONCE) once, fn, (PVOID) callback, nil);
+    #elif PNSLR_UNIX
+        pthread_once((pthread_once_t*) once, callback);
     #else
         #error "Unknown platform."
     #endif

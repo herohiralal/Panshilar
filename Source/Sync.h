@@ -186,5 +186,29 @@ void PNSLR_SignalConditionVariable(PNSLR_ConditionVariable* condvar);
  */
 void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
 
+// Do Once =========================================================================
+
+/**
+ * A "do once" primitive.
+ * It ensures that a specified initialization function is executed only once, even
+ * if called from multiple threads.
+ * This is useful for one-time initialization of shared resources.
+ */
+typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_DoOnce
+{
+    u8 buffer[PNSLR_PTR_SIZE];
+} PNSLR_DoOnce;
+
+/**
+ * The callback function type for the "do once" primitive.
+ */
+typedef void (*PNSLR_DoOnceCallback)(void);
+
+/*
+ * Executing the specified callback function only once.
+ * If multiple threads call this function simultaneously, only one will execute.
+ */
+void PNSLR_ExecuteDoOnce(PNSLR_DoOnce* once, PNSLR_DoOnceCallback callback);
+
 EXTERN_C_END
 #endif // PNSLR_SYNC_PRIMITIVES_H ==================================================
