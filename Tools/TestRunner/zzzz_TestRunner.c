@@ -161,7 +161,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
         utf8str tmpEndStr = PNSLR_MakeString(info.name.count, false, ctx.testAllocator, PNSLR_GET_LOC(), nil);
         for (i64 j = 0; j < info.name.count; ++j) { tmpEndStr.data[j] = '='; }
-        PNSLR_LogIf(PNSLR_StringLiteral("======$======\n"), PNSLR_FmtArgs(PNSLR_FmtString(tmpEndStr)), PNSLR_GET_LOC());
+        PNSLR_LogIf(PNSLR_StringLiteral("======$======"), PNSLR_FmtArgs(PNSLR_FmtString(tmpEndStr)), PNSLR_GET_LOC());
         PNSLR_FreeString(tmpEndStr, ctx.testAllocator, PNSLR_GET_LOC(), nil);
     }
 

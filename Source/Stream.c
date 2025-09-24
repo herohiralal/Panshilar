@@ -353,6 +353,7 @@ static b8 PNSLR_Internal_WriteFmtOptionsToStream(PNSLR_Stream stream, PNSLR_Prim
                 fmtOpt.valueBufferA,
                 ib
             );
+            break;
         }
         case PNSLR_PrimitiveFmtType_I8:
         case PNSLR_PrimitiveFmtType_I16:
@@ -373,6 +374,7 @@ static b8 PNSLR_Internal_WriteFmtOptionsToStream(PNSLR_Stream stream, PNSLR_Prim
                 *(i64*) &fmtOpt.valueBufferA,
                 ib
             );
+            break;
         }
         default:
         {

@@ -15,6 +15,7 @@ static PNSLR_DoOnce G_PNSLR_Internal_DefaultLoggerInit  = {0};
 static void PNSLR_Internal_InitialiseLoggerStateIfRequired(void)
 {
     #if PNSLR_DESKTOP
+        G_PNSLR_Internal_DefaultLoggerMutex = PNSLR_New(PNSLR_Mutex, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
         *G_PNSLR_Internal_DefaultLoggerMutex = PNSLR_CreateMutex();
         setvbuf(stdout, nil, _IONBF, 0); // Disable stdout buffering
     #endif

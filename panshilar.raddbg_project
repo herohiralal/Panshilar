@@ -1,8 +1,11 @@
 // raddbg 0.9.21 project file
 
+recent_file: path: "Tools/TestRunner/zzzz_TestRunner.c"
+recent_file: path: "Source/Stream.c"
+recent_file: path: "Source/Logger.c"
+recent_file: path: "Source/Strings.c"
 recent_file: path: "Tools/TestRunner/0020_FilePresentTest.c"
 recent_file: path: "Source/Allocators.c"
-recent_file: path: "Tools/TestRunner/zzzz_TestRunner.c"
 recent_file: path: "Tools/BindGen/Generator.c"
 recent_file: path: "Tools/BindGen/GeneratorC.c"
 recent_file: path: "Tools/BindGen/GeneratorOdn.c"
