@@ -336,7 +336,6 @@ void PNSLR_LogL(PNSLR_Logger logger, PNSLR_LoggerLevel level, utf8str msg, PNSLR
             msg,
             PNSLR_LogOption_None |
                 PNSLR_LogOption_IncludeLevel |
-                PNSLR_LogOption_IncludeFile |
                 PNSLR_LogOption_IncludeColours,
             loc
         );
