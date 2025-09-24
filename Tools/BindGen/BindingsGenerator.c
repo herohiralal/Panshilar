@@ -3,12 +3,7 @@
 #endif
 
 #define PNSLR_IMPLEMENTATION
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Compiler.h"
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Warnings.h"
-PNSLR_SUPPRESS_WARN
-#include <stdio.h>
-#include <stdlib.h>
-PNSLR_UNSUPPRESS_WARN
+#include "../../Source/__PrivateIncludes.h"
 #include "../../Source/Panshilar.h"
 #include "FilesGather.h"
 #include "SrcParser.h"

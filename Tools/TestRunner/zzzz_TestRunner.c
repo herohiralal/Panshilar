@@ -3,34 +3,9 @@
 #endif
 
 #define PNSLR_IMPLEMENTATION
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Platforms.h"
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Compiler.h"
-#include "../../Source/Dependencies/PNSLR_Intrinsics/Warnings.h"
-PNSLR_SUPPRESS_WARN
-#if PNSLR_UNIX
-    #define _POSIX_C_SOURCE 200809L
-    #define _XOPEN_SOURCE 700
-#endif
-#include <stdio.h>
-PNSLR_UNSUPPRESS_WARN
+#include "../../Source/__PrivateIncludes.h"
 #include "zzzz_TestRunner.h"
 #include "zzzz_GeneratedCombinedTests.c"
-
-#if PNSLR_ANDROID
-    #define TR_PRINTI(f)       ((void) __android_log_print(ANDROID_LOG_INFO,  "TestRunner", f             ))
-    #define TR_PRINTW(f)       ((void) __android_log_print(ANDROID_LOG_WARN,  "TestRunner", f             ))
-    #define TR_PRINTE(f)       ((void) __android_log_print(ANDROID_LOG_ERROR, "TestRunner", f             ))
-    #define TR_PRINTFI(f, ...) ((void) __android_log_print(ANDROID_LOG_INFO,  "TestRunner", f, __VA_ARGS__))
-    #define TR_PRINTFW(f, ...) ((void) __android_log_print(ANDROID_LOG_WARN,  "TestRunner", f, __VA_ARGS__))
-    #define TR_PRINTFE(f, ...) ((void) __android_log_print(ANDROID_LOG_ERROR, "TestRunner", f, __VA_ARGS__))
-#else
-    #define TR_PRINTI(f)       ((void) printf("\033[32m" f "\033[0m\n"             ))
-    #define TR_PRINTW(f)       ((void) printf("\033[33m" f "\033[0m\n"             ))
-    #define TR_PRINTE(f)       ((void) printf("\033[31m" f "\033[0m\n"             ))
-    #define TR_PRINTFI(f, ...) ((void) printf("\033[32m" f "\033[0m\n", __VA_ARGS__))
-    #define TR_PRINTFW(f, ...) ((void) printf("\033[33m" f "\033[0m\n", __VA_ARGS__))
-    #define TR_PRINTFE(f, ...) ((void) printf("\033[31m" f "\033[0m\n", __VA_ARGS__))
-#endif
 
 ENUM_START(BufferedMessageType, u8)
     #define BufferedMessageType_Invalid     ((BufferedMessageType) 0)
@@ -61,7 +36,7 @@ static inline void BufferMessage(const BufferedMessage* msg)
 
         if (err != PNSLR_AllocatorError_None)
         {
-            TR_PRINTE("Error resizing buffered messages array.");
+            PNSLR_LogE(PNSLR_StringLiteral("Error resizing buffered messages array."), PNSLR_GET_LOC());
             PNSLR_ExitProcess(1);
             return;
         }
@@ -99,23 +74,21 @@ b8 AssertInternal(b8 condition, utf8str message, PNSLR_SourceCodeLocation locati
 // TODO: make the test runner multi-threaded
 void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 {
-    setvbuf(stdout, NULL, _IONBF, 0); // disable stdout buffering
-
     PNSLR_Path tgtDir = {0};
     {
         PNSLR_Platform plt  = PNSLR_GetPlatform();
 
         if (plt == PNSLR_Platform_Windows || plt == PNSLR_Platform_Linux)
         {
-            if (!args.count) { TR_PRINTE("Need at least one arg to extract location."); PNSLR_ExitProcess(1); return; }
+            if (!args.count) { PNSLR_LogE(PNSLR_StringLiteral("Need at least one arg to extract location."), PNSLR_GET_LOC()); PNSLR_ExitProcess(1); return; }
 
             PNSLR_Path execPath = PNSLR_NormalisePath(args.data[0], PNSLR_PathNormalisationType_File, PNSLR_GetAllocator_DefaultHeap());
             PNSLR_Path execParent = {0};
-            if (!PNSLR_SplitPath(execPath, &execParent, nil, nil, nil)) { TR_PRINTE("Failed to split executable path."); PNSLR_ExitProcess(1); return; }
+            if (!PNSLR_SplitPath(execPath, &execParent, nil, nil, nil)) { PNSLR_LogE(PNSLR_StringLiteral("Failed to split executable path."), PNSLR_GET_LOC()); PNSLR_ExitProcess(1); return; }
 
             utf8str execParentName = {0};
-            if (!PNSLR_SplitPath(execParent, &tgtDir, &execParentName, nil, nil)) { TR_PRINTE("Failed to split executable parent path."); PNSLR_ExitProcess(1); return; }
-            if (!PNSLR_AreStringsEqual(execParentName, PNSLR_StringLiteral("Binaries"), 0)) { TR_PRINTE("Executable not in expected 'Binaries' directory."); PNSLR_ExitProcess(1); return; }
+            if (!PNSLR_SplitPath(execParent, &tgtDir, &execParentName, nil, nil)) { PNSLR_LogE(PNSLR_StringLiteral("Failed to split executable parent path."), PNSLR_GET_LOC()); PNSLR_ExitProcess(1); return; }
+            if (!PNSLR_AreStringsEqual(execParentName, PNSLR_StringLiteral("Binaries"), 0)) { PNSLR_LogE(PNSLR_StringLiteral("Executable not in expected 'Binaries' directory."), PNSLR_GET_LOC()); PNSLR_ExitProcess(1); return; }
         }
         else
         {
@@ -134,7 +107,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
     if (!tests.count || !tests.data)
     {
-        TR_PRINTW("No tests found.");
+        PNSLR_LogW(PNSLR_StringLiteral("No tests found."), PNSLR_GET_LOC());
         PNSLR_ExitProcess(1);
         return;
     }
@@ -155,7 +128,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
         info.fn(&ctx);
 
-        TR_PRINTFI("==== [%.*s] ====", (i32) info.name.count, info.name.data);
+        PNSLR_LogIf(PNSLR_StringLiteral("==== [$] ===="), PNSLR_FmtArgs(PNSLR_FmtString(info.name)), PNSLR_GET_LOC());
 
         i32 checkCount = 0, passCount = 0;
         for (i32 j = 0; j < (i32) G_NumBufferedMessages; ++j)
@@ -165,8 +138,7 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
             switch (msg->type)
             {
                 case BufferedMessageType_TestFnLog:
-                    TR_PRINTFI("INFO  : %.*s", (i32) msg->msg.count, msg->msg.data);
-                    TR_PRINTFI("        from %.*s:%d", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    PNSLR_LogIf(PNSLR_StringLiteral("INFO  : $"), PNSLR_FmtArgs(PNSLR_FmtString(msg->msg)), msg->loc);
                     break;
                 case BufferedMessageType_AssertPass:
                     checkCount++;
@@ -175,22 +147,21 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
                 case BufferedMessageType_AssertFail:
                     success = false;
                     checkCount++;
-                    TR_PRINTFE("ERROR : %.*s", (i32) msg->msg.count, msg->msg.data);
-                    TR_PRINTFE("        from %.*s:%d", (i32) msg->loc.file.count, msg->loc.file.data, msg->loc.line);
+                    PNSLR_LogEf(PNSLR_StringLiteral("ERROR : $"), PNSLR_FmtArgs(PNSLR_FmtString(msg->msg)), msg->loc);
                     break;
                 default:
-                    TR_PRINTE("ERROR_UNKNOWN_MESSAGE");
+                    PNSLR_LogE(PNSLR_StringLiteral("ERROR_UNKNOWN_MESSAGE"), PNSLR_GET_LOC());
                     break;
             }
         }
 
-        TR_PRINTFI("RESULT: (%d/%d).", passCount, checkCount);
-        if (checkCount == passCount) { TR_PRINTI("All tests passed. (^_^)        "); }
-        else                         { TR_PRINTE("One or more tests failed. (>_<)"); }
+        PNSLR_LogIf(PNSLR_StringLiteral("Result: ($/$)."), PNSLR_FmtArgs(PNSLR_FmtI32(passCount, PNSLR_IntegerBase_Decimal), PNSLR_FmtI32(checkCount, PNSLR_IntegerBase_Decimal)), PNSLR_GET_LOC());
+        if (checkCount == passCount) { PNSLR_LogI(PNSLR_StringLiteral("All tests passed. (^_^)        "), PNSLR_GET_LOC()); }
+        else                         { PNSLR_LogE(PNSLR_StringLiteral("One or more tests failed. (>_<)"), PNSLR_GET_LOC()); }
 
         utf8str tmpEndStr = PNSLR_MakeString(info.name.count, false, ctx.testAllocator, PNSLR_GET_LOC(), nil);
         for (i64 j = 0; j < info.name.count; ++j) { tmpEndStr.data[j] = '='; }
-        TR_PRINTFI("======%.*s======\n", (i32) tmpEndStr.count, tmpEndStr.data);
+        PNSLR_LogIf(PNSLR_StringLiteral("======$======\n"), PNSLR_FmtArgs(PNSLR_FmtString(tmpEndStr)), PNSLR_GET_LOC());
         PNSLR_FreeString(tmpEndStr, ctx.testAllocator, PNSLR_GET_LOC(), nil);
     }
 
@@ -198,12 +169,12 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 
     if (!success)
     {
-        TR_PRINTE("=============== One or more tests failed. (>_<) ===============");
+        PNSLR_LogE(PNSLR_StringLiteral("=============== One or more tests failed. (>_<) ==============="), PNSLR_GET_LOC());
         PNSLR_ExitProcess(1);
     }
     else
     {
-        TR_PRINTI("=================== All tests passed. (^_^) ===================");
+        PNSLR_LogI(PNSLR_StringLiteral("=================== All tests passed. (^_^) ==================="), PNSLR_GET_LOC());
     }
 }
 
