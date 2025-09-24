@@ -450,6 +450,16 @@ b8 PNSLR_FormatAndAppendToStringBuilder(
     PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
 );
 
+/**
+ * Format a string with the given format and arguments, returning the result
+ * as a new allocated string using the specified allocator.
+ */
+utf8str PNSLR_FormatString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
+);
+
 // Conversions to strings ==========================================================
 
 /**
