@@ -4,7 +4,6 @@
 #define PNSLR_IMPLEMENTATION
 #include "__Prelude.h"
 
-#include "RadDbgMarkup.c"
 #include "Memory.c"
 #include "Environment.c"
 #include "Runtime.c"
@@ -13,7 +12,6 @@
 #include "Chrono.c"
 #include "Strings.c"
 #include "IO.c"
-#include "Console.c"
 #include "Process.c"
 #include "Network.c"
 #include "Stream.c"
@@ -23,5 +21,7 @@
     #include <android_native_app_glue.c>
     PNSLR_UNSUPPRESS_WARN
 #endif
+
+#include "RadDbgMarkup.c"
 
 #endif//PNSLR_UNITY_C

@@ -1907,17 +1907,6 @@ namespace Panshilar
     );
 
     // #######################################################################################
-    // Console
-    // #######################################################################################
-
-    /**
-     * Print a message to the standard output stream.
-     */
-    i32 PrintToStdOut(
-        utf8str message
-    );
-
-    // #######################################################################################
     // Process
     // #######################################################################################
 
@@ -3555,12 +3544,6 @@ extern "C" b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
 b8 Panshilar::MoveFile(Panshilar::Path src, Panshilar::Path dst)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MoveFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
-}
-
-extern "C" i32 PNSLR_PrintToStdOut(PNSLR_UTF8STR message);
-i32 Panshilar::PrintToStdOut(utf8str message)
-{
-    i32 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrintToStdOut(PNSLR_Bindings_Convert(message)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" void PNSLR_ExitProcess(i32 exitCode);
