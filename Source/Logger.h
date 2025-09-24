@@ -11,24 +11,25 @@ EXTERN_C_BEGIN
 /**
  * Defines the logging levels.
  */
-ENUM_START(PNSLR_LoggerLevel, i8)
-    #define PNSLR_LoggerLevel_Debug    ((PNSLR_LoggerLevel) -1)
-    #define PNSLR_LoggerLevel_Info     ((PNSLR_LoggerLevel)  0)
-    #define PNSLR_LoggerLevel_Warn     ((PNSLR_LoggerLevel)  1)
-    #define PNSLR_LoggerLevel_Error    ((PNSLR_LoggerLevel)  2)
-    #define PNSLR_LoggerLevel_Critical ((PNSLR_LoggerLevel)  3)
+ENUM_START(PNSLR_LoggerLevel, u8)
+    #define PNSLR_LoggerLevel_Debug    ((PNSLR_LoggerLevel) 0)
+    #define PNSLR_LoggerLevel_Info     ((PNSLR_LoggerLevel) 1)
+    #define PNSLR_LoggerLevel_Warn     ((PNSLR_LoggerLevel) 2)
+    #define PNSLR_LoggerLevel_Error    ((PNSLR_LoggerLevel) 3)
+    #define PNSLR_LoggerLevel_Critical ((PNSLR_LoggerLevel) 4)
 ENUM_END
 
 /**
  * Defines options for logging output.
  */
-ENUM_FLAGS_START(PNSLR_LogOptions, u8)
-    #define PNSLR_LogOption_None             ((PNSLR_LogOptions) (     0))
-    #define PNSLR_LogOption_IncludeLevel     ((PNSLR_LogOptions) (1 << 0))
-    #define PNSLR_LogOption_IncludeDate      ((PNSLR_LogOptions) (1 << 1))
-    #define PNSLR_LogOption_IncludeTime      ((PNSLR_LogOptions) (1 << 2))
-    #define PNSLR_LogOption_IncludeLocation  ((PNSLR_LogOptions) (1 << 3))
-    #define PNSLR_LogOption_IncludeColours   ((PNSLR_LogOptions) (1 << 4))
+ENUM_FLAGS_START(PNSLR_LogOption, u8)
+    #define PNSLR_LogOption_None             ((PNSLR_LogOption) (     0))
+    #define PNSLR_LogOption_IncludeLevel     ((PNSLR_LogOption) (1 << 0))
+    #define PNSLR_LogOption_IncludeDate      ((PNSLR_LogOption) (1 << 1))
+    #define PNSLR_LogOption_IncludeTime      ((PNSLR_LogOption) (1 << 2))
+    #define PNSLR_LogOption_IncludeFile      ((PNSLR_LogOption) (1 << 3))
+    #define PNSLR_LogOption_IncludeFn        ((PNSLR_LogOption) (1 << 4))
+    #define PNSLR_LogOption_IncludeColours   ((PNSLR_LogOption) (1 << 5))
 ENUM_END
 
 /**
@@ -38,7 +39,7 @@ typedef void (*PNSLR_LoggerProcedure)(
     rawptr                   loggerData,
     PNSLR_LoggerLevel        level,
     utf8str                  data,
-    PNSLR_LogOptions         options,
+    PNSLR_LogOption         options,
     PNSLR_SourceCodeLocation location
 );
 
@@ -50,16 +51,23 @@ typedef struct PNSLR_Logger
     PNSLR_LoggerProcedure procedure;
     rawptr                data;
     PNSLR_LoggerLevel     minAllowedLvl;
-    PNSLR_LogOptions      options;
+    PNSLR_LogOption      options;
 } PNSLR_Logger;
 
 // Default Logger Control ==========================================================
 
 /**
  * Sets the default logger FOR THE CURRENT THREAD.
- * WILL NOT BE CARRIED OVER TO OTHER THREADS.
+ * By default, every thread gets a thread-safe default logger that:
+ * - logs to stdout on desktop platforms
+ * - logs to logcat on Android
  */
 void PNSLR_SetDefaultLogger(PNSLR_Logger logger);
+
+/**
+ * Disables the default logger FOR THE CURRENT THREAD.
+ */
+void PNSLR_DisableDefaultLogger(void);
 
 // Default Logger Non-Format Log Functions =========================================
 
@@ -101,6 +109,12 @@ void PNSLR_LogL( PNSLR_Logger logger, PNSLR_LoggerLevel level, utf8str msg,     
 void PNSLR_LogLf(PNSLR_Logger logger, PNSLR_LoggerLevel level, utf8str fmtMsg, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args, PNSLR_SourceCodeLocation loc);
 
 // Logger Casts ====================================================================
+
+/**
+ * Creates a logger that writes to the given file.
+ * The file must be opened and valid.
+ */
+PNSLR_Logger PNSLR_LoggerFromFile(PNSLR_File f, PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options OPT_ARG);
 
 EXTERN_C_END
 #endif // PNSLR_LOGGER_H ===========================================================

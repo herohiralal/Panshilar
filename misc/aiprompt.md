@@ -28,11 +28,11 @@ ENUM_END
 ```
 - Enum flags declaration looks like this:
 ```
-ENUM_FLAGS_START(PNSLR_ExampleEnumFlags, u8 /* /u16/u32/u64 - unsigned only */)
-    #define PNSLR_ExampleEnumFlags_None   ((PNSLR_ExampleEnumFlags) (        0)) // needs the extra brackets
-    #define PNSLR_ExampleEnumFlags_FlagA  ((PNSLR_ExampleEnumFlags) (1ULL << 0)) // needs 1ULL and not just 1
-    #define PNSLR_ExampleEnumFlags_FlagB  ((PNSLR_ExampleEnumFlags) (1ULL << 1))
-    #define PNSLR_ExampleEnumFlags_FlagC  ((PNSLR_ExampleEnumFlags) (1ULL << 2))
+ENUM_FLAGS_START(PNSLR_ExampleEnumFlag /* singular name */, u8 /* /u16/u32/u64 - unsigned only */)
+    #define PNSLR_ExampleEnumFlag_None   ((PNSLR_ExampleEnumFlag) (        0)) // needs the extra brackets
+    #define PNSLR_ExampleEnumFlag_FlagA  ((PNSLR_ExampleEnumFlag) (1ULL << 0)) // needs 1ULL and not just 1
+    #define PNSLR_ExampleEnumFlag_FlagB  ((PNSLR_ExampleEnumFlag) (1ULL << 1))
+    #define PNSLR_ExampleEnumFlag_FlagC  ((PNSLR_ExampleEnumFlag) (1ULL << 2))
 ENUM_FLAGS_END
 ```
 - Struct declaration looks like this:
