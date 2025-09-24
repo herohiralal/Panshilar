@@ -362,6 +362,35 @@ foreign {
 	) ---
 }
 
+// Do Once ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*
+A "do once" primitive.
+It ensures that a specified initialization function is executed only once, even
+if called from multiple threads.
+This is useful for one-time initialization of shared resources.
+*/
+DoOnce :: struct #align(8)  {
+	buffer: [8]u8,
+}
+
+/*
+The callback function type for the "do once" primitive.
+*/
+DoOnceCallback :: #type proc "c" ()
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Executing the specified callback function only once.
+	If multiple threads call this function simultaneously, only one will execute.
+	*/
+	ExecuteDoOnce :: proc "c" (
+		once: ^DoOnce,
+		callback: DoOnceCallback,
+	) ---
+}
+
 // #######################################################################################
 // Memory
 // #######################################################################################
@@ -927,6 +956,23 @@ foreign {
 	Returns the current time in nanoseconds since the Unix epoch (January 1, 1970).
 	*/
 	NanosecondsSinceUnixEpoch :: proc "c" () -> i64 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Breaks down the given nanoseconds since the Unix epoch into its
+	date and time components.
+	*/
+	ConvertNanosecondsSinceUnixEpochToDateTime :: proc "c" (
+		ns: i64,
+		outYear: ^i16,
+		outMonth: ^u8,
+		outDay: ^u8,
+		outHour: ^u8,
+		outMinute: ^u8,
+		outSecond: ^u8,
+	) -> b8 ---
 }
 
 // #######################################################################################
@@ -1724,6 +1770,19 @@ foreign {
 		fmtStr: string,
 		args: []PrimitiveFmtOptions,
 	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Format a string with the given format and arguments, returning the result
+	as a new allocated string using the specified allocator.
+	*/
+	FormatString :: proc "c" (
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+		allocator: Allocator,
+	) -> string ---
 }
 
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2602,6 +2661,514 @@ foreign {
 	StreamFromStdErr :: proc "c" (
 		disableBuffering: b8 = { },
 	) -> Stream ---
+}
+
+// #######################################################################################
+// Logger
+// #######################################################################################
+
+// Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*
+Defines the logging levels.
+*/
+LoggerLevel :: enum u8 {
+	Debug = 0,
+	Info = 1,
+	Warn = 2,
+	Error = 3,
+	Critical = 4,
+}
+
+/*
+Defines options for logging output.
+*/
+LogOption :: distinct bit_set[LogOptionValues; u8]
+
+LogOptionValues :: enum u8 {
+	IncludeLevel = 0,
+	IncludeDate = 1,
+	IncludeTime = 2,
+	IncludeFile = 3,
+	IncludeFn = 4,
+	IncludeColours = 5,
+}
+
+/*
+Defines the delegate type for the logger function.
+*/
+LoggerProcedure :: #type proc "c" (
+	loggerData: rawptr,
+	level: LoggerLevel,
+	data: string,
+	options: LogOption,
+	location: SourceCodeLocation,
+)
+
+/*
+Defines a generic logger structure that can be used to log messages.
+*/
+Logger :: struct  {
+	procedure: LoggerProcedure,
+	data: rawptr,
+	minAllowedLvl: LoggerLevel,
+	options: LogOption,
+}
+
+// Default Logger Control ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Sets the default logger FOR THE CURRENT THREAD.
+	By default, every thread gets a thread-safe default logger that:
+	- logs to stdout on desktop platforms
+	- logs to logcat on Android
+	*/
+	SetDefaultLogger :: proc "c" (
+		logger: Logger,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Disables the default logger FOR THE CURRENT THREAD.
+	*/
+	DisableDefaultLogger :: proc "c" () ---
+}
+
+// Default Logger Non-Format Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogD :: proc "c" (
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogI :: proc "c" (
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogW :: proc "c" (
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogE :: proc "c" (
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogC :: proc "c" (
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+// Default Logger Formatted Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogDf :: proc "c" (
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogIf :: proc "c" (
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogWf :: proc "c" (
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogEf :: proc "c" (
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogCf :: proc "c" (
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLD :: proc "c" (
+		logger: Logger,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLI :: proc "c" (
+		logger: Logger,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLW :: proc "c" (
+		logger: Logger,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLE :: proc "c" (
+		logger: Logger,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLC :: proc "c" (
+		logger: Logger,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLDf :: proc "c" (
+		logger: Logger,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLIf :: proc "c" (
+		logger: Logger,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLWf :: proc "c" (
+		logger: Logger,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLEf :: proc "c" (
+		logger: Logger,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLCf :: proc "c" (
+		logger: Logger,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+// Logger functions with explicit level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	Log :: proc "c" (
+		level: LoggerLevel,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	Logf :: proc "c" (
+		level: LoggerLevel,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogL :: proc "c" (
+		logger: Logger,
+		level: LoggerLevel,
+		msg: string,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	LogLf :: proc "c" (
+		logger: Logger,
+		level: LoggerLevel,
+		fmtMsg: string,
+		args: []PrimitiveFmtOptions,
+		loc: SourceCodeLocation,
+	) ---
+}
+
+// Logger Casts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a logger that writes to the given file.
+	The file must be opened and valid.
+	*/
+	LoggerFromFile :: proc "c" (
+		f: File,
+		minAllowedLevel: LoggerLevel,
+		options: LogOption = { },
+	) -> Logger ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a logger that uses the default outputs (see `PNSLR_SetDefaultLogger()`).
+	The returned logger is thread-safe and can be used from any thread.
+	This can be used along with `PNSLR_SetDefaultLogger()` to customize
+	the behaviour of the default in-built logger.
+	*/
+	GetDefaultLoggerWithOptions :: proc "c" (
+		minAllowedLevel: LoggerLevel,
+		options: LogOption = { },
+	) -> Logger ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a nil logger that does nothing.
+	This can be used to disable logging in certain parts of the code.
+	*/
+	GetNilLogger :: proc "c" () -> Logger ---
+}
+
+// #######################################################################################
+// Threads
+// #######################################################################################
+
+/*
+An opaque handle to a thread.
+*/
+ThreadHandle :: struct  {
+	handle: u64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Checks if the handle to a thread is valid.
+	*/
+	IsThreadHandleValid :: proc "c" (
+		handle: ThreadHandle,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets a handle to the current thread.
+	*/
+	GetCurrentThreadHandle :: proc "c" () -> ThreadHandle ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets the name of a thread.
+	The returned string is allocated using the provided allocator.
+	If the thread has no name, an empty string is returned.
+	*/
+	GetThreadName :: proc "c" (
+		handle: ThreadHandle,
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Sets the name of a thread.
+	The name is copied, so the provided string does not need to be valid after this call.
+	On some platforms, thread names may be truncated to a certain length.
+	 *
+	Thread lengths on platforms (excluding null terminator):
+	    Windows/OSX/iOS - 63 characters
+	    Linux/Android   - 15 characters
+	*/
+	SetThreadName :: proc "c" (
+		handle: ThreadHandle,
+		name: string,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets the name of the current thread.
+	Read more about `PNSLR_GetThreadName`.
+	*/
+	GetCurrentThreadName :: proc "c" (
+		allocator: Allocator,
+	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Sets the name of the current thread.
+	Read more about `PNSLR_SetThreadName`.
+	*/
+	SetCurrentThreadName :: proc "c" (
+		name: string,
+	) ---
+}
+
+// #######################################################################################
+// SharedMemoryChannel
+// #######################################################################################
+
+SharedMemoryChannelReader :: struct  {
+	handle: u64,
+}
+
+SharedMemoryChannelWriter :: struct  {
+	handle: u64,
+}
+
+SharedMemoryMessage :: struct  {
+	data: rawptr,
+	size: i64,
+	internal: u64,
+}
+
+SharedMemoryReservedMessage :: struct  {
+	data: rawptr,
+	size: i64,
+	internal: u64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	CreateSharedMemoryChannelReader :: proc "c" (
+		name: string,
+		bytes: i64,
+		reader: ^SharedMemoryChannelReader,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	ReadSharedMemoryChannelMessage :: proc "c" (
+		reader: ^SharedMemoryChannelReader,
+		message: ^SharedMemoryMessage,
+		fatalError: ^b8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	AcknowledgeSharedMemoryChannelMessage :: proc "c" (
+		message: ^SharedMemoryMessage,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	DestroySharedMemoryChannelReader :: proc "c" (
+		reader: ^SharedMemoryChannelReader,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	TryConnectSharedMemoryChannelWriter :: proc "c" (
+		name: string,
+		writer: ^SharedMemoryChannelWriter,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	PrepareSharedMemoryChannelMessage :: proc "c" (
+		writer: ^SharedMemoryChannelWriter,
+		bytes: i64,
+		reservedMessage: ^SharedMemoryReservedMessage,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	CommitSharedMemoryChannelMessage :: proc "c" (
+		writer: ^SharedMemoryChannelWriter,
+		reservedMessage: ^SharedMemoryReservedMessage,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	DisconnectSharedMemoryChannelWriter :: proc "c" (
+		writer: ^SharedMemoryChannelWriter,
+	) -> b8 ---
 }
 
 #assert(size_of(int)  == 8, " int must be 8 bytes")

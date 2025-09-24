@@ -196,7 +196,7 @@ void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condvar);
  */
 typedef struct alignas(PNSLR_PTR_SIZE) PNSLR_DoOnce
 {
-    u8 buffer[PNSLR_PTR_SIZE];
+    u8 buffer[1 * PNSLR_PTR_SIZE];
 } PNSLR_DoOnce;
 
 /**

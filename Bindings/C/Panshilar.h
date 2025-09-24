@@ -302,6 +302,33 @@ void PNSLR_BroadcastConditionVariable(
     PNSLR_ConditionVariable* condvar
 );
 
+// Do Once ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * A "do once" primitive.
+ * It ensures that a specified initialization function is executed only once, even
+ * if called from multiple threads.
+ * This is useful for one-time initialization of shared resources.
+ */
+typedef struct PNSLR_ALIGNAS(8) PNSLR_DoOnce
+{
+    u8 buffer[8];
+} PNSLR_DoOnce;
+
+/**
+ * The callback function type for the "do once" primitive.
+ */
+typedef void (*PNSLR_DoOnceCallback)(void);
+
+/*
+ * Executing the specified callback function only once.
+ * If multiple threads call this function simultaneously, only one will execute.
+ */
+void PNSLR_ExecuteDoOnce(
+    PNSLR_DoOnce* once,
+    PNSLR_DoOnceCallback callback
+);
+
 // #######################################################################################
 // Memory
 // #######################################################################################
@@ -780,6 +807,20 @@ void PNSLR_FreeCString(
  * Returns the current time in nanoseconds since the Unix epoch (January 1, 1970).
  */
 i64 PNSLR_NanosecondsSinceUnixEpoch(void);
+
+/**
+ * Breaks down the given nanoseconds since the Unix epoch into its
+ * date and time components.
+ */
+b8 PNSLR_ConvertNanosecondsSinceUnixEpochToDateTime(
+    i64 ns,
+    i16* outYear,
+    u8* outMonth,
+    u8* outDay,
+    u8* outHour,
+    u8* outMinute,
+    u8* outSecond
+);
 
 // #######################################################################################
 // Strings
@@ -1400,6 +1441,16 @@ b8 PNSLR_FormatAndAppendToStringBuilder(
     PNSLR_StringBuilder* builder,
     utf8str fmtStr,
     PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args
+);
+
+/**
+ * Format a string with the given format and arguments, returning the result
+ * as a new allocated string using the specified allocator.
+ */
+utf8str PNSLR_FormatString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
 );
 
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2093,6 +2144,388 @@ PNSLR_Stream PNSLR_StreamFromStdOut(
  */
 PNSLR_Stream PNSLR_StreamFromStdErr(
     b8 disableBuffering
+);
+
+// #######################################################################################
+// Logger
+// #######################################################################################
+
+// Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Defines the logging levels.
+ */
+typedef u8 PNSLR_LoggerLevel /* use as value */;
+#define PNSLR_LoggerLevel_Debug ((PNSLR_LoggerLevel) 0)
+#define PNSLR_LoggerLevel_Info ((PNSLR_LoggerLevel) 1)
+#define PNSLR_LoggerLevel_Warn ((PNSLR_LoggerLevel) 2)
+#define PNSLR_LoggerLevel_Error ((PNSLR_LoggerLevel) 3)
+#define PNSLR_LoggerLevel_Critical ((PNSLR_LoggerLevel) 4)
+
+/**
+ * Defines options for logging output.
+ */
+typedef u8 PNSLR_LogOption /* use as flags */;
+#define PNSLR_LogOption_None ((PNSLR_LogOption) 0)
+#define PNSLR_LogOption_IncludeLevel ((PNSLR_LogOption) 1)
+#define PNSLR_LogOption_IncludeDate ((PNSLR_LogOption) 2)
+#define PNSLR_LogOption_IncludeTime ((PNSLR_LogOption) 4)
+#define PNSLR_LogOption_IncludeFile ((PNSLR_LogOption) 8)
+#define PNSLR_LogOption_IncludeFn ((PNSLR_LogOption) 16)
+#define PNSLR_LogOption_IncludeColours ((PNSLR_LogOption) 32)
+
+/**
+ * Defines the delegate type for the logger function.
+ */
+typedef void (*PNSLR_LoggerProcedure)(
+    rawptr loggerData,
+    PNSLR_LoggerLevel level,
+    utf8str data,
+    PNSLR_LogOption options,
+    PNSLR_SourceCodeLocation location
+);
+
+/**
+ * Defines a generic logger structure that can be used to log messages.
+ */
+typedef struct PNSLR_Logger
+{
+    PNSLR_LoggerProcedure procedure;
+    rawptr data;
+    PNSLR_LoggerLevel minAllowedLvl;
+    PNSLR_LogOption options;
+} PNSLR_Logger;
+
+// Default Logger Control ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Sets the default logger FOR THE CURRENT THREAD.
+ * By default, every thread gets a thread-safe default logger that:
+ * - logs to stdout on desktop platforms
+ * - logs to logcat on Android
+ */
+void PNSLR_SetDefaultLogger(
+    PNSLR_Logger logger
+);
+
+/**
+ * Disables the default logger FOR THE CURRENT THREAD.
+ */
+void PNSLR_DisableDefaultLogger(void);
+
+// Default Logger Non-Format Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void PNSLR_LogD(
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogI(
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogW(
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogE(
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogC(
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+// Default Logger Formatted Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void PNSLR_LogDf(
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogIf(
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogWf(
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogEf(
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogCf(
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLD(
+    PNSLR_Logger logger,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLI(
+    PNSLR_Logger logger,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLW(
+    PNSLR_Logger logger,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLE(
+    PNSLR_Logger logger,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLC(
+    PNSLR_Logger logger,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLDf(
+    PNSLR_Logger logger,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLIf(
+    PNSLR_Logger logger,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLWf(
+    PNSLR_Logger logger,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLEf(
+    PNSLR_Logger logger,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLCf(
+    PNSLR_Logger logger,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+// Logger functions with explicit level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+void PNSLR_Log(
+    PNSLR_LoggerLevel level,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_Logf(
+    PNSLR_LoggerLevel level,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogL(
+    PNSLR_Logger logger,
+    PNSLR_LoggerLevel level,
+    utf8str msg,
+    PNSLR_SourceCodeLocation loc
+);
+
+void PNSLR_LogLf(
+    PNSLR_Logger logger,
+    PNSLR_LoggerLevel level,
+    utf8str fmtMsg,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_SourceCodeLocation loc
+);
+
+// Logger Casts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Creates a logger that writes to the given file.
+ * The file must be opened and valid.
+ */
+PNSLR_Logger PNSLR_LoggerFromFile(
+    PNSLR_File f,
+    PNSLR_LoggerLevel minAllowedLevel,
+    PNSLR_LogOption options
+);
+
+/**
+ * Creates a logger that uses the default outputs (see `PNSLR_SetDefaultLogger()`).
+ * The returned logger is thread-safe and can be used from any thread.
+ * This can be used along with `PNSLR_SetDefaultLogger()` to customize
+ * the behaviour of the default in-built logger.
+ */
+PNSLR_Logger PNSLR_GetDefaultLoggerWithOptions(
+    PNSLR_LoggerLevel minAllowedLevel,
+    PNSLR_LogOption options
+);
+
+/**
+ * Creates a nil logger that does nothing.
+ * This can be used to disable logging in certain parts of the code.
+ */
+PNSLR_Logger PNSLR_GetNilLogger(void);
+
+// #######################################################################################
+// Threads
+// #######################################################################################
+
+/**
+ * An opaque handle to a thread.
+ */
+typedef struct PNSLR_ThreadHandle
+{
+    u64 handle;
+} PNSLR_ThreadHandle;
+
+/**
+ * Checks if the handle to a thread is valid.
+ */
+b8 PNSLR_IsThreadHandleValid(
+    PNSLR_ThreadHandle handle
+);
+
+/**
+ * Gets a handle to the current thread.
+ */
+PNSLR_ThreadHandle PNSLR_GetCurrentThreadHandle(void);
+
+/**
+ * Gets the name of a thread.
+ * The returned string is allocated using the provided allocator.
+ * If the thread has no name, an empty string is returned.
+ */
+utf8str PNSLR_GetThreadName(
+    PNSLR_ThreadHandle handle,
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Sets the name of a thread.
+ * The name is copied, so the provided string does not need to be valid after this call.
+ * On some platforms, thread names may be truncated to a certain length.
+ *
+ * Thread lengths on platforms (excluding null terminator):
+ *     Windows/OSX/iOS - 63 characters
+ *     Linux/Android   - 15 characters
+ */
+void PNSLR_SetThreadName(
+    PNSLR_ThreadHandle handle,
+    utf8str name
+);
+
+/**
+ * Gets the name of the current thread.
+ * Read more about `PNSLR_GetThreadName`.
+ */
+utf8str PNSLR_GetCurrentThreadName(
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Sets the name of the current thread.
+ * Read more about `PNSLR_SetThreadName`.
+ */
+void PNSLR_SetCurrentThreadName(
+    utf8str name
+);
+
+// #######################################################################################
+// SharedMemoryChannel
+// #######################################################################################
+
+typedef struct PNSLR_SharedMemoryChannelReader
+{
+    u64 handle;
+} PNSLR_SharedMemoryChannelReader;
+
+typedef struct PNSLR_SharedMemoryChannelWriter
+{
+    u64 handle;
+} PNSLR_SharedMemoryChannelWriter;
+
+typedef struct PNSLR_SharedMemoryMessage
+{
+    rawptr data;
+    i64 size;
+    u64 internal;
+} PNSLR_SharedMemoryMessage;
+
+typedef struct PNSLR_SharedMemoryReservedMessage
+{
+    rawptr data;
+    i64 size;
+    u64 internal;
+} PNSLR_SharedMemoryReservedMessage;
+
+b8 PNSLR_CreateSharedMemoryChannelReader(
+    utf8str name,
+    i64 bytes,
+    PNSLR_SharedMemoryChannelReader* reader
+);
+
+b8 PNSLR_ReadSharedMemoryChannelMessage(
+    PNSLR_SharedMemoryChannelReader* reader,
+    PNSLR_SharedMemoryMessage* message,
+    b8* fatalError
+);
+
+b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(
+    PNSLR_SharedMemoryMessage* message
+);
+
+b8 PNSLR_DestroySharedMemoryChannelReader(
+    PNSLR_SharedMemoryChannelReader* reader
+);
+
+b8 PNSLR_TryConnectSharedMemoryChannelWriter(
+    utf8str name,
+    PNSLR_SharedMemoryChannelWriter* writer
+);
+
+b8 PNSLR_PrepareSharedMemoryChannelMessage(
+    PNSLR_SharedMemoryChannelWriter* writer,
+    i64 bytes,
+    PNSLR_SharedMemoryReservedMessage* reservedMessage
+);
+
+b8 PNSLR_CommitSharedMemoryChannelMessage(
+    PNSLR_SharedMemoryChannelWriter* writer,
+    PNSLR_SharedMemoryReservedMessage* reservedMessage
+);
+
+b8 PNSLR_DisconnectSharedMemoryChannelWriter(
+    PNSLR_SharedMemoryChannelWriter* writer
 );
 
 #undef PNSLR_ALIGNAS

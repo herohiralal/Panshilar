@@ -14,4 +14,5 @@
 #include "Stream.h"
 #include "Logger.h"
 #include "Threads.h"
+#include "SharedMemoryChannel.h"
 #endif // PNSLR_MAIN_HEADER_H ======================================================

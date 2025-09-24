@@ -300,6 +300,33 @@ namespace Panshilar
         ConditionVariable* condvar
     );
 
+    // Do Once ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * A "do once" primitive.
+     * It ensures that a specified initialization function is executed only once, even
+     * if called from multiple threads.
+     * This is useful for one-time initialization of shared resources.
+     */
+    struct alignas(8) DoOnce
+    {
+       u8 buffer[8];
+    };
+
+    /**
+     * The callback function type for the "do once" primitive.
+     */
+    typedef void (*DoOnceCallback)();
+
+    /*
+     * Executing the specified callback function only once.
+     * If multiple threads call this function simultaneously, only one will execute.
+     */
+    void ExecuteDoOnce(
+        DoOnce* once,
+        DoOnceCallback callback
+    );
+
     // #######################################################################################
     // Memory
     // #######################################################################################
@@ -784,6 +811,20 @@ namespace Panshilar
      * Returns the current time in nanoseconds since the Unix epoch (January 1, 1970).
      */
     i64 NanosecondsSinceUnixEpoch();
+
+    /**
+     * Breaks down the given nanoseconds since the Unix epoch into its
+     * date and time components.
+     */
+    b8 ConvertNanosecondsSinceUnixEpochToDateTime(
+        i64 ns,
+        i16* outYear,
+        u8* outMonth,
+        u8* outDay,
+        u8* outHour,
+        u8* outMinute,
+        u8* outSecond
+    );
 
     // #######################################################################################
     // Strings
@@ -1408,6 +1449,16 @@ namespace Panshilar
         StringBuilder* builder,
         utf8str fmtStr,
         ArraySlice<PrimitiveFmtOptions> args
+    );
+
+    /**
+     * Format a string with the given format and arguments, returning the result
+     * as a new allocated string using the specified allocator.
+     */
+    utf8str FormatString(
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args,
+        Allocator allocator
     );
 
     // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2105,6 +2156,392 @@ namespace Panshilar
         b8 disableBuffering = { }
     );
 
+    // #######################################################################################
+    // Logger
+    // #######################################################################################
+
+    // Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Defines the logging levels.
+     */
+    enum class LoggerLevel : u8 /* use as value */
+    {
+        Debug = 0,
+        Info = 1,
+        Warn = 2,
+        Error = 3,
+        Critical = 4,
+    };
+
+    /**
+     * Defines options for logging output.
+     */
+    enum class LogOption : u8 /* use as flags */
+    {
+        None = 0,
+        IncludeLevel = 1,
+        IncludeDate = 2,
+        IncludeTime = 4,
+        IncludeFile = 8,
+        IncludeFn = 16,
+        IncludeColours = 32,
+    };
+
+    /**
+     * Defines the delegate type for the logger function.
+     */
+    typedef void (*LoggerProcedure)(
+        rawptr loggerData,
+        LoggerLevel level,
+        utf8str data,
+        LogOption options,
+        SourceCodeLocation location
+    );
+
+    /**
+     * Defines a generic logger structure that can be used to log messages.
+     */
+    struct Logger
+    {
+       LoggerProcedure procedure;
+       rawptr data;
+       LoggerLevel minAllowedLvl;
+       LogOption options;
+    };
+
+    // Default Logger Control ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Sets the default logger FOR THE CURRENT THREAD.
+     * By default, every thread gets a thread-safe default logger that:
+     * - logs to stdout on desktop platforms
+     * - logs to logcat on Android
+     */
+    void SetDefaultLogger(
+        Logger logger
+    );
+
+    /**
+     * Disables the default logger FOR THE CURRENT THREAD.
+     */
+    void DisableDefaultLogger();
+
+    // Default Logger Non-Format Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void LogD(
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogI(
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogW(
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogE(
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogC(
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    // Default Logger Formatted Log Functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void LogDf(
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogIf(
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogWf(
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogEf(
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogCf(
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogLD(
+        Logger logger,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLI(
+        Logger logger,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLW(
+        Logger logger,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLE(
+        Logger logger,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLC(
+        Logger logger,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLDf(
+        Logger logger,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogLIf(
+        Logger logger,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogLWf(
+        Logger logger,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogLEf(
+        Logger logger,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogLCf(
+        Logger logger,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    // Logger functions with explicit level ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    void Log(
+        LoggerLevel level,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void Logf(
+        LoggerLevel level,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    void LogL(
+        Logger logger,
+        LoggerLevel level,
+        utf8str msg,
+        SourceCodeLocation loc
+    );
+
+    void LogLf(
+        Logger logger,
+        LoggerLevel level,
+        utf8str fmtMsg,
+        ArraySlice<PrimitiveFmtOptions> args,
+        SourceCodeLocation loc
+    );
+
+    // Logger Casts ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * Creates a logger that writes to the given file.
+     * The file must be opened and valid.
+     */
+    Logger LoggerFromFile(
+        File f,
+        LoggerLevel minAllowedLevel,
+        LogOption options = { }
+    );
+
+    /**
+     * Creates a logger that uses the default outputs (see `PNSLR_SetDefaultLogger()`).
+     * The returned logger is thread-safe and can be used from any thread.
+     * This can be used along with `PNSLR_SetDefaultLogger()` to customize
+     * the behaviour of the default in-built logger.
+     */
+    Logger GetDefaultLoggerWithOptions(
+        LoggerLevel minAllowedLevel,
+        LogOption options = { }
+    );
+
+    /**
+     * Creates a nil logger that does nothing.
+     * This can be used to disable logging in certain parts of the code.
+     */
+    Logger GetNilLogger();
+
+    // #######################################################################################
+    // Threads
+    // #######################################################################################
+
+    /**
+     * An opaque handle to a thread.
+     */
+    struct ThreadHandle
+    {
+       u64 handle;
+    };
+
+    /**
+     * Checks if the handle to a thread is valid.
+     */
+    b8 IsThreadHandleValid(
+        ThreadHandle handle
+    );
+
+    /**
+     * Gets a handle to the current thread.
+     */
+    ThreadHandle GetCurrentThreadHandle();
+
+    /**
+     * Gets the name of a thread.
+     * The returned string is allocated using the provided allocator.
+     * If the thread has no name, an empty string is returned.
+     */
+    utf8str GetThreadName(
+        ThreadHandle handle,
+        Allocator allocator
+    );
+
+    /**
+     * Sets the name of a thread.
+     * The name is copied, so the provided string does not need to be valid after this call.
+     * On some platforms, thread names may be truncated to a certain length.
+     *
+     * Thread lengths on platforms (excluding null terminator):
+     *     Windows/OSX/iOS - 63 characters
+     *     Linux/Android   - 15 characters
+     */
+    void SetThreadName(
+        ThreadHandle handle,
+        utf8str name
+    );
+
+    /**
+     * Gets the name of the current thread.
+     * Read more about `PNSLR_GetThreadName`.
+     */
+    utf8str GetCurrentThreadName(
+        Allocator allocator
+    );
+
+    /**
+     * Sets the name of the current thread.
+     * Read more about `PNSLR_SetThreadName`.
+     */
+    void SetCurrentThreadName(
+        utf8str name
+    );
+
+    // #######################################################################################
+    // SharedMemoryChannel
+    // #######################################################################################
+
+    struct SharedMemoryChannelReader
+    {
+       u64 handle;
+    };
+
+    struct SharedMemoryChannelWriter
+    {
+       u64 handle;
+    };
+
+    struct SharedMemoryMessage
+    {
+       rawptr data;
+       i64 size;
+       u64 internal;
+    };
+
+    struct SharedMemoryReservedMessage
+    {
+       rawptr data;
+       i64 size;
+       u64 internal;
+    };
+
+    b8 CreateSharedMemoryChannelReader(
+        utf8str name,
+        i64 bytes,
+        SharedMemoryChannelReader* reader
+    );
+
+    b8 ReadSharedMemoryChannelMessage(
+        SharedMemoryChannelReader* reader,
+        SharedMemoryMessage* message,
+        b8* fatalError
+    );
+
+    b8 AcknowledgeSharedMemoryChannelMessage(
+        SharedMemoryMessage* message
+    );
+
+    b8 DestroySharedMemoryChannelReader(
+        SharedMemoryChannelReader* reader
+    );
+
+    b8 TryConnectSharedMemoryChannelWriter(
+        utf8str name,
+        SharedMemoryChannelWriter* writer
+    );
+
+    b8 PrepareSharedMemoryChannelMessage(
+        SharedMemoryChannelWriter* writer,
+        i64 bytes,
+        SharedMemoryReservedMessage* reservedMessage
+    );
+
+    b8 CommitSharedMemoryChannelMessage(
+        SharedMemoryChannelWriter* writer,
+        SharedMemoryReservedMessage* reservedMessage
+    );
+
+    b8 DisconnectSharedMemoryChannelWriter(
+        SharedMemoryChannelWriter* writer
+    );
+
 } // namespace end
 
 namespace Panshilar
@@ -2406,6 +2843,32 @@ extern "C" void PNSLR_BroadcastConditionVariable(PNSLR_ConditionVariable* condva
 void Panshilar::BroadcastConditionVariable(Panshilar::ConditionVariable* condvar)
 {
     PNSLR_BroadcastConditionVariable(PNSLR_Bindings_Convert(condvar));
+}
+
+struct alignas(8) PNSLR_DoOnce
+{
+   u8 buffer[8];
+};
+static_assert(sizeof(PNSLR_DoOnce) == sizeof(Panshilar::DoOnce), "size mismatch");
+static_assert(alignof(PNSLR_DoOnce) == alignof(Panshilar::DoOnce), "align mismatch");
+PNSLR_DoOnce* PNSLR_Bindings_Convert(Panshilar::DoOnce* x) { return reinterpret_cast<PNSLR_DoOnce*>(x); }
+Panshilar::DoOnce* PNSLR_Bindings_Convert(PNSLR_DoOnce* x) { return reinterpret_cast<Panshilar::DoOnce*>(x); }
+PNSLR_DoOnce& PNSLR_Bindings_Convert(Panshilar::DoOnce& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::DoOnce& PNSLR_Bindings_Convert(PNSLR_DoOnce& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_DoOnce, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::DoOnce, buffer), "buffer offset mismatch");
+
+extern "C" typedef void (*PNSLR_DoOnceCallback)();
+static_assert(sizeof(PNSLR_DoOnceCallback) == sizeof(Panshilar::DoOnceCallback), "size mismatch");
+static_assert(alignof(PNSLR_DoOnceCallback) == alignof(Panshilar::DoOnceCallback), "align mismatch");
+PNSLR_DoOnceCallback* PNSLR_Bindings_Convert(Panshilar::DoOnceCallback* x) { return reinterpret_cast<PNSLR_DoOnceCallback*>(x); }
+Panshilar::DoOnceCallback* PNSLR_Bindings_Convert(PNSLR_DoOnceCallback* x) { return reinterpret_cast<Panshilar::DoOnceCallback*>(x); }
+PNSLR_DoOnceCallback& PNSLR_Bindings_Convert(Panshilar::DoOnceCallback& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::DoOnceCallback& PNSLR_Bindings_Convert(PNSLR_DoOnceCallback& x) { return *PNSLR_Bindings_Convert(&x); }
+
+extern "C" void PNSLR_ExecuteDoOnce(PNSLR_DoOnce* once, PNSLR_DoOnceCallback callback);
+void Panshilar::ExecuteDoOnce(Panshilar::DoOnce* once, Panshilar::DoOnceCallback callback)
+{
+    PNSLR_ExecuteDoOnce(PNSLR_Bindings_Convert(once), PNSLR_Bindings_Convert(callback));
 }
 
 extern "C" void PNSLR_MemSet(rawptr memory, i32 value, i32 size);
@@ -2764,6 +3227,12 @@ extern "C" i64 PNSLR_NanosecondsSinceUnixEpoch();
 i64 Panshilar::NanosecondsSinceUnixEpoch()
 {
     i64 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_NanosecondsSinceUnixEpoch(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_ConvertNanosecondsSinceUnixEpochToDateTime(i64 ns, i16* outYear, u8* outMonth, u8* outDay, u8* outHour, u8* outMinute, u8* outSecond);
+b8 Panshilar::ConvertNanosecondsSinceUnixEpochToDateTime(i64 ns, i16* outYear, u8* outMonth, u8* outDay, u8* outHour, u8* outMinute, u8* outSecond)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ConvertNanosecondsSinceUnixEpochToDateTime(PNSLR_Bindings_Convert(ns), PNSLR_Bindings_Convert(outYear), PNSLR_Bindings_Convert(outMonth), PNSLR_Bindings_Convert(outDay), PNSLR_Bindings_Convert(outHour), PNSLR_Bindings_Convert(outMinute), PNSLR_Bindings_Convert(outSecond)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" i32 PNSLR_GetCStringLength(cstring str);
@@ -3214,6 +3683,12 @@ extern "C" b8 PNSLR_FormatAndAppendToStringBuilder(PNSLR_StringBuilder* builder,
 b8 Panshilar::FormatAndAppendToStringBuilder(Panshilar::StringBuilder* builder, utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatAndAppendToStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_FormatString(PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_Allocator allocator);
+utf8str Panshilar::FormatString(utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatString(PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" PNSLR_UTF8STR PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
@@ -3702,6 +4177,374 @@ extern "C" PNSLR_Stream PNSLR_StreamFromStdErr(b8 disableBuffering);
 Panshilar::Stream Panshilar::StreamFromStdErr(b8 disableBuffering)
 {
     PNSLR_Stream zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StreamFromStdErr(PNSLR_Bindings_Convert(disableBuffering)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+enum class PNSLR_LoggerLevel : u8 { };
+static_assert(sizeof(PNSLR_LoggerLevel) == sizeof(Panshilar::LoggerLevel), "size mismatch");
+static_assert(alignof(PNSLR_LoggerLevel) == alignof(Panshilar::LoggerLevel), "align mismatch");
+PNSLR_LoggerLevel* PNSLR_Bindings_Convert(Panshilar::LoggerLevel* x) { return reinterpret_cast<PNSLR_LoggerLevel*>(x); }
+Panshilar::LoggerLevel* PNSLR_Bindings_Convert(PNSLR_LoggerLevel* x) { return reinterpret_cast<Panshilar::LoggerLevel*>(x); }
+PNSLR_LoggerLevel& PNSLR_Bindings_Convert(Panshilar::LoggerLevel& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::LoggerLevel& PNSLR_Bindings_Convert(PNSLR_LoggerLevel& x) { return *PNSLR_Bindings_Convert(&x); }
+
+enum class PNSLR_LogOption : u8 { };
+static_assert(sizeof(PNSLR_LogOption) == sizeof(Panshilar::LogOption), "size mismatch");
+static_assert(alignof(PNSLR_LogOption) == alignof(Panshilar::LogOption), "align mismatch");
+PNSLR_LogOption* PNSLR_Bindings_Convert(Panshilar::LogOption* x) { return reinterpret_cast<PNSLR_LogOption*>(x); }
+Panshilar::LogOption* PNSLR_Bindings_Convert(PNSLR_LogOption* x) { return reinterpret_cast<Panshilar::LogOption*>(x); }
+PNSLR_LogOption& PNSLR_Bindings_Convert(Panshilar::LogOption& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::LogOption& PNSLR_Bindings_Convert(PNSLR_LogOption& x) { return *PNSLR_Bindings_Convert(&x); }
+
+extern "C" typedef void (*PNSLR_LoggerProcedure)(rawptr loggerData, PNSLR_LoggerLevel level, PNSLR_UTF8STR data, PNSLR_LogOption options, PNSLR_SourceCodeLocation location);
+static_assert(sizeof(PNSLR_LoggerProcedure) == sizeof(Panshilar::LoggerProcedure), "size mismatch");
+static_assert(alignof(PNSLR_LoggerProcedure) == alignof(Panshilar::LoggerProcedure), "align mismatch");
+PNSLR_LoggerProcedure* PNSLR_Bindings_Convert(Panshilar::LoggerProcedure* x) { return reinterpret_cast<PNSLR_LoggerProcedure*>(x); }
+Panshilar::LoggerProcedure* PNSLR_Bindings_Convert(PNSLR_LoggerProcedure* x) { return reinterpret_cast<Panshilar::LoggerProcedure*>(x); }
+PNSLR_LoggerProcedure& PNSLR_Bindings_Convert(Panshilar::LoggerProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::LoggerProcedure& PNSLR_Bindings_Convert(PNSLR_LoggerProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+
+struct PNSLR_Logger
+{
+   PNSLR_LoggerProcedure procedure;
+   rawptr data;
+   PNSLR_LoggerLevel minAllowedLvl;
+   PNSLR_LogOption options;
+};
+static_assert(sizeof(PNSLR_Logger) == sizeof(Panshilar::Logger), "size mismatch");
+static_assert(alignof(PNSLR_Logger) == alignof(Panshilar::Logger), "align mismatch");
+PNSLR_Logger* PNSLR_Bindings_Convert(Panshilar::Logger* x) { return reinterpret_cast<PNSLR_Logger*>(x); }
+Panshilar::Logger* PNSLR_Bindings_Convert(PNSLR_Logger* x) { return reinterpret_cast<Panshilar::Logger*>(x); }
+PNSLR_Logger& PNSLR_Bindings_Convert(Panshilar::Logger& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::Logger& PNSLR_Bindings_Convert(PNSLR_Logger& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Logger, procedure) == PNSLR_STRUCT_OFFSET(Panshilar::Logger, procedure), "procedure offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Logger, data) == PNSLR_STRUCT_OFFSET(Panshilar::Logger, data), "data offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Logger, minAllowedLvl) == PNSLR_STRUCT_OFFSET(Panshilar::Logger, minAllowedLvl), "minAllowedLvl offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Logger, options) == PNSLR_STRUCT_OFFSET(Panshilar::Logger, options), "options offset mismatch");
+
+extern "C" void PNSLR_SetDefaultLogger(PNSLR_Logger logger);
+void Panshilar::SetDefaultLogger(Panshilar::Logger logger)
+{
+    PNSLR_SetDefaultLogger(PNSLR_Bindings_Convert(logger));
+}
+
+extern "C" void PNSLR_DisableDefaultLogger();
+void Panshilar::DisableDefaultLogger()
+{
+    PNSLR_DisableDefaultLogger();
+}
+
+extern "C" void PNSLR_LogD(PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogD(utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogD(PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogI(PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogI(utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogI(PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogW(PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogW(utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogW(PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogE(PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogE(utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogE(PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogC(PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogC(utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogC(PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogDf(PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogDf(utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogDf(PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogIf(PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogIf(utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogIf(PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogWf(PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogWf(utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogWf(PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogEf(PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogEf(utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogEf(PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogCf(PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogCf(utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogCf(PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLD(PNSLR_Logger logger, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLD(Panshilar::Logger logger, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLD(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLI(PNSLR_Logger logger, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLI(Panshilar::Logger logger, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLI(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLW(PNSLR_Logger logger, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLW(Panshilar::Logger logger, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLW(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLE(PNSLR_Logger logger, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLE(Panshilar::Logger logger, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLE(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLC(PNSLR_Logger logger, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLC(Panshilar::Logger logger, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLC(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLDf(PNSLR_Logger logger, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLDf(Panshilar::Logger logger, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLDf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLIf(PNSLR_Logger logger, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLIf(Panshilar::Logger logger, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLIf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLWf(PNSLR_Logger logger, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLWf(Panshilar::Logger logger, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLWf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLEf(PNSLR_Logger logger, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLEf(Panshilar::Logger logger, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLEf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLCf(PNSLR_Logger logger, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLCf(Panshilar::Logger logger, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLCf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_Log(PNSLR_LoggerLevel level, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::Log(Panshilar::LoggerLevel level, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_Log(PNSLR_Bindings_Convert(level), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_Logf(PNSLR_LoggerLevel level, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::Logf(Panshilar::LoggerLevel level, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_Logf(PNSLR_Bindings_Convert(level), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogL(PNSLR_Logger logger, PNSLR_LoggerLevel level, PNSLR_UTF8STR msg, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogL(Panshilar::Logger logger, Panshilar::LoggerLevel level, utf8str msg, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogL(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(level), PNSLR_Bindings_Convert(msg), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" void PNSLR_LogLf(PNSLR_Logger logger, PNSLR_LoggerLevel level, PNSLR_UTF8STR fmtMsg, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_SourceCodeLocation loc);
+void Panshilar::LogLf(Panshilar::Logger logger, Panshilar::LoggerLevel level, utf8str fmtMsg, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::SourceCodeLocation loc)
+{
+    PNSLR_LogLf(PNSLR_Bindings_Convert(logger), PNSLR_Bindings_Convert(level), PNSLR_Bindings_Convert(fmtMsg), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(loc));
+}
+
+extern "C" PNSLR_Logger PNSLR_LoggerFromFile(PNSLR_File f, PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options);
+Panshilar::Logger Panshilar::LoggerFromFile(Panshilar::File f, Panshilar::LoggerLevel minAllowedLevel, Panshilar::LogOption options)
+{
+    PNSLR_Logger zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_LoggerFromFile(PNSLR_Bindings_Convert(f), PNSLR_Bindings_Convert(minAllowedLevel), PNSLR_Bindings_Convert(options)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_Logger PNSLR_GetDefaultLoggerWithOptions(PNSLR_LoggerLevel minAllowedLevel, PNSLR_LogOption options);
+Panshilar::Logger Panshilar::GetDefaultLoggerWithOptions(Panshilar::LoggerLevel minAllowedLevel, Panshilar::LogOption options)
+{
+    PNSLR_Logger zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetDefaultLoggerWithOptions(PNSLR_Bindings_Convert(minAllowedLevel), PNSLR_Bindings_Convert(options)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_Logger PNSLR_GetNilLogger();
+Panshilar::Logger Panshilar::GetNilLogger()
+{
+    PNSLR_Logger zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetNilLogger(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+struct PNSLR_ThreadHandle
+{
+   u64 handle;
+};
+static_assert(sizeof(PNSLR_ThreadHandle) == sizeof(Panshilar::ThreadHandle), "size mismatch");
+static_assert(alignof(PNSLR_ThreadHandle) == alignof(Panshilar::ThreadHandle), "align mismatch");
+PNSLR_ThreadHandle* PNSLR_Bindings_Convert(Panshilar::ThreadHandle* x) { return reinterpret_cast<PNSLR_ThreadHandle*>(x); }
+Panshilar::ThreadHandle* PNSLR_Bindings_Convert(PNSLR_ThreadHandle* x) { return reinterpret_cast<Panshilar::ThreadHandle*>(x); }
+PNSLR_ThreadHandle& PNSLR_Bindings_Convert(Panshilar::ThreadHandle& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::ThreadHandle& PNSLR_Bindings_Convert(PNSLR_ThreadHandle& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ThreadHandle, handle) == PNSLR_STRUCT_OFFSET(Panshilar::ThreadHandle, handle), "handle offset mismatch");
+
+extern "C" b8 PNSLR_IsThreadHandleValid(PNSLR_ThreadHandle handle);
+b8 Panshilar::IsThreadHandleValid(Panshilar::ThreadHandle handle)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_IsThreadHandleValid(PNSLR_Bindings_Convert(handle)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_ThreadHandle PNSLR_GetCurrentThreadHandle();
+Panshilar::ThreadHandle Panshilar::GetCurrentThreadHandle()
+{
+    PNSLR_ThreadHandle zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCurrentThreadHandle(); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_GetThreadName(PNSLR_ThreadHandle handle, PNSLR_Allocator allocator);
+utf8str Panshilar::GetThreadName(Panshilar::ThreadHandle handle, Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetThreadName(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_SetThreadName(PNSLR_ThreadHandle handle, PNSLR_UTF8STR name);
+void Panshilar::SetThreadName(Panshilar::ThreadHandle handle, utf8str name)
+{
+    PNSLR_SetThreadName(PNSLR_Bindings_Convert(handle), PNSLR_Bindings_Convert(name));
+}
+
+extern "C" PNSLR_UTF8STR PNSLR_GetCurrentThreadName(PNSLR_Allocator allocator);
+utf8str Panshilar::GetCurrentThreadName(Panshilar::Allocator allocator)
+{
+    PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetCurrentThreadName(PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_SetCurrentThreadName(PNSLR_UTF8STR name);
+void Panshilar::SetCurrentThreadName(utf8str name)
+{
+    PNSLR_SetCurrentThreadName(PNSLR_Bindings_Convert(name));
+}
+
+struct PNSLR_SharedMemoryChannelReader
+{
+   u64 handle;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelReader) == sizeof(Panshilar::SharedMemoryChannelReader), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelReader) == alignof(Panshilar::SharedMemoryChannelReader), "align mismatch");
+PNSLR_SharedMemoryChannelReader* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelReader* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelReader*>(x); }
+Panshilar::SharedMemoryChannelReader* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReader* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelReader*>(x); }
+PNSLR_SharedMemoryChannelReader& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelReader& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelReader& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReader& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReader, handle) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReader, handle), "handle offset mismatch");
+
+struct PNSLR_SharedMemoryChannelWriter
+{
+   u64 handle;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelWriter) == sizeof(Panshilar::SharedMemoryChannelWriter), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelWriter) == alignof(Panshilar::SharedMemoryChannelWriter), "align mismatch");
+PNSLR_SharedMemoryChannelWriter* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelWriter* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelWriter*>(x); }
+Panshilar::SharedMemoryChannelWriter* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelWriter* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelWriter*>(x); }
+PNSLR_SharedMemoryChannelWriter& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelWriter& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelWriter& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelWriter& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelWriter, handle) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelWriter, handle), "handle offset mismatch");
+
+struct PNSLR_SharedMemoryMessage
+{
+   rawptr data;
+   i64 size;
+   u64 internal;
+};
+static_assert(sizeof(PNSLR_SharedMemoryMessage) == sizeof(Panshilar::SharedMemoryMessage), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryMessage) == alignof(Panshilar::SharedMemoryMessage), "align mismatch");
+PNSLR_SharedMemoryMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryMessage*>(x); }
+Panshilar::SharedMemoryMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryMessage*>(x); }
+PNSLR_SharedMemoryMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, data) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, data), "data offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, size), "size offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, internal) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, internal), "internal offset mismatch");
+
+struct PNSLR_SharedMemoryReservedMessage
+{
+   rawptr data;
+   i64 size;
+   u64 internal;
+};
+static_assert(sizeof(PNSLR_SharedMemoryReservedMessage) == sizeof(Panshilar::SharedMemoryReservedMessage), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryReservedMessage) == alignof(Panshilar::SharedMemoryReservedMessage), "align mismatch");
+PNSLR_SharedMemoryReservedMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryReservedMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryReservedMessage*>(x); }
+Panshilar::SharedMemoryReservedMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryReservedMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryReservedMessage*>(x); }
+PNSLR_SharedMemoryReservedMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryReservedMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, data) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, data), "data offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, size), "size offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, internal) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, internal), "internal offset mismatch");
+
+extern "C" b8 PNSLR_CreateSharedMemoryChannelReader(PNSLR_UTF8STR name, i64 bytes, PNSLR_SharedMemoryChannelReader* reader);
+b8 Panshilar::CreateSharedMemoryChannelReader(utf8str name, i64 bytes, Panshilar::SharedMemoryChannelReader* reader)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateSharedMemoryChannelReader(PNSLR_Bindings_Convert(name), PNSLR_Bindings_Convert(bytes), PNSLR_Bindings_Convert(reader)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_ReadSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelReader* reader, PNSLR_SharedMemoryMessage* message, b8* fatalError);
+b8 Panshilar::ReadSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelReader* reader, Panshilar::SharedMemoryMessage* message, b8* fatalError)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadSharedMemoryChannelMessage(PNSLR_Bindings_Convert(reader), PNSLR_Bindings_Convert(message), PNSLR_Bindings_Convert(fatalError)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(PNSLR_SharedMemoryMessage* message);
+b8 Panshilar::AcknowledgeSharedMemoryChannelMessage(Panshilar::SharedMemoryMessage* message)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AcknowledgeSharedMemoryChannelMessage(PNSLR_Bindings_Convert(message)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_DestroySharedMemoryChannelReader(PNSLR_SharedMemoryChannelReader* reader);
+b8 Panshilar::DestroySharedMemoryChannelReader(Panshilar::SharedMemoryChannelReader* reader)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DestroySharedMemoryChannelReader(PNSLR_Bindings_Convert(reader)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_TryConnectSharedMemoryChannelWriter(PNSLR_UTF8STR name, PNSLR_SharedMemoryChannelWriter* writer);
+b8 Panshilar::TryConnectSharedMemoryChannelWriter(utf8str name, Panshilar::SharedMemoryChannelWriter* writer)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryConnectSharedMemoryChannelWriter(PNSLR_Bindings_Convert(name), PNSLR_Bindings_Convert(writer)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, i64 bytes, PNSLR_SharedMemoryReservedMessage* reservedMessage);
+b8 Panshilar::PrepareSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, i64 bytes, Panshilar::SharedMemoryReservedMessage* reservedMessage)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_Bindings_Convert(writer), PNSLR_Bindings_Convert(bytes), PNSLR_Bindings_Convert(reservedMessage)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_CommitSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, PNSLR_SharedMemoryReservedMessage* reservedMessage);
+b8 Panshilar::CommitSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, Panshilar::SharedMemoryReservedMessage* reservedMessage)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CommitSharedMemoryChannelMessage(PNSLR_Bindings_Convert(writer), PNSLR_Bindings_Convert(reservedMessage)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" b8 PNSLR_DisconnectSharedMemoryChannelWriter(PNSLR_SharedMemoryChannelWriter* writer);
+b8 Panshilar::DisconnectSharedMemoryChannelWriter(Panshilar::SharedMemoryChannelWriter* writer)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_DisconnectSharedMemoryChannelWriter(PNSLR_Bindings_Convert(writer)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 #undef PNSLR_STRUCT_OFFSET

@@ -23,13 +23,13 @@ ENUM_END
  * Defines options for logging output.
  */
 ENUM_FLAGS_START(PNSLR_LogOption, u8)
-    #define PNSLR_LogOption_None             ((PNSLR_LogOption) (     0))
-    #define PNSLR_LogOption_IncludeLevel     ((PNSLR_LogOption) (1 << 0))
-    #define PNSLR_LogOption_IncludeDate      ((PNSLR_LogOption) (1 << 1))
-    #define PNSLR_LogOption_IncludeTime      ((PNSLR_LogOption) (1 << 2))
-    #define PNSLR_LogOption_IncludeFile      ((PNSLR_LogOption) (1 << 3))
-    #define PNSLR_LogOption_IncludeFn        ((PNSLR_LogOption) (1 << 4))
-    #define PNSLR_LogOption_IncludeColours   ((PNSLR_LogOption) (1 << 5))
+    #define PNSLR_LogOption_None             ((PNSLR_LogOption) (        0))
+    #define PNSLR_LogOption_IncludeLevel     ((PNSLR_LogOption) (1ULL << 0))
+    #define PNSLR_LogOption_IncludeDate      ((PNSLR_LogOption) (1ULL << 1))
+    #define PNSLR_LogOption_IncludeTime      ((PNSLR_LogOption) (1ULL << 2))
+    #define PNSLR_LogOption_IncludeFile      ((PNSLR_LogOption) (1ULL << 3))
+    #define PNSLR_LogOption_IncludeFn        ((PNSLR_LogOption) (1ULL << 4))
+    #define PNSLR_LogOption_IncludeColours   ((PNSLR_LogOption) (1ULL << 5))
 ENUM_END
 
 /**

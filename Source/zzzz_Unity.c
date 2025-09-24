@@ -17,6 +17,7 @@
 #include "Stream.c"
 #include "Logger.c"
 #include "Threads.c"
+#include "SharedMemoryChannel.c"
 
 #if PNSLR_ANDROID
     PNSLR_SUPPRESS_WARN

@@ -58,3 +58,12 @@ typedef struct PNSLR_ExampleStruct
   - 32-bit stuff not supported
 - use `PNSLR_MSVC`/`PNSLR_CLANG`/`PNSLR_GCC` for compiler-specific code
 - use `PNSLR_DBG`/`PNSLR_REL` for debug/release specific code
+- all `PNSLR_` preprocessor macros are defined to 1/0 appropriately, don't use #ifdef for them as it'll give wrong results
+- use block comments for documentation, like this:
+```
+/**
+ * This is a doc comment for a function.
+ * It can be multiple lines.
+ */
+void X();
+```
