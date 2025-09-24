@@ -1,12 +1,16 @@
 # Rules
 
 - c11 code only
-- `PNSLR_` suffix for functions/structs/enums
-- `PNSLR_Internal_` suffix for any internal (source file) functions/structs/enums
+- `PascalCase` for structs/functions/enums/globals
+- `ALL_CAPS` for macro constants
+- `camelCase` for variables (local/member/arguments)
+- `PNSLR_` prefix for functions/structs/enums
+- `PNSLR_Internal_` prefix for any internal (source file) functions/structs/enums
   - they must also be static
-- `G_PNSLR_Internal_` suffix for globals; don't declare them in headers; keep them static
+- `G_PNSLR_Internal_` prefix for globals; don't declare them in headers; keep them static
 - use `thread_local` after `static` and before type-name to make a thread-local var
 - don't use macros
+- curly braces on new lines everywhere
 - b8/u8/i8/u16/i16/u32/i32/u64/i64 primitives available (use instead of c usuals)
 - `PNSLR_ArraySlice(TYPE)` to use an array (has { TYPE* data; i64* count; })
 - `PNSLR_DECLARE_ARRAY_SLICE(TYPE);` needed in a header once, if `PNSLR_ArraySlice(TYPE)` is to be used
