@@ -2478,16 +2478,25 @@ namespace Panshilar
     // SharedMemoryChannel
     // #######################################################################################
 
+    /**
+     * Represents a shared memory channel reader that creates and owns the shared memory segment.
+     */
     struct SharedMemoryChannelReader
     {
        u64 handle;
     };
 
+    /**
+     * Represents a shared memory channel writer that connects to an existing shared memory segment.
+     */
     struct SharedMemoryChannelWriter
     {
        u64 handle;
     };
 
+    /**
+     * Represents a message that has been read from a shared memory channel.
+     */
     struct SharedMemoryMessage
     {
        rawptr data;
@@ -2495,6 +2504,9 @@ namespace Panshilar
        u64 internal;
     };
 
+    /**
+     * Represents a reserved message slot for writing to a shared memory channel.
+     */
     struct SharedMemoryReservedMessage
     {
        rawptr data;
@@ -2502,42 +2514,71 @@ namespace Panshilar
        u64 internal;
     };
 
+    /**
+     * Creates a shared memory channel reader with the specified name and size.
+     * The reader owns the shared memory segment and other processes can connect as writers.
+     */
     b8 CreateSharedMemoryChannelReader(
         utf8str name,
         i64 bytes,
         SharedMemoryChannelReader* reader
     );
 
+    /**
+     * Polls for a message from the shared memory channel.
+     * Returns true if a message was found, false otherwise.
+     * Sets fatalError to true if an unrecoverable error occurred.
+     */
     b8 ReadSharedMemoryChannelMessage(
         SharedMemoryChannelReader* reader,
         SharedMemoryMessage* message,
         b8* fatalError
     );
 
+    /**
+     * Acknowledges that a message has been processed and advances the read cursor.
+     */
     b8 AcknowledgeSharedMemoryChannelMessage(
         SharedMemoryMessage* message
     );
 
+    /**
+     * Destroys a shared memory channel reader and releases all associated resources.
+     */
     b8 DestroySharedMemoryChannelReader(
         SharedMemoryChannelReader* reader
     );
 
+    /**
+     * Attempts to connect to an existing shared memory channel as a writer.
+     * Returns true if successful, false if the channel doesn't exist or connection failed.
+     */
     b8 TryConnectSharedMemoryChannelWriter(
         utf8str name,
         SharedMemoryChannelWriter* writer
     );
 
+    /**
+     * Reserves space for a message in the shared memory channel.
+     * Returns true if space was available, false otherwise.
+     */
     b8 PrepareSharedMemoryChannelMessage(
         SharedMemoryChannelWriter* writer,
         i64 bytes,
         SharedMemoryReservedMessage* reservedMessage
     );
 
+    /**
+     * Commits a previously reserved message to the shared memory channel.
+     */
     b8 CommitSharedMemoryChannelMessage(
         SharedMemoryChannelWriter* writer,
         SharedMemoryReservedMessage* reservedMessage
     );
 
+    /**
+     * Disconnects from a shared memory channel and releases writer resources.
+     */
     b8 DisconnectSharedMemoryChannelWriter(
         SharedMemoryChannelWriter* writer
     );

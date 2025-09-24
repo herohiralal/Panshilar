@@ -3087,20 +3087,32 @@ foreign {
 // SharedMemoryChannel
 // #######################################################################################
 
+/*
+Represents a shared memory channel reader that creates and owns the shared memory segment.
+*/
 SharedMemoryChannelReader :: struct  {
 	handle: u64,
 }
 
+/*
+Represents a shared memory channel writer that connects to an existing shared memory segment.
+*/
 SharedMemoryChannelWriter :: struct  {
 	handle: u64,
 }
 
+/*
+Represents a message that has been read from a shared memory channel.
+*/
 SharedMemoryMessage :: struct  {
 	data: rawptr,
 	size: i64,
 	internal: u64,
 }
 
+/*
+Represents a reserved message slot for writing to a shared memory channel.
+*/
 SharedMemoryReservedMessage :: struct  {
 	data: rawptr,
 	size: i64,
@@ -3109,6 +3121,10 @@ SharedMemoryReservedMessage :: struct  {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Creates a shared memory channel reader with the specified name and size.
+	The reader owns the shared memory segment and other processes can connect as writers.
+	*/
 	CreateSharedMemoryChannelReader :: proc "c" (
 		name: string,
 		bytes: i64,
@@ -3118,6 +3134,11 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Polls for a message from the shared memory channel.
+	Returns true if a message was found, false otherwise.
+	Sets fatalError to true if an unrecoverable error occurred.
+	*/
 	ReadSharedMemoryChannelMessage :: proc "c" (
 		reader: ^SharedMemoryChannelReader,
 		message: ^SharedMemoryMessage,
@@ -3127,6 +3148,9 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Acknowledges that a message has been processed and advances the read cursor.
+	*/
 	AcknowledgeSharedMemoryChannelMessage :: proc "c" (
 		message: ^SharedMemoryMessage,
 	) -> b8 ---
@@ -3134,6 +3158,9 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Destroys a shared memory channel reader and releases all associated resources.
+	*/
 	DestroySharedMemoryChannelReader :: proc "c" (
 		reader: ^SharedMemoryChannelReader,
 	) -> b8 ---
@@ -3141,6 +3168,10 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Attempts to connect to an existing shared memory channel as a writer.
+	Returns true if successful, false if the channel doesn't exist or connection failed.
+	*/
 	TryConnectSharedMemoryChannelWriter :: proc "c" (
 		name: string,
 		writer: ^SharedMemoryChannelWriter,
@@ -3149,6 +3180,10 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Reserves space for a message in the shared memory channel.
+	Returns true if space was available, false otherwise.
+	*/
 	PrepareSharedMemoryChannelMessage :: proc "c" (
 		writer: ^SharedMemoryChannelWriter,
 		bytes: i64,
@@ -3158,6 +3193,9 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Commits a previously reserved message to the shared memory channel.
+	*/
 	CommitSharedMemoryChannelMessage :: proc "c" (
 		writer: ^SharedMemoryChannelWriter,
 		reservedMessage: ^SharedMemoryReservedMessage,
@@ -3166,6 +3204,9 @@ foreign {
 
 @(link_prefix="PNSLR_")
 foreign {
+	/*
+	Disconnects from a shared memory channel and releases writer resources.
+	*/
 	DisconnectSharedMemoryChannelWriter :: proc "c" (
 		writer: ^SharedMemoryChannelWriter,
 	) -> b8 ---
