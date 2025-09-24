@@ -3,23 +3,19 @@
 //+skipreflect
 #include "Compiler.h"
 
-#if defined(offsetof)
-    #undef offsetof // avoid conflict with stddef.h, if somehow inherited
-#endif
-
 #if PNSLR_MSVC
 
-        #define thread_local            __declspec(thread)
-        #define noinline                __declspec(noinline)
-        #define forceinline             __forceinline
-        #define noreturn                __declspec(noreturn)
+    #define PNSLR_NOINLINE                    __declspec(noinline)
+    #define PNSLR_FORCEINLINE                 __forceinline
+    #define PNSLR_NORETURN                    __declspec(noreturn)
+    // offsetof impl depends on c/c++
 
 #elif (PNSLR_CLANG || PNSLR_GCC)
 
-        #define noinline                __attribute__((noinline))
-        #define forceinline             inline __attribute__((always_inline))
-        #define noreturn                __attribute__((noreturn))
-        #define offsetof(type, member)  __builtin_offsetof(type, member)
+    #define PNSLR_NOINLINE                    __attribute__((noinline))
+    #define PNSLR_FORCEINLINE                 inline __attribute__((always_inline))
+    #define PNSLR_NORETURN                    __attribute__((noreturn))
+    #define PNSLR_OFFSETOF(type, member)      __builtin_offsetof(type, member)
 
 #else
     #error "Required features not supported by this compiler."
@@ -31,10 +27,10 @@
     // inline       is used as-is
     // alignas      is used as-is
     // alignof      is used as-is
-    #define deprecated                 [[deprecated]]
+    #define PNSLR_DEPRECATED                  [[deprecated]]
 
     #if PNSLR_MSVC
-        #define offsetof(type, member) ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
+        #define PNSLR_OFFSETOF(type, member)  ((u64)&reinterpret_cast<char const volatile&>((((type*)0)->member)))
     #endif
 
     // static_assert is used as-is
@@ -43,25 +39,27 @@
 
     #if PNSLR_MSVC
 
-        #define inline                  __inline
-        #define alignas(x)              __declspec(align(x))
-        #define alignof(type)           __alignof(type)
-        #define deprecated              __declspec(deprecated)
-        #define offsetof(type, member)  ((unsigned __int64)&(((type*)0)->member))
+        #define thread_local                  __declspec(thread)
+        #define inline                        __inline
+        #define alignas(x)                    __declspec(align(x))
+        #define alignof(type)                 __alignof(type)
+        #define PNSLR_DEPRECATED              __declspec(deprecated)
+        #define PNSLR_OFFSETOF(type, member)  ((unsigned __int64)&(((type*)0)->member))
 
     #elif (PNSLR_CLANG || PNSLR_GCC)
 
-        #define thread_local            __thread
-        #define inline                  __inline__
-        #define alignas(x)              __attribute__((aligned(x)))
-        #define alignof(type)           __alignof__(type)
-        #define deprecated              __attribute__((deprecated))
+        #define thread_local                  __thread
+        #define inline                        __inline__
+        #define alignas(x)                    __attribute__((aligned(x)))
+        #define alignof(type)                 __alignof__(type)
+        #define PNSLR_DEPRECATED              __attribute__((deprecated))
+        // offsetof declared previously
 
     #else
         #error "Required features not supported by this compiler."
     #endif
 
-    #define static_assert _Static_assert
+    #define static_assert                    _Static_assert
 
 #endif
 
