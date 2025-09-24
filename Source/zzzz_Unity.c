@@ -15,6 +15,7 @@
 #include "Process.c"
 #include "Network.c"
 #include "Stream.c"
+#include "Threads.c"
 
 #if PNSLR_ANDROID
     PNSLR_SUPPRESS_WARN

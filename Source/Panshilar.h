@@ -12,4 +12,5 @@
 #include "Process.h"
 #include "Network.h"
 #include "Stream.h"
+#include "Threads.h"
 #endif // PNSLR_MAIN_HEADER_H ======================================================
