@@ -39,15 +39,16 @@ utf8str PNSLR_GetThreadName(PNSLR_ThreadHandle handle, PNSLR_Allocator allocator
 {
     #if PNSLR_WINDOWS
     {
-        WCHAR nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
-        if (GetThreadDescription((HANDLE) handle.handle, &nameBuffer[0]) != S_OK) goto failedToFindName;
-        i64 len = 0;
-        while (len < PNSLR_MAX_THREAD_NAME_LEN && nameBuffer[len] != 0) { ++len; }
-        if (len == 0) goto failedToFindName; // no name set
+        LPWSTR threadName = nil;
+        if (GetThreadDescription((HANDLE) handle.handle, &threadName) != S_OK) goto failedToFindName;
+        if (!threadName) goto failedToFindName;
 
-        return PNSLR_UTF8FromUTF16WindowsOnly((PNSLR_ArraySlice(u16)) { .data = (u16*) nameBuffer, .count = len }, allocator);
+        i32 len = 0;
+        while (threadName[len] != 0) { ++len; }
+
+        return PNSLR_UTF8FromUTF16WindowsOnly((PNSLR_ArraySlice(u16)) { .data = (u16*) threadName, .count = len }, allocator);
     }
-    #elif PNSLR_UNIX
+    #elif PNSLR_OSX || PNSLR_IOS || (PNSLR_LINUX && defined(_GNU_SOURCE)) || (PNSLR_ANDROID && defined(_GNU_SOURCE))
     {
         char nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
         if (pthread_getname_np((pthread_t) handle.handle, nameBuffer, PNSLR_MAX_THREAD_NAME_LEN) != 0)
@@ -87,8 +88,24 @@ utf8str PNSLR_GetThreadName(PNSLR_ThreadHandle handle, PNSLR_Allocator allocator
 
 void PNSLR_SetThreadName(PNSLR_ThreadHandle handle, utf8str name)
 {
+    if (name.count > PNSLR_MAX_THREAD_NAME_LEN - 1)
+        name.count = PNSLR_MAX_THREAD_NAME_LEN - 1;
+
     #if PNSLR_WINDOWS
-    #elif PNSLR_UNIX
+    {
+        WCHAR nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
+        MultiByteToWideChar(CP_UTF8, 0, (cstring) name.data, (i32) name.count, nameBuffer, PNSLR_MAX_THREAD_NAME_LEN);
+
+        SetThreadDescription((HANDLE) handle.handle, nameBuffer);
+    }
+    #elif PNSLR_OSX || PNSLR_IOS || (PNSLR_LINUX && defined(_GNU_SOURCE)) || (PNSLR_ANDROID && defined(_GNU_SOURCE))
+    {
+        char nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
+        PNSLR_MemCopy(nameBuffer, name.data, (i32) name.count);
+        nameBuffer[name.count] = '\0';
+
+        pthread_setname_np((pthread_t) handle.handle, nameBuffer);
+    }
     #endif
 }
 
