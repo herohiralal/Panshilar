@@ -156,26 +156,28 @@ static void PNSLR_Internal_LoggerFn_Default(rawptr loggerData, PNSLR_LoggerLevel
     {
         PNSLR_INTERNAL_ALLOCATOR_INIT(Logger, internalAllocator);
         i64 totalLen = fnLen + data.count + locLen;
-        cstring outData = PNSLR_MakeCString(totalLen, false, internalAllocator, PNSLR_GET_LOC(), nil); // +1 for null terminator
-        outData[totalLen] = '\0'; // null terminator
-        char* ptr = outData;
+        PNSLR_StringBuilder sb = {.allocator = internalAllocator};
+        PNSLR_ReserveSpaceInStringBuilder(&sb, totalLen + 1); // +1 for null terminator
         if (fnLen)
-            snprintf(ptr, (size_t) (totalLen - (i64) (ptr - outData)), "[%.*s()] ", (i32) location.function.count, location.function.data);
-        ptr += fnLen;
+            PNSLR_FormatAndAppendToStringBuilder(&sb, PNSLR_StringLiteral("[$()] "),
+                PNSLR_FmtArgs(
+                    PNSLR_FmtString(location.function)
+                )
+            );
 
-        snprintf(ptr, (size_t) (totalLen - (i64) (ptr - outData)), "%.*s", (i32) data.count, data.data);
-        ptr += data.count;
+        PNSLR_AppendStringToStringBuilder(&sb, data);
 
         if (locLen)
-            snprintf(ptr, (size_t) (totalLen - (i64) (ptr - outData)), " (from %.*s:%d:%d)", (i32) location.file.count, location.file.data, (i32) location.line, (i32) location.column);
-        ptr += locLen;
+            PNSLR_FormatAndAppendToStringBuilder(&sb, PNSLR_StringLiteral(" (from $:$:$)"),
+                PNSLR_FmtArgs(
+                    PNSLR_FmtString(location.file),
+                    PNSLR_FmtI32(location.line, PNSLR_IntegerBase_Decimal),
+                    PNSLR_FmtI32(location.column, PNSLR_IntegerBase_Decimal)
+                )
+            );
 
-        if ((i64) (ptr - outData) != totalLen)
-        {
-            FORCE_DBG_TRAP;
-            // something went wrong, fallback to just data
-            snprintf(outData, (size_t) totalLen + 1, "%.*s", (i32) data.count, data.data);
-        }
+        PNSLR_AppendRuneToStringBuilder(&sb, '\0');
+        utf8str outData = PNSLR_StringFromStringBuilder(&sb);
 
         int androidPrio = ANDROID_LOG_DEFAULT;
         switch (level)
@@ -188,7 +190,7 @@ static void PNSLR_Internal_LoggerFn_Default(rawptr loggerData, PNSLR_LoggerLevel
             default:                         androidPrio = ANDROID_LOG_DEFAULT;  break;
         }
 
-        __android_log_write(androidPrio, "Panshilar-DefaultLogger", outData);
+        __android_log_write(androidPrio, "Panshilar-DefaultLogger", (cstring) outData.data);
 
         PNSLR_INTERNAL_ALLOCATOR_RESET(Logger, internalAllocator);
     }

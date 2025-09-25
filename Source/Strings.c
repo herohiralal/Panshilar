@@ -578,6 +578,11 @@ static b8 PNSLR_Internal_ResizeStringBuilderIfRequired(PNSLR_StringBuilder* buil
     return err == PNSLR_AllocatorError_None;
 }
 
+b8 PNSLR_ReserveSpaceInStringBuilder(PNSLR_StringBuilder *builder, i64 additionalSize)
+{
+    return PNSLR_Internal_ResizeStringBuilderIfRequired(builder, additionalSize);
+}
+
 b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte)
 {
     if (!builder || !PNSLR_Internal_ResizeStringBuilderIfRequired(builder, 1)) return false;

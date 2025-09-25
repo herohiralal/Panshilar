@@ -204,6 +204,11 @@ typedef struct PNSLR_StringBuilder
 } PNSLR_StringBuilder;
 
 /**
+ * Ensure that the string builder has enough space to accommodate additionalSize bytes.
+ */
+b8 PNSLR_ReserveSpaceInStringBuilder(PNSLR_StringBuilder* builder, i64 additionalSize);
+
+/**
  * Append a single byte to the string builder. Could be an ANSI/ASCII character,
  * or not. The function does not check for validity.
  */
