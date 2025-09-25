@@ -24,28 +24,28 @@ namespace jni {
 
 // Singleton class that stores an app's JVM and context
 class Ctx {
- private:
-  // Allows construction with std::unique_ptr from a static method, but
-  // disallows construction outside of the class since no one else can
-  // construct a ConstructorTag
-  struct ConstructorTag {};
-  JavaVM* jvm_;
-  jobject jctx_;  // Global reference to the app's context
- public:
-  static const Ctx* Init(JNIEnv* env, jobject ctx);
-  static void Destroy();
-  static const Ctx* Instance();
-  Ctx(JNIEnv* env, jobject ctx, ConstructorTag);
-  ~Ctx();
-  JNIEnv* Env() const;
-  JavaVM* Jvm() const { return jvm_; }
-  jobject AppCtx() const { return jctx_; }
-  bool IsValid() const { return jvm_ != nullptr && jctx_ != nullptr; }
-  void DetachThread() const;
-  Ctx() = delete;
-  Ctx(const Ctx&) = delete;
-  Ctx(Ctx&&) = delete;
-  Ctx& operator=(const Ctx& rhs) = delete;
+   private:
+    // Allows construction with std::unique_ptr from a static method, but
+    // disallows construction outside of the class since no one else can
+    // construct a ConstructorTag
+    struct ConstructorTag {};
+    JavaVM* jvm_;
+    jobject jctx_;  // Global reference to the app's context
+   public:
+    static const Ctx* Init(JNIEnv* env, jobject ctx);
+    static void Destroy();
+    static const Ctx* Instance();
+    Ctx(JNIEnv* env, jobject ctx, ConstructorTag);
+    ~Ctx();
+    JNIEnv* Env() const;
+    JavaVM* Jvm() const { return jvm_; }
+    jobject AppCtx() const { return jctx_; }
+    bool IsValid() const { return jvm_ != nullptr && jctx_ != nullptr; }
+    void DetachThread() const;
+    Ctx() = delete;
+    Ctx(const Ctx&) = delete;
+    Ctx(Ctx&&) = delete;
+    Ctx& operator=(const Ctx& rhs) = delete;
 };
 
 }  // namespace jni

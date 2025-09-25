@@ -52,9 +52,9 @@ void GameActivityEventsInit(JNIEnv* env);
  * Note that we pass as much information from Java Activity as possible
  * to avoid extra JNI calls.
  */
-void GameActivityMotionEvent_fromJava(JNIEnv* env, jobject motionEvent,
-                                      GameActivityMotionEvent* out_event,
-                                      int pointerCount, int historySize);
+void GameActivityMotionEvent_fromJava(
+    JNIEnv* env, jobject motionEvent, GameActivityMotionEvent* out_event,
+    int pointerCount, int historySize);
 
 /**
  * \brief Convert a Java `KeyEvent` to a `GameActivityKeyEvent`.

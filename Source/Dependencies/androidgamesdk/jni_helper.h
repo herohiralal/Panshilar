@@ -21,21 +21,22 @@
 #include <string>
 #include <vector>
 
-#define CHECK_FOR_JNI_EXCEPTION_AND_RETURN(A)          \
-  if (RawExceptionCheck()) {                           \
-    std::string exception_msg = GetExceptionMessage(); \
-    ALOGW("%s", exception_msg.c_str());                \
-    return A;                                          \
-  }
+#define CHECK_FOR_JNI_EXCEPTION_AND_RETURN(A)              \
+    if (RawExceptionCheck()) {                             \
+        std::string exception_msg = GetExceptionMessage(); \
+        ALOGW("%s", exception_msg.c_str());                \
+        return A;                                          \
+    }
 
-#define SAFE_LOGGING_CHECK_FOR_JNI_EXCEPTION_AND_RETURN(A, B)               \
-  if (RawExceptionCheck()) {                                                \
-    std::string exception_msg =                                             \
-        B ? GetExceptionMessage()                                           \
-          : RemoveSensitiveInfoFromExceptionMessage(GetExceptionMessage()); \
-    ALOGW("%s", exception_msg.c_str());                                     \
-    return A;                                                               \
-  }
+#define SAFE_LOGGING_CHECK_FOR_JNI_EXCEPTION_AND_RETURN(A, B) \
+    if (RawExceptionCheck()) {                                \
+        std::string exception_msg =                           \
+            B ? GetExceptionMessage()                         \
+              : RemoveSensitiveInfoFromExceptionMessage(      \
+                    GetExceptionMessage());                   \
+        ALOGW("%s", exception_msg.c_str());                   \
+        return A;                                             \
+    }
 
 namespace gamesdk {
 
@@ -56,48 +57,49 @@ jclass FindClass(const char* class_name);
 // Releases the jstring and any c string pointer generated from it upon
 // destruction.
 class String {
-  jstring j_str_;
-  const char* c_str_;
+    jstring j_str_;
+    const char* c_str_;
 
- public:
-  String(const char* s) : j_str_(Env()->NewStringUTF(s)), c_str_(nullptr) {}
-  String(jstring s) : j_str_(s), c_str_(nullptr) {}
-  String(String&& rhs) : j_str_(rhs.j_str_), c_str_(rhs.c_str_) {
-    rhs.j_str_ = nullptr;
-    rhs.c_str_ = nullptr;
-  }
-  String(const String& rhs) : j_str_(rhs.j_str_), c_str_(nullptr) {
-    if (j_str_ != nullptr) {
-      j_str_ = reinterpret_cast<jstring>(Env()->NewLocalRef(j_str_));
+   public:
+    String(const char* s) : j_str_(Env()->NewStringUTF(s)), c_str_(nullptr) {}
+    String(jstring s) : j_str_(s), c_str_(nullptr) {}
+    String(String&& rhs) : j_str_(rhs.j_str_), c_str_(rhs.c_str_) {
+        rhs.j_str_ = nullptr;
+        rhs.c_str_ = nullptr;
     }
-  }
-  String& operator=(const String& rhs) {
-    if (this != &rhs) {
-      Release();
-      if (rhs.j_str_ != nullptr) {
-        j_str_ = reinterpret_cast<jstring>(Env()->NewLocalRef(rhs.j_str_));
-      }
+    String(const String& rhs) : j_str_(rhs.j_str_), c_str_(nullptr) {
+        if (j_str_ != nullptr) {
+            j_str_ = reinterpret_cast<jstring>(Env()->NewLocalRef(j_str_));
+        }
     }
-    return *this;
-  }
-  jstring J() const { return j_str_; }
-  const char* C() {
-    if (c_str_ == nullptr && j_str_ != nullptr) {
-      c_str_ = Env()->GetStringUTFChars(j_str_, nullptr);
+    String& operator=(const String& rhs) {
+        if (this != &rhs) {
+            Release();
+            if (rhs.j_str_ != nullptr) {
+                j_str_ =
+                    reinterpret_cast<jstring>(Env()->NewLocalRef(rhs.j_str_));
+            }
+        }
+        return *this;
     }
-    return c_str_;
-  }
-  ~String() { Release(); }
-  void Release() {
-    if (c_str_ != nullptr) {
-      Env()->ReleaseStringUTFChars(j_str_, c_str_);
-      c_str_ = nullptr;
+    jstring J() const { return j_str_; }
+    const char* C() {
+        if (c_str_ == nullptr && j_str_ != nullptr) {
+            c_str_ = Env()->GetStringUTFChars(j_str_, nullptr);
+        }
+        return c_str_;
     }
-    if (j_str_ != nullptr) {
-      Env()->DeleteLocalRef(j_str_);
-      j_str_ = nullptr;
+    ~String() { Release(); }
+    void Release() {
+        if (c_str_ != nullptr) {
+            Env()->ReleaseStringUTFChars(j_str_, c_str_);
+            c_str_ = nullptr;
+        }
+        if (j_str_ != nullptr) {
+            Env()->DeleteLocalRef(j_str_);
+            j_str_ = nullptr;
+        }
     }
-  }
 };
 
 // This class takes ownership of the jni object and jni class and calls
@@ -107,108 +109,109 @@ class String {
 // NB you cannot share these objects between threads. Create global refs in
 // order to do that.
 class LocalObject {
-  jobject obj_;
-  jclass clz_;
+    jobject obj_;
+    jclass clz_;
 
- public:
-  static constexpr int BAD_FIELD = -1;
+   public:
+    static constexpr int BAD_FIELD = -1;
 
-  LocalObject(jobject o = nullptr, jclass c = nullptr) : obj_(o), clz_(c) {}
-  ~LocalObject() { Release(); }
-  LocalObject(LocalObject&& o) : obj_(o.obj_), clz_(o.clz_) {
-    o.obj_ = nullptr;
-    o.clz_ = nullptr;
-  }
-  LocalObject(const LocalObject& o) = delete;
-  LocalObject& operator=(const LocalObject& o) = delete;
-  LocalObject& operator=(LocalObject&& o) {
-    if (obj_ != o.obj_) {
-      if (obj_ != nullptr) {
-        Env()->DeleteLocalRef(obj_);
-      }
-      obj_ = o.obj_;
+    LocalObject(jobject o = nullptr, jclass c = nullptr) : obj_(o), clz_(c) {}
+    ~LocalObject() { Release(); }
+    LocalObject(LocalObject&& o) : obj_(o.obj_), clz_(o.clz_) {
+        o.obj_ = nullptr;
+        o.clz_ = nullptr;
     }
-    if (clz_ != o.clz_) {
-      if (clz_ != nullptr) {
-        Env()->DeleteLocalRef(clz_);
-      }
-      clz_ = o.clz_;
+    LocalObject(const LocalObject& o) = delete;
+    LocalObject& operator=(const LocalObject& o) = delete;
+    LocalObject& operator=(LocalObject&& o) {
+        if (obj_ != o.obj_) {
+            if (obj_ != nullptr) {
+                Env()->DeleteLocalRef(obj_);
+            }
+            obj_ = o.obj_;
+        }
+        if (clz_ != o.clz_) {
+            if (clz_ != nullptr) {
+                Env()->DeleteLocalRef(clz_);
+            }
+            clz_ = o.clz_;
+        }
+        o.obj_ = nullptr;
+        o.clz_ = nullptr;
+        return *this;
     }
-    o.obj_ = nullptr;
-    o.clz_ = nullptr;
-    return *this;
-  }
-  jobject ObjNewRef() const {
-    if (obj_ != nullptr) return Env()->NewLocalRef(obj_);
-    return obj_;
-  }
-  jclass ClassNewRef() const {
-    if (clz_ != nullptr) return (jclass)Env()->NewLocalRef(clz_);
-    return clz_;
-  }
-  jobjectArray AsObjectArray() const {
-    return reinterpret_cast<jobjectArray>(obj_);
-  }
-  bool IsNull() const { return obj_ == nullptr; }
-  bool ClassIsNull() const { return clz_ == nullptr; }
-  operator jobject() const { return obj_; }
-  operator jclass() const { return clz_; }
-  void SetObj(jobject o) {
-    if (obj_ != nullptr) Env()->DeleteLocalRef(obj_);
-    obj_ = o;
-  }
-  void SetClass(jclass c) {
-    if (clz_ != nullptr) Env()->DeleteLocalRef(clz_);
-    clz_ = c;
-  }
-  // Set clz_ to the class with the given name or get the class from the
-  //  object if clz_to is missing / empty.
-  bool Cast(const std::string& clz_to = "") {
-    jclass c;
-    if (clz_to.empty()) {
-      if (obj_ == nullptr)
-        c = nullptr;
-      else
-        c = Env()->GetObjectClass(obj_);
-    } else {
-      c = FindClass(clz_to.c_str());
+    jobject ObjNewRef() const {
+        if (obj_ != nullptr) return Env()->NewLocalRef(obj_);
+        return obj_;
     }
-    if (c == nullptr) return false;
-    SetClass(c);
-    return true;
-  }
+    jclass ClassNewRef() const {
+        if (clz_ != nullptr) return (jclass)Env()->NewLocalRef(clz_);
+        return clz_;
+    }
+    jobjectArray AsObjectArray() const {
+        return reinterpret_cast<jobjectArray>(obj_);
+    }
+    bool IsNull() const { return obj_ == nullptr; }
+    bool ClassIsNull() const { return clz_ == nullptr; }
+    operator jobject() const { return obj_; }
+    operator jclass() const { return clz_; }
+    void SetObj(jobject o) {
+        if (obj_ != nullptr) Env()->DeleteLocalRef(obj_);
+        obj_ = o;
+    }
+    void SetClass(jclass c) {
+        if (clz_ != nullptr) Env()->DeleteLocalRef(clz_);
+        clz_ = c;
+    }
+    // Set clz_ to the class with the given name or get the class from the
+    //  object if clz_to is missing / empty.
+    bool Cast(const std::string& clz_to = "") {
+        jclass c;
+        if (clz_to.empty()) {
+            if (obj_ == nullptr)
+                c = nullptr;
+            else
+                c = Env()->GetObjectClass(obj_);
+        } else {
+            c = FindClass(clz_to.c_str());
+        }
+        if (c == nullptr) return false;
+        SetClass(c);
+        return true;
+    }
 
-  // These methods take a variable number of arguments and have the return the
-  // type indicated. The arguments are passed directly to JNI and it's not
-  // type-safe, so:
-  //   All object arguments should be jobjects, NOT LocalObject.
-  //   All string arguments should be jstrings, NOT String.
-  jobject CallObjectMethod(const char* name, const char* sig, ...) const;
-  jobject CallStaticObjectMethod(const char* name, const char* sig, ...) const;
-  jni::String CallStringMethod(const char* name, const char* sig, ...) const;
-  void CallVoidMethod(const char* name, const char* sig, ...) const;
-  int CallIntMethod(const char* name, const char* sig, ...) const;
-  bool CallBooleanMethod(const char* name, const char* sig, ...) const;
+    // These methods take a variable number of arguments and have the return the
+    // type indicated. The arguments are passed directly to JNI and it's not
+    // type-safe, so:
+    //   All object arguments should be jobjects, NOT LocalObject.
+    //   All string arguments should be jstrings, NOT String.
+    jobject CallObjectMethod(const char* name, const char* sig, ...) const;
+    jobject CallStaticObjectMethod(const char* name, const char* sig,
+                                   ...) const;
+    jni::String CallStringMethod(const char* name, const char* sig, ...) const;
+    void CallVoidMethod(const char* name, const char* sig, ...) const;
+    int CallIntMethod(const char* name, const char* sig, ...) const;
+    bool CallBooleanMethod(const char* name, const char* sig, ...) const;
 
-  // Returns a null object if the field could not be found (and exception will
-  // be set)
-  LocalObject GetObjectField(const char* field_name, const char* sig) const;
-  // Returns BAD_FIELD is the field could not be found (and exception is set)
-  int GetIntField(const char* field_name) const;
-  bool GetBooleanField(const char* field_name) const;
-  int64_t GetLongField(const char* field_name) const;
+    // Returns a null object if the field could not be found (and exception will
+    // be set)
+    LocalObject GetObjectField(const char* field_name, const char* sig) const;
+    // Returns BAD_FIELD is the field could not be found (and exception is set)
+    int GetIntField(const char* field_name) const;
+    bool GetBooleanField(const char* field_name) const;
+    int64_t GetLongField(const char* field_name) const;
 
- private:
-  void Release() {
-    if (clz_ != nullptr) {
-      Env()->DeleteLocalRef(clz_);
+   private:
+    void Release() {
+        if (clz_ != nullptr) {
+            Env()->DeleteLocalRef(clz_);
+        }
+        if (obj_ != nullptr) {
+            Env()->DeleteLocalRef(obj_);
+        }
+        obj_ = nullptr;
+        clz_ = nullptr;
     }
-    if (obj_ != nullptr) {
-      Env()->DeleteLocalRef(obj_);
-    }
-    obj_ = nullptr;
-    clz_ = nullptr;
-  }
 };
 
 LocalObject NewObjectV(const char* cclz, const char* ctorSig, va_list argptr);

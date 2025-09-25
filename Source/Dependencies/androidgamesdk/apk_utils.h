@@ -25,19 +25,19 @@ namespace apk_utils {
  * Loads and unloads the asset with the given name to memory.
  */
 class NativeAsset {
-  AAsset* asset;
+    AAsset* asset;
 
- public:
-  NativeAsset(const char* name);
-  NativeAsset(NativeAsset&& a);
-  NativeAsset& operator=(NativeAsset&& a);
+   public:
+    NativeAsset(const char* name);
+    NativeAsset(NativeAsset&& a);
+    NativeAsset& operator=(NativeAsset&& a);
 
-  NativeAsset(const NativeAsset& a) = delete;
-  NativeAsset& operator=(const NativeAsset& a) = delete;
+    NativeAsset(const NativeAsset& a) = delete;
+    NativeAsset& operator=(const NativeAsset& a) = delete;
 
-  ~NativeAsset();
-  bool IsValid();
-  operator AAsset*();
+    ~NativeAsset();
+    bool IsValid();
+    operator AAsset*();
 };
 
 }  // namespace apk_utils
