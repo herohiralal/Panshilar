@@ -830,6 +830,11 @@ local.properties
         with open(filepath, 'w') as f:
             f.write(content)
 
+    printSectionStart()
+    printSuccess('Generated Android Studio Project')
+    succeededProcesses.append('Android Studio Project Generation')
+    printSectionEnd()
+
 # endregion
 
 # region Visual Studio Generator ==============================================================================================
@@ -1031,6 +1036,11 @@ EndGlobal
     for filepath, content in files:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
+
+    printSectionStart()
+    printSuccess('Generated Visual Studio Project')
+    succeededProcesses.append('Visual Studio Project Generation')
+    printSectionEnd()
 
 # endregion
 
@@ -1998,6 +2008,11 @@ iOSInjectionProject/
     for filepath, content in files:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
+
+    printSectionStart()
+    printSuccess('Generated XCode Project')
+    succeededProcesses.append('XCode Project Generation')
+    printSectionEnd()
 
 # endregion
 
