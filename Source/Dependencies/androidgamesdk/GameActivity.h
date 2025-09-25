@@ -621,9 +621,9 @@ bool GameActivity_isSoftwareKeyboardVisible(GameActivity* activity);
  * <b>Note:</b> currently only TYPE_NULL AND TYPE_CLASS_NUMBER are supported.
  */
 void GameActivity_setImeEditorInfo(GameActivity* activity,
-                                   enum GameTextInputType inputType,
-                                   enum GameTextInputActionType actionId,
-                                   enum GameTextInputImeOptions imeOptions);
+                                   GameTextInputType inputType,
+                                   GameTextInputActionType actionId,
+                                   GameTextInputImeOptions imeOptions);
 
 /**
  * These are getters for Configuration class members. They may be called from
