@@ -350,8 +350,8 @@ void GameTextInputState_fromJava(const GameTextInput *input, jobject state,
  *                            1      TYPE_DATETIME_VARIATION_TIME
  * |-------|-------|-------|-------|</pre>
  */
-
-enum GameTextInputType : unsigned int {
+typedef unsigned int GameTextInputType;
+// enum GameTextInputType : unsigned int {
     /**
      * Mask of bits that determine the overall class
      * of text being given.  Currently supported classes are:
@@ -361,19 +361,19 @@ enum GameTextInputType : unsigned int {
      * understand, assume {@link #TYPE_CLASS_TEXT} with NO variation
      * or flags.<p>
      */
-    TYPE_MASK_CLASS = 0x0000000f,
+    #define TYPE_MASK_CLASS ((GameTextInputType) 0x0000000f)
 
     /**
      * Mask of bits that determine the variation of
      * the base content class.
      */
-    TYPE_MASK_VARIATION = 0x00000ff0,
+    #define TYPE_MASK_VARIATION ((GameTextInputType) 0x00000ff0)
 
     /**
      * Mask of bits that provide addition bit flags
      * of options.
      */
-    TYPE_MASK_FLAGS = 0x00fff000,
+    #define TYPE_MASK_FLAGS ((GameTextInputType) 0x00fff000)
 
     /**
      * Special content type for when no explicit type has been specified.
@@ -385,7 +385,7 @@ enum GameTextInputType : unsigned int {
      * method will likely not be able to generate key events even if this
      * flag is set.
      */
-    TYPE_NULL = 0x00000000,
+    #define TYPE_NULL ((GameTextInputType) 0x00000000)
 
     // ----------------------------------------------------------------------
 
@@ -400,7 +400,7 @@ enum GameTextInputType : unsigned int {
      * {@link #TYPE_TEXT_VARIATION_URI}.  If you do not recognize the
      * variation, normal should be assumed.
      */
-    TYPE_CLASS_TEXT = 0x00000001,
+    #define TYPE_CLASS_TEXT ((GameTextInputType) 0x00000001)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: capitalize all characters.  Overrides
@@ -409,7 +409,7 @@ enum GameTextInputType : unsigned int {
      * to be the same as {@link TextUtils#CAP_MODE_CHARACTERS}. Of course,
      * this only affects languages where there are upper-case and lower-case letters.
      */
-    TYPE_TEXT_FLAG_CAP_CHARACTERS = 0x00001000,
+    #define TYPE_TEXT_FLAG_CAP_CHARACTERS ((GameTextInputType) 0x00001000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: capitalize the first character of
@@ -418,7 +418,7 @@ enum GameTextInputType : unsigned int {
      * to be the same as {@link TextUtils#CAP_MODE_WORDS}. Of course,
      * this only affects languages where there are upper-case and lower-case letters.
      */
-    TYPE_TEXT_FLAG_CAP_WORDS = 0x00002000,
+    #define TYPE_TEXT_FLAG_CAP_WORDS ((GameTextInputType) 0x00002000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: capitalize the first character of
@@ -429,7 +429,7 @@ enum GameTextInputType : unsigned int {
      * or use different grammatical rules). Of course,
      * this only affects languages where there are upper-case and lower-case letters.
      */
-    TYPE_TEXT_FLAG_CAP_SENTENCES = 0x00004000,
+    #define TYPE_TEXT_FLAG_CAP_SENTENCES ((GameTextInputType) 0x00004000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: the user is entering free-form
@@ -443,7 +443,7 @@ enum GameTextInputType : unsigned int {
      * auto-correct typos as the user is typing, but does not define whether
      * the IME offers an interface to show suggestions.
      */
-    TYPE_TEXT_FLAG_AUTO_CORRECT = 0x00008000,
+    #define TYPE_TEXT_FLAG_AUTO_CORRECT ((GameTextInputType) 0x00008000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: the text editor (which means
@@ -462,7 +462,7 @@ enum GameTextInputType : unsigned int {
      * interface for displaying suggestions, but instead of supplying its own
      * it will rely on the Editor to pass completions/corrections.
      */
-    TYPE_TEXT_FLAG_AUTO_COMPLETE = 0x00010000,
+    #define TYPE_TEXT_FLAG_AUTO_COMPLETE ((GameTextInputType) 0x00010000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: multiple lines of text can be
@@ -471,14 +471,14 @@ enum GameTextInputType : unsigned int {
      * display an enter key when this flag is not set, as there should be no
      * need to create new lines.
      */
-    TYPE_TEXT_FLAG_MULTI_LINE = 0x00020000,
+    #define TYPE_TEXT_FLAG_MULTI_LINE ((GameTextInputType) 0x00020000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: the regular text view associated
      * with this should not be multi-line, but when a fullscreen input method
      * is providing text it should use multiple lines if it can.
      */
-    TYPE_TEXT_FLAG_IME_MULTI_LINE = 0x00040000,
+    #define TYPE_TEXT_FLAG_IME_MULTI_LINE ((GameTextInputType) 0x00040000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: the input method does not need to
@@ -497,7 +497,7 @@ enum GameTextInputType : unsigned int {
      * show an interface to display suggestions. Most IMEs will also take this to
      * mean they do not need to try to auto-correct what the user is typing.
      */
-    TYPE_TEXT_FLAG_NO_SUGGESTIONS = 0x00080000,
+    #define TYPE_TEXT_FLAG_NO_SUGGESTIONS ((GameTextInputType) 0x00080000)
 
     /**
      * Flag for {@link #TYPE_CLASS_TEXT}: Let the IME know the text conversion suggestions are
@@ -512,74 +512,74 @@ enum GameTextInputType : unsigned int {
      * {@link InputConnection#setComposingRegion(int, int, TextAttribute)}, and
      * {@link InputConnection#commitText(CharSequence, int, TextAttribute)}.
      */
-    TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS = 0x00100000,
+    #define TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS ((GameTextInputType) 0x00100000)
 
     // ----------------------------------------------------------------------
 
     /**
      * Default variation of {@link #TYPE_CLASS_TEXT}: plain old normal text.
      */
-    TYPE_TEXT_VARIATION_NORMAL = 0x00000000,
+    #define TYPE_TEXT_VARIATION_NORMAL ((GameTextInputType) 0x00000000)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering a URI.
      */
-    TYPE_TEXT_VARIATION_URI = 0x00000010,
+    #define TYPE_TEXT_VARIATION_URI ((GameTextInputType) 0x00000010)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering an e-mail address.
      */
-    TYPE_TEXT_VARIATION_EMAIL_ADDRESS = 0x00000020,
+    #define TYPE_TEXT_VARIATION_EMAIL_ADDRESS ((GameTextInputType) 0x00000020)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering the subject line of
      * an e-mail.
      */
-    TYPE_TEXT_VARIATION_EMAIL_SUBJECT = 0x00000030,
+    #define TYPE_TEXT_VARIATION_EMAIL_SUBJECT ((GameTextInputType) 0x00000030)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering a short, possibly informal
      * message such as an instant message or a text message.
      */
-    TYPE_TEXT_VARIATION_SHORT_MESSAGE = 0x00000040,
+    #define TYPE_TEXT_VARIATION_SHORT_MESSAGE ((GameTextInputType) 0x00000040)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering the content of a long, possibly
      * formal message such as the body of an e-mail.
      */
-    TYPE_TEXT_VARIATION_LONG_MESSAGE = 0x00000050,
+    #define TYPE_TEXT_VARIATION_LONG_MESSAGE ((GameTextInputType) 0x00000050)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering the name of a person.
      */
-    TYPE_TEXT_VARIATION_PERSON_NAME = 0x00000060,
+    #define TYPE_TEXT_VARIATION_PERSON_NAME ((GameTextInputType) 0x00000060)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering a postal mailing address.
      */
-    TYPE_TEXT_VARIATION_POSTAL_ADDRESS = 0x00000070,
+    #define TYPE_TEXT_VARIATION_POSTAL_ADDRESS ((GameTextInputType) 0x00000070)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering a password.
      */
-    TYPE_TEXT_VARIATION_PASSWORD = 0x00000080,
+    #define TYPE_TEXT_VARIATION_PASSWORD ((GameTextInputType) 0x00000080)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering a password, which should
      * be visible to the user.
      */
-    TYPE_TEXT_VARIATION_VISIBLE_PASSWORD = 0x00000090,
+    #define TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ((GameTextInputType) 0x00000090)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering text inside of a web form.
      */
-    TYPE_TEXT_VARIATION_WEB_EDIT_TEXT = 0x000000a0,
+    #define TYPE_TEXT_VARIATION_WEB_EDIT_TEXT ((GameTextInputType) 0x000000a0)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering text to filter contents
      * of a list etc.
      */
-    TYPE_TEXT_VARIATION_FILTER = 0x000000b0,
+    #define TYPE_TEXT_VARIATION_FILTER ((GameTextInputType) 0x000000b0)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering text for phonetic
@@ -587,7 +587,7 @@ enum GameTextInputType : unsigned int {
      * useful for languages where one spelling may have several phonetic
      * readings, like Japanese.
      */
-    TYPE_TEXT_VARIATION_PHONETIC = 0x000000c0,
+    #define TYPE_TEXT_VARIATION_PHONETIC ((GameTextInputType) 0x000000c0)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering e-mail address inside
@@ -598,7 +598,7 @@ enum GameTextInputType : unsigned int {
      * when passed through {@link android.view.inputmethod.EditorInfo#makeCompatible(int)
      * EditorInfo.makeCompatible(int)}.
      */
-    TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS = 0x000000d0,
+    #define TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS ((GameTextInputType) 0x000000d0)
 
     /**
      * Variation of {@link #TYPE_CLASS_TEXT}: entering password inside
@@ -609,7 +609,7 @@ enum GameTextInputType : unsigned int {
      * when passed through {@link android.view.inputmethod.EditorInfo#makeCompatible(int)
      * EditorInfo.makeCompatible(int)}.
      */
-    TYPE_TEXT_VARIATION_WEB_PASSWORD = 0x000000e0,
+    #define TYPE_TEXT_VARIATION_WEB_PASSWORD ((GameTextInputType) 0x000000e0)
 
     // ----------------------------------------------------------------------
 
@@ -622,19 +622,19 @@ enum GameTextInputType : unsigned int {
      * <p>IME authors: If you do not recognize
      * the variation, normal should be assumed.</p>
      */
-    TYPE_CLASS_NUMBER = 0x00000002,
+    #define TYPE_CLASS_NUMBER ((GameTextInputType) 0x00000002)
 
     /**
      * Flag of {@link #TYPE_CLASS_NUMBER}: the number is signed, allowing
      * a positive or negative sign at the start.
      */
-    TYPE_NUMBER_FLAG_SIGNED = 0x00001000,
+    #define TYPE_NUMBER_FLAG_SIGNED ((GameTextInputType) 0x00001000)
 
     /**
      * Flag of {@link #TYPE_CLASS_NUMBER}: the number is decimal, allowing
      * a decimal point to provide fractional values.
      */
-    TYPE_NUMBER_FLAG_DECIMAL = 0x00002000,
+    #define TYPE_NUMBER_FLAG_DECIMAL ((GameTextInputType) 0x00002000)
 
     // ----------------------------------------------------------------------
 
@@ -647,7 +647,7 @@ enum GameTextInputType : unsigned int {
      * {@link android.view.inputmethod.EditorInfo#makeCompatible(int)
      * EditorInfo.makeCompatible(int)}.
      */
-    TYPE_NUMBER_VARIATION_NORMAL = 0x00000000,
+    #define TYPE_NUMBER_VARIATION_NORMAL ((GameTextInputType) 0x00000000)
 
     /**
      * Variation of {@link #TYPE_CLASS_NUMBER}: entering a numeric password.
@@ -657,14 +657,14 @@ enum GameTextInputType : unsigned int {
      * through {@link android.view.inputmethod.EditorInfo#makeCompatible(int)
      * EditorInfo.makeCompatible(int)}.
      */
-    TYPE_NUMBER_VARIATION_PASSWORD = 0x00000010,
+    #define TYPE_NUMBER_VARIATION_PASSWORD ((GameTextInputType) 0x00000010)
 
     // ----------------------------------------------------------------------
     /**
      * Class for a phone number.  This class currently supports no variations
      * or flags.
      */
-    TYPE_CLASS_PHONE = 0x00000003,
+    #define TYPE_CLASS_PHONE ((GameTextInputType) 0x00000003)
 
     // ----------------------------------------------------------------------
 
@@ -675,26 +675,26 @@ enum GameTextInputType : unsigned int {
      * {@link #TYPE_DATETIME_VARIATION_DATE}, and
      * {@link #TYPE_DATETIME_VARIATION_TIME}.
      */
-    TYPE_CLASS_DATETIME = 0x00000004,
+    #define TYPE_CLASS_DATETIME ((GameTextInputType) 0x00000004)
 
     /**
      * Default variation of {@link #TYPE_CLASS_DATETIME}: allows entering
      * both a date and time.
      */
-    TYPE_DATETIME_VARIATION_NORMAL = 0x00000000,
+    #define TYPE_DATETIME_VARIATION_NORMAL ((GameTextInputType) 0x00000000)
 
     /**
      * Default variation of {@link #TYPE_CLASS_DATETIME}: allows entering
      * only a date.
      */
-    TYPE_DATETIME_VARIATION_DATE = 0x00000010,
+    #define TYPE_DATETIME_VARIATION_DATE ((GameTextInputType) 0x00000010)
 
     /**
      * Default variation of {@link #TYPE_CLASS_DATETIME}: allows entering
      * only a time.
      */
-    TYPE_DATETIME_VARIATION_TIME = 0x00000020,
-};
+    #define TYPE_DATETIME_VARIATION_TIME ((GameTextInputType) 0x00000020)
+// };
 
 /**
  * actionId and imeOptions argument of GameActivity_setImeEditorInfo().
@@ -721,61 +721,61 @@ enum GameTextInputType : unsigned int {
  *  1                                IME_FLAG_FORCE_ASCII
  * |-------|-------|-------|-------|</pre>
  */
-
-enum GameTextInputActionType : unsigned int {
+typedef unsigned int GameTextInputActionType;
+// enum GameTextInputActionType : unsigned int {
     /**
      * Set of bits in {@link #imeOptions} that provide alternative actions
      * associated with the "enter" key.  This both helps the IME provide
      * better feedback about what the enter key will do, and also allows it
      * to provide alternative mechanisms for providing that command.
      */
-    IME_MASK_ACTION = 0x000000ff,
+    #define IME_MASK_ACTION ((GameTextInputActionType) 0x000000ff)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: no specific action has been
      * associated with this editor, let the editor come up with its own if
      * it can.
      */
-    IME_ACTION_UNSPECIFIED = 0x00000000,
+    #define IME_ACTION_UNSPECIFIED ((GameTextInputActionType) 0x00000000)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: there is no available action.
      */
-    IME_ACTION_NONE = 0x00000001,
+    #define IME_ACTION_NONE ((GameTextInputActionType) 0x00000001)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: the action key performs a "go"
      * operation to take the user to the target of the text they typed.
      * Typically used, for example, when entering a URL.
      */
-    IME_ACTION_GO = 0x00000002,
+    #define IME_ACTION_GO ((GameTextInputActionType) 0x00000002)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: the action key performs a "search"
      * operation, taking the user to the results of searching for the text
      * they have typed (in whatever context is appropriate).
      */
-    IME_ACTION_SEARCH = 0x00000003,
+    #define IME_ACTION_SEARCH ((GameTextInputActionType) 0x00000003)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: the action key performs a "send"
      * operation, delivering the text to its target.  This is typically used
      * when composing a message in IM or SMS where sending is immediate.
      */
-    IME_ACTION_SEND = 0x00000004,
+    #define IME_ACTION_SEND ((GameTextInputActionType) 0x00000004)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: the action key performs a "next"
      * operation, taking the user to the next field that will accept text.
      */
-    IME_ACTION_NEXT = 0x00000005,
+    #define IME_ACTION_NEXT ((GameTextInputActionType) 0x00000005)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: the action key performs a "done"
      * operation, typically meaning there is nothing more to input and the
      * IME will be closed.
      */
-    IME_ACTION_DONE = 0x00000006,
+    #define IME_ACTION_DONE ((GameTextInputActionType) 0x00000006)
 
     /**
      * Bits of {@link #IME_MASK_ACTION}: like {@link #IME_ACTION_NEXT}, but
@@ -783,10 +783,11 @@ enum GameTextInputActionType : unsigned int {
      * specify an action (since it precludes {@link #IME_ACTION_NEXT}), but
      * can be returned to the app if it sets {@link #IME_FLAG_NAVIGATE_PREVIOUS}.
      */
-    IME_ACTION_PREVIOUS = 0x00000007,
-};
+    #define IME_ACTION_PREVIOUS ((GameTextInputActionType) 0x00000007)
+// };
 
-enum GameTextInputImeOptions : unsigned int {
+typedef unsigned int GameTextInputImeOptions;
+// enum GameTextInputImeOptions : unsigned int {
     /**
      * Flag of {@link #imeOptions}: used to request that the IME should not update any personalized
      * data such as typing history and personalized language model based on what the user typed on
@@ -805,7 +806,7 @@ enum GameTextInputImeOptions : unsigned int {
      * <p>Applications need to be aware that the flag is not a guarantee, and some IMEs may not
      * respect it.</p>
      */
-    IME_FLAG_NO_PERSONALIZED_LEARNING = 0x1000000,
+    #define IME_FLAG_NO_PERSONALIZED_LEARNING ((GameTextInputImeOptions) 0x1000000)
 
     /**
      * Flag of {@link #imeOptions}: used to request that the IME never go
@@ -820,7 +821,7 @@ enum GameTextInputImeOptions : unsigned int {
      * Applications need to be aware that the flag is not a guarantee, and
      * some IMEs may ignore it.
      */
-    IME_FLAG_NO_FULLSCREEN = 0x2000000,
+    #define IME_FLAG_NO_FULLSCREEN ((GameTextInputImeOptions) 0x2000000)
 
     /**
      * Flag of {@link #imeOptions}: like {@link #IME_FLAG_NAVIGATE_NEXT}, but
@@ -830,7 +831,7 @@ enum GameTextInputImeOptions : unsigned int {
      * at {@link InputConnection#performEditorAction(int)
      * InputConnection.performEditorAction(int)}.
      */
-    IME_FLAG_NAVIGATE_PREVIOUS = 0x4000000,
+    #define IME_FLAG_NAVIGATE_PREVIOUS ((GameTextInputImeOptions) 0x4000000)
 
     /**
      * Flag of {@link #imeOptions}: used to specify that there is something
@@ -844,7 +845,7 @@ enum GameTextInputImeOptions : unsigned int {
      * in the application at {@link InputConnection#performEditorAction(int)
      * InputConnection.performEditorAction(int)}.
      */
-    IME_FLAG_NAVIGATE_NEXT = 0x8000000,
+    #define IME_FLAG_NAVIGATE_NEXT ((GameTextInputImeOptions) 0x8000000)
 
     /**
      * Flag of {@link #imeOptions}: used to specify that the IME does not need
@@ -858,7 +859,7 @@ enum GameTextInputImeOptions : unsigned int {
      * Its meaning is unclear in some situations and it may not work appropriately
      * on older versions of the platform.
      */
-    IME_FLAG_NO_EXTRACT_UI = 0x10000000,
+    #define IME_FLAG_NO_EXTRACT_UI ((GameTextInputImeOptions) 0x10000000)
 
     /**
      * Flag of {@link #imeOptions}: used in conjunction with one of the actions
@@ -871,7 +872,7 @@ enum GameTextInputImeOptions : unsigned int {
      * screen real estate to display the action and it should be used instead
      * to show more text.
      */
-    IME_FLAG_NO_ACCESSORY_ACTION = 0x20000000,
+    #define IME_FLAG_NO_ACCESSORY_ACTION ((GameTextInputImeOptions) 0x20000000)
 
     /**
      * Flag of {@link #imeOptions}: used in conjunction with one of the actions
@@ -884,7 +885,7 @@ enum GameTextInputImeOptions : unsigned int {
      * {@link android.widget.TextView} will automatically set this flag for you
      * on multi-line text views.
      */
-    IME_FLAG_NO_ENTER_ACTION = 0x40000000,
+    #define IME_FLAG_NO_ENTER_ACTION ((GameTextInputImeOptions) 0x40000000)
 
     /**
      * Flag of {@link #imeOptions}: used to request an IME that is capable of
@@ -901,20 +902,20 @@ enum GameTextInputImeOptions : unsigned int {
      * especially when their IME could end up with a state where only languages
      * using non-ASCII are enabled.
      */
-    IME_FLAG_FORCE_ASCII = 0x80000000,
+    #define IME_FLAG_FORCE_ASCII ((GameTextInputImeOptions) 0x80000000)
 
     /**
      * Flag of {@link #internalImeOptions}: flag is set when app window containing this
      * {@link EditorInfo} is using {@link Configuration#ORIENTATION_PORTRAIT} mode.
      * @hide
      */
-    IME_INTERNAL_FLAG_APP_WINDOW_PORTRAIT = 0x00000001,
+    #define IME_INTERNAL_FLAG_APP_WINDOW_PORTRAIT ((GameTextInputImeOptions) 0x00000001)
 
     /**
      * Generic unspecified type for {@link #imeOptions}.
      */
-    IME_NULL = 0x00000000,
-};
+    #define IME_NULL ((GameTextInputImeOptions) 0x00000000)
+// };
 
 #ifdef __cplusplus
 }

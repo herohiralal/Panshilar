@@ -13,3 +13,4 @@ Primarily including this so I don't have to fucking deal with the horrible gradl
   - will need to go through gamesdk, gametextinput and game-activity separately
   - something else as well, if you need
 - Fix up any 'include' errors.
+- Fix up any C11 incompatibilities, at least in headers
