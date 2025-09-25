@@ -14,7 +14,6 @@
     #define PNSLR_DECLARE_ARRAY_SLICE(ty) \
         typedef struct { ty* data; i64 count; } PNSLR_ArraySlice(ty); \
         EXTERN_C_END \
-
         template<> struct ArraySlice<ty> \
         { \
             ty* data; \
@@ -24,7 +23,6 @@
             ArraySlice<ty>(const PNSLR_ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
             operator PNSLR_ArraySlice(ty)() const { return {data, count}; } \
         }; \
-
         EXTERN_C_BEGIN
 
 #else
