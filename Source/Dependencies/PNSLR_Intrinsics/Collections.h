@@ -19,8 +19,8 @@
             ty* data; \
             i64 count; \
             ArraySlice<ty>() = default; \
-            ArraySlice<ty>(i64 inCount, ty* inData) : count(inCount), data(inData) { } \
-            ArraySlice<ty>(const PNSLR_ArraySlice(ty)& other) : count(other.count), data(other.data) { } \
+            ArraySlice<ty>(i64 inCount, ty* inData) : data(inData), count(inCount) { } \
+            ArraySlice<ty>(const PNSLR_ArraySlice(ty)& other) : data(other.data), count(other.count) { } \
             operator PNSLR_ArraySlice(ty)() const { return {data, count}; } \
         }; \
         EXTERN_C_BEGIN
