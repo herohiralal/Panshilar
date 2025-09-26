@@ -4,6 +4,11 @@
 
 #define PNSLR_IMPLEMENTATION
 #include "../../Source/__PrivateIncludes.h"
+#if PNSLR_ANDROID
+    PNSLR_SUPPRESS_WARN
+    #include <android_native_app_glue.h>
+    PNSLR_UNSUPPRESS_WARN
+#endif
 #include "zzzz_TestRunner.h"
 #include "zzzz_GeneratedCombinedTests.c"
 
@@ -195,6 +200,18 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
         app->onAppCmd = nil;
         TestRunnerMain((PNSLR_ArraySlice(utf8str)) {0});
         ANativeActivity_finish(app->activity);
+
+        b8 keep = true;
+        while (keep)
+        {
+            int ident, events;
+            struct android_poll_source* source;
+            while ((ident = ALooper_pollOnce(-1, NULL, &events, (void**)&source)) >= 0)
+            {
+                if (source) source->process(app, source);
+                if (app->destroyRequested) { keep = false; break; }
+            }
+        }
     }
 
 #elif PNSLR_IOS
@@ -206,3 +223,8 @@ void TestRunnerMain(PNSLR_ArraySlice(utf8str) args)
 #endif
 
 #include "../../Source/zzzz_Unity.c"
+#if PNSLR_ANDROID
+    PNSLR_SUPPRESS_WARN
+    #include <android_native_app_glue.c>
+    PNSLR_UNSUPPRESS_WARN
+#endif

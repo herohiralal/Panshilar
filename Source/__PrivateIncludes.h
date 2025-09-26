@@ -68,7 +68,6 @@ PNSLR_SUPPRESS_WARN
     #include <android/log.h>
     #include <android/asset_manager.h>
     #include <android/native_activity.h>
-    #include <android_native_app_glue.h>
 #endif
 
 PNSLR_UNSUPPRESS_WARN

@@ -19,12 +19,6 @@
 #include "Threads.c"
 #include "SharedMemoryChannel.c"
 
-#if PNSLR_ANDROID
-    PNSLR_SUPPRESS_WARN
-    #include <android_native_app_glue.c>
-    PNSLR_UNSUPPRESS_WARN
-#endif
-
 #include "RadDbgMarkup.c"
 
 #endif//PNSLR_UNITY_C
