@@ -10,6 +10,15 @@ CMD_ARG_HOST_ONLY   = '-host-only'   in sys.argv # Only build for the host platf
 
 # endregion
 
+# region Global Config ========================================================================================================
+
+# Use Native App Glue for Android builds (requires NDK); if you're using Dvaarpaal, or any derivatives, it includes a
+# separate version of GameActivity, which contains its own version of Native App Glue, so you wouldn't need this.
+# This is only present here, because TestRunner technically needs it.
+G_UseNativeAppGlueForAndroid = False
+
+# endregion
+
 # region Global State =========================================================================================================
 
 succeededProcesses: list[str] = []  # List to track successful processes
@@ -331,8 +340,7 @@ def getCommonCompilationArgs(
         output += [
             f'--sysroot={plt.toolch}\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\',
             '-fPIC',
-            f'-I{plt.toolch}\\sources\\android\\native_app_glue\\',
-        ]
+        ] + ([f'-I{plt.toolch}\\sources\\android\\native_app_glue\\'] if G_UseNativeAppGlueForAndroid else [])
         if plt.arch == 'x64':
             output += ['--target=x86_64-none-linux-android28']
         elif plt.arch == 'arm64':
@@ -524,8 +532,7 @@ def setupVsCodeLspStuff():
             config.defines += ['ANDROID=1', '_FORTIFY_SOURCE=2']
             config.includePath += [
                 f'{plt.toolch}\\toolchains\\llvm\\prebuilt\\windows-x86_64\\sysroot\\usr\\include'.replace('\\', '/'),
-                f'{plt.toolch}\\sources\\android\\native_app_glue'.replace('\\', '/'),
-            ]
+            ] + ([f'{plt.toolch}\\sources\\android\\native_app_glue'.replace('\\', '/')] if G_UseNativeAppGlueForAndroid else [])
 
         if plt.tgt == 'linux':
             config.includePath += [f'{plt.toolch}\\usr\\include'.replace('\\', '/')]
@@ -759,14 +766,16 @@ target_compile_definitions(nativelib PRIVATE
     $<$<CONFIG:Release>:PNSLR_REL=1>
     $<$<CONFIG:RelWithDebInfo>:PNSLR_REL=1>
     $<$<CONFIG:MinSizeRel>:PNSLR_REL=1>
-)
+)\
 
+{"""
 target_include_directories(nativelib PRIVATE
     ${{ANDROID_NDK}}/sources/android/native_app_glue
 )
 
 set(CMAKE_SHARED_LINKER_FLAGS
     "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate")
+""" if G_UseNativeAppGlueForAndroid else ''}\
 
 target_link_libraries(nativelib
     jnigraphics
