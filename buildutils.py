@@ -595,20 +595,24 @@ def createAndroidProject(
         f"./{projDir}/gradle/wrapper"
     ]
 
+    # using game activity instead of native activity
+    if not G_UseNativeAppGlueForAndroid:
+        dirs += [f"./{projDir}/app/src/main/java/{pkgName.replace('.', '/')}"]
+
     for dirPath in dirs:
         Path(dirPath).mkdir(parents=True, exist_ok=True)
 
     # Root build.gradle.kts
     rootBuild = f"""\
 plugins {{
-    alias(libs.plugins.android.application) apply false
+    id("com.android.application") version "8.13.0" apply false
 }}
 """
 
     # App build.gradle.kts
     appBuild = f"""\
 plugins {{
-    alias(libs.plugins.android.application)
+    id("com.android.application")
 }}
 
 android {{
@@ -647,6 +651,11 @@ android {{
         }}
     }}
 }}
+
+dependencies {{
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.games:games-activity:3.0.5")
+}}
 """
 
     # settings.gradle.kts
@@ -684,15 +693,6 @@ android.useAndroidX=true
 android.nonTransitiveRClass=true
 """
 
-    # libs.versions.toml
-    libsVersions = f"""\
-[versions]
-agp = "8.13.0"
-
-[plugins]
-android-application = {{ id = "com.android.application", version.ref = "agp" }}
-"""
-
     # gradle-wrapper.properties
     wrapperProps = f"""\
 distributionBase=GRADLE_USER_HOME
@@ -700,6 +700,42 @@ distributionPath=wrapper/dists
 distributionUrl=https\\://services.gradle.org/distributions/gradle-{grdlVer}-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
+"""
+
+    mainActivity = ''
+    if not G_UseNativeAppGlueForAndroid:
+        mainActivity = f"""\
+package {pkgName};
+
+import android.view.View;
+import com.google.androidgamesdk.GameActivity;
+
+public class MainActivity extends GameActivity {{
+    static {{
+        System.loadLibrary("nativelib");
+    }}
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {{
+        super.onWindowFocusChanged(hasFocus);
+
+        if (hasFocus) {{
+            hideSystemUi();
+        }}
+    }}
+
+    private void hideSystemUi() {{
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+        );
+    }}
+}}
 """
 
     # AndroidManifest.xml
@@ -712,9 +748,12 @@ zipStorePath=wrapper/dists
 
     <application
         android:label="{appName}"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        android:theme="{\
+            '@android:style/Theme.NoTitleBar.Fullscreen' \
+                if G_UseNativeAppGlueForAndroid else \
+            '@style/Theme.AppCompat.NoActionBar'}">
         <activity
-            android:name="android.app.NativeActivity"
+            android:name="{'.MainActivity' if mainActivity else 'android.app.NativeActivity'}"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -743,6 +782,7 @@ zipStorePath=wrapper/dists
 </project>
 """
 
+    nativeSymbolToPreserve = 'ANativeActivity_onCreate' if G_UseNativeAppGlueForAndroid else 'Java_com_google_androidgamesdk_GameActivity_initializeNativeCode'
     # CMakeLists.txt
     cmake = f"""\
 cmake_minimum_required(VERSION 3.22.1)
@@ -772,10 +812,11 @@ target_compile_definitions(nativelib PRIVATE
 target_include_directories(nativelib PRIVATE
     ${{ANDROID_NDK}}/sources/android/native_app_glue
 )
+""" if G_UseNativeAppGlueForAndroid else ''}\
 
 set(CMAKE_SHARED_LINKER_FLAGS
-    "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate")
-""" if G_UseNativeAppGlueForAndroid else ''}\
+    "${{CMAKE_SHARED_LINKER_FLAGS}} -u {nativeSymbolToPreserve}"
+)
 
 target_link_libraries(nativelib
     jnigraphics
@@ -819,11 +860,16 @@ local.properties
         (f"./{projDir}/settings.gradle.kts",                      settings),
         (f"./{projDir}/gradle.properties",                        gradleProps),
         (f"./{projDir}/gradle/wrapper/gradle-wrapper.properties", wrapperProps),
-        (f"./{projDir}/gradle/libs.versions.toml",                libsVersions),
         (f"./{projDir}/app/build.gradle.kts",                     appBuild),
         (f"./{projDir}/app/src/main/AndroidManifest.xml",         manifest),
         (f"./{projDir}/app/src/main/cpp/CMakeLists.txt",          cmake),
     ]
+
+    if mainActivity:
+        files += [(
+            f"./{projDir}/app/src/main/java/{pkgName.replace('.', '/')}/MainActivity.java",
+            mainActivity
+        )]
 
     if cxxMain:
         cxxRelPath = os.path.relpath('./' + cxxMain, f"./{projDir}/app/src/main/cpp/").replace('\\', '/')
