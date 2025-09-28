@@ -331,8 +331,21 @@ def getCommonCompilationArgs(
         specifier: str = '/D' if plt.tgt == 'windows' else '-D'
         output += [f'{specifier}{getPlatformTgtDefine(plt)}=1', f'{specifier}{getPlatformArchDefine(plt)}=1']
         output += [f'{specifier}{'PNSLR_DBG' if dbg else 'PNSLR_REL'}=1']
+
         if plt.tgt == 'android':
             output += ['-DANDROID=1', '-D_FORTIFY_SOURCE=2']
+
+        if TOOLCHAINS.vulkanSdk:
+            if plt.tgt == 'windows':
+                output += [
+                    f'/I{TOOLCHAINS.vulkanSdk}/Include',
+                    f'/LIBPATH:{TOOLCHAINS.vulkanSdk}/Lib',
+                ]
+            else:
+                output += [
+                    f'-I{TOOLCHAINS.vulkanSdk}/Include',
+                    f'-L{TOOLCHAINS.vulkanSdk}/Lib',
+                ]
 
     if addStdArgs:
         specifier: str = '/std:' if plt.tgt == 'windows' else '-std='
@@ -383,18 +396,6 @@ def getCommonCompilationArgs(
         ]
     else:
         raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
-
-    if TOOLCHAINS.vulkanSdk:
-        if plt.tgt == 'windows':
-            output += [
-                f'/I{TOOLCHAINS.vulkanSdk}/Include',
-                f'/LIBPATH:{TOOLCHAINS.vulkanSdk}/Lib',
-            ]
-        else:
-            output += [
-                f'-I{TOOLCHAINS.vulkanSdk}/Include',
-                f'-L{TOOLCHAINS.vulkanSdk}/Lib',
-            ]
 
     return output
 
