@@ -109,6 +109,7 @@ class Toolchains:
     osxSdk:              str = ''
     iosSdk:              str = ''
     iosSimSdk:           str = ''
+    vulkanSdk:           str = ''
 
 def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str, toolchainEnvVarName: str) -> str:
     toolchainFound = '1' == os.getenv(statusBoolEnvVarName)
@@ -127,24 +128,36 @@ def getToolchainPath(prettyTgt: str, prettyArch: str, statusBoolEnvVarName: str,
 
 def getToolchains() -> Toolchains:
     toolch: Toolchains = Toolchains()
+
+    failed = False
+    printSectionStart()
+
     if sys.platform == 'win32':
-        printSectionStart()
         toolch.windowsToolchain    = getToolchainPath('Windows', 'x64',   'WINDOWS_TOOLCHAIN_FOUND',     'WINDOWS_TOOLCHAIN')
         toolch.linuxX64Toolchain   = getToolchainPath('Linux',   'x64',   'LINUX_X64_TOOLCHAIN_FOUND',   'LINUX_X64_TOOLCHAIN')
         toolch.linuxArm64Toolchain = getToolchainPath('Linux',   'ARM64', 'LINUX_ARM64_TOOLCHAIN_FOUND', 'LINUX_ARM64_TOOLCHAIN')
         toolch.androidToolchain    = getToolchainPath('Android', 'ARM64', 'ANDROID_TOOLCHAIN_FOUND',     'ANDROID_TOOLCHAIN')
-        printSectionEnd()
 
     elif sys.platform == 'darwin':
-        printSectionStart()
         toolch.osxTools = os.getenv('BUILD_TOOLS_PATH', '')
         toolch.iosSdk   = getToolchainPath('iOS',           'ARM64', 'IOS_SDK_FOUND',     'IOS_SDK_PATH')
         toolch.iosSdk   = getToolchainPath('iOS-Simulator', 'ARM64', 'IOS_SIM_SDK_FOUND', 'IOS_SIM_SDK_PATH')
         toolch.osxSdk   = getToolchainPath('macOS',         'ARM64', 'OSX_SDK_FOUND',     'OSX_SDK_PATH')
-        printSectionEnd()
 
     else:
-        raise NotImplementedError(f'Unsupported platform: {sys.platform}')
+        failed = True
+        printErr('Unsupported host platform! Only Windows and OSX are supported as host platforms.')
+
+    vkSdkPath = os.getenv('VULKAN_SDK', '')
+    if vkSdkPath:
+        toolch.vulkanSdk = vkSdkPath.replace('/', '\\')
+        printInfo(f'Using Vulkan SDK at: {toolch.vulkanSdk}.')
+
+    printSectionEnd()
+
+    if failed:
+        printErr('One or more toolchains were not found or not set up correctly. Please check the output above for details.')
+        sys.exit(1)
 
     return toolch
 
@@ -371,6 +384,18 @@ def getCommonCompilationArgs(
     else:
         raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
 
+    if TOOLCHAINS.vulkanSdk:
+        if plt.tgt == 'windows':
+            output += [
+                f'/I{TOOLCHAINS.vulkanSdk}/Include',
+                f'/LIBPATH:{TOOLCHAINS.vulkanSdk}/Lib',
+            ]
+        else:
+            output += [
+                f'-I{TOOLCHAINS.vulkanSdk}/Include',
+                f'-L{TOOLCHAINS.vulkanSdk}/Lib',
+            ]
+
     return output
 
 def getCompilationCommand(
@@ -526,6 +551,9 @@ def setupVsCodeLspStuff():
                 useCxx       = False,
             ),
         )
+
+        if TOOLCHAINS.vulkanSdk:
+            config.includePath += [f'{TOOLCHAINS.vulkanSdk}\\Include'.replace('\\', '/')]
 
         if plt.tgt == 'android':
             config.defines += ['ANDROID=1', '_FORTIFY_SOURCE=2']
