@@ -28,7 +28,6 @@ typedef char*               cstring;
 #else
 
     #undef  nil
-    #undef  bool
     #undef  false
     #undef  true
 
