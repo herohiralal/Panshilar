@@ -22,7 +22,9 @@ PNSLR_SUPPRESS_WARN
     #include <malloc.h>
 
     #if PNSLR_DBG
-        #define RADDBG_MARKUP_IMPLEMENTATION
+        #ifndef __cplusplus // only need the implementation in one of the files
+            #define RADDBG_MARKUP_IMPLEMENTATION
+        #endif
         #include "Dependencies/raddbg/raddbg_markup.h"
         #undef RADDBG_MARKUP_IMPLEMENTATION
     #endif
