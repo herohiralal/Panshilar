@@ -1,5 +1,4 @@
-import os, sys
-import buildutils
+import os, sys, buildutils, genprojandroid, genprojvs2022, genprojxcode
 
 # region Commandline arguments ================================================================================================
 
@@ -116,16 +115,17 @@ if __name__ == '__main__':
             buildTestRunner(plt)
 
     if CMD_ARG_MAKE_ANDROID_PROJ:
-        buildutils.createAndroidProject(
-            appName = 'PanshilarTestRunner',
-            pkgName = 'com.panshilar.testrunner',
-            projDir = 'Tools/TestRunner/ProjectFiles/TestRunner_Android',
-            cxxMain = '',
-            cMain   = 'Tools/TestRunner/zzzz_TestRunner.c',
+        genprojandroid.run(
+            appName         = 'PanshilarTestRunner',
+            pkgName         = 'com.panshilar.testrunner',
+            projDir         = 'Tools/TestRunner/ProjectFiles/TestRunner_Android',
+            cxxMain         = '',
+            cMain           = 'Tools/TestRunner/zzzz_TestRunner.c',
+            useGameActivity = False,
         )
 
     if CMD_ARG_MAKE_VS_PROJ:
-        buildutils.createVisualStudioProject(
+        genprojvs2022.run(
             projName = 'PanshilarTestRunner',
             projDir  = 'Tools/TestRunner/ProjectFiles/TestRunner_VisualStudio',
             cxxMain  = '',
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         )
 
     if CMD_ARG_MAKE_XCODE_PROJ:
-        buildutils.createXCodeProject(
+        genprojxcode.run(
             projName   = 'PanshilarTestRunner',
             pkgName    = 'com.panshilar.testrunner',
             projDir    = 'Tools/TestRunner/ProjectFiles/TestRunner_XCode',
