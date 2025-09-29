@@ -335,16 +335,16 @@ def getCommonCompilationArgs(
         if plt.tgt == 'android':
             output += ['-DANDROID=1', '-D_FORTIFY_SOURCE=2']
 
+        # removed libpath additions here becauses on most platforms, we're using volk
+        # which dynamically loads the vulkan library at runtime
         if TOOLCHAINS.vulkanSdk:
             if plt.tgt == 'windows':
                 output += [
                     f'/I{TOOLCHAINS.vulkanSdk}/Include',
-                    f'/LIBPATH:{TOOLCHAINS.vulkanSdk}/Lib',
                 ]
             else:
                 output += [
                     f'-I{TOOLCHAINS.vulkanSdk}/Include',
-                    f'-L{TOOLCHAINS.vulkanSdk}/Lib',
                 ]
 
     if addStdArgs:
