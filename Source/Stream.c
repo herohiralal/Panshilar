@@ -417,7 +417,7 @@ b8 PNSLR_FormatAndWriteToStream(PNSLR_Stream stream, utf8str fmtStr, PNSLR_Array
 
             if (i + 1 < fmtStr.count && fmtStr.data[i + 1] == '$')
             {
-                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("$$"))) { return false; }
+                if (!PNSLR_WriteToStream(stream, PNSLR_StringLiteral("$"))) { return false; }
                 i += 2;
             }
             else
