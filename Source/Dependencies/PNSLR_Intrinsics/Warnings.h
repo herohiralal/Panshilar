@@ -14,6 +14,7 @@
     #pragma warning(disable: 4711) // function selected for automatic inline expansion
     #pragma warning(disable: 4464) // relative include path contains '..'
     #pragma warning(disable: 5038) // data member will be initialized after base class
+    #pragma warning(disable: 4577) // 'noexcept' used with no exception handling mode specified
 
     #define PNSLR_SUPPRESS_WARN \
         __pragma(warning(push, 0))

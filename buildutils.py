@@ -309,9 +309,13 @@ def getCommonCompilationArgs(
 
     output: list[str]
     if plt.tgt == 'windows':
-        output = ['/Brepro', '/nologo', '/Wall', '/WX']
+        output = ['/Brepro', '/nologo', '/Wall', '/WX'] + (['/MTd'] if dbg else ['/MT'])
+        if useCxx:
+            output += ['/EHs-', '/GR-']
     else:
         output = ['-Werror']
+        if useCxx:
+            output += ['-fno-exceptions', '-fno-rtti']
 
     if dbg:
         if plt.tgt == 'windows':
