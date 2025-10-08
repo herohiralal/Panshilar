@@ -428,14 +428,62 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessEnvBlock(PNSLR_ArraySlic
 
     return envBlockUtf16;
 }
+#elif PNSLR_UNIX
+
+PNSLR_ArraySlice(utf8str) PNSLR_Internal_SplitUnixPathList(utf8str pathStr, PNSLR_Allocator allocator)
+{
+    if (!pathStr.data || !pathStr.count) return (PNSLR_ArraySlice(utf8str)) {0};
+
+    i64 start = 0, count = 0;
+    b8 quote = false;
+
+    for (i64 i = 0; i < pathStr.count; i++)
+    {
+        u8 c = pathStr.data[i];
+        if (c == '\"') { quote = !quote; }
+        else if (c == ':' && !quote) { count++; }
+    }
+
+    start = 0; quote = false;
+
+    PNSLR_ArraySlice(utf8str) paths = PNSLR_MakeSlice(utf8str, count + 1, false, allocator, PNSLR_GET_LOC(), nil);
+
+    i64 index = 0;
+    for (i64 i = 0; i < pathStr.count; i++)
+    {
+        u8 c = pathStr.data[i];
+        if (c == '\"') { quote = !quote; }
+        else if (c == ':' && !quote)
+        {
+            paths.data[index] = pathStr; paths.data[index].data += start; paths.data[index].count = i - start;
+            index++;
+            start = i + 1;
+        }
+    }
+
+    if (index != count) FORCE_DBG_TRAP;
+
+    paths.data[index] = pathStr; paths.data[index].data += start; paths.data[index].count = pathStr.count - start;
+
+    for (i64 i = 0; i < paths.count; i++)
+    {
+        utf8str s0 = paths.data[i];
+
+        utf8str s = PNSLR_ReplaceInString(s0, PNSLR_StringLiteral("\""), PNSLR_StringLiteral(""), allocator, PNSLR_StringComparisonType_CaseSensitive);
+        paths.data[i] = s;
+    }
+
+    return paths;
+}
+
 #endif
 
 b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, PNSLR_Path workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
 {
     if (!outProcessHandle) return false;
-    if (execAndArgs.count < 1 || !execAndArgs.data) return false;
-
     *outProcessHandle = (PNSLR_ProcessHandle) {0};
+
+    if (execAndArgs.count < 1 || !execAndArgs.data) return false;
 
     PNSLR_Allocator tempAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8192, PNSLR_GET_LOC(), nil);
     if (!tempAllocator.procedure) return false;
@@ -509,11 +557,247 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
     }
     #elif PNSLR_UNIX
     {
+        PNSLR_StringBuilder exeBuilder = {.allocator = tempAllocator};
+        utf8str exePath = execAndArgs.data[0];
+
+        b8 isSimpleExePath = true;
+        for (i64 i = 0; i < exePath.count; i++)
+        {
+            if (exePath.data[i] == '/' || exePath.data[i] == '\\')
+            {
+                isSimpleExePath = false;
+                break;
+            }
+        }
+
+        PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) currentEnvVars = {0};
+        if (!isSimpleExePath)
+        {
+            PNSLR_ResetStringBuilder(&exeBuilder);
+            PNSLR_AppendStringToStringBuilder(&exeBuilder, exePath);
+            PNSLR_AppendByteToStringBuilder(&exeBuilder, '\0');
+
+            utf8str exePathWithNull = PNSLR_StringFromStringBuilder(&exeBuilder);
+            cstring exePathCStr = (cstring) exePathWithNull.data;
+
+            // check if path is executable
+            if (access(exePathCStr, X_OK) != 0)
+            {
+                goto exitFn; // not executable or does not exist
+            }
+        }
+        else
+        {
+            currentEnvVars = PNSLR_GetEnvironmentVariables(tempAllocator); // to ensure PATH is loaded
+            utf8str pathVar = {0};
+            for (i64 i = 0; i < currentEnvVars.count; i++)
+            {
+                if (PNSLR_AreStringsEqual(currentEnvVars.data[i].key, PNSLR_StringLiteral("PATH"), PNSLR_StringComparisonType_CaseSensitive))
+                {
+                    pathVar = currentEnvVars.data[i].value;
+                    break;
+                }
+            }
+
+            PNSLR_ArraySlice(utf8str) pathDirs = PNSLR_Internal_SplitUnixPathList(pathVar, tempAllocator);
+
+            b8 found = false;
+            for (i64 i = 0; i < pathDirs.count; i++)
+            {
+                utf8str dir = pathDirs.data[i];
+                PNSLR_ResetStringBuilder(&exeBuilder);
+                PNSLR_AppendStringToStringBuilder(&exeBuilder, dir);
+                PNSLR_AppendByteToStringBuilder(&exeBuilder, '/');
+                PNSLR_AppendStringToStringBuilder(&exeBuilder, exePath);
+                PNSLR_AppendByteToStringBuilder(&exeBuilder, '\0');
+
+                utf8str fullPath = PNSLR_StringFromStringBuilder(&exeBuilder);
+                cstring fullPathCStr = (cstring) fullPath.data;
+
+                if (access(fullPathCStr, X_OK) == 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) // check in cwd
+            {
+                PNSLR_ResetStringBuilder(&exeBuilder);
+                PNSLR_AppendStringToStringBuilder(&exeBuilder, workingDirectory.path);
+                if (workingDirectory.path.count > 0 && workingDirectory.path.data[workingDirectory.path.count - 1] != '/')
+                    PNSLR_AppendByteToStringBuilder(&exeBuilder, '/');
+                PNSLR_AppendStringToStringBuilder(&exeBuilder, PNSLR_StringLiteral("./"));
+                PNSLR_AppendStringToStringBuilder(&exeBuilder, exePath);
+                PNSLR_AppendByteToStringBuilder(&exeBuilder, '\0');
+
+                utf8str fullPath = PNSLR_StringFromStringBuilder(&exeBuilder);
+                cstring fullPathCStr = (cstring) fullPath.data;
+
+                if (access(fullPathCStr, X_OK) == 0)
+                {
+                    found = true;
+                }
+            }
+
+            if (!found) { goto exitFn; } // not found in PATH
+        }
+
+        cstring cwd = nil;
+        if (workingDirectory.path.data && workingDirectory.path.count)
+            cwd = PNSLR_CStringFromString(workingDirectory.path, tempAllocator);
+
+
+        cstring* cmd = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (execAndArgs.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+
+        for (i64 i = 0; i < execAndArgs.count; i++)
+            cmd[i] = PNSLR_CStringFromString(execAndArgs.data[i], tempAllocator);
+
+        cstring* env;
+        if (!environmentVariables.count || !environmentVariables.data)
+        {
+            env = environ; // inherit from current process
+        }
+        else
+        {
+            cstring* cenv = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (environmentVariables.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+            for (i64 i = 0; i < environmentVariables.count; i++)
+                cenv[i] = PNSLR_CStringFromString(environmentVariables.data[i], tempAllocator);
+
+            env = cenv;
+        }
+
+        static const i32 READ = 0;
+        static const i32 WRITE = 1;
+
+        int pipeVal[2];
+        if (pipe(pipeVal) != 0) { goto exitFn; }
+
+        // make read end non-blocking
+        if (fcntl(pipeVal[READ], F_SETFD, FD_CLOEXEC) == -1)
+        {
+            close(pipeVal[READ]);
+            close(pipeVal[WRITE]);
+            goto exitFn;
+        }
+
+        // make write end non-blocking
+        if (fcntl(pipeVal[WRITE], F_SETFD, FD_CLOEXEC) == -1)
+        {
+            close(pipeVal[READ]);
+            close(pipeVal[WRITE]);
+            goto exitFn;
+        }
+
+        __pid_t pid = fork();
+        switch (pid)
+        {
+            case -1: // fork failed
+            {
+                close(pipeVal[WRITE]);
+                close(pipeVal[READ]);
+                goto exitFn;
+            }
+
+            case 0: // child
+            {
+                int nullFile = open("/dev/null", O_RDWR);
+                if (nullFile == -1)
+                {
+                    u8 errNoVal = (u8) errno;
+                    write(pipeVal[WRITE], &errNoVal, 1);
+                    exit(126);
+                }
+
+                int stdoutFile = stdOutPipe ? (i32) (i64) stdOutPipe->platformHandle : nullFile;
+                int stderrFile = stdErrPipe ? (i32) (i64) stdErrPipe->platformHandle : nullFile;
+                int stdinFile  = nullFile; // we do not support stdin for now
+
+                if (dup2(stdoutFile, STDOUT_FILENO) == -1 ||
+                    dup2(stderrFile, STDERR_FILENO) == -1 ||
+                    dup2(stdinFile,  STDIN_FILENO)  == -1)
+                {
+                    u8 errNoVal = (u8) errno;
+                    write(pipeVal[WRITE], &errNoVal, 1);
+                    exit(126);
+                }
+
+                if (cwd != nil && chdir(cwd) != 0)
+                {
+                    u8 errNoVal = (u8) errno;
+                    write(pipeVal[WRITE], &errNoVal, 1);
+                    exit(126);
+                }
+
+                utf8str fullExePath = PNSLR_StringFromStringBuilder(&exeBuilder);
+                cstring fullExePathCStr = (cstring) fullExePath.data;
+
+                int res = execve(fullExePathCStr, cmd, env);
+                if (res == -1)
+                {
+                    u8 errNoVal = (u8) errno;
+                    write(pipeVal[WRITE], &errNoVal, 1);
+                    exit(126);
+                }
+
+                break;
+            }
+
+            default: // parent
+            {
+                close(pipeVal[WRITE]);
+
+                int errNoVal;
+                while (true)
+                {
+                    u8 errNoByte = 0;
+                    switch (read(pipeVal[READ], &errNoByte, 1))
+                    {
+                        case 1:
+                            errNoVal = (int) errNoByte;
+                            break;
+
+                        case -1:
+                            if (errno == EINTR) continue; // interrupted, try again
+                            errNoVal = errno;
+                            break;
+                    }
+
+                    break;
+                }
+
+                if (errNoVal != 0)
+                {
+                    // reported error
+
+                    while (true)
+                    {
+                        siginfo_t info;
+                        int wpid = waitid(P_PID, (id_t) (outProcessHandle->pid), &info, WEXITED);
+                        if (wpid == -1 && errno == EINTR)
+                            continue; // interrupted, try again
+                        break;
+                    }
+
+                    close(pipeVal[READ]);
+                    goto exitFn;
+                }
+
+                // open the process
+                // but we haven't implemented it yet, so just store the pid
+                *outProcessHandle = (PNSLR_ProcessHandle) {.pid = (i64) pid, .handle = 0};
+                success = true;
+                break;
+            }
+        }
+
+        close(pipeVal[READ]);
     }
     #else
         #error "Process creation not implemented on this platform"
     #endif
 
+exitFn:
     PNSLR_DestroyAllocator_Arena(tempAllocator, PNSLR_GET_LOC(), nil);
 
     return success;
