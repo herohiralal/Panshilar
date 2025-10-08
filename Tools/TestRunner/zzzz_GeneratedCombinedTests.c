@@ -11,11 +11,16 @@
 #undef MAIN_TEST_FN
 
 #undef MAIN_TEST_FN
+#define MAIN_TEST_FN(ctxArgName) void ZZZZ_Test_EnvVarsTest(const TestContext* ctxArgName)
+#include "EnvVarsTest.c"
+#undef MAIN_TEST_FN
+
+#undef MAIN_TEST_FN
 #define MAIN_TEST_FN(ctxArgName) void ZZZZ_Test_StringsTest(const TestContext* ctxArgName)
 #include "StringsTest.c"
 #undef MAIN_TEST_FN
 
-u64 ZZZZ_GetTestsCount(void) { return 3ULL; }
+u64 ZZZZ_GetTestsCount(void) { return 4ULL; }
 
 void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)
 {
@@ -25,8 +30,11 @@ void ZZZZ_GetAllTests(PNSLR_ArraySlice(TestFunctionInfo) fns)
     fns.data[1].name = PNSLR_StringLiteral("0020_FilePresentTest");
     fns.data[1].fn   = ZZZZ_Test_0020_FilePresentTest;
 
-    fns.data[2].name = PNSLR_StringLiteral("StringsTest");
-    fns.data[2].fn   = ZZZZ_Test_StringsTest;
+    fns.data[2].name = PNSLR_StringLiteral("EnvVarsTest");
+    fns.data[2].fn   = ZZZZ_Test_EnvVarsTest;
+
+    fns.data[3].name = PNSLR_StringLiteral("StringsTest");
+    fns.data[3].fn   = ZZZZ_Test_StringsTest;
 
     // done
 }

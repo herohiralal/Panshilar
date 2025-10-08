@@ -1976,6 +1976,25 @@ namespace Panshilar
         i32 exitCode
     );
 
+    /**
+     * A key-value pair representing an environment variable.
+     */
+    struct EnvVarKeyValuePair
+    {
+       utf8str key;
+       utf8str value;
+    };
+
+    /**
+     * Retrieves all environment variables as an array slice of key-value pairs.
+     * The returned array slice is allocated using the provided allocator.
+     * The individual strings within the key-value pairs are also individually
+     * allocated using the same allocator.
+     */
+    ArraySlice<EnvVarKeyValuePair> GetEnvironmentVariables(
+        Allocator allocator
+    );
+
     // #######################################################################################
     // Network
     // #######################################################################################
@@ -4174,6 +4193,36 @@ extern "C" void PNSLR_ExitProcess(i32 exitCode);
 void Panshilar::ExitProcess(i32 exitCode)
 {
     PNSLR_ExitProcess(PNSLR_Bindings_Convert(exitCode));
+}
+
+struct PNSLR_EnvVarKeyValuePair
+{
+   PNSLR_UTF8STR key;
+   PNSLR_UTF8STR value;
+};
+static_assert(sizeof(PNSLR_EnvVarKeyValuePair) == sizeof(Panshilar::EnvVarKeyValuePair), "size mismatch");
+static_assert(alignof(PNSLR_EnvVarKeyValuePair) == alignof(Panshilar::EnvVarKeyValuePair), "align mismatch");
+PNSLR_EnvVarKeyValuePair* PNSLR_Bindings_Convert(Panshilar::EnvVarKeyValuePair* x) { return reinterpret_cast<PNSLR_EnvVarKeyValuePair*>(x); }
+Panshilar::EnvVarKeyValuePair* PNSLR_Bindings_Convert(PNSLR_EnvVarKeyValuePair* x) { return reinterpret_cast<Panshilar::EnvVarKeyValuePair*>(x); }
+PNSLR_EnvVarKeyValuePair& PNSLR_Bindings_Convert(Panshilar::EnvVarKeyValuePair& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::EnvVarKeyValuePair& PNSLR_Bindings_Convert(PNSLR_EnvVarKeyValuePair& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_EnvVarKeyValuePair, key) == PNSLR_STRUCT_OFFSET(Panshilar::EnvVarKeyValuePair, key), "key offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_EnvVarKeyValuePair, value) == PNSLR_STRUCT_OFFSET(Panshilar::EnvVarKeyValuePair, value), "value offset mismatch");
+
+typedef struct { PNSLR_EnvVarKeyValuePair* data; i64 count; } PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair;
+static_assert(sizeof(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair) == sizeof(ArraySlice<Panshilar::EnvVarKeyValuePair>), "size mismatch");
+static_assert(alignof(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair) == alignof(ArraySlice<Panshilar::EnvVarKeyValuePair>), "align mismatch");
+PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair* PNSLR_Bindings_Convert(ArraySlice<Panshilar::EnvVarKeyValuePair>* x) { return reinterpret_cast<PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair*>(x); }
+ArraySlice<Panshilar::EnvVarKeyValuePair>* PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair* x) { return reinterpret_cast<ArraySlice<Panshilar::EnvVarKeyValuePair>*>(x); }
+PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair& PNSLR_Bindings_Convert(ArraySlice<Panshilar::EnvVarKeyValuePair>& x) { return *PNSLR_Bindings_Convert(&x); }
+ArraySlice<Panshilar::EnvVarKeyValuePair>& PNSLR_Bindings_Convert(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair, count) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::EnvVarKeyValuePair>, count), "count offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair, data) == PNSLR_STRUCT_OFFSET(ArraySlice<Panshilar::EnvVarKeyValuePair>, data), "data offset mismatch");
+
+extern "C" PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair PNSLR_GetEnvironmentVariables(PNSLR_Allocator allocator);
+ArraySlice<Panshilar::EnvVarKeyValuePair> Panshilar::GetEnvironmentVariables(Panshilar::Allocator allocator)
+{
+    PNSLR_ArraySlice_PNSLR_EnvVarKeyValuePair zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetEnvironmentVariables(PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 typedef PNSLR_ArraySlice_u8 PNSLR_IPAddress;

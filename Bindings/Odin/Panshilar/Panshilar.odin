@@ -2443,6 +2443,29 @@ foreign {
 	) ---
 }
 
+/*
+A key-value pair representing an environment variable.
+*/
+EnvVarKeyValuePair :: struct  {
+	key: string,
+	value: string,
+}
+
+// declare []EnvVarKeyValuePair
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Retrieves all environment variables as an array slice of key-value pairs.
+	The returned array slice is allocated using the provided allocator.
+	The individual strings within the key-value pairs are also individually
+	allocated using the same allocator.
+	*/
+	GetEnvironmentVariables :: proc "c" (
+		allocator: Allocator,
+	) -> []EnvVarKeyValuePair ---
+}
+
 // #######################################################################################
 // Network
 // #######################################################################################
