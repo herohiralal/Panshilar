@@ -43,7 +43,7 @@ This file contains todo items for Panshilar library.
   - [ ] Colors
 - [ ] Threading
   - [ ] Atomics
-  - [ ] Start/Sleep/WaitFor Thread
+  - [x] Start/Sleep/WaitFor Thread
   - [x] CriticalSection
   - [x] RWMutex
   - [x] Semaphore
