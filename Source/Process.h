@@ -79,5 +79,40 @@ b8 PNSLR_WriteToPipe(PNSLR_PipeHandle pipe, PNSLR_ArraySlice(u8) src);
  */
 b8 PNSLR_ClosePipe(PNSLR_PipeHandle pipe);
 
+/**
+ * A handle to a process.
+ * The `pid` field is the process ID.
+ * On Windows, this is `dwProcessId`.
+ * On Unix-like systems, this is the PID.
+ * The `handle` field is a platform-specific handle to the process.
+ * On Windows, this is a HANDLE.
+ * On Unix-like systems, this is pidfd.
+ */
+typedef struct PNSLR_ProcessHandle
+{
+    i64 pid;
+    u64 handle;
+} PNSLR_ProcessHandle;
+
+/**
+ * Starts a new process with the specified executable and arguments.
+ * Optionally, environment variables, working directory, and pipes for
+ * standard output and error can be provided.
+ *
+ * If not provided, environment variables and working directory are inherited
+ * from the current process. If provided, they must be in a 'KEY=VALUE' format.
+ *
+ * The pipe handles provided must be read ends for stdout and stderr respectively.
+ * If null, the respective output is discarded.
+ */
+b8 PNSLR_StartProcess(
+    PNSLR_ProcessHandle*      outProcessHandle,
+    PNSLR_ArraySlice(utf8str) execAndArgs,
+    PNSLR_ArraySlice(utf8str) environmentVariables OPT_ARG,
+    utf8str                   workingDirectory     OPT_ARG,
+    PNSLR_PipeHandle*         stdOutPipe           OPT_ARG,
+    PNSLR_PipeHandle*         stdErrPipe           OPT_ARG
+);
+
 EXTERN_C_END
 #endif // PNSLR_PROCESS_H ==========================================================

@@ -204,7 +204,6 @@ b8 PNSLR_WriteToPipe(PNSLR_PipeHandle pipe, PNSLR_ArraySlice(u8) src)
 {
     if (!src.data || !src.count) { return false; }
 
-    i64 bytesWrittenTotal = 0;
     b8 success = true;
 
     #if PNSLR_WINDOWS
@@ -220,7 +219,6 @@ b8 PNSLR_WriteToPipe(PNSLR_PipeHandle pipe, PNSLR_ArraySlice(u8) src)
                 success = false;
             bytesWritten = 0;
         }
-        bytesWrittenTotal = (i64) bytesWritten;
 
     #elif PNSLR_UNIX
 
@@ -232,8 +230,6 @@ b8 PNSLR_WriteToPipe(PNSLR_PipeHandle pipe, PNSLR_ArraySlice(u8) src)
             else
                 success = false;
         }
-
-        bytesWrittenTotal = (i64) res;
 
     #endif
 
@@ -253,6 +249,272 @@ b8 PNSLR_ClosePipe(PNSLR_PipeHandle pipe)
         success = (close((i32) (i64) pipe.platformHandle) == 0);
 
     #endif
+
+    return success;
+}
+
+#if PNSLR_WINDOWS
+PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessCmdLine(PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_Allocator tempAllocator)
+{
+    PNSLR_StringBuilder sb = {.allocator = tempAllocator};
+
+    for (i64 i = 0; i < execAndArgs.count; i++)
+    {
+        utf8str arg = execAndArgs.data[i];
+
+        if (i != 0) { PNSLR_AppendByteToStringBuilder(&sb, ' '); }
+
+        // Escape and quote the argument as needed
+        b8 needsQuotes = false;
+        for (i64 j = 0; j < arg.count; j++)
+        {
+            if (false ||
+                arg.data[j] == '('  ||
+                arg.data[j] == ')'  ||
+                arg.data[j] == '['  ||
+                arg.data[j] == ']'  ||
+                arg.data[j] == '{'  ||
+                arg.data[j] == '}'  ||
+                arg.data[j] == '^'  ||
+                arg.data[j] == '='  ||
+                arg.data[j] == ';'  ||
+                arg.data[j] == '!'  ||
+                arg.data[j] == '\'' ||
+                arg.data[j] == '+'  ||
+                arg.data[j] == ','  ||
+                arg.data[j] == '`'  ||
+                arg.data[j] == '~'  ||
+                arg.data[j] == '\"' ||
+                arg.data[j] == ' '  ||
+                false)
+            {
+                needsQuotes = true;
+                break;
+            }
+        }
+
+        if (!needsQuotes)
+        {
+            PNSLR_AppendStringToStringBuilder(&sb, arg);
+            continue;
+        }
+
+        // Argument needs quotes and possibly escaping
+
+        PNSLR_AppendByteToStringBuilder(&sb, '\"'); // start
+
+        i64 j = 0;
+        while (j < arg.count)
+        {
+            i64 backslashes = 0;
+
+            while (j < arg.count && arg.data[j] == '\\') { backslashes++; j++; }
+
+            if (j == arg.count)
+            {
+                // Escape all backslashes at the end
+                for (i64 k = 0; k < backslashes * 2; k++)
+                    PNSLR_AppendByteToStringBuilder(&sb, '\\');
+                break;
+            }
+            else if (arg.data[j] == '\"')
+            {
+                // Escape all backslashes and the quote
+                for (i64 k = 0; k < (backslashes * 2) + 1; k++)
+                    PNSLR_AppendByteToStringBuilder(&sb, '\\');
+
+                PNSLR_AppendByteToStringBuilder(&sb, '\"');
+            }
+            else
+            {
+                // No special handling needed, just output the backslashes
+                for (i64 k = 0; k < backslashes; k++)
+                    PNSLR_AppendByteToStringBuilder(&sb, '\\');
+
+                PNSLR_AppendByteToStringBuilder(&sb, arg.data[j]);
+            }
+
+            j++;
+        }
+
+        PNSLR_AppendByteToStringBuilder(&sb, '\"'); // end
+    }
+
+    utf8str cmdLineUtf8 = PNSLR_StringFromStringBuilder(&sb);
+
+    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, (i32) cmdLineUtf8.count, NULL, 0);
+    if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
+
+    PNSLR_ArraySlice(u16) cmdLineUtf16 = PNSLR_MakeSlice(u16, (i64) n, false, tempAllocator, PNSLR_GET_LOC(), nil);
+    if (!cmdLineUtf16.data) { return (PNSLR_ArraySlice(u16)) {0}; } // allocation failed
+
+    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, (i32) cmdLineUtf8.count, (LPWSTR) cmdLineUtf16.data, (i32) n);
+    if (n1 == 0)
+    {
+        PNSLR_FreeSlice(&cmdLineUtf16, tempAllocator, PNSLR_GET_LOC(), nil);
+        return (PNSLR_ArraySlice(u16)) {0}; // conversion failed
+    }
+
+    return cmdLineUtf16;
+}
+
+PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessEnvBlock(PNSLR_ArraySlice(utf8str) envVars, PNSLR_Allocator tempAllocator)
+{
+    PNSLR_StringBuilder sb = {.allocator = tempAllocator};
+
+    for (i64 currIdx = (envVars.count - 1); currIdx >= 0; --currIdx)
+    {
+        utf8str kv = envVars.data[currIdx];
+
+        i64 eqIdx = -1;
+        for (i64 i = 0; i < kv.count; i++)
+        {
+            if (kv.data[i] == '=')
+            {
+                eqIdx = i;
+                break;
+            }
+        }
+
+        if (eqIdx == -1) { continue; } // malformed, skip
+
+        utf8str key = kv; key.count = eqIdx;
+
+        b8 foundDuplicate = false;
+        for (i64 prevIdx = (currIdx + 1); prevIdx < envVars.count; prevIdx++)
+        {
+            i64 eqIdxPrev = -1;
+            for (i64 i = 0; i < envVars.data[prevIdx].count; i++)
+            {
+                if (envVars.data[prevIdx].data[i] == '=')
+                {
+                    eqIdxPrev = i;
+                    break;
+                }
+            }
+
+            if (eqIdxPrev == -1) { continue; } // malformed, skip
+
+            utf8str keyPrev = envVars.data[prevIdx]; keyPrev.count = eqIdxPrev;
+            if (PNSLR_AreStringsEqual(key, keyPrev, PNSLR_StringComparisonType_CaseSensitive))
+            {
+                foundDuplicate = true;
+                break;
+            }
+        }
+
+        if (foundDuplicate) { continue; } // skip this one, a later one exists
+
+        PNSLR_AppendStringToStringBuilder(&sb, kv);
+        PNSLR_AppendByteToStringBuilder(&sb, '\0'); // null terminator
+    }
+
+    PNSLR_AppendByteToStringBuilder(&sb, '\0'); // final null terminator
+
+    utf8str envBlockUtf8 = PNSLR_StringFromStringBuilder(&sb);
+
+    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, (i32) envBlockUtf8.count, NULL, 0);
+    if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
+
+    PNSLR_ArraySlice(u16) envBlockUtf16 = PNSLR_MakeSlice(u16, (i64) n, false, tempAllocator, PNSLR_GET_LOC(), nil);
+    if (!envBlockUtf16.data) { return (PNSLR_ArraySlice(u16)) {0}; } // allocation failed
+
+    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, (i32) envBlockUtf8.count, (LPWSTR) envBlockUtf16.data, (i32) n);
+    if (n1 == 0)
+    {
+        PNSLR_FreeSlice(&envBlockUtf16, tempAllocator, PNSLR_GET_LOC(), nil);
+        return (PNSLR_ArraySlice(u16)) {0}; // conversion failed
+    }
+
+    return envBlockUtf16;
+}
+#endif
+
+b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, utf8str workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
+{
+    if (!outProcessHandle) return false;
+    if (execAndArgs.count < 1 || !execAndArgs.data) return false;
+
+    *outProcessHandle = (PNSLR_ProcessHandle) {0};
+
+    PNSLR_Allocator tempAllocator = PNSLR_NewAllocator_Arena(PNSLR_GetAllocator_DefaultHeap(), 8192, PNSLR_GET_LOC(), nil);
+    if (!tempAllocator.procedure) return false;
+
+    b8 success = false;
+    #if PNSLR_WINDOWS
+    {
+        PNSLR_ArraySlice(u16) cmdLine = PNSLR_Internal_BuildWindowsProcessCmdLine(execAndArgs, tempAllocator);
+
+        if (!environmentVariables.count || !environmentVariables.data)
+        {
+            PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) kvps = PNSLR_GetEnvironmentVariables(tempAllocator);
+            PNSLR_ArraySlice(utf8str) envVars = PNSLR_MakeSlice(utf8str, kvps.count, false, tempAllocator, PNSLR_GET_LOC(), nil);
+            for (i64 i = 0; i < kvps.count; i++)
+                envVars.data[i] = kvps.data[i].kvp;
+        }
+
+        PNSLR_ArraySlice(u16) envBlock = PNSLR_Internal_BuildWindowsProcessEnvBlock(environmentVariables, tempAllocator);
+
+        HANDLE nullHandle = NULL;
+        if (!stdOutPipe || !stdErrPipe)
+        {
+            SECURITY_ATTRIBUTES sa = {.nLength = sizeof(SECURITY_ATTRIBUTES), .bInheritHandle = true};
+            nullHandle = CreateFileW(L"NUL", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nil);
+            if (nullHandle == INVALID_HANDLE_VALUE) { FORCE_DBG_TRAP; } // should not happen
+        }
+
+        HANDLE stdOutHandle = stdOutPipe ? (HANDLE) (rawptr) stdOutPipe->platformHandle : nullHandle;
+        HANDLE stdErrHandle = stdErrPipe ? (HANDLE) (rawptr) stdErrPipe->platformHandle : nullHandle;
+        HANDLE stdInHandle  = nullHandle; // we do not support stdin for now
+
+        PNSLR_ArraySlice(u16) workingDirUtf16 = {0};
+        if (workingDirectory.data && workingDirectory.count) workingDirUtf16 = PNSLR_UTF16FromUTF8WindowsOnly(workingDirectory, tempAllocator);
+
+        STARTUPINFOW si =
+        {
+            .cb = sizeof(STARTUPINFOW),
+            .hStdError = stdErrHandle,
+            .hStdOutput = stdOutHandle,
+            .hStdInput = stdInHandle,
+            .dwFlags = STARTF_USESTDHANDLES
+        };
+
+        PROCESS_INFORMATION pi = {0};
+        BOOL ok = CreateProcessW(
+            NULL,
+            (LPWSTR) cmdLine.data,
+            NULL,
+            NULL,
+            true,
+            CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS,
+            envBlock.data,
+            workingDirUtf16.data,
+            &si,
+            &pi
+        );
+
+        if (nullHandle != NULL)
+        {
+            CloseHandle(nullHandle);
+            nullHandle = NULL;
+        }
+
+        success = (b8) ok;
+
+        *outProcessHandle = (PNSLR_ProcessHandle)
+        {
+            .pid = (i64) pi.dwProcessId,
+            .handle = (u64) (rawptr) pi.hProcess
+        };
+    }
+    #elif PNSLR_UNIX
+    {
+    }
+    #else
+        #error "Process creation not implemented on this platform"
+    #endif
+
+    PNSLR_DestroyAllocator_Arena(tempAllocator, PNSLR_GET_LOC(), nil);
 
     return success;
 }

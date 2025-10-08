@@ -54,6 +54,7 @@ PNSLR_SUPPRESS_WARN
     #include <sys/stat.h>
     #include <sys/wait.h>
     #include <sys/mman.h>
+    #include <sys/ioctl.h>
     #include <netinet/in.h>
     #include <errno.h>
     #include <dirent.h>
