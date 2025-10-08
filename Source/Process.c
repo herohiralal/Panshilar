@@ -430,7 +430,7 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessEnvBlock(PNSLR_ArraySlic
 }
 #endif
 
-b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, utf8str workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
+b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, PNSLR_Path workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
 {
     if (!outProcessHandle) return false;
     if (execAndArgs.count < 1 || !execAndArgs.data) return false;
@@ -468,7 +468,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
         HANDLE stdInHandle  = nullHandle; // we do not support stdin for now
 
         PNSLR_ArraySlice(u16) workingDirUtf16 = {0};
-        if (workingDirectory.data && workingDirectory.count) workingDirUtf16 = PNSLR_UTF16FromUTF8WindowsOnly(workingDirectory, tempAllocator);
+        if (workingDirectory.path.data && workingDirectory.path.count) workingDirUtf16 = PNSLR_UTF16FromUTF8WindowsOnly(workingDirectory.path, tempAllocator);
 
         STARTUPINFOW si =
         {

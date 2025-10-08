@@ -2,6 +2,7 @@
 #define PNSLR_PROCESS_H
 #include "__Prelude.h"
 #include "Allocators.h"
+#include "IO.h"
 EXTERN_C_BEGIN
 
 /**
@@ -109,7 +110,7 @@ b8 PNSLR_StartProcess(
     PNSLR_ProcessHandle*      outProcessHandle,
     PNSLR_ArraySlice(utf8str) execAndArgs,
     PNSLR_ArraySlice(utf8str) environmentVariables OPT_ARG,
-    utf8str                   workingDirectory     OPT_ARG,
+    PNSLR_Path                workingDirectory     OPT_ARG,
     PNSLR_PipeHandle*         stdOutPipe           OPT_ARG,
     PNSLR_PipeHandle*         stdErrPipe           OPT_ARG
 );
