@@ -286,6 +286,7 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessCmdLine(PNSLR_ArraySlice
                 arg.data[j] == '~'  ||
                 arg.data[j] == '\"' ||
                 arg.data[j] == ' '  ||
+                arg.data[j] == '\t' || // include tab as whitespace
                 false)
             {
                 needsQuotes = true;
@@ -340,15 +341,16 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessCmdLine(PNSLR_ArraySlice
         PNSLR_AppendByteToStringBuilder(&sb, '\"'); // end
     }
 
+    PNSLR_AppendByteToStringBuilder(&sb, '\0');
     utf8str cmdLineUtf8 = PNSLR_StringFromStringBuilder(&sb);
 
-    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, (i32) cmdLineUtf8.count, NULL, 0);
+    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, -1, NULL, 0);
     if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
 
     PNSLR_ArraySlice(u16) cmdLineUtf16 = PNSLR_MakeSlice(u16, (i64) n, false, tempAllocator, PNSLR_GET_LOC(), nil);
     if (!cmdLineUtf16.data) { return (PNSLR_ArraySlice(u16)) {0}; } // allocation failed
 
-    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, (i32) cmdLineUtf8.count, (LPWSTR) cmdLineUtf16.data, (i32) n);
+    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) cmdLineUtf8.data, -1, (LPWSTR) cmdLineUtf16.data, n);
     if (n1 == 0)
     {
         PNSLR_FreeSlice(&cmdLineUtf16, tempAllocator, PNSLR_GET_LOC(), nil);
@@ -396,7 +398,7 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessEnvBlock(PNSLR_ArraySlic
             if (eqIdxPrev == -1) { continue; } // malformed, skip
 
             utf8str keyPrev = envVars.data[prevIdx]; keyPrev.count = eqIdxPrev;
-            if (PNSLR_AreStringsEqual(key, keyPrev, PNSLR_StringComparisonType_CaseSensitive))
+            if (PNSLR_AreStringsEqual(key, keyPrev, PNSLR_StringComparisonType_CaseInsensitive))
             {
                 foundDuplicate = true;
                 break;
@@ -413,13 +415,13 @@ PNSLR_ArraySlice(u16) PNSLR_Internal_BuildWindowsProcessEnvBlock(PNSLR_ArraySlic
 
     utf8str envBlockUtf8 = PNSLR_StringFromStringBuilder(&sb);
 
-    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, (i32) envBlockUtf8.count, NULL, 0);
+    i32 n = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, -1, NULL, 0);
     if (n <= 0) { return (PNSLR_ArraySlice(u16)) {0}; } // conversion failed
 
     PNSLR_ArraySlice(u16) envBlockUtf16 = PNSLR_MakeSlice(u16, (i64) n, false, tempAllocator, PNSLR_GET_LOC(), nil);
     if (!envBlockUtf16.data) { return (PNSLR_ArraySlice(u16)) {0}; } // allocation failed
 
-    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, (i32) envBlockUtf8.count, (LPWSTR) envBlockUtf16.data, (i32) n);
+    i32 n1 = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR) envBlockUtf8.data, -1, (LPWSTR) envBlockUtf16.data, (i32) n);
     if (n1 == 0)
     {
         PNSLR_FreeSlice(&envBlockUtf16, tempAllocator, PNSLR_GET_LOC(), nil);
@@ -493,15 +495,19 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
     {
         PNSLR_ArraySlice(u16) cmdLine = PNSLR_Internal_BuildWindowsProcessCmdLine(execAndArgs, tempAllocator);
 
+        // Build localEnvVars if environmentVariables is empty; otherwise use provided env list.
+        PNSLR_ArraySlice(utf8str) localEnvVars = environmentVariables;
         if (!environmentVariables.count || !environmentVariables.data)
         {
             PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) kvps = PNSLR_GetEnvironmentVariables(tempAllocator);
-            PNSLR_ArraySlice(utf8str) envVars = PNSLR_MakeSlice(utf8str, kvps.count, false, tempAllocator, PNSLR_GET_LOC(), nil);
+            localEnvVars = PNSLR_MakeSlice(utf8str, kvps.count, false, tempAllocator, PNSLR_GET_LOC(), nil);
             for (i64 i = 0; i < kvps.count; i++)
-                envVars.data[i] = kvps.data[i].kvp;
+                localEnvVars.data[i] = kvps.data[i].kvp;
         }
 
-        PNSLR_ArraySlice(u16) envBlock = PNSLR_Internal_BuildWindowsProcessEnvBlock(environmentVariables, tempAllocator);
+        PNSLR_ArraySlice(u16) envBlock = {0};
+        if (localEnvVars.count && localEnvVars.data)
+            envBlock = PNSLR_Internal_BuildWindowsProcessEnvBlock(localEnvVars, tempAllocator);
 
         HANDLE nullHandle = NULL;
         if (!stdOutPipe || !stdErrPipe)
@@ -535,8 +541,8 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
             NULL,
             true,
             CREATE_UNICODE_ENVIRONMENT | NORMAL_PRIORITY_CLASS,
-            envBlock.data,
-            workingDirUtf16.data,
+            envBlock.data ? envBlock.data : NULL,
+            workingDirUtf16.data ? workingDirUtf16.data : NULL,
             &si,
             &pi
         );
@@ -549,11 +555,22 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
 
         success = (b8) ok;
 
-        *outProcessHandle = (PNSLR_ProcessHandle)
+        if (ok)
         {
-            .pid = (i64) pi.dwProcessId,
-            .handle = (u64) (rawptr) pi.hProcess
-        };
+            *outProcessHandle = (PNSLR_ProcessHandle)
+            {
+                .pid = (i64) pi.dwProcessId,
+                .handle = (u64) (rawptr) pi.hProcess
+            };
+            // We don't need the initial thread handle here — close to avoid leak.
+            if (pi.hThread) { CloseHandle(pi.hThread); pi.hThread = NULL; }
+        }
+        else
+        {
+            // Ensure we don't leak any handles if CreateProcessW failed and returned handles.
+            if (pi.hProcess) { CloseHandle(pi.hProcess); pi.hProcess = NULL; }
+            if (pi.hThread)  { CloseHandle(pi.hThread);  pi.hThread = NULL; }
+        }
     }
     #elif PNSLR_UNIX
     {
@@ -649,20 +666,25 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
 
 
         cstring* cmd = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (execAndArgs.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+        if (!cmd) goto exitFn;
 
         for (i64 i = 0; i < execAndArgs.count; i++)
             cmd[i] = PNSLR_CStringFromString(execAndArgs.data[i], tempAllocator);
+        cmd[execAndArgs.count] = NULL; // NULL-terminate argv
 
         cstring* env;
+        cstring* cenv = NULL;
         if (!environmentVariables.count || !environmentVariables.data)
         {
             env = environ; // inherit from current process
         }
         else
         {
-            cstring* cenv = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (environmentVariables.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+            cenv = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (environmentVariables.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+            if (!cenv) goto exitFn;
             for (i64 i = 0; i < environmentVariables.count; i++)
                 cenv[i] = PNSLR_CStringFromString(environmentVariables.data[i], tempAllocator);
+            cenv[environmentVariables.count] = NULL; // NULL-terminate envp
 
             env = cenv;
         }
@@ -673,7 +695,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
         int pipeVal[2];
         if (pipe(pipeVal) != 0) { goto exitFn; }
 
-        // make read end non-blocking
+        // make read end close-on-exec
         if (fcntl(pipeVal[READ], F_SETFD, FD_CLOEXEC) == -1)
         {
             close(pipeVal[READ]);
@@ -681,7 +703,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
             goto exitFn;
         }
 
-        // make write end non-blocking
+        // make write end close-on-exec
         if (fcntl(pipeVal[WRITE], F_SETFD, FD_CLOEXEC) == -1)
         {
             close(pipeVal[READ]);
@@ -701,12 +723,16 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
 
             case 0: // child
             {
+                // Close read end in child; child will write a single byte on failure.
+                close(pipeVal[READ]);
+
                 int nullFile = open("/dev/null", O_RDWR);
                 if (nullFile == -1)
                 {
-                    u8 errNoVal = (u8) errno;
-                    write(pipeVal[WRITE], &errNoVal, 1);
-                    exit(126);
+                    int errNoVal = errno;
+                    // write 4 bytes of errno for safety
+                    (void)write(pipeVal[WRITE], &errNoVal, sizeof(errNoVal));
+                    _exit(126);
                 }
 
                 int stdoutFile = stdOutPipe ? (i32) (i64) stdOutPipe->platformHandle : nullFile;
@@ -717,27 +743,28 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
                     dup2(stderrFile, STDERR_FILENO) == -1 ||
                     dup2(stdinFile,  STDIN_FILENO)  == -1)
                 {
-                    u8 errNoVal = (u8) errno;
-                    write(pipeVal[WRITE], &errNoVal, 1);
-                    exit(126);
+                    int errNoVal = errno;
+                    (void)write(pipeVal[WRITE], &errNoVal, sizeof(errNoVal));
+                    _exit(126);
                 }
 
                 if (cwd != nil && chdir(cwd) != 0)
                 {
-                    u8 errNoVal = (u8) errno;
-                    write(pipeVal[WRITE], &errNoVal, 1);
-                    exit(126);
+                    int errNoVal = errno;
+                    (void)write(pipeVal[WRITE], &errNoVal, sizeof(errNoVal));
+                    _exit(126);
                 }
 
+                // exeBuilder contains the full executable path (we ensured '\0' was appended earlier).
                 utf8str fullExePath = PNSLR_StringFromStringBuilder(&exeBuilder);
                 cstring fullExePathCStr = (cstring) fullExePath.data;
 
-                int res = execve(fullExePathCStr, cmd, env);
-                if (res == -1)
+                execve(fullExePathCStr, cmd, env);
+                // If execve returns, it's an error
                 {
-                    u8 errNoVal = (u8) errno;
-                    write(pipeVal[WRITE], &errNoVal, 1);
-                    exit(126);
+                    int errNoVal = errno;
+                    (void)write(pipeVal[WRITE], &errNoVal, sizeof(errNoVal));
+                    _exit(126);
                 }
 
                 break;
@@ -745,35 +772,35 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
 
             default: // parent
             {
+                // Close write end in parent — child writes to it on error.
                 close(pipeVal[WRITE]);
 
-                int errNoVal;
-                while (true)
+                int errNoVal = 0;
+
+                // Read error info from child (child writes errno if it failed before exec).
+                // Child writes sizeof(int). Read that (or EOF).
+                ssize_t totalRead = 0;
+                while (totalRead < (ssize_t)sizeof(int))
                 {
-                    u8 errNoByte = 0;
-                    switch (read(pipeVal[READ], &errNoByte, 1))
+                    ssize_t r = read(pipeVal[READ], ((u8*)&errNoVal) + totalRead, (ssize_t)sizeof(int) - totalRead);
+                    if (r > 0) { totalRead += r; continue; }
+                    if (r == 0) { /* EOF: child closed without writing: treat as no-error */ break; }
+                    if (r == -1)
                     {
-                        case 1:
-                            errNoVal = (int) errNoByte;
-                            break;
-
-                        case -1:
-                            if (errno == EINTR) continue; // interrupted, try again
-                            errNoVal = errno;
-                            break;
+                        if (errno == EINTR) continue;
+                        // read failed; set errNoVal to errno and break
+                        errNoVal = errno;
+                        break;
                     }
-
-                    break;
                 }
 
                 if (errNoVal != 0)
                 {
-                    // reported error
-
+                    // reported error — wait for the child to avoid zombies (use local pid)
                     while (true)
                     {
                         siginfo_t info;
-                        int wpid = waitid(P_PID, (id_t) (outProcessHandle->pid), &info, WEXITED);
+                        int wpid = waitid(P_PID, (id_t) pid, &info, WEXITED);
                         if (wpid == -1 && errno == EINTR)
                             continue; // interrupted, try again
                         break;
@@ -783,8 +810,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
                     goto exitFn;
                 }
 
-                // open the process
-                // but we haven't implemented it yet, so just store the pid
+                // No error reported — child successfully exec'd (or at least didn't fail early).
                 *outProcessHandle = (PNSLR_ProcessHandle) {.pid = (i64) pid, .handle = 0};
                 success = true;
                 break;
