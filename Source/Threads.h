@@ -49,5 +49,26 @@ utf8str PNSLR_GetCurrentThreadName(PNSLR_Allocator allocator);
  */
 void PNSLR_SetCurrentThreadName(utf8str name);
 
+/**
+ * A procedure that can be run on a thread.
+ * The `data` parameter is optional user data that can be passed to the thread.
+ */
+typedef void (*PNSLR_ThreadProcedure)(rawptr data);
+
+/**
+ * Start a new thread with the specified procedure and user data.
+ */
+PNSLR_ThreadHandle PNSLR_StartThread(PNSLR_ThreadProcedure procedure, rawptr data OPT_ARG, utf8str name OPT_ARG);
+
+/**
+ * Joins a thread, blocking the calling thread until the specified thread has finished.
+ */
+void PNSLR_JoinThread(PNSLR_ThreadHandle handle);
+
+/**
+ * Sleeps the current thread for the specified number of milliseconds.
+ */
+void PNSLR_SleepCurrentThread(u64 milliseconds);
+
 EXTERN_C_END
 #endif // PNSLR_THREADS_H ==========================================================

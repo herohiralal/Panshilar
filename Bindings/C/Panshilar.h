@@ -1123,6 +1123,14 @@ typedef struct PNSLR_StringBuilder
 } PNSLR_StringBuilder;
 
 /**
+ * Ensure that the string builder has enough space to accommodate additionalSize bytes.
+ */
+b8 PNSLR_ReserveSpaceInStringBuilder(
+    PNSLR_StringBuilder* builder,
+    i64 additionalSize
+);
+
+/**
  * Append a single byte to the string builder. Could be an ANSI/ASCII character,
  * or not. The function does not check for validity.
  */
@@ -2460,45 +2468,135 @@ void PNSLR_SetCurrentThreadName(
     utf8str name
 );
 
+/**
+ * A procedure that can be run on a thread.
+ * The `data` parameter is optional user data that can be passed to the thread.
+ */
+typedef void (*PNSLR_ThreadProcedure)(
+    rawptr data
+);
+
+/**
+ * Start a new thread with the specified procedure and user data.
+ */
+PNSLR_ThreadHandle PNSLR_StartThread(
+    PNSLR_ThreadProcedure procedure,
+    rawptr data,
+    utf8str name
+);
+
+/**
+ * Joins a thread, blocking the calling thread until the specified thread has finished.
+ */
+void PNSLR_JoinThread(
+    PNSLR_ThreadHandle handle
+);
+
+/**
+ * Sleeps the current thread for the specified number of milliseconds.
+ */
+void PNSLR_SleepCurrentThread(
+    u64 milliseconds
+);
+
 // #######################################################################################
 // SharedMemoryChannel
 // #######################################################################################
 
+// Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 /**
- * Represents a shared memory channel reader that creates and owns the shared memory segment.
+ * Opaque handle for a shared memory channel.
+ */
+typedef struct PNSLR_SharedMemoryChannelHandle
+{
+    i64 handle;
+} PNSLR_SharedMemoryChannelHandle;
+
+/**
+ * Platform-specific header for a shared memory channel.
+ */
+typedef struct PNSLR_SharedMemoryChannelPlatformHeader
+{
+    u32 magicNum;
+} PNSLR_SharedMemoryChannelPlatformHeader;
+
+/**
+ * Represents the status of a shared memory channel endpoint (reader or writer).
+ */
+typedef u8 PNSLR_SharedMemoryChannelStatus /* use as value */;
+#define PNSLR_SharedMemoryChannelStatus_Disconnected ((PNSLR_SharedMemoryChannelStatus) 0)
+#define PNSLR_SharedMemoryChannelStatus_Paused ((PNSLR_SharedMemoryChannelStatus) 1)
+#define PNSLR_SharedMemoryChannelStatus_Active ((PNSLR_SharedMemoryChannelStatus) 2)
+
+/**
+ * Header for a shared memory channel, containing metadata about the channel.
+ */
+typedef struct PNSLR_SharedMemoryChannelHeader
+{
+    u32 magicNum;
+    u32 version;
+    PNSLR_SharedMemoryChannelStatus readerStatus;
+    PNSLR_SharedMemoryChannelStatus writerStatus;
+    u32 offsetToOsSpecificHeader;
+    u32 offsetToMsgQueueHeader;
+    u32 offsetToMsgData;
+    i64 fullMemRegionSize;
+    i64 dataSize;
+} PNSLR_SharedMemoryChannelHeader;
+
+/**
+ * Header for the message queue within a shared memory channel.
+ */
+typedef struct PNSLR_SharedMemoryChannelMessageQueueHeader
+{
+    i64 readCursor;
+    u8 padding[56];
+    i64 writeCursor;
+} PNSLR_SharedMemoryChannelMessageQueueHeader;
+
+/**
+ * Represents a reader endpoint for a shared memory channel.
  */
 typedef struct PNSLR_SharedMemoryChannelReader
 {
-    u64 handle;
+    PNSLR_SharedMemoryChannelHeader* header;
+    PNSLR_SharedMemoryChannelHandle handle;
 } PNSLR_SharedMemoryChannelReader;
 
 /**
- * Represents a shared memory channel writer that connects to an existing shared memory segment.
+ * Represents a writer endpoint for a shared memory channel.
  */
 typedef struct PNSLR_SharedMemoryChannelWriter
 {
-    u64 handle;
+    PNSLR_SharedMemoryChannelHeader* header;
+    PNSLR_SharedMemoryChannelHandle handle;
 } PNSLR_SharedMemoryChannelWriter;
-
-/**
- * Represents a message that has been read from a shared memory channel.
- */
-typedef struct PNSLR_SharedMemoryMessage
-{
-    rawptr data;
-    i64 size;
-    u64 internal;
-} PNSLR_SharedMemoryMessage;
 
 /**
  * Represents a reserved message slot for writing to a shared memory channel.
  */
-typedef struct PNSLR_SharedMemoryReservedMessage
+typedef struct PNSLR_SharedMemoryChannelReservedMessage
 {
-    rawptr data;
+    PNSLR_SharedMemoryChannelWriter* channel;
+    i64 offset;
     i64 size;
-    u64 internal;
-} PNSLR_SharedMemoryReservedMessage;
+    u8* writePtr;
+} PNSLR_SharedMemoryChannelReservedMessage;
+
+/**
+ * Represents a message that has been read from a shared memory channel.
+ */
+typedef struct PNSLR_SharedMemoryChannelMessage
+{
+    PNSLR_SharedMemoryChannelReader* channel;
+    i64 offset;
+    i64 size;
+    u8* readPtr;
+    i64 readSize;
+} PNSLR_SharedMemoryChannelMessage;
+
+// Reader Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Creates a shared memory channel reader with the specified name and size.
@@ -2506,7 +2604,7 @@ typedef struct PNSLR_SharedMemoryReservedMessage
  */
 b8 PNSLR_CreateSharedMemoryChannelReader(
     utf8str name,
-    i64 bytes,
+    i64 size,
     PNSLR_SharedMemoryChannelReader* reader
 );
 
@@ -2517,7 +2615,7 @@ b8 PNSLR_CreateSharedMemoryChannelReader(
  */
 b8 PNSLR_ReadSharedMemoryChannelMessage(
     PNSLR_SharedMemoryChannelReader* reader,
-    PNSLR_SharedMemoryMessage* message,
+    PNSLR_SharedMemoryChannelMessage* message,
     b8* fatalError
 );
 
@@ -2525,7 +2623,7 @@ b8 PNSLR_ReadSharedMemoryChannelMessage(
  * Acknowledges that a message has been processed and advances the read cursor.
  */
 b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(
-    PNSLR_SharedMemoryMessage* message
+    PNSLR_SharedMemoryChannelMessage* message
 );
 
 /**
@@ -2534,6 +2632,8 @@ b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(
 b8 PNSLR_DestroySharedMemoryChannelReader(
     PNSLR_SharedMemoryChannelReader* reader
 );
+
+// Writer Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
  * Attempts to connect to an existing shared memory channel as a writer.
@@ -2550,8 +2650,8 @@ b8 PNSLR_TryConnectSharedMemoryChannelWriter(
  */
 b8 PNSLR_PrepareSharedMemoryChannelMessage(
     PNSLR_SharedMemoryChannelWriter* writer,
-    i64 bytes,
-    PNSLR_SharedMemoryReservedMessage* reservedMessage
+    i64 size,
+    PNSLR_SharedMemoryChannelReservedMessage* reservedMessage
 );
 
 /**
@@ -2559,7 +2659,7 @@ b8 PNSLR_PrepareSharedMemoryChannelMessage(
  */
 b8 PNSLR_CommitSharedMemoryChannelMessage(
     PNSLR_SharedMemoryChannelWriter* writer,
-    PNSLR_SharedMemoryReservedMessage* reservedMessage
+    PNSLR_SharedMemoryChannelReservedMessage reservedMessage
 );
 
 /**

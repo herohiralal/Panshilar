@@ -1129,6 +1129,14 @@ namespace Panshilar
     };
 
     /**
+     * Ensure that the string builder has enough space to accommodate additionalSize bytes.
+     */
+    b8 ReserveSpaceInStringBuilder(
+        StringBuilder* builder,
+        i64 additionalSize
+    );
+
+    /**
      * Append a single byte to the string builder. Could be an ANSI/ASCII character,
      * or not. The function does not check for validity.
      */
@@ -2474,45 +2482,137 @@ namespace Panshilar
         utf8str name
     );
 
+    /**
+     * A procedure that can be run on a thread.
+     * The `data` parameter is optional user data that can be passed to the thread.
+     */
+    typedef void (*ThreadProcedure)(
+        rawptr data
+    );
+
+    /**
+     * Start a new thread with the specified procedure and user data.
+     */
+    ThreadHandle StartThread(
+        ThreadProcedure procedure,
+        rawptr data = { },
+        utf8str name = { }
+    );
+
+    /**
+     * Joins a thread, blocking the calling thread until the specified thread has finished.
+     */
+    void JoinThread(
+        ThreadHandle handle
+    );
+
+    /**
+     * Sleeps the current thread for the specified number of milliseconds.
+     */
+    void SleepCurrentThread(
+        u64 milliseconds
+    );
+
     // #######################################################################################
     // SharedMemoryChannel
     // #######################################################################################
 
+    // Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     /**
-     * Represents a shared memory channel reader that creates and owns the shared memory segment.
+     * Opaque handle for a shared memory channel.
+     */
+    struct SharedMemoryChannelHandle
+    {
+       i64 handle;
+    };
+
+    /**
+     * Platform-specific header for a shared memory channel.
+     */
+    struct SharedMemoryChannelPlatformHeader
+    {
+       u32 magicNum;
+    };
+
+    /**
+     * Represents the status of a shared memory channel endpoint (reader or writer).
+     */
+    enum class SharedMemoryChannelStatus : u8 /* use as value */
+    {
+        Disconnected = 0,
+        Paused = 1,
+        Active = 2,
+    };
+
+    /**
+     * Header for a shared memory channel, containing metadata about the channel.
+     */
+    struct SharedMemoryChannelHeader
+    {
+       u32 magicNum;
+       u32 version;
+       SharedMemoryChannelStatus readerStatus;
+       SharedMemoryChannelStatus writerStatus;
+       u32 offsetToOsSpecificHeader;
+       u32 offsetToMsgQueueHeader;
+       u32 offsetToMsgData;
+       i64 fullMemRegionSize;
+       i64 dataSize;
+    };
+
+    /**
+     * Header for the message queue within a shared memory channel.
+     */
+    struct SharedMemoryChannelMessageQueueHeader
+    {
+       i64 readCursor;
+       u8 padding[56];
+       i64 writeCursor;
+    };
+
+    /**
+     * Represents a reader endpoint for a shared memory channel.
      */
     struct SharedMemoryChannelReader
     {
-       u64 handle;
+       SharedMemoryChannelHeader* header;
+       SharedMemoryChannelHandle handle;
     };
 
     /**
-     * Represents a shared memory channel writer that connects to an existing shared memory segment.
+     * Represents a writer endpoint for a shared memory channel.
      */
     struct SharedMemoryChannelWriter
     {
-       u64 handle;
-    };
-
-    /**
-     * Represents a message that has been read from a shared memory channel.
-     */
-    struct SharedMemoryMessage
-    {
-       rawptr data;
-       i64 size;
-       u64 internal;
+       SharedMemoryChannelHeader* header;
+       SharedMemoryChannelHandle handle;
     };
 
     /**
      * Represents a reserved message slot for writing to a shared memory channel.
      */
-    struct SharedMemoryReservedMessage
+    struct SharedMemoryChannelReservedMessage
     {
-       rawptr data;
+       SharedMemoryChannelWriter* channel;
+       i64 offset;
        i64 size;
-       u64 internal;
+       u8* writePtr;
     };
+
+    /**
+     * Represents a message that has been read from a shared memory channel.
+     */
+    struct SharedMemoryChannelMessage
+    {
+       SharedMemoryChannelReader* channel;
+       i64 offset;
+       i64 size;
+       u8* readPtr;
+       i64 readSize;
+    };
+
+    // Reader Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Creates a shared memory channel reader with the specified name and size.
@@ -2520,7 +2620,7 @@ namespace Panshilar
      */
     b8 CreateSharedMemoryChannelReader(
         utf8str name,
-        i64 bytes,
+        i64 size,
         SharedMemoryChannelReader* reader
     );
 
@@ -2531,15 +2631,15 @@ namespace Panshilar
      */
     b8 ReadSharedMemoryChannelMessage(
         SharedMemoryChannelReader* reader,
-        SharedMemoryMessage* message,
-        b8* fatalError
+        SharedMemoryChannelMessage* message,
+        b8* fatalError = { }
     );
 
     /**
      * Acknowledges that a message has been processed and advances the read cursor.
      */
     b8 AcknowledgeSharedMemoryChannelMessage(
-        SharedMemoryMessage* message
+        SharedMemoryChannelMessage* message
     );
 
     /**
@@ -2548,6 +2648,8 @@ namespace Panshilar
     b8 DestroySharedMemoryChannelReader(
         SharedMemoryChannelReader* reader
     );
+
+    // Writer Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Attempts to connect to an existing shared memory channel as a writer.
@@ -2564,8 +2666,8 @@ namespace Panshilar
      */
     b8 PrepareSharedMemoryChannelMessage(
         SharedMemoryChannelWriter* writer,
-        i64 bytes,
-        SharedMemoryReservedMessage* reservedMessage
+        i64 size,
+        SharedMemoryChannelReservedMessage* reservedMessage
     );
 
     /**
@@ -2573,7 +2675,7 @@ namespace Panshilar
      */
     b8 CommitSharedMemoryChannelMessage(
         SharedMemoryChannelWriter* writer,
-        SharedMemoryReservedMessage* reservedMessage
+        SharedMemoryChannelReservedMessage reservedMessage
     );
 
     /**
@@ -3485,6 +3587,12 @@ static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, allocator) == PNSLR_STRUC
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, buffer), "buffer offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, writtenSize) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, writtenSize), "writtenSize offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_StringBuilder, cursorPos) == PNSLR_STRUCT_OFFSET(Panshilar::StringBuilder, cursorPos), "cursorPos offset mismatch");
+
+extern "C" b8 PNSLR_ReserveSpaceInStringBuilder(PNSLR_StringBuilder* builder, i64 additionalSize);
+b8 Panshilar::ReserveSpaceInStringBuilder(Panshilar::StringBuilder* builder, i64 additionalSize)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReserveSpaceInStringBuilder(PNSLR_Bindings_Convert(builder), PNSLR_Bindings_Convert(additionalSize)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
 
 extern "C" b8 PNSLR_AppendByteToStringBuilder(PNSLR_StringBuilder* builder, u8 byte);
 b8 Panshilar::AppendByteToStringBuilder(Panshilar::StringBuilder* builder, u8 byte)
@@ -4484,9 +4592,112 @@ void Panshilar::SetCurrentThreadName(utf8str name)
     PNSLR_SetCurrentThreadName(PNSLR_Bindings_Convert(name));
 }
 
+extern "C" typedef void (*PNSLR_ThreadProcedure)(rawptr data);
+static_assert(sizeof(PNSLR_ThreadProcedure) == sizeof(Panshilar::ThreadProcedure), "size mismatch");
+static_assert(alignof(PNSLR_ThreadProcedure) == alignof(Panshilar::ThreadProcedure), "align mismatch");
+PNSLR_ThreadProcedure* PNSLR_Bindings_Convert(Panshilar::ThreadProcedure* x) { return reinterpret_cast<PNSLR_ThreadProcedure*>(x); }
+Panshilar::ThreadProcedure* PNSLR_Bindings_Convert(PNSLR_ThreadProcedure* x) { return reinterpret_cast<Panshilar::ThreadProcedure*>(x); }
+PNSLR_ThreadProcedure& PNSLR_Bindings_Convert(Panshilar::ThreadProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::ThreadProcedure& PNSLR_Bindings_Convert(PNSLR_ThreadProcedure& x) { return *PNSLR_Bindings_Convert(&x); }
+
+extern "C" PNSLR_ThreadHandle PNSLR_StartThread(PNSLR_ThreadProcedure procedure, rawptr data, PNSLR_UTF8STR name);
+Panshilar::ThreadHandle Panshilar::StartThread(Panshilar::ThreadProcedure procedure, rawptr data, utf8str name)
+{
+    PNSLR_ThreadHandle zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_StartThread(PNSLR_Bindings_Convert(procedure), PNSLR_Bindings_Convert(data), PNSLR_Bindings_Convert(name)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_JoinThread(PNSLR_ThreadHandle handle);
+void Panshilar::JoinThread(Panshilar::ThreadHandle handle)
+{
+    PNSLR_JoinThread(PNSLR_Bindings_Convert(handle));
+}
+
+extern "C" void PNSLR_SleepCurrentThread(u64 milliseconds);
+void Panshilar::SleepCurrentThread(u64 milliseconds)
+{
+    PNSLR_SleepCurrentThread(PNSLR_Bindings_Convert(milliseconds));
+}
+
+struct PNSLR_SharedMemoryChannelHandle
+{
+   i64 handle;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelHandle) == sizeof(Panshilar::SharedMemoryChannelHandle), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelHandle) == alignof(Panshilar::SharedMemoryChannelHandle), "align mismatch");
+PNSLR_SharedMemoryChannelHandle* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelHandle* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelHandle*>(x); }
+Panshilar::SharedMemoryChannelHandle* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelHandle* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelHandle*>(x); }
+PNSLR_SharedMemoryChannelHandle& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelHandle& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelHandle& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelHandle& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHandle, handle) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHandle, handle), "handle offset mismatch");
+
+struct PNSLR_SharedMemoryChannelPlatformHeader
+{
+   u32 magicNum;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelPlatformHeader) == sizeof(Panshilar::SharedMemoryChannelPlatformHeader), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelPlatformHeader) == alignof(Panshilar::SharedMemoryChannelPlatformHeader), "align mismatch");
+PNSLR_SharedMemoryChannelPlatformHeader* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelPlatformHeader* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelPlatformHeader*>(x); }
+Panshilar::SharedMemoryChannelPlatformHeader* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelPlatformHeader* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelPlatformHeader*>(x); }
+PNSLR_SharedMemoryChannelPlatformHeader& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelPlatformHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelPlatformHeader& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelPlatformHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelPlatformHeader, magicNum) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelPlatformHeader, magicNum), "magicNum offset mismatch");
+
+enum class PNSLR_SharedMemoryChannelStatus : u8 { };
+static_assert(sizeof(PNSLR_SharedMemoryChannelStatus) == sizeof(Panshilar::SharedMemoryChannelStatus), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelStatus) == alignof(Panshilar::SharedMemoryChannelStatus), "align mismatch");
+PNSLR_SharedMemoryChannelStatus* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelStatus* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelStatus*>(x); }
+Panshilar::SharedMemoryChannelStatus* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelStatus* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelStatus*>(x); }
+PNSLR_SharedMemoryChannelStatus& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelStatus& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelStatus& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelStatus& x) { return *PNSLR_Bindings_Convert(&x); }
+
+struct PNSLR_SharedMemoryChannelHeader
+{
+   u32 magicNum;
+   u32 version;
+   PNSLR_SharedMemoryChannelStatus readerStatus;
+   PNSLR_SharedMemoryChannelStatus writerStatus;
+   u32 offsetToOsSpecificHeader;
+   u32 offsetToMsgQueueHeader;
+   u32 offsetToMsgData;
+   i64 fullMemRegionSize;
+   i64 dataSize;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelHeader) == sizeof(Panshilar::SharedMemoryChannelHeader), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelHeader) == alignof(Panshilar::SharedMemoryChannelHeader), "align mismatch");
+PNSLR_SharedMemoryChannelHeader* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelHeader* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelHeader*>(x); }
+Panshilar::SharedMemoryChannelHeader* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelHeader* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelHeader*>(x); }
+PNSLR_SharedMemoryChannelHeader& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelHeader& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, magicNum) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, magicNum), "magicNum offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, version) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, version), "version offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, readerStatus) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, readerStatus), "readerStatus offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, writerStatus) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, writerStatus), "writerStatus offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, offsetToOsSpecificHeader) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, offsetToOsSpecificHeader), "offsetToOsSpecificHeader offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, offsetToMsgQueueHeader) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, offsetToMsgQueueHeader), "offsetToMsgQueueHeader offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, offsetToMsgData) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, offsetToMsgData), "offsetToMsgData offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, fullMemRegionSize) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, fullMemRegionSize), "fullMemRegionSize offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelHeader, dataSize) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelHeader, dataSize), "dataSize offset mismatch");
+
+struct PNSLR_SharedMemoryChannelMessageQueueHeader
+{
+   i64 readCursor;
+   u8 padding[56];
+   i64 writeCursor;
+};
+static_assert(sizeof(PNSLR_SharedMemoryChannelMessageQueueHeader) == sizeof(Panshilar::SharedMemoryChannelMessageQueueHeader), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelMessageQueueHeader) == alignof(Panshilar::SharedMemoryChannelMessageQueueHeader), "align mismatch");
+PNSLR_SharedMemoryChannelMessageQueueHeader* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelMessageQueueHeader* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelMessageQueueHeader*>(x); }
+Panshilar::SharedMemoryChannelMessageQueueHeader* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelMessageQueueHeader* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelMessageQueueHeader*>(x); }
+PNSLR_SharedMemoryChannelMessageQueueHeader& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelMessageQueueHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelMessageQueueHeader& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelMessageQueueHeader& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessageQueueHeader, readCursor) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessageQueueHeader, readCursor), "readCursor offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessageQueueHeader, padding) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessageQueueHeader, padding), "padding offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessageQueueHeader, writeCursor) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessageQueueHeader, writeCursor), "writeCursor offset mismatch");
+
 struct PNSLR_SharedMemoryChannelReader
 {
-   u64 handle;
+   PNSLR_SharedMemoryChannelHeader* header;
+   PNSLR_SharedMemoryChannelHandle handle;
 };
 static_assert(sizeof(PNSLR_SharedMemoryChannelReader) == sizeof(Panshilar::SharedMemoryChannelReader), "size mismatch");
 static_assert(alignof(PNSLR_SharedMemoryChannelReader) == alignof(Panshilar::SharedMemoryChannelReader), "align mismatch");
@@ -4494,11 +4705,13 @@ PNSLR_SharedMemoryChannelReader* PNSLR_Bindings_Convert(Panshilar::SharedMemoryC
 Panshilar::SharedMemoryChannelReader* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReader* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelReader*>(x); }
 PNSLR_SharedMemoryChannelReader& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelReader& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::SharedMemoryChannelReader& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReader& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReader, header) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReader, header), "header offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReader, handle) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReader, handle), "handle offset mismatch");
 
 struct PNSLR_SharedMemoryChannelWriter
 {
-   u64 handle;
+   PNSLR_SharedMemoryChannelHeader* header;
+   PNSLR_SharedMemoryChannelHandle handle;
 };
 static_assert(sizeof(PNSLR_SharedMemoryChannelWriter) == sizeof(Panshilar::SharedMemoryChannelWriter), "size mismatch");
 static_assert(alignof(PNSLR_SharedMemoryChannelWriter) == alignof(Panshilar::SharedMemoryChannelWriter), "align mismatch");
@@ -4506,54 +4719,61 @@ PNSLR_SharedMemoryChannelWriter* PNSLR_Bindings_Convert(Panshilar::SharedMemoryC
 Panshilar::SharedMemoryChannelWriter* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelWriter* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelWriter*>(x); }
 PNSLR_SharedMemoryChannelWriter& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelWriter& x) { return *PNSLR_Bindings_Convert(&x); }
 Panshilar::SharedMemoryChannelWriter& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelWriter& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelWriter, header) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelWriter, header), "header offset mismatch");
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelWriter, handle) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelWriter, handle), "handle offset mismatch");
 
-struct PNSLR_SharedMemoryMessage
+struct PNSLR_SharedMemoryChannelReservedMessage
 {
-   rawptr data;
+   PNSLR_SharedMemoryChannelWriter* channel;
+   i64 offset;
    i64 size;
-   u64 internal;
+   u8* writePtr;
 };
-static_assert(sizeof(PNSLR_SharedMemoryMessage) == sizeof(Panshilar::SharedMemoryMessage), "size mismatch");
-static_assert(alignof(PNSLR_SharedMemoryMessage) == alignof(Panshilar::SharedMemoryMessage), "align mismatch");
-PNSLR_SharedMemoryMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryMessage*>(x); }
-Panshilar::SharedMemoryMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryMessage*>(x); }
-PNSLR_SharedMemoryMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryMessage& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::SharedMemoryMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryMessage& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, data) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, data), "data offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, size), "size offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryMessage, internal) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryMessage, internal), "internal offset mismatch");
+static_assert(sizeof(PNSLR_SharedMemoryChannelReservedMessage) == sizeof(Panshilar::SharedMemoryChannelReservedMessage), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelReservedMessage) == alignof(Panshilar::SharedMemoryChannelReservedMessage), "align mismatch");
+PNSLR_SharedMemoryChannelReservedMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelReservedMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelReservedMessage*>(x); }
+Panshilar::SharedMemoryChannelReservedMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReservedMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelReservedMessage*>(x); }
+PNSLR_SharedMemoryChannelReservedMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelReservedMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReservedMessage, channel) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReservedMessage, channel), "channel offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReservedMessage, offset) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReservedMessage, offset), "offset offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReservedMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReservedMessage, size), "size offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelReservedMessage, writePtr) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelReservedMessage, writePtr), "writePtr offset mismatch");
 
-struct PNSLR_SharedMemoryReservedMessage
+struct PNSLR_SharedMemoryChannelMessage
 {
-   rawptr data;
+   PNSLR_SharedMemoryChannelReader* channel;
+   i64 offset;
    i64 size;
-   u64 internal;
+   u8* readPtr;
+   i64 readSize;
 };
-static_assert(sizeof(PNSLR_SharedMemoryReservedMessage) == sizeof(Panshilar::SharedMemoryReservedMessage), "size mismatch");
-static_assert(alignof(PNSLR_SharedMemoryReservedMessage) == alignof(Panshilar::SharedMemoryReservedMessage), "align mismatch");
-PNSLR_SharedMemoryReservedMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryReservedMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryReservedMessage*>(x); }
-Panshilar::SharedMemoryReservedMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryReservedMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryReservedMessage*>(x); }
-PNSLR_SharedMemoryReservedMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
-Panshilar::SharedMemoryReservedMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryReservedMessage& x) { return *PNSLR_Bindings_Convert(&x); }
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, data) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, data), "data offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, size), "size offset mismatch");
-static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryReservedMessage, internal) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryReservedMessage, internal), "internal offset mismatch");
+static_assert(sizeof(PNSLR_SharedMemoryChannelMessage) == sizeof(Panshilar::SharedMemoryChannelMessage), "size mismatch");
+static_assert(alignof(PNSLR_SharedMemoryChannelMessage) == alignof(Panshilar::SharedMemoryChannelMessage), "align mismatch");
+PNSLR_SharedMemoryChannelMessage* PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelMessage* x) { return reinterpret_cast<PNSLR_SharedMemoryChannelMessage*>(x); }
+Panshilar::SharedMemoryChannelMessage* PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelMessage* x) { return reinterpret_cast<Panshilar::SharedMemoryChannelMessage*>(x); }
+PNSLR_SharedMemoryChannelMessage& PNSLR_Bindings_Convert(Panshilar::SharedMemoryChannelMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::SharedMemoryChannelMessage& PNSLR_Bindings_Convert(PNSLR_SharedMemoryChannelMessage& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessage, channel) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessage, channel), "channel offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessage, offset) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessage, offset), "offset offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessage, size) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessage, size), "size offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessage, readPtr) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessage, readPtr), "readPtr offset mismatch");
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_SharedMemoryChannelMessage, readSize) == PNSLR_STRUCT_OFFSET(Panshilar::SharedMemoryChannelMessage, readSize), "readSize offset mismatch");
 
-extern "C" b8 PNSLR_CreateSharedMemoryChannelReader(PNSLR_UTF8STR name, i64 bytes, PNSLR_SharedMemoryChannelReader* reader);
-b8 Panshilar::CreateSharedMemoryChannelReader(utf8str name, i64 bytes, Panshilar::SharedMemoryChannelReader* reader)
+extern "C" b8 PNSLR_CreateSharedMemoryChannelReader(PNSLR_UTF8STR name, i64 size, PNSLR_SharedMemoryChannelReader* reader);
+b8 Panshilar::CreateSharedMemoryChannelReader(utf8str name, i64 size, Panshilar::SharedMemoryChannelReader* reader)
 {
-    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateSharedMemoryChannelReader(PNSLR_Bindings_Convert(name), PNSLR_Bindings_Convert(bytes), PNSLR_Bindings_Convert(reader)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateSharedMemoryChannelReader(PNSLR_Bindings_Convert(name), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(reader)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_ReadSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelReader* reader, PNSLR_SharedMemoryMessage* message, b8* fatalError);
-b8 Panshilar::ReadSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelReader* reader, Panshilar::SharedMemoryMessage* message, b8* fatalError)
+extern "C" b8 PNSLR_ReadSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelReader* reader, PNSLR_SharedMemoryChannelMessage* message, b8* fatalError);
+b8 Panshilar::ReadSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelReader* reader, Panshilar::SharedMemoryChannelMessage* message, b8* fatalError)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_ReadSharedMemoryChannelMessage(PNSLR_Bindings_Convert(reader), PNSLR_Bindings_Convert(message), PNSLR_Bindings_Convert(fatalError)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(PNSLR_SharedMemoryMessage* message);
-b8 Panshilar::AcknowledgeSharedMemoryChannelMessage(Panshilar::SharedMemoryMessage* message)
+extern "C" b8 PNSLR_AcknowledgeSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelMessage* message);
+b8 Panshilar::AcknowledgeSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelMessage* message)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_AcknowledgeSharedMemoryChannelMessage(PNSLR_Bindings_Convert(message)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
@@ -4570,14 +4790,14 @@ b8 Panshilar::TryConnectSharedMemoryChannelWriter(utf8str name, Panshilar::Share
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_TryConnectSharedMemoryChannelWriter(PNSLR_Bindings_Convert(name), PNSLR_Bindings_Convert(writer)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, i64 bytes, PNSLR_SharedMemoryReservedMessage* reservedMessage);
-b8 Panshilar::PrepareSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, i64 bytes, Panshilar::SharedMemoryReservedMessage* reservedMessage)
+extern "C" b8 PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, i64 size, PNSLR_SharedMemoryChannelReservedMessage* reservedMessage);
+b8 Panshilar::PrepareSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, i64 size, Panshilar::SharedMemoryChannelReservedMessage* reservedMessage)
 {
-    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_Bindings_Convert(writer), PNSLR_Bindings_Convert(bytes), PNSLR_Bindings_Convert(reservedMessage)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_PrepareSharedMemoryChannelMessage(PNSLR_Bindings_Convert(writer), PNSLR_Bindings_Convert(size), PNSLR_Bindings_Convert(reservedMessage)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
-extern "C" b8 PNSLR_CommitSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, PNSLR_SharedMemoryReservedMessage* reservedMessage);
-b8 Panshilar::CommitSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, Panshilar::SharedMemoryReservedMessage* reservedMessage)
+extern "C" b8 PNSLR_CommitSharedMemoryChannelMessage(PNSLR_SharedMemoryChannelWriter* writer, PNSLR_SharedMemoryChannelReservedMessage reservedMessage);
+b8 Panshilar::CommitSharedMemoryChannelMessage(Panshilar::SharedMemoryChannelWriter* writer, Panshilar::SharedMemoryChannelReservedMessage reservedMessage)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CommitSharedMemoryChannelMessage(PNSLR_Bindings_Convert(writer), PNSLR_Bindings_Convert(reservedMessage)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }

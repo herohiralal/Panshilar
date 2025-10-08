@@ -1354,6 +1354,17 @@ StringBuilder :: struct  {
 @(link_prefix="PNSLR_")
 foreign {
 	/*
+	Ensure that the string builder has enough space to accommodate additionalSize bytes.
+	*/
+	ReserveSpaceInStringBuilder :: proc "c" (
+		builder: ^StringBuilder,
+		additionalSize: i64,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
 	Append a single byte to the string builder. Could be an ANSI/ASCII character,
 	or not. The function does not check for validity.
 	*/
@@ -3083,41 +3094,137 @@ foreign {
 	) ---
 }
 
+/*
+A procedure that can be run on a thread.
+The `data` parameter is optional user data that can be passed to the thread.
+*/
+ThreadProcedure :: #type proc "c" (
+	data: rawptr,
+)
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Start a new thread with the specified procedure and user data.
+	*/
+	StartThread :: proc "c" (
+		procedure: ThreadProcedure,
+		data: rawptr = { },
+		name: string = { },
+	) -> ThreadHandle ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Joins a thread, blocking the calling thread until the specified thread has finished.
+	*/
+	JoinThread :: proc "c" (
+		handle: ThreadHandle,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Sleeps the current thread for the specified number of milliseconds.
+	*/
+	SleepCurrentThread :: proc "c" (
+		milliseconds: u64,
+	) ---
+}
+
 // #######################################################################################
 // SharedMemoryChannel
 // #######################################################################################
 
+// Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 /*
-Represents a shared memory channel reader that creates and owns the shared memory segment.
+Opaque handle for a shared memory channel.
+*/
+SharedMemoryChannelHandle :: struct  {
+	handle: i64,
+}
+
+/*
+Platform-specific header for a shared memory channel.
+*/
+SharedMemoryChannelPlatformHeader :: struct  {
+	magicNum: u32,
+}
+
+/*
+Represents the status of a shared memory channel endpoint (reader or writer).
+*/
+SharedMemoryChannelStatus :: enum u8 {
+	Disconnected = 0,
+	Paused = 1,
+	Active = 2,
+}
+
+/*
+Header for a shared memory channel, containing metadata about the channel.
+*/
+SharedMemoryChannelHeader :: struct  {
+	magicNum: u32,
+	version: u32,
+	readerStatus: SharedMemoryChannelStatus,
+	writerStatus: SharedMemoryChannelStatus,
+	offsetToOsSpecificHeader: u32,
+	offsetToMsgQueueHeader: u32,
+	offsetToMsgData: u32,
+	fullMemRegionSize: i64,
+	dataSize: i64,
+}
+
+/*
+Header for the message queue within a shared memory channel.
+*/
+SharedMemoryChannelMessageQueueHeader :: struct  {
+	readCursor: i64,
+	padding: [56]u8,
+	writeCursor: i64,
+}
+
+/*
+Represents a reader endpoint for a shared memory channel.
 */
 SharedMemoryChannelReader :: struct  {
-	handle: u64,
+	header: ^SharedMemoryChannelHeader,
+	handle: SharedMemoryChannelHandle,
 }
 
 /*
-Represents a shared memory channel writer that connects to an existing shared memory segment.
+Represents a writer endpoint for a shared memory channel.
 */
 SharedMemoryChannelWriter :: struct  {
-	handle: u64,
-}
-
-/*
-Represents a message that has been read from a shared memory channel.
-*/
-SharedMemoryMessage :: struct  {
-	data: rawptr,
-	size: i64,
-	internal: u64,
+	header: ^SharedMemoryChannelHeader,
+	handle: SharedMemoryChannelHandle,
 }
 
 /*
 Represents a reserved message slot for writing to a shared memory channel.
 */
-SharedMemoryReservedMessage :: struct  {
-	data: rawptr,
+SharedMemoryChannelReservedMessage :: struct  {
+	channel: ^SharedMemoryChannelWriter,
+	offset: i64,
 	size: i64,
-	internal: u64,
+	writePtr: ^u8,
 }
+
+/*
+Represents a message that has been read from a shared memory channel.
+*/
+SharedMemoryChannelMessage :: struct  {
+	channel: ^SharedMemoryChannelReader,
+	offset: i64,
+	size: i64,
+	readPtr: ^u8,
+	readSize: i64,
+}
+
+// Reader Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -3127,7 +3234,7 @@ foreign {
 	*/
 	CreateSharedMemoryChannelReader :: proc "c" (
 		name: string,
-		bytes: i64,
+		size: i64,
 		reader: ^SharedMemoryChannelReader,
 	) -> b8 ---
 }
@@ -3141,8 +3248,8 @@ foreign {
 	*/
 	ReadSharedMemoryChannelMessage :: proc "c" (
 		reader: ^SharedMemoryChannelReader,
-		message: ^SharedMemoryMessage,
-		fatalError: ^b8,
+		message: ^SharedMemoryChannelMessage,
+		fatalError: ^b8 = { },
 	) -> b8 ---
 }
 
@@ -3152,7 +3259,7 @@ foreign {
 	Acknowledges that a message has been processed and advances the read cursor.
 	*/
 	AcknowledgeSharedMemoryChannelMessage :: proc "c" (
-		message: ^SharedMemoryMessage,
+		message: ^SharedMemoryChannelMessage,
 	) -> b8 ---
 }
 
@@ -3165,6 +3272,8 @@ foreign {
 		reader: ^SharedMemoryChannelReader,
 	) -> b8 ---
 }
+
+// Writer Interface ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @(link_prefix="PNSLR_")
 foreign {
@@ -3186,8 +3295,8 @@ foreign {
 	*/
 	PrepareSharedMemoryChannelMessage :: proc "c" (
 		writer: ^SharedMemoryChannelWriter,
-		bytes: i64,
-		reservedMessage: ^SharedMemoryReservedMessage,
+		size: i64,
+		reservedMessage: ^SharedMemoryChannelReservedMessage,
 	) -> b8 ---
 }
 
@@ -3198,7 +3307,7 @@ foreign {
 	*/
 	CommitSharedMemoryChannelMessage :: proc "c" (
 		writer: ^SharedMemoryChannelWriter,
-		reservedMessage: ^SharedMemoryReservedMessage,
+		reservedMessage: SharedMemoryChannelReservedMessage,
 	) -> b8 ---
 }
 

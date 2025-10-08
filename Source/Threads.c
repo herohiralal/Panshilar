@@ -119,4 +119,120 @@ void PNSLR_SetCurrentThreadName(utf8str name)
     PNSLR_SetThreadName(PNSLR_GetCurrentThreadHandle(), name);
 }
 
+typedef struct PNSLR_Internal_ThreadProcPayload
+{
+    PNSLR_ThreadProcedure procedure;
+    rawptr                data;
+} PNSLR_Internal_ThreadProcPayload;
+
+#if PNSLR_WINDOWS
+    DWORD WINAPI PNSLR_Internal_WinThreadProcWrapper(LPVOID param)
+    {
+        PNSLR_Internal_ThreadProcPayload* payloadPtr = (PNSLR_Internal_ThreadProcPayload*) param;
+        PNSLR_Internal_ThreadProcPayload  payload = *payloadPtr;
+        PNSLR_Delete(payloadPtr, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
+
+        payload.procedure(payload.data);
+        return 0;
+    }
+#elif PNSLR_UNIX
+    void* PNSLR_Internal_UnixThreadProcWrapper(void* param)
+    {
+        PNSLR_Internal_ThreadProcPayload* payloadPtr = (PNSLR_Internal_ThreadProcPayload*) param;
+        PNSLR_Internal_ThreadProcPayload  payload = *payloadPtr;
+        PNSLR_Delete(payloadPtr, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
+
+        payload.procedure(payload.data);
+        return nil;
+    }
+#else
+    #error "Unknown platform."
+#endif
+
+PNSLR_ThreadHandle PNSLR_StartThread(PNSLR_ThreadProcedure procedure, rawptr data, utf8str name)
+{
+    PNSLR_Internal_ThreadProcPayload* payloadPtr = PNSLR_New(PNSLR_Internal_ThreadProcPayload, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
+    if (!payloadPtr) { FORCE_DBG_TRAP; return (PNSLR_ThreadHandle) {0}; }
+
+    *payloadPtr = (PNSLR_Internal_ThreadProcPayload)
+    {
+        .procedure = procedure,
+        .data      = data
+    };
+
+    b8 failed = false;
+    PNSLR_ThreadHandle handle = {0};
+    #if PNSLR_WINDOWS
+    {
+        HANDLE threadHandle = CreateThread(
+            nil,                                 // default security attributes
+            0,                                   // use default stack size
+            PNSLR_Internal_WinThreadProcWrapper, // thread function name
+            payloadPtr,                          // argument to thread function
+            0,                                   // use default creation flags
+            nil                                  // returns the thread identifier
+        );
+
+        if (threadHandle == nil)
+        {
+            failed = true;
+        }
+        else
+        {
+            handle.handle = (u64) threadHandle;
+        }
+    }
+    #elif PNSLR_UNIX
+    {
+        pthread_t thread;
+        if (pthread_create(&thread, nil, PNSLR_Internal_UnixThreadProcWrapper, payloadPtr) != 0)
+        {
+            failed = true;
+        }
+        else
+        {
+            handle.handle = (u64) thread;
+        }
+    }
+    #else
+        #error "Unknown platform."
+    #endif
+
+    if (failed) { FORCE_DBG_TRAP; return (PNSLR_ThreadHandle) {0}; }
+
+    if (name.data && name.count)
+        PNSLR_SetThreadName(handle, name);
+
+    return handle;
+}
+
+void PNSLR_JoinThread(PNSLR_ThreadHandle handle)
+{
+    #if PNSLR_WINDOWS
+        WaitForSingleObject((HANDLE) handle.handle, INFINITE);
+        CloseHandle((HANDLE) handle.handle);
+    #elif PNSLR_UNIX
+        pthread_join((pthread_t) handle.handle, nil);
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
+void PNSLR_SleepCurrentThread(u64 milliseconds)
+{
+    #if PNSLR_WINDOWS
+        Sleep((DWORD) milliseconds);
+    #elif PNSLR_UNIX
+        struct timespec req, rem;
+        req.tv_sec = (time_t)(milliseconds / 1000);
+        req.tv_nsec = (long)((milliseconds % 1000) * 1000000);
+        while (nanosleep(&req, &rem) == -1 && errno == EINTR)
+        {
+            req = rem;
+        }
+    #else
+        #error "Unknown platform."
+    #endif
+}
+
 #undef PNSLR_MAX_THREAD_NAME_LEN
