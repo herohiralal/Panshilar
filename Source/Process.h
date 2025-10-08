@@ -11,9 +11,13 @@ void PNSLR_ExitProcess(i32 exitCode);
 
 /**
  * A key-value pair representing an environment variable.
+ * The `kvp` field contains the full "KEY=VALUE" string.
+ * The 'key' field contains the key part.
+ * The 'value' field contains the value part.
  */
 typedef struct PNSLR_EnvVarKeyValuePair
 {
+    utf8str kvp;
     utf8str key;
     utf8str value;
 } PNSLR_EnvVarKeyValuePair;
@@ -23,8 +27,9 @@ PNSLR_DECLARE_ARRAY_SLICE(PNSLR_EnvVarKeyValuePair);
 /**
  * Retrieves all environment variables as an array slice of key-value pairs.
  * The returned array slice is allocated using the provided allocator.
- * The individual strings within the key-value pairs are also individually
- * allocated using the same allocator.
+ * The individual strings within the key-value pairs are also allocated using the same allocator.
+ * For the key-value pairs, the `kvp` field contains the full "KEY=VALUE" string,
+ * while the `key` and `value` fields are just 'views' into that string.
  */
 PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) PNSLR_GetEnvironmentVariables(PNSLR_Allocator allocator);
 

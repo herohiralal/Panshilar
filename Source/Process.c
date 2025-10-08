@@ -42,14 +42,24 @@ PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) PNSLR_GetEnvironmentVariables(PNSLR_A
     i64 index = 0;
     #if PNSLR_WINDOWS
 
-        for (LPWCH var = envStringsWindows; *var; var += wcslen(var) + 1)
+        size_t fullLen = 0;
+        for (LPWCH var = envStringsWindows; *var; var += fullLen + 1)
         {
+            fullLen = wcslen(var);
+            if (fullLen == 0) { continue; }
+
             LPWCH equalSign = wcschr(var, L'=');
             if (!equalSign) { continue; } // malformed entry, skip
             if (equalSign == var) { continue; } // empty key, skip
 
-            envVars.data[index].key   = PNSLR_UTF8FromUTF16WindowsOnly((PNSLR_ArraySlice(u16)) {.data = (u16*) (var),           .count = (i64) (equalSign - var)    }, allocator);
-            envVars.data[index].value = PNSLR_UTF8FromUTF16WindowsOnly((PNSLR_ArraySlice(u16)) {.data = (u16*) (equalSign + 1), .count = (i64) wcslen(equalSign + 1)}, allocator);
+            utf8str kvp = PNSLR_UTF8FromUTF16WindowsOnly((PNSLR_ArraySlice(u16)) {.data = (u16*) var, .count = (i64) fullLen}, allocator);
+
+            i64 keyLen = (i64) (strchr((char*) kvp.data, '=') - (char*) kvp.data);
+            i64 valLen = kvp.count - keyLen - 1; // -1 for '='
+
+            envVars.data[index].kvp   = kvp;
+            envVars.data[index].key   = (utf8str) {.data = kvp.data, .count = keyLen};
+            envVars.data[index].value = (utf8str) {.data = kvp.data + keyLen + 1, .count = valLen};
             index++;
         }
 
@@ -60,12 +70,21 @@ PNSLR_ArraySlice(PNSLR_EnvVarKeyValuePair) PNSLR_GetEnvironmentVariables(PNSLR_A
         for (cstring* varPtr = environ; *varPtr; varPtr++)
         {
             cstring var = *varPtr;
+
+            size_t fullLen = strlen(var);
+
             char* equalSign = strchr(var, '=');
             if (!equalSign) { continue; } // malformed entry, skip
             if (equalSign == var) { continue; } // empty key, skip
 
-            envVars.data[index].key   = PNSLR_CloneString((utf8str) {.data = (u8*) (var),           .count = (i64) (equalSign - var)    }, allocator);
-            envVars.data[index].value = PNSLR_CloneString((utf8str) {.data = (u8*) (equalSign + 1), .count = (i64) strlen(equalSign + 1)}, allocator);
+            utf8str kvp = PNSLR_CloneString((utf8str) {.data = (u8*) var, .count = (i64) fullLen}, allocator);
+
+            i64 keyLen = (i64) (strchr((char*) kvp.data, '=') - (char*) kvp.data);
+            i64 valLen = kvp.count - keyLen - 1; // -1 for '='
+
+            envVars.data[index].kvp   = kvp;
+            envVars.data[index].key   = (utf8str) {.data = kvp.data, .count = keyLen};
+            envVars.data[index].value = (utf8str) {.data = kvp.data + keyLen + 1, .count = valLen};
             index++;
         }
 
