@@ -480,7 +480,7 @@ PNSLR_ArraySlice(utf8str) PNSLR_Internal_SplitUnixPathList(utf8str pathStr, PNSL
 
 #endif
 
-b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, PNSLR_Path workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
+b8 PNSLR_RunProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8str) execAndArgs, PNSLR_ArraySlice(utf8str) environmentVariables, PNSLR_Path workingDirectory, PNSLR_PipeHandle* stdOutPipe, PNSLR_PipeHandle* stdErrPipe)
 {
     if (!outProcessHandle) return false;
     *outProcessHandle = (PNSLR_ProcessHandle) {0};
@@ -570,6 +570,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
             // Ensure we don't leak any handles if CreateProcessW failed and returned handles.
             if (pi.hProcess) { CloseHandle(pi.hProcess); pi.hProcess = NULL; }
             if (pi.hThread)  { CloseHandle(pi.hThread);  pi.hThread = NULL; }
+            goto exitFn;
         }
     }
     #elif PNSLR_UNIX
@@ -665,7 +666,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
             cwd = PNSLR_CStringFromString(workingDirectory.path, tempAllocator);
 
 
-        cstring* cmd = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (execAndArgs.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+        cstring* cmd = PNSLR_Allocate(tempAllocator, false, (i32) ((i64) sizeof(cstring) * (execAndArgs.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
         if (!cmd) goto exitFn;
 
         for (i64 i = 0; i < execAndArgs.count; i++)
@@ -680,7 +681,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
         }
         else
         {
-            cenv = PNSLR_Allocate(tempAllocator, false, (i32) (sizeof(cstring) * (environmentVariables.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
+            cenv = PNSLR_Allocate(tempAllocator, false, (i32) ((i64) sizeof(cstring) * (environmentVariables.count + 1)), (i32) alignof(cstring), PNSLR_GET_LOC(), nil);
             if (!cenv) goto exitFn;
             for (i64 i = 0; i < environmentVariables.count; i++)
                 cenv[i] = PNSLR_CStringFromString(environmentVariables.data[i], tempAllocator);
@@ -782,7 +783,7 @@ b8 PNSLR_StartProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(ut
                 ssize_t totalRead = 0;
                 while (totalRead < (ssize_t)sizeof(int))
                 {
-                    ssize_t r = read(pipeVal[READ], ((u8*)&errNoVal) + totalRead, (ssize_t)sizeof(int) - totalRead);
+                    ssize_t r = read(pipeVal[READ], ((u8*)&errNoVal) + totalRead, (size_t) ((ssize_t) sizeof(int) - totalRead));
                     if (r > 0) { totalRead += r; continue; }
                     if (r == 0) { /* EOF: child closed without writing: treat as no-error */ break; }
                     if (r == -1)
@@ -827,4 +828,81 @@ exitFn:
     PNSLR_DestroyAllocator_Arena(tempAllocator, PNSLR_GET_LOC(), nil);
 
     return success;
+}
+
+b8 PNSLR_WaitForProcess(PNSLR_ProcessHandle* process, i32* outExitCode)
+{
+    if (!process) return false;
+
+#if PNSLR_WINDOWS
+    HANDLE hProc = (HANDLE)(uintptr_t)process->handle;
+    if (!hProc) return false;
+
+    DWORD waitResult = WaitForSingleObject(hProc, INFINITE);
+    if (waitResult != WAIT_OBJECT_0)
+        return false;
+
+    DWORD exitCode = 0;
+    if (!GetExitCodeProcess(hProc, &exitCode))
+        return false;
+
+    if (outExitCode)
+        *outExitCode = (i32)exitCode;
+
+    return true;
+#else
+    int status = 0;
+    pid_t pidResult = waitpid((pid_t)process->pid, &status, 0);
+    if (pidResult == -1)
+        return false;
+
+    if (outExitCode)
+    {
+        if (WIFEXITED(status))
+            *outExitCode = (i32) WEXITSTATUS(status);
+        else if (WIFSIGNALED(status))
+            *outExitCode = (i32) -WTERMSIG(status);
+        else
+            *outExitCode = (i32) -1;
+    }
+
+    return true;
+#endif
+}
+
+b8 PNSLR_KillProcess(PNSLR_ProcessHandle* process)
+{
+    if (!process) return false;
+
+#if PNSLR_WINDOWS
+    HANDLE hProc = (HANDLE)(uintptr_t)process->handle;
+    if (!hProc) return false;
+
+    BOOL ok = TerminateProcess(hProc, 1);
+    return ok ? true : false;
+#else
+    if (process->pid <= 0)
+        return false;
+
+    int result = kill((pid_t)process->pid, SIGKILL);
+    return (result == 0);
+#endif
+}
+
+void PNSLR_CloseProcess(PNSLR_ProcessHandle* process)
+{
+    if (!process) return;
+
+#if PNSLR_WINDOWS
+    HANDLE hProc = (HANDLE)(uintptr_t)process->handle;
+    if (hProc)
+        CloseHandle(hProc);
+    process->handle = 0;
+#else
+    // If using pidfds (Linux 5.3+), close here:
+    // close((int)process->handle);
+    process->handle = 0;
+#endif
+
+    process->pid = 0;
 }

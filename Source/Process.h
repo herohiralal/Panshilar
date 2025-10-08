@@ -106,7 +106,7 @@ typedef struct PNSLR_ProcessHandle
  * The pipe handles provided must be read ends for stdout and stderr respectively.
  * If null, the respective output is discarded.
  */
-b8 PNSLR_StartProcess(
+b8 PNSLR_RunProcess(
     PNSLR_ProcessHandle*      outProcessHandle,
     PNSLR_ArraySlice(utf8str) execAndArgs,
     PNSLR_ArraySlice(utf8str) environmentVariables OPT_ARG,
@@ -114,6 +114,27 @@ b8 PNSLR_StartProcess(
     PNSLR_PipeHandle*         stdOutPipe           OPT_ARG,
     PNSLR_PipeHandle*         stdErrPipe           OPT_ARG
 );
+
+/**
+ * Waits for the given process to exit and retrieves its exit code.
+ *
+ * Returns true if the process exited cleanly or false on failure.
+ * The exit code is stored in *outExitCode if provided.
+ */
+b8 PNSLR_WaitForProcess(PNSLR_ProcessHandle* process, i32* outExitCode OPT_ARG);
+
+/**
+ * Kills the given process immediately.
+ *
+ * Returns true if the signal/termination request succeeded.
+ */
+b8 PNSLR_KillProcess(PNSLR_ProcessHandle* process);
+
+/**
+ * Closes the handle associated with the process.
+ * Does not terminate or wait for the process.
+ */
+void PNSLR_CloseProcess(PNSLR_ProcessHandle* process);
 
 EXTERN_C_END
 #endif // PNSLR_PROCESS_H ==========================================================

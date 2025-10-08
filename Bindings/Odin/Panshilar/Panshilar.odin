@@ -2445,8 +2445,12 @@ foreign {
 
 /*
 A key-value pair representing an environment variable.
+The `kvp` field contains the full "KEY=VALUE" string.
+The 'key' field contains the key part.
+The 'value' field contains the value part.
 */
 EnvVarKeyValuePair :: struct  {
+	kvp: string,
 	key: string,
 	value: string,
 }
@@ -2458,12 +2462,162 @@ foreign {
 	/*
 	Retrieves all environment variables as an array slice of key-value pairs.
 	The returned array slice is allocated using the provided allocator.
-	The individual strings within the key-value pairs are also individually
-	allocated using the same allocator.
+	The individual strings within the key-value pairs are also allocated using the same allocator.
+	For the key-value pairs, the `kvp` field contains the full "KEY=VALUE" string,
+	while the `key` and `value` fields are just 'views' into that string.
 	*/
 	GetEnvironmentVariables :: proc "c" (
 		allocator: Allocator,
 	) -> []EnvVarKeyValuePair ---
+}
+
+/*
+Opaque handle to a pipe.
+On Windows, this is a HANDLE.
+On Unix-like systems, this is a file descriptor (int).
+This is used for inter-process communication (IPC).
+*/
+PipeHandle :: struct  {
+	platformHandle: u64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates a pipe and returns the read and write ends.
+	The read end is used for reading data from the pipe.
+	The write end is used for writing data to the pipe.
+	*/
+	CreatePipe :: proc "c" (
+		outR: ^PipeHandle,
+		outW: ^PipeHandle,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Gets the number of bytes available to read from the read end of the pipe.
+	The size is stored in `outSize`.
+	 *
+	Note that this function does not block, and the size may change after
+	this function returns.
+	*/
+	GetRemainingPipeReadSize :: proc "c" (
+		pipe: PipeHandle,
+		outSize: ^i64,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Reads data from the read end of the pipe into the provided buffer.
+	The number of bytes read is stored in `readSize` if it's not null.
+	Returns true on success, false on failure.
+	*/
+	ReadFromPipe :: proc "c" (
+		pipe: PipeHandle,
+		dst: []u8,
+		readSize: ^i64 = { },
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Writes data to the write end of the pipe from the provided buffer.
+	Returns true on success, false on failure.
+	*/
+	WriteToPipe :: proc "c" (
+		pipe: PipeHandle,
+		src: []u8,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Closes the pipe handle, releasing any associated resources.
+	After calling this function, the pipe handle should not be used again.
+	*/
+	ClosePipe :: proc "c" (
+		pipe: PipeHandle,
+	) -> b8 ---
+}
+
+/*
+A handle to a process.
+The `pid` field is the process ID.
+On Windows, this is `dwProcessId`.
+On Unix-like systems, this is the PID.
+The `handle` field is a platform-specific handle to the process.
+On Windows, this is a HANDLE.
+On Unix-like systems, this is pidfd.
+*/
+ProcessHandle :: struct  {
+	pid: i64,
+	handle: u64,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Starts a new process with the specified executable and arguments.
+	Optionally, environment variables, working directory, and pipes for
+	standard output and error can be provided.
+	 *
+	If not provided, environment variables and working directory are inherited
+	from the current process. If provided, they must be in a 'KEY=VALUE' format.
+	 *
+	The pipe handles provided must be read ends for stdout and stderr respectively.
+	If null, the respective output is discarded.
+	*/
+	RunProcess :: proc "c" (
+		outProcessHandle: ^ProcessHandle,
+		execAndArgs: []string,
+		environmentVariables: []string = { },
+		workingDirectory: Path = { },
+		stdOutPipe: ^PipeHandle = { },
+		stdErrPipe: ^PipeHandle = { },
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Waits for the given process to exit and retrieves its exit code.
+	 *
+	Returns true if the process exited cleanly or false on failure.
+	The exit code is stored in *outExitCode if provided.
+	*/
+	WaitForProcess :: proc "c" (
+		process: ^ProcessHandle,
+		outExitCode: ^i32 = { },
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Kills the given process immediately.
+	 *
+	Returns true if the signal/termination request succeeded.
+	*/
+	KillProcess :: proc "c" (
+		process: ^ProcessHandle,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Closes the handle associated with the process.
+	Does not terminate or wait for the process.
+	*/
+	CloseProcess :: proc "c" (
+		process: ^ProcessHandle,
+	) ---
 }
 
 // #######################################################################################
