@@ -23,7 +23,8 @@ def run(
     c.append("    #error \"You must define INLINED_FILE_INCLUSION_NAME to be the name of the inlined file (without extension)\"")
     c.append("#else")
     c.append("")
-    c.append("    #define AUTOGEN_XXX_MY_MACRO_COMBINE(x, y) x##y")
+    c.append("    #define AUTOGEN_XXX_MY_MACRO_COMBINE_1(x, y) x##y")
+    c.append("    #define AUTOGEN_XXX_MY_MACRO_COMBINE(x, y) AUTOGEN_XXX_MY_MACRO_COMBINE_1(x, y)")
     c.append("")
     c.append("    static const unsigned char AUTOGEN_XXX_MY_MACRO_COMBINE(INLINED_FILE_INCLUSION_NAME, Contents) [] = {")
     if arrDecl:
@@ -33,6 +34,7 @@ def run(
     c.append("    static const unsigned long long AUTOGEN_XXX_MY_MACRO_COMBINE(INLINED_FILE_INCLUSION_NAME, Size) = sizeof( AUTOGEN_XXX_MY_MACRO_COMBINE(INLINED_FILE_INCLUSION_NAME, Contents) );")
     c.append("")
     c.append("    #undef AUTOGEN_XXX_MY_MACRO_COMBINE")
+    c.append("    #undef AUTOGEN_XXX_MY_MACRO_COMBINE_1")
     c.append("    #undef INLINED_FILE_INCLUSION_NAME")
     c.append("")
     c.append("#endif")
