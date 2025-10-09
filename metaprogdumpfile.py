@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Optional
 
 def run(
-        inputPath: str | Path,
-        outputPath: Optional[str | Path] = None,
+        inputFileName: str,
+        inputPath: str,
+        outputPath: str,
         bytesPerLine: int = 16
     ) -> None:
 
@@ -18,7 +18,7 @@ def run(
     arrDecl = ",\n        ".join(lines) if lines else ""
 
     c: list[str] = []
-    c.append(f"// generated from {p.name}, do not edit")
+    c.append(f"// generated from {inputFileName}, do not edit")
     c.append("#ifndef INLINED_FILE_INCLUSION_NAME")
     c.append("    #error \"You must define INLINED_FILE_INCLUSION_NAME to be the name of the inlined file (without extension)\"")
     c.append("#else")
