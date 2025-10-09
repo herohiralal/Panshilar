@@ -30,7 +30,7 @@ This file contains todo items for Panshilar library.
   - [x] GetExtension
 - [x] StrConv
   - [x] String <-> Boolean
-  - [ ] String <-> Enum // HOW??
+  - [ ] ~~String <-> Enum~~ // HOW??
   - [x] String <-> Float
   - [x] String <-> Int
 - [x] Disk I/O Functionality
@@ -38,9 +38,9 @@ This file contains todo items for Panshilar library.
   - [x] WriteStream
   - [x] ReadStream
   - [x] Ensure File/Dir
-- [ ] Console Logging Functionality
-  - [ ] Basic logging
-  - [ ] Colors
+- [x] Console Logging Functionality
+  - [x] Basic logging
+  - [x] Colors
 - [ ] Threading
   - [ ] Atomics
   - [x] Start/Sleep/WaitFor Thread
@@ -48,20 +48,20 @@ This file contains todo items for Panshilar library.
   - [x] RWMutex
   - [x] Semaphore
   - [ ] Channels
-- [ ] Process
-  - [ ] Run
-  - [ ] WaitOn
-  - [ ] Kill
-- [ ] Math functions
-  - [ ] Vector Library
-    - [ ] float2
-    - [ ] float3
-    - [ ] float4
-    - [ ] colour
-    - [ ] quaternion
-    - [ ] matrices
-  - [ ] Linear Algebra
-  - [ ] Trigonometry
+- [x] Process
+  - [x] Run
+  - [x] WaitOn
+  - [x] Kill
+- [ ] ~~Math functions~~ Skipping because doesn't seem like a good fit for Panshilar
+  - [ ] ~~Vector Library~~
+    - [ ] ~~float2~~
+    - [ ] ~~float3~~
+    - [ ] ~~float4~~
+    - [ ] ~~colour~~
+    - [ ] ~~quaternion~~
+    - [ ] ~~matrices~~
+  - [ ] ~~Linear Algebra~~
+  - [ ] ~~Trigonometry~~
 - [ ] Allocators
   - [x] Arena
   - [x] Stack
@@ -70,7 +70,7 @@ This file contains todo items for Panshilar library.
 - [ ] Time
   - [x] GetCurrent
   - [ ] Unix Epoch conv
-  - [ ] Apollo(?)
+  - [ ] ~~Apollo(?)~~ too pretentious
 - [ ] Environment
   - [x] Exit with code
   - [ ] Get Cmdline
