@@ -14,6 +14,8 @@ PNSLR_SUPPRESS_WARN
 
 #if PNSLR_WINDOWS
     #define WIN32_LEAN_AND_MEAN
+    #define VC_EXTRALEAN
+    #define NOMINMAX
     #include <Windows.h>
     #include <WinSock2.h>
     #include <ws2ipdef.h>
@@ -30,6 +32,8 @@ PNSLR_SUPPRESS_WARN
     #endif
 
     #include <stdio.h>
+    #undef VC_EXTRALEAN
+    #undef NOMINMAX
     #undef WIN32_LEAN_AND_MEAN
 #endif
 
