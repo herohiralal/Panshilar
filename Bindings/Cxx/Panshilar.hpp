@@ -310,7 +310,7 @@ namespace Panshilar
      */
     struct alignas(8) DoOnce
     {
-       u8 buffer[8];
+       u8 buffer[16];
     };
 
     /**
@@ -3138,7 +3138,7 @@ void Panshilar::BroadcastConditionVariable(Panshilar::ConditionVariable* condvar
 
 struct alignas(8) PNSLR_DoOnce
 {
-   u8 buffer[8];
+   u8 buffer[16];
 };
 static_assert(sizeof(PNSLR_DoOnce) == sizeof(Panshilar::DoOnce), "size mismatch");
 static_assert(alignof(PNSLR_DoOnce) == alignof(Panshilar::DoOnce), "align mismatch");

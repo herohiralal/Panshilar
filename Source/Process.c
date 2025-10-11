@@ -712,7 +712,7 @@ b8 PNSLR_RunProcess(PNSLR_ProcessHandle* outProcessHandle, PNSLR_ArraySlice(utf8
             goto exitFn;
         }
 
-        __pid_t pid = fork();
+        pid_t pid = fork();
         switch (pid)
         {
             case -1: // fork failed

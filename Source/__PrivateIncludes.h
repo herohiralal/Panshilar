@@ -44,8 +44,12 @@ PNSLR_SUPPRESS_WARN
 #if PNSLR_UNIX
 
     // since we're on C11
-    #define _POSIX_C_SOURCE 200809L
-    #define _XOPEN_SOURCE 700
+    #if PNSLR_APPLE
+        #define _DARWIN_C_SOURCE
+    #else
+        #define _POSIX_C_SOURCE 200809L
+        #define _XOPEN_SOURCE 700
+    #endif
 
     #include <stdio.h>
     #include <stdlib.h>
@@ -67,7 +71,18 @@ PNSLR_SUPPRESS_WARN
 #endif
 
 #if PNSLR_APPLE
+    extern char** environ;
+
+    #include <mach/mach.h>
+    #include <mach/mach_time.h>
+    #include <TargetConditionals.h>
+    #include <signal.h>
     #include <dispatch/dispatch.h>
+    #include <os/log.h>
+    #include <objc/runtime.h>
+    #include <objc/message.h>
+    #include <objc/NSObject.h>
+    #include <objc/NSObjCRuntime.h>
 #endif
 
 #if PNSLR_ANDROID

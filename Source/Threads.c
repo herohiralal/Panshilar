@@ -88,24 +88,28 @@ utf8str PNSLR_GetThreadName(PNSLR_ThreadHandle handle, PNSLR_Allocator allocator
 
 void PNSLR_SetThreadName(PNSLR_ThreadHandle handle, utf8str name)
 {
-    if (name.count > PNSLR_MAX_THREAD_NAME_LEN - 1)
-        name.count = PNSLR_MAX_THREAD_NAME_LEN - 1;
+    #if !PNSLR_APPLE
+        if (name.count > PNSLR_MAX_THREAD_NAME_LEN - 1)
+            name.count = PNSLR_MAX_THREAD_NAME_LEN - 1;
 
-    #if PNSLR_WINDOWS
-    {
-        WCHAR nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
-        MultiByteToWideChar(CP_UTF8, 0, (cstring) name.data, (i32) name.count, nameBuffer, PNSLR_MAX_THREAD_NAME_LEN);
+        #if PNSLR_WINDOWS
+        {
+            WCHAR nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
+            MultiByteToWideChar(CP_UTF8, 0, (cstring) name.data, (i32) name.count, nameBuffer, PNSLR_MAX_THREAD_NAME_LEN);
 
-        SetThreadDescription((HANDLE) handle.handle, nameBuffer);
-    }
-    #elif PNSLR_OSX || PNSLR_IOS || (PNSLR_LINUX && defined(_GNU_SOURCE)) || (PNSLR_ANDROID && defined(_GNU_SOURCE))
-    {
-        char nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
-        PNSLR_MemCopy(nameBuffer, name.data, (i32) name.count);
-        nameBuffer[name.count] = '\0';
+            SetThreadDescription((HANDLE) handle.handle, nameBuffer);
+        }
+        #elif (PNSLR_LINUX && defined(_GNU_SOURCE)) || (PNSLR_ANDROID && defined(_GNU_SOURCE))
+        {
+            char nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
+            PNSLR_MemCopy(nameBuffer, name.data, (i32) name.count);
+            nameBuffer[name.count] = '\0';
 
-        pthread_setname_np((pthread_t) handle.handle, nameBuffer);
-    }
+            pthread_setname_np((pthread_t) handle.handle, nameBuffer);
+        }
+        #endif
+    #else
+        return; // setting thread name on Apple platforms is not supported
     #endif
 }
 
@@ -116,13 +120,25 @@ utf8str PNSLR_GetCurrentThreadName(PNSLR_Allocator allocator)
 
 void PNSLR_SetCurrentThreadName(utf8str name)
 {
-    PNSLR_SetThreadName(PNSLR_GetCurrentThreadHandle(), name);
+    #if PNSLR_APPLE
+        if (name.count > PNSLR_MAX_THREAD_NAME_LEN - 1)
+            name.count = PNSLR_MAX_THREAD_NAME_LEN - 1;
+
+        char nameBuffer[PNSLR_MAX_THREAD_NAME_LEN] = {0};
+        PNSLR_MemCopy(nameBuffer, name.data, (i32) name.count);
+        nameBuffer[name.count] = '\0';
+        pthread_setname_np(nameBuffer);
+        return;
+    #else
+        PNSLR_SetThreadName(PNSLR_GetCurrentThreadHandle(), name);
+    #endif
 }
 
 typedef struct PNSLR_Internal_ThreadProcPayload
 {
     PNSLR_ThreadProcedure procedure;
     rawptr                data;
+    utf8str               threadName;
 } PNSLR_Internal_ThreadProcPayload;
 
 #if PNSLR_WINDOWS
@@ -132,6 +148,8 @@ typedef struct PNSLR_Internal_ThreadProcPayload
         PNSLR_Internal_ThreadProcPayload  payload = *payloadPtr;
         PNSLR_Delete(payloadPtr, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
 
+        PNSLR_SetCurrentThreadName(payload.threadName);
+        PNSLR_FreeString(payload.threadName, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
         payload.procedure(payload.data);
         return 0;
     }
@@ -142,6 +160,8 @@ typedef struct PNSLR_Internal_ThreadProcPayload
         PNSLR_Internal_ThreadProcPayload  payload = *payloadPtr;
         PNSLR_Delete(payloadPtr, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
 
+        PNSLR_SetCurrentThreadName(payload.threadName);
+        PNSLR_FreeString(payload.threadName, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
         payload.procedure(payload.data);
         return nil;
     }
@@ -156,8 +176,9 @@ PNSLR_ThreadHandle PNSLR_StartThread(PNSLR_ThreadProcedure procedure, rawptr dat
 
     *payloadPtr = (PNSLR_Internal_ThreadProcPayload)
     {
-        .procedure = procedure,
-        .data      = data
+        .procedure  = procedure,
+        .data       = data,
+        .threadName = PNSLR_CloneString(name, PNSLR_GetAllocator_DefaultHeap())
     };
 
     b8 failed = false;
@@ -198,10 +219,12 @@ PNSLR_ThreadHandle PNSLR_StartThread(PNSLR_ThreadProcedure procedure, rawptr dat
         #error "Unknown platform."
     #endif
 
-    if (failed) { FORCE_DBG_TRAP; return (PNSLR_ThreadHandle) {0}; }
-
-    if (name.data && name.count)
-        PNSLR_SetThreadName(handle, name);
+    if (failed)
+    {
+        PNSLR_FreeString(payloadPtr->threadName, PNSLR_GetAllocator_DefaultHeap(), PNSLR_GET_LOC(), nil);
+        FORCE_DBG_TRAP;
+        return (PNSLR_ThreadHandle) {0};
+    }
 
     return handle;
 }

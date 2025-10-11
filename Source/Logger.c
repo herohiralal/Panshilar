@@ -25,7 +25,7 @@ static void PNSLR_Internal_LoggerFn_Default(rawptr loggerData, PNSLR_LoggerLevel
 {
     PNSLR_ExecuteDoOnce(&G_PNSLR_Internal_DefaultLoggerInit, PNSLR_Internal_InitialiseLoggerStateIfRequired);
 
-    #if PNSLR_ANDROID // logcat takes care of these
+    #if PNSLR_MOBILE // logcat/console takes care of these
         options &= ~(PNSLR_LogOption_IncludeLevel|PNSLR_LogOption_IncludeDate|PNSLR_LogOption_IncludeTime|PNSLR_LogOption_IncludeColours);
     #endif
 
@@ -152,7 +152,7 @@ static void PNSLR_Internal_LoggerFn_Default(rawptr loggerData, PNSLR_LoggerLevel
 
         PNSLR_UnlockMutex(G_PNSLR_Internal_DefaultLoggerMutex);
     }
-    #elif PNSLR_ANDROID
+    #elif PNSLR_MOBILE
     {
         PNSLR_INTERNAL_ALLOCATOR_INIT(Logger, internalAllocator);
         i64 totalLen = fnLen + data.count + locLen;
@@ -179,18 +179,38 @@ static void PNSLR_Internal_LoggerFn_Default(rawptr loggerData, PNSLR_LoggerLevel
         PNSLR_AppendRuneToStringBuilder(&sb, '\0');
         utf8str outData = PNSLR_StringFromStringBuilder(&sb);
 
-        int androidPrio = ANDROID_LOG_DEFAULT;
-        switch (level)
-        {
-            case PNSLR_LoggerLevel_Debug:    androidPrio = ANDROID_LOG_DEBUG;    break;
-            case PNSLR_LoggerLevel_Info:     androidPrio = ANDROID_LOG_INFO;     break;
-            case PNSLR_LoggerLevel_Warn:     androidPrio = ANDROID_LOG_WARN;     break;
-            case PNSLR_LoggerLevel_Error:    androidPrio = ANDROID_LOG_ERROR;    break;
-            case PNSLR_LoggerLevel_Critical: androidPrio = ANDROID_LOG_FATAL;    break;
-            default:                         androidPrio = ANDROID_LOG_DEFAULT;  break;
-        }
+        #if PNSLR_ANDROID
 
-        __android_log_write(androidPrio, "Panshilar-DefaultLogger", (cstring) outData.data);
+            int androidPrio = ANDROID_LOG_DEFAULT;
+            switch (level)
+            {
+                case PNSLR_LoggerLevel_Debug:    androidPrio = ANDROID_LOG_DEBUG;    break;
+                case PNSLR_LoggerLevel_Info:     androidPrio = ANDROID_LOG_INFO;     break;
+                case PNSLR_LoggerLevel_Warn:     androidPrio = ANDROID_LOG_WARN;     break;
+                case PNSLR_LoggerLevel_Error:    androidPrio = ANDROID_LOG_ERROR;    break;
+                case PNSLR_LoggerLevel_Critical: androidPrio = ANDROID_LOG_FATAL;    break;
+                default:                         androidPrio = ANDROID_LOG_DEFAULT;  break;
+            }
+
+            __android_log_write(androidPrio, "Panshilar-DefaultLogger", (cstring) outData.data);
+
+        #elif PNSLR_IOS
+
+            os_log_type_t osPrio = OS_LOG_TYPE_DEFAULT;
+            switch (level)
+            {
+                case PNSLR_LoggerLevel_Debug:    osPrio = OS_LOG_TYPE_DEBUG;    break;
+                case PNSLR_LoggerLevel_Info:     osPrio = OS_LOG_TYPE_INFO;     break;
+                case PNSLR_LoggerLevel_Warn:     osPrio = OS_LOG_TYPE_ERROR;    break; // no warn level, so using error
+                case PNSLR_LoggerLevel_Error:    osPrio = OS_LOG_TYPE_ERROR;    break;
+                case PNSLR_LoggerLevel_Critical: osPrio = OS_LOG_TYPE_FAULT;    break;
+                default:                         osPrio = OS_LOG_TYPE_DEFAULT;  break;
+            }
+
+            os_log_with_type(OS_LOG_DEFAULT, osPrio, "%s", (cstring) outData.data);
+        #else
+            #error "Unknown platform"
+        #endif
 
         PNSLR_INTERNAL_ALLOCATOR_RESET(Logger, internalAllocator);
     }

@@ -371,7 +371,7 @@ if called from multiple threads.
 This is useful for one-time initialization of shared resources.
 */
 DoOnce :: struct #align(8)  {
-	buffer: [8]u8,
+	buffer: [16]u8,
 }
 
 /*

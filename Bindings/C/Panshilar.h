@@ -312,7 +312,7 @@ void PNSLR_BroadcastConditionVariable(
  */
 typedef struct PNSLR_ALIGNAS(8) PNSLR_DoOnce
 {
-    u8 buffer[8];
+    u8 buffer[16];
 } PNSLR_DoOnce;
 
 /**
