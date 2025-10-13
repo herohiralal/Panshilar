@@ -424,6 +424,9 @@ def getCompilationCommand(
     output += [inputF]
     output += ['/Fo'+outputF] if plt.tgt == 'windows' else ['-o', outputF]
 
+    if plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
+        output += ['-fobjc-arc']
+
     if dbg and plt.tgt == 'windows':
         output += ['/Fd'+outputF.rstrip('.obj') + '.pdb']
 
@@ -487,6 +490,7 @@ def getExecBuildCommand(
             output += ['-l' + lib]
 
     if plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
+        output += ['-ObjC']
         for fwk in objcFwks:
             output += ['-framework', fwk]
 
