@@ -461,7 +461,8 @@ def getExecBuildCommand(
         inputFs:  list[str],
         sysLibs:  list[str],
         outputF:  str,
-        useCxx:   bool = False,
+        useCxx:   bool      = False,
+        objcFwks: list[str] = []
     ) -> list[str]:
     output: list[str] = [(getCxxCompiler(plt) if useCxx else getCCompiler(plt))]
 
@@ -485,6 +486,10 @@ def getExecBuildCommand(
         for lib in sysLibs:
             output += ['-l' + lib]
 
+    if plt.tgt == 'osx' or plt.tgt == 'ios' or plt.tgt == 'iossimulator':
+        for fwk in objcFwks:
+            output += ['-framework', fwk]
+
     return output
 
 def getDynamicLibBuildCommand(
@@ -493,7 +498,8 @@ def getDynamicLibBuildCommand(
         inputFs:  list[str],
         sysLibs:  list[str],
         outputF:  str,
-        useCxx:   bool = False,
+        useCxx:   bool      = False,
+        objcFwks: list[str] = []
     ) -> list[str]:
     output = getExecBuildCommand(
         plt      = plt,
@@ -502,6 +508,7 @@ def getDynamicLibBuildCommand(
         sysLibs  = sysLibs,
         outputF  = outputF,
         useCxx   = useCxx,
+        objcFwks = objcFwks,
     )
 
     if plt.tgt == 'windows':

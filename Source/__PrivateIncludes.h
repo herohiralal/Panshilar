@@ -79,10 +79,6 @@ PNSLR_SUPPRESS_WARN
     #include <signal.h>
     #include <dispatch/dispatch.h>
     #include <os/log.h>
-    #include <objc/runtime.h>
-    #include <objc/message.h>
-    #include <objc/NSObject.h>
-    #include <objc/NSObjCRuntime.h>
 #endif
 
 #if PNSLR_ANDROID
