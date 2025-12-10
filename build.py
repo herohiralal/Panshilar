@@ -121,7 +121,6 @@ if __name__ == '__main__':
             projDir         = 'Tools/TestRunner/ProjectFiles/TestRunner_Android',
             cxxMain         = '',
             cMain           = 'Tools/TestRunner/zzzz_TestRunner.c',
-            useGameActivity = False,
         )
 
     if CMD_ARG_MAKE_VS_PROJ:

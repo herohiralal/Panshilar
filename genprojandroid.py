@@ -14,7 +14,6 @@ def run(
         verName:         str  = "1.0",
         cxxMain:         str  = "",
         cMain:           str  = "",
-        useGameActivity: bool = True,
     ):
 
     # Create directory structure
@@ -24,10 +23,6 @@ def run(
         f"./{projDir}/app/src/main/cpp",
         f"./{projDir}/gradle/wrapper"
     ]
-
-    # using game activity instead of native activity
-    if useGameActivity:
-        dirs += [f"./{projDir}/app/src/main/java/{pkgName.replace('.', '/')}"]
 
     for dirPath in dirs:
         Path(dirPath).mkdir(parents=True, exist_ok=True)
@@ -132,42 +127,6 @@ zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 """
 
-    mainActivity = ''
-    if useGameActivity:
-        mainActivity = f"""\
-package {pkgName};
-
-import android.view.View;
-import com.google.androidgamesdk.GameActivity;
-
-public class MainActivity extends GameActivity {{
-    static {{
-        System.loadLibrary("nativelib");
-    }}
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {{
-        super.onWindowFocusChanged(hasFocus);
-
-        if (hasFocus) {{
-            hideSystemUi();
-        }}
-    }}
-
-    private void hideSystemUi() {{
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-        );
-    }}
-}}
-"""
-
     # AndroidManifest.xml
     manifest = f"""\
 <?xml version="1.0" encoding="utf-8"?>
@@ -178,12 +137,9 @@ public class MainActivity extends GameActivity {{
 
     <application
         android:label="{appName}"
-        android:theme="{\
-            '@style/Theme.AppCompat.NoActionBar' \
-                if useGameActivity else \
-            '@android:style/Theme.NoTitleBar.Fullscreen'}">
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
-            android:name="{'.MainActivity' if mainActivity else 'android.app.NativeActivity'}"
+            android:name="android.app.NativeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -212,11 +168,6 @@ public class MainActivity extends GameActivity {{
 </project>
 """
 
-    if useGameActivity:
-        nativeSymbolToPreserve = 'Java_com_google_androidgamesdk_GameActivity_initializeNativeCode'
-    else:
-        nativeSymbolToPreserve = 'ANativeActivity_onCreate'
-
     # CMakeLists.txt
     cmake = f"""\
 cmake_minimum_required(VERSION 3.22.1)
@@ -242,14 +193,12 @@ target_compile_definitions(nativelib PRIVATE
     $<$<CONFIG:MinSizeRel>:PNSLR_REL=1>
 )\
 
-{'' if useGameActivity else """
 target_include_directories(nativelib PRIVATE
     ${{ANDROID_NDK}}/sources/android/native_app_glue
 )
-"""}\
 
 set(CMAKE_SHARED_LINKER_FLAGS
-    "${{CMAKE_SHARED_LINKER_FLAGS}} -u {nativeSymbolToPreserve}"
+    "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate"
 )
 
 target_link_libraries(nativelib
@@ -298,12 +247,6 @@ local.properties
         (f"./{projDir}/app/src/main/AndroidManifest.xml",         manifest),
         (f"./{projDir}/app/src/main/cpp/CMakeLists.txt",          cmake),
     ]
-
-    if mainActivity:
-        files += [(
-            f"./{projDir}/app/src/main/java/{pkgName.replace('.', '/')}/MainActivity.java",
-            mainActivity
-        )]
 
     if cxxMain:
         cxxRelPath = os.path.relpath('./' + cxxMain, f"./{projDir}/app/src/main/cpp/").replace('\\', '/')
