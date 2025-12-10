@@ -69,7 +69,6 @@ def buildBindingsGenerator(plt: buildutils.Platform) -> bool:
 # endregion
 
 if __name__ == '__main__':
-    buildutils.G_UseNativeAppGlueForAndroid = True
     buildutils.setupVsCodeLspStuff()
 
     if CMD_ARG_RUN_TESTS:
