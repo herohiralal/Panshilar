@@ -198,7 +198,7 @@ target_include_directories(nativelib PRIVATE
 )
 
 set(CMAKE_SHARED_LINKER_FLAGS
-    "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate"
+    "${{CMAKE_SHARED_LINKER_FLAGS}} -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384"
 )
 
 target_link_libraries(nativelib
