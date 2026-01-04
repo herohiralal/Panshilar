@@ -1,8 +1,15 @@
 #ifndef PNSLR_PLATFORM_INTRINSICS_H // =============================================
 #define PNSLR_PLATFORM_INTRINSICS_H
 //+skipreflect
+#include "Warnings.h"
 
 // configuration
+
+#if defined(_DEBUG) || defined(DEBUG) || !defined(NDEBUG)
+    #define PNSLR_DBG 1
+#else
+    #define PNSLR_REL 1
+#endif
 
 #ifndef PNSLR_DBG
     #define PNSLR_DBG 0
@@ -12,6 +19,26 @@
 #endif
 
 // platform
+
+#if defined(_WIN32) || defined(_WIN64)
+    #define PNSLR_WINDOWS 1
+#elif defined(__APPLE__)
+    PNSLR_SUPPRESS_WARN
+        #include <TargetConditionals.h>
+    PNSLR_UNSUPPRESS_WARN
+
+    #if TARGET_OS_IPHONE
+        #define PNSLR_IOS 1
+    #else
+        #define PNSLR_OSX 1
+    #endif
+#elif defined(__linux__)
+    #if defined(__ANDROID__)
+        #define PNSLR_ANDROID 1
+    #else
+        #define PNSLR_LINUX 1
+    #endif
+#endif
 
 #ifndef PNSLR_WINDOWS
     #define PNSLR_WINDOWS 0
@@ -39,6 +66,12 @@
 #endif
 
 // architecture
+
+#if defined(__x86_64__) || defined(_M_X64)
+    #define PNSLR_X64 1
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    #define PNSLR_ARM64 1
+#endif
 
 #ifndef PNSLR_X64
     #define PNSLR_X64 0

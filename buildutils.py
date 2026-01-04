@@ -202,28 +202,6 @@ def getPlatforms(all: bool) -> list[Platform]:
 VALID_PLATFORMS    = getPlatforms(True)
 PLATFORMS_TO_BUILD = getPlatforms(False)
 
-def getPlatformTgtDefine(plt: Platform) -> str:
-    if plt.tgt == 'windows':
-        return 'PNSLR_WINDOWS'
-    elif plt.tgt == 'linux':
-        return 'PNSLR_LINUX'
-    elif plt.tgt == 'osx':
-        return 'PNSLR_OSX'
-    elif plt.tgt == 'android':
-        return 'PNSLR_ANDROID'
-    elif plt.tgt == 'ios' or plt.tgt == 'iossimulator':
-        return 'PNSLR_IOS'
-    else:
-        raise NotImplementedError(f'Unsupported platform target: {plt.tgt}')
-
-def getPlatformArchDefine(plt: Platform) -> str:
-    if plt.arch == 'x64':
-        return 'PNSLR_X64'
-    elif plt.arch == 'arm64':
-        return 'PNSLR_ARM64'
-    else:
-        raise NotImplementedError(f'Unsupported platform architecture: {plt.arch}')
-
 def getCCompiler(plt: Platform) -> str:
     if plt.tgt == 'windows':
         return os.path.join(plt.toolch, 'bin', 'HostX64', 'x64', 'cl.exe')
@@ -328,8 +306,6 @@ def getCommonCompilationArgs(
 
     if addEnvArgs:
         specifier: str = '/D' if plt.tgt == 'windows' else '-D'
-        output += [f'{specifier}{getPlatformTgtDefine(plt)}=1', f'{specifier}{getPlatformArchDefine(plt)}=1']
-        output += [f'{specifier}{'PNSLR_DBG' if dbg else 'PNSLR_REL'}=1']
 
         if plt.tgt == 'android':
             output += ['-DANDROID=1', '-D_FORTIFY_SOURCE=2']
@@ -549,11 +525,7 @@ def setupVsCodeLspStuff():
             cStandard = 'c11',
             cppStandard = 'c++14',
             includePath = [],
-            defines = [
-                f'{getPlatformTgtDefine(plt)}=1',
-                f'{getPlatformArchDefine(plt)}=1',
-                f'PNSLR_DBG=1',
-            ],
+            defines = ['_DEBUG'] if plt.tgt == 'windows' else ['DEBUG'],
             compilerArgs = getCommonCompilationArgs(
                 plt          = plt,
                 dbg          = False,
