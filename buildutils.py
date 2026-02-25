@@ -282,7 +282,7 @@ def getCommonCompilationArgs(
 
     output: list[str]
     if plt.tgt == 'windows':
-        output = ['/Brepro', '/nologo', '/Wall', '/WX'] + (['/MTd'] if dbg else ['/MT'])
+        output = ['/Brepro', '/nologo', '/Wall', '/WX', '/Zc:preprocessor'] + (['/MTd'] if dbg else ['/MT'])
         if useCxx:
             output += ['/EHs-', '/GR-']
     else:
