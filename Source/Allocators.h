@@ -444,17 +444,17 @@ EXTERN_C_END
 
     namespace Panshilar
     {
-        template <typename T> T* PNSLR_NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
+        template <typename T> T* NewT(PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             return (T*) PNSLR_Allocate(allocator, true, (i32) sizeof(T), (i32) alignof(T), loc, err);
         }
 
-        template <typename T> void PNSLR_DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
+        template <typename T> void DeleteT(T* obj, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             if (obj) { PNSLR_Free(allocator, obj, loc, err); }
         }
 
-        template <typename T> ArraySlice<T> PNSLR_MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
+        template <typename T> ArraySlice<T> MakeSliceT(i64 count, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
@@ -463,7 +463,7 @@ EXTERN_C_END
             return *reinterpret_cast<ArraySlice<T>*>(&raw);
         }
 
-        template <typename T> void PNSLR_FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
+        template <typename T> void FreeSliceT(ArraySlice<T>* slice, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
@@ -471,7 +471,7 @@ EXTERN_C_END
             if (slice) PNSLR_FreeRawSlice(reinterpret_cast<PNSLR_RawArraySlice*>(slice), allocator, loc, err);
         }
 
-        template <typename T> void PNSLR_ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
+        template <typename T> void ResizeSliceT(ArraySlice<T>* slice, i64 newCount, b8 zeroed, PNSLR_Allocator allocator, PNSLR_SourceCodeLocation loc, PNSLR_AllocatorError* err = nil)
         {
             static_assert( sizeof(ArraySlice<T>) ==  sizeof(PNSLR_RawArraySlice), "ArraySlice<T> must be the same size as PNSLR_RawArraySlice");
             static_assert(alignof(ArraySlice<T>) == alignof(PNSLR_RawArraySlice), "ArraySlice<T> must have the same alignment as PNSLR_RawArraySlice");
@@ -492,31 +492,31 @@ EXTERN_C_BEGIN
      * Allocate an object of type 'ty' using the provided allocator.
      */
     #define PNSLR_New(ty, allocator, loc, error__) \
-        PNSLR_NewT<ty>(allocator, loc, error__)
+        Panshilar::NewT<ty>(allocator, loc, error__)
 
     /**
      * Delete an object allocated with `PNSLR_New`, using the provided allocator.
      */
     #define PNSLR_Delete(obj, allocator, loc, error__) \
-        PNSLR_DeleteT<decltype(*(obj))>(obj, allocator, loc, error__)
+        Panshilar::DeleteT(obj, allocator, loc, error__)
 
     /**
      * Allocate an array of 'count' elements of type 'ty' using the provided allocator. Optionally zeroed.
      */
     #define PNSLR_MakeSlice(ty, count, zeroed, allocator, loc, error__) \
-        PNSLR_MakeSliceT<ty>(count, zeroed, allocator, loc, error__)
+        Panshilar::MakeSliceT<ty>(count, zeroed, allocator, loc, error__)
 
     /**
      * Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator.
      */
     #define PNSLR_FreeSlice(slice, allocator, loc, error__) \
-        PNSLR_FreeSliceT(slice, allocator, loc, error__)
+        Panshilar::FreeSliceT(slice, allocator, loc, error__)
 
     /**
      * Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed.
      */
     #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
-        PNSLR_ResizeSliceT<ty>(slice, newCount, zeroed, allocator, loc, error__)
+        Panshilar::ResizeSliceT<ty>(slice, newCount, zeroed, allocator, loc, error__)
 
 #else
 
