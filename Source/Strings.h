@@ -424,6 +424,37 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value);
 
 //+skipreflect
 
+#ifdef __cplusplus
+
+EXTERN_C_END
+
+template <i64 N>
+static inline PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) PNSLR_FmtArgsInternalCxx(const PNSLR_PrimitiveFmtOptions* args)
+{
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) slice;
+    slice.data = const_cast<PNSLR_PrimitiveFmtOptions*>(args);
+    slice.count = N;
+    return slice;
+}
+
+#define PNSLR_FmtArgsInternal(...) PNSLR_FmtArgsInternalCxx<COUNT_VARARGS(__VA_ARGS__)>([&]() \
+{ \
+    static const PNSLR_PrimitiveFmtOptions arr[] = {__VA_ARGS__}; \
+    return arr; \
+}())
+
+EXTERN_C_BEGIN
+
+#else
+
+#define PNSLR_FmtArgsInternal(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
+    { \
+        .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
+        .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
+    }
+
+#endif
+
 /**
  * Helper macro to create an array slice of format options from varargs.
  * Note that this macro creates a temporary array, so it should only be used
@@ -437,11 +468,7 @@ PNSLR_PrimitiveFmtOptions PNSLR_FmtString(utf8str value);
  *         ... // more args
  *     )
  */
-#define PNSLR_FmtArgs(...) (PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions)) \
-    { \
-        .data = (PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__}, \
-        .count = sizeof((PNSLR_PrimitiveFmtOptions[]){__VA_ARGS__})/sizeof(PNSLR_PrimitiveFmtOptions) \
-    }
+#define PNSLR_FmtArgs(...) PNSLR_FmtArgsInternal(__VA_ARGS__)
 
 //-skipreflect
 

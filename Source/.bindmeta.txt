@@ -57,7 +57,7 @@ $$$CXX_HEADER_SUFFIX
 namespace Panshilar
 {
     /** Create a utf8str from a string literal. */
-    template <u64 N> constexpr utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+    template <u64 N> static inline utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
     /** Get the current source code location. */
     #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}

@@ -67,7 +67,7 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
     {
         // Create a utf8str from a string literal.
         template <u64 N>
-        constexpr utf8str StringLiteral(const char (&str)[N])
+        static inline utf8str StringLiteral(const char (&str)[N])
         {
             utf8str output;
             output.count = (i64) (N - 1);
@@ -77,7 +77,7 @@ PNSLR_DECLARE_ARRAY_SLICE(utf8str);
     }
 
     template <u64 N>
-    static constexpr utf8str PNSLR_StringLiteral(const char (&str)[N])
+    static inline utf8str PNSLR_StringLiteral(const char (&str)[N])
     {
         utf8str output;
         output.count = (i64) (N - 1);
