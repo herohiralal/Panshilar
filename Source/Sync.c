@@ -18,7 +18,18 @@
     static_assert(sizeof  (PNSLR_DoOnce) >= sizeof (INIT_ONCE)      , "PNSLR_DoOnce must be at least as ""large as INIT_ONCE.");
     static_assert((alignof(PNSLR_DoOnce) %  alignof(INIT_ONCE)) == 0, "PNSLR_DoOnce must be at least as aligned as INIT_ONCE.");
 
+    static_assert(sizeof  (PNSLR_Event) >= sizeof (HANDLE)      , "PNSLR_Event must be at least as ""large as HANDLE.");
+    static_assert((alignof(PNSLR_Event) %  alignof(HANDLE)) == 0, "PNSLR_Event must be at least as aligned as HANDLE.");
+
 #elif PNSLR_UNIX
+
+    typedef struct PNSLR_EventUnix
+    {
+        pthread_mutex_t mutex;
+        pthread_cond_t  cond;
+        b8              signaled;
+        b8              manualReset;
+    } PNSLR_EventUnix;
 
     static_assert(sizeof  (PNSLR_Mutex) >= sizeof (pthread_mutex_t)      , "PNSLR_Mutex must be at least as ""large as pthread_mutex_t.");
     static_assert((alignof(PNSLR_Mutex) %  alignof(pthread_mutex_t)) == 0, "PNSLR_Mutex must be at least as aligned as pthread_mutex_t.");
@@ -39,6 +50,9 @@
 
     static_assert(sizeof  (PNSLR_DoOnce) >= sizeof (pthread_once_t)      , "PNSLR_DoOnce must be at least as ""large as pthread_once_t.");
     static_assert((alignof(PNSLR_DoOnce) %  alignof(pthread_once_t)) == 0, "PNSLR_DoOnce must be at least as aligned as pthread_once_t.");
+
+    static_assert(sizeof  (PNSLR_Event) >= sizeof (PNSLR_EventUnix),       "PNSLR_Event must be at least as ""large as PNSLR_EventUnix.");
+    static_assert((alignof(PNSLR_Event) %  alignof(PNSLR_EventUnix)) == 0, "PNSLR_Event must be at least as aligned as PNSLR_EventUnix.");
 
 #else
 
@@ -435,4 +449,103 @@ void PNSLR_ExecuteDoOnce(PNSLR_DoOnce* once, PNSLR_DoOnceCallback callback)
     #else
         #error "Unknown platform."
     #endif
+}
+
+PNSLR_Event PNSLR_CreateEvent(b8 manualReset)
+{
+    PNSLR_Event output;
+
+#if PNSLR_WINDOWS
+    HANDLE h = CreateEventW(nil, (BOOL) manualReset, FALSE, nil);
+    *((HANDLE*) &output) = h;
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) &output;
+    pthread_mutex_init(&e->mutex, nil);
+    pthread_cond_init(&e->cond, nil);
+    e->signaled    = false;
+    e->manualReset = manualReset;
+#endif
+
+    return output;
+}
+
+void PNSLR_DestroyEvent(PNSLR_Event* event)
+{
+#if PNSLR_WINDOWS
+    CloseHandle(*(HANDLE*) event);
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) event;
+    pthread_mutex_destroy(&e->mutex);
+    pthread_cond_destroy(&e->cond);
+#endif
+}
+
+void PNSLR_WaitEvent(PNSLR_Event* event)
+{
+#if PNSLR_WINDOWS
+    WaitForSingleObject(*(HANDLE*) event, INFINITE);
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) event;
+    pthread_mutex_lock(&e->mutex);
+    while (!e->signaled)
+        pthread_cond_wait(&e->cond, &e->mutex);
+    if (!e->manualReset)
+        e->signaled = false;
+    pthread_mutex_unlock(&e->mutex);
+#endif
+}
+
+b8 PNSLR_WaitEventTimeout(PNSLR_Event* event, i32 timeoutNs)
+{
+#if PNSLR_WINDOWS
+    DWORD result = WaitForSingleObject(*(HANDLE*) event, timeoutNs / 1000000);
+    return result == WAIT_OBJECT_0;
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) event;
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec  += timeoutNs / 1000000000;
+    ts.tv_nsec += timeoutNs % 1000000000;
+    pthread_mutex_lock(&e->mutex);
+    while (!e->signaled)
+    {
+        if (pthread_cond_timedwait(&e->cond, &e->mutex, &ts) == ETIMEDOUT)
+        {
+            pthread_mutex_unlock(&e->mutex);
+            return false;
+        }
+    }
+    if (!e->manualReset)
+        e->signaled = false;
+    pthread_mutex_unlock(&e->mutex);
+    return true;
+#endif
+}
+
+void PNSLR_SignalEvent(PNSLR_Event* event)
+{
+#if PNSLR_WINDOWS
+    SetEvent(*(HANDLE*) event);
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) event;
+    pthread_mutex_lock(&e->mutex);
+    e->signaled = true;
+    if (e->manualReset)
+        pthread_cond_broadcast(&e->cond);
+    else
+        pthread_cond_signal(&e->cond);
+    pthread_mutex_unlock(&e->mutex);
+#endif
+}
+
+void PNSLR_ResetEvent(PNSLR_Event* event)
+{
+#if PNSLR_WINDOWS
+    ResetEvent(*(HANDLE*) event);
+#elif PNSLR_UNIX
+    PNSLR_EventUnix* e = (PNSLR_EventUnix*) event;
+    pthread_mutex_lock(&e->mutex);
+    e->signaled = false;
+    pthread_mutex_unlock(&e->mutex);
+#endif
 }

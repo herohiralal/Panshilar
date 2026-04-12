@@ -329,6 +329,68 @@ void PNSLR_ExecuteDoOnce(
     PNSLR_DoOnceCallback callback
 );
 
+// Event ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * An event synchronization primitive.
+ * It allows one or more threads to wait until another thread signals a condition.
+ */
+typedef struct PNSLR_ALIGNAS(8) PNSLR_Event
+{
+    u8 buffer[112];
+} PNSLR_Event;
+
+/**
+ * Creates an event.
+ * If manualReset is true, the event must be manually reset after being signaled.
+ * If manualReset is false, the event automatically resets after releasing one waiting thread.
+ */
+PNSLR_Event PNSLR_CreateEvent(
+    b8 manualReset
+);
+
+/**
+ * Destroys an event.
+ */
+void PNSLR_DestroyEvent(
+    PNSLR_Event* event
+);
+
+/**
+ * Waits on an event.
+ * The calling thread will block until the event is signaled.
+ */
+void PNSLR_WaitEvent(
+    PNSLR_Event* event
+);
+
+/**
+ * Waits on an event with a timeout.
+ * The calling thread will block until the event is signaled or the timeout expires.
+ * Returns true if the event was signaled, false if the timeout expired.
+ */
+b8 PNSLR_WaitEventTimeout(
+    PNSLR_Event* event,
+    i32 timeoutNs
+);
+
+/**
+ * Signals an event.
+ * If manualReset is false, wakes up one waiting thread and resets automatically.
+ * If manualReset is true, wakes up all waiting threads and remains signaled until reset.
+ */
+void PNSLR_SignalEvent(
+    PNSLR_Event* event
+);
+
+/**
+ * Resets an event, returning it to the unsignaled state.
+ * Only meaningful for manual-reset events.
+ */
+void PNSLR_ResetEvent(
+    PNSLR_Event* event
+);
+
 // #######################################################################################
 // Memory
 // #######################################################################################

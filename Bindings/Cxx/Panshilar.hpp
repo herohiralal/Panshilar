@@ -327,6 +327,68 @@ namespace Panshilar
         DoOnceCallback callback
     );
 
+    // Event ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    /**
+     * An event synchronization primitive.
+     * It allows one or more threads to wait until another thread signals a condition.
+     */
+    struct alignas(8) Event
+    {
+       u8 buffer[112];
+    };
+
+    /**
+     * Creates an event.
+     * If manualReset is true, the event must be manually reset after being signaled.
+     * If manualReset is false, the event automatically resets after releasing one waiting thread.
+     */
+    Event CreateEvent(
+        b8 manualReset
+    );
+
+    /**
+     * Destroys an event.
+     */
+    void DestroyEvent(
+        Event* event
+    );
+
+    /**
+     * Waits on an event.
+     * The calling thread will block until the event is signaled.
+     */
+    void WaitEvent(
+        Event* event
+    );
+
+    /**
+     * Waits on an event with a timeout.
+     * The calling thread will block until the event is signaled or the timeout expires.
+     * Returns true if the event was signaled, false if the timeout expired.
+     */
+    b8 WaitEventTimeout(
+        Event* event,
+        i32 timeoutNs
+    );
+
+    /**
+     * Signals an event.
+     * If manualReset is false, wakes up one waiting thread and resets automatically.
+     * If manualReset is true, wakes up all waiting threads and remains signaled until reset.
+     */
+    void SignalEvent(
+        Event* event
+    );
+
+    /**
+     * Resets an event, returning it to the unsignaled state.
+     * Only meaningful for manual-reset events.
+     */
+    void ResetEvent(
+        Event* event
+    );
+
     // #######################################################################################
     // Memory
     // #######################################################################################
@@ -2838,7 +2900,7 @@ namespace Panshilar
 namespace Panshilar
 {
     /** Create a utf8str from a string literal. */
-    template <u64 N> constexpr utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
+    template <u64 N> static inline utf8str StringLiteral(const char (&str)[N]) { utf8str output; output.count = (i64) (N - 1); output.data = (u8*) str; return output; }
 
     /** Get the current source code location. */
     #define PNSLR_GET_LOC() Panshilar::SourceCodeLocation{Panshilar::StringLiteral(__FILE__), __LINE__, 0, Panshilar::StringLiteral(__FUNCTION__)}
@@ -3160,6 +3222,54 @@ extern "C" void PNSLR_ExecuteDoOnce(PNSLR_DoOnce* once, PNSLR_DoOnceCallback cal
 void Panshilar::ExecuteDoOnce(Panshilar::DoOnce* once, Panshilar::DoOnceCallback callback)
 {
     PNSLR_ExecuteDoOnce(PNSLR_Bindings_Convert(once), PNSLR_Bindings_Convert(callback));
+}
+
+struct alignas(8) PNSLR_Event
+{
+   u8 buffer[112];
+};
+static_assert(sizeof(PNSLR_Event) == sizeof(Panshilar::Event), "size mismatch");
+static_assert(alignof(PNSLR_Event) == alignof(Panshilar::Event), "align mismatch");
+PNSLR_Event* PNSLR_Bindings_Convert(Panshilar::Event* x) { return reinterpret_cast<PNSLR_Event*>(x); }
+Panshilar::Event* PNSLR_Bindings_Convert(PNSLR_Event* x) { return reinterpret_cast<Panshilar::Event*>(x); }
+PNSLR_Event& PNSLR_Bindings_Convert(Panshilar::Event& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::Event& PNSLR_Bindings_Convert(PNSLR_Event& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_Event, buffer) == PNSLR_STRUCT_OFFSET(Panshilar::Event, buffer), "buffer offset mismatch");
+
+extern "C" PNSLR_Event PNSLR_CreateEvent(b8 manualReset);
+Panshilar::Event Panshilar::CreateEvent(b8 manualReset)
+{
+    PNSLR_Event zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_CreateEvent(PNSLR_Bindings_Convert(manualReset)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_DestroyEvent(PNSLR_Event* event);
+void Panshilar::DestroyEvent(Panshilar::Event* event)
+{
+    PNSLR_DestroyEvent(PNSLR_Bindings_Convert(event));
+}
+
+extern "C" void PNSLR_WaitEvent(PNSLR_Event* event);
+void Panshilar::WaitEvent(Panshilar::Event* event)
+{
+    PNSLR_WaitEvent(PNSLR_Bindings_Convert(event));
+}
+
+extern "C" b8 PNSLR_WaitEventTimeout(PNSLR_Event* event, i32 timeoutNs);
+b8 Panshilar::WaitEventTimeout(Panshilar::Event* event, i32 timeoutNs)
+{
+    b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_WaitEventTimeout(PNSLR_Bindings_Convert(event), PNSLR_Bindings_Convert(timeoutNs)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_SignalEvent(PNSLR_Event* event);
+void Panshilar::SignalEvent(Panshilar::Event* event)
+{
+    PNSLR_SignalEvent(PNSLR_Bindings_Convert(event));
+}
+
+extern "C" void PNSLR_ResetEvent(PNSLR_Event* event);
+void Panshilar::ResetEvent(Panshilar::Event* event)
+{
+    PNSLR_ResetEvent(PNSLR_Bindings_Convert(event));
 }
 
 extern "C" void PNSLR_MemSet(rawptr memory, i32 value, i32 size);

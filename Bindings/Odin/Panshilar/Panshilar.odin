@@ -391,6 +391,85 @@ foreign {
 	) ---
 }
 
+// Event ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/*
+An event synchronization primitive.
+It allows one or more threads to wait until another thread signals a condition.
+*/
+Event :: struct #align(8)  {
+	buffer: [112]u8,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Creates an event.
+	If manualReset is true, the event must be manually reset after being signaled.
+	If manualReset is false, the event automatically resets after releasing one waiting thread.
+	*/
+	CreateEvent :: proc "c" (
+		manualReset: b8,
+	) -> Event ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Destroys an event.
+	*/
+	DestroyEvent :: proc "c" (
+		event: ^Event,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Waits on an event.
+	The calling thread will block until the event is signaled.
+	*/
+	WaitEvent :: proc "c" (
+		event: ^Event,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Waits on an event with a timeout.
+	The calling thread will block until the event is signaled or the timeout expires.
+	Returns true if the event was signaled, false if the timeout expired.
+	*/
+	WaitEventTimeout :: proc "c" (
+		event: ^Event,
+		timeoutNs: i32,
+	) -> b8 ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Signals an event.
+	If manualReset is false, wakes up one waiting thread and resets automatically.
+	If manualReset is true, wakes up all waiting threads and remains signaled until reset.
+	*/
+	SignalEvent :: proc "c" (
+		event: ^Event,
+	) ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Resets an event, returning it to the unsignaled state.
+	Only meaningful for manual-reset events.
+	*/
+	ResetEvent :: proc "c" (
+		event: ^Event,
+	) ---
+}
+
 // #######################################################################################
 // Memory
 // #######################################################################################
