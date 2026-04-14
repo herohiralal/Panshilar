@@ -965,6 +965,17 @@ utf8str PNSLR_FormatString(utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOp
     return result;
 }
 
+cstring PNSLR_FormatCString(utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args, PNSLR_Allocator allocator)
+{
+    PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+    PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+    PNSLR_FormatAndAppendToStringBuilder(&builder, fmtStr, args);
+    cstring result = PNSLR_CStringFromString(PNSLR_StringFromStringBuilder(&builder), allocator);
+    PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+    // no need to 'free' string builder, the internal allocator reset will take care
+    return result;
+}
+
 utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);

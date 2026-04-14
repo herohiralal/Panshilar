@@ -492,6 +492,16 @@ utf8str PNSLR_FormatString(
     PNSLR_Allocator allocator
 );
 
+/**
+ * Format a C-style null-terminated string with the given format and arguments,
+ * returning the result as a new allocated string using the specified allocator.
+ */
+cstring PNSLR_FormatCString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
+);
+
 // Conversions to strings ==========================================================
 
 /**
