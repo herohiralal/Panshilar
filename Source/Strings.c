@@ -976,6 +976,25 @@ cstring PNSLR_FormatCString(utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtO
     return result;
 }
 
+PNSLR_ArraySlice(u16) PNSLR_FormatUTF16StringWindowsOnly(utf8str fmtStr, PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args, PNSLR_Allocator allocator)
+{
+    #if PNSLR_WINDOWS
+    {
+        PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);
+        PNSLR_StringBuilder builder = {.allocator = internalAllocator};
+        PNSLR_FormatAndAppendToStringBuilder(&builder, fmtStr, args);
+        PNSLR_ArraySlice(u16) result = PNSLR_UTF16FromUTF8WindowsOnly(PNSLR_StringFromStringBuilder(&builder), allocator);
+        PNSLR_INTERNAL_ALLOCATOR_RESET(Strings, internalAllocator);
+        // no need to 'free' string builder, the internal allocator reset will take care
+        return result;
+    }
+    #else
+    {
+        return (PNSLR_ArraySlice(u16)) {0};
+    }
+    #endif
+}
+
 utf8str PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator)
 {
     PNSLR_INTERNAL_ALLOCATOR_INIT(Strings, internalAllocator);

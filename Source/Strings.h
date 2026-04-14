@@ -177,6 +177,9 @@ PNSLR_DecodedRune PNSLR_DecodeRune(PNSLR_ArraySlice(u8) s);
  * Converts a UTF-8 string to a UTF-16 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - The output string will contain a null terminator and the slice count
+ * will not include that null terminator.
  */
 PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocator allocator);
 
@@ -184,6 +187,8 @@ PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(utf8str str, PNSLR_Allocato
  * Converts a UTF-16 string to a UTF-8 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - All the trailing null terminator characters will be ignored.
  */
 utf8str PNSLR_UTF8FromUTF16WindowsOnly(PNSLR_ArraySlice(u16) utf16str, PNSLR_Allocator allocator);
 
@@ -497,6 +502,20 @@ utf8str PNSLR_FormatString(
  * returning the result as a new allocated string using the specified allocator.
  */
 cstring PNSLR_FormatCString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Format a UTF-16 string with the given format and arguments, returning the
+ * result as a new allocated string using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - The output string will contain a null terminator and the slice count
+ * will not include that null terminator
+ */
+PNSLR_ArraySlice(u16) PNSLR_FormatUTF16StringWindowsOnly(
     utf8str fmtStr,
     PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
     PNSLR_Allocator allocator
