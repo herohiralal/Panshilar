@@ -510,13 +510,13 @@ EXTERN_C_BEGIN
      * Free a 'slice' (passed by ptr) allocated with `PNSLR_MakeSlice`, using the provided allocator.
      */
     #define PNSLR_FreeSlice(slice, allocator, loc, error__) \
-        Panshilar::FreeSliceT(slice, allocator, loc, error__)
+        Panshilar::FreeSliceT(CreateArraySlicePtr(slice), allocator, loc, error__)
 
     /**
      * Resize a 'slice' (passed by ptr) to one with 'newCount' elements of type 'ty' using the provided allocator. Optionally zeroed.
      */
     #define PNSLR_ResizeSlice(ty, slice, newCount, zeroed, allocator, loc, error__) \
-        Panshilar::ResizeSliceT<ty>(slice, newCount, zeroed, allocator, loc, error__)
+        Panshilar::ResizeSliceT<ty>(CreateArraySlicePtr(slice), newCount, zeroed, allocator, loc, error__)
 
 #else
 

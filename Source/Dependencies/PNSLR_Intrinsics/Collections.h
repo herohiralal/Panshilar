@@ -23,6 +23,7 @@
             ArraySlice<ty>(const PNSLR_ArraySlice(ty)& other) : data(other.data), count(other.count) { } \
             operator PNSLR_ArraySlice(ty)() const { return {data, count}; } \
         }; \
+        static inline ArraySlice<ty>* CreateArraySlicePtr(PNSLR_ArraySlice(ty)* slice) { return (ArraySlice<ty>*) slice; } \
         EXTERN_C_BEGIN
 
 #else
