@@ -3,7 +3,7 @@
 
 PNSLR_CREATE_INTERNAL_ARENA_ALLOCATOR(DynaLib, 2);
 
-PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(PNSLR_Path path)
+PNSLR_DynamicLibrary PNSLR_GetDynamicLibrary(PNSLR_Path path, b8 noLoad)
 {
     if (!PNSLR_PathExists(path, PNSLR_PathExistsCheckType_File))
         return (PNSLR_DynamicLibrary) {0};
@@ -13,18 +13,21 @@ PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(PNSLR_Path path)
     cstring pathCStr = PNSLR_CStringFromString(path.path, internalAllocator);
 
     rawptr handle = nil;
+
 #if PNSLR_WINDOWS
-    handle = (rawptr) LoadLibraryA(pathCStr);
+
+    if (noLoad) handle = (rawptr) GetModuleHandle(pathCStr);
+    else        handle = (rawptr) LoadLibraryA(pathCStr);
+
     if (handle == nil)
-    {
         return (PNSLR_DynamicLibrary) {0};
-    }
+
 #elif PNSLR_UNIX
-    handle = dlopen(pathCStr, RTLD_NOW | RTLD_LOCAL);
+
+    handle = dlopen(pathCStr, RTLD_NOW | RTLD_LOCAL | (noLoad ? RTLD_NOLOAD : 0));
     if (handle == nil)
-    {
         return (PNSLR_DynamicLibrary) {0};
-    }
+
 #else
     #error "PNSLR_DynLib: unsupported platform"
 #endif

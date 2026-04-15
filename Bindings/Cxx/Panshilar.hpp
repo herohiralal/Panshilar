@@ -2069,11 +2069,17 @@ namespace Panshilar
     };
 
     /**
-     * Loads a dynamic library from the given path.
-     * Returns zero-value on failure.
+     * Gets tthe handle to a dynamic library by its path.
+     * By default, it'll load the library, unless noLoad argument is passed as true.
+     * In that case, the library won't be loaded if it isn't already loaded.
+     *
+     * Returns zero-value on failure (invalid path, failed to load, etc.).
+     * Returns zero-value if noLoad is passed as true, but the library is not loaded
+     * already.
      */
-    DynamicLibrary LoadDynamicLibrary(
-        Path path
+    DynamicLibrary GetDynamicLibrary(
+        Path path,
+        b8 noLoad = { }
     );
 
     /**
@@ -4518,10 +4524,10 @@ PNSLR_DynamicLibrary& PNSLR_Bindings_Convert(Panshilar::DynamicLibrary& x) { ret
 Panshilar::DynamicLibrary& PNSLR_Bindings_Convert(PNSLR_DynamicLibrary& x) { return *PNSLR_Bindings_Convert(&x); }
 static_assert(PNSLR_STRUCT_OFFSET(PNSLR_DynamicLibrary, handle) == PNSLR_STRUCT_OFFSET(Panshilar::DynamicLibrary, handle), "handle offset mismatch");
 
-extern "C" PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(PNSLR_Path path);
-Panshilar::DynamicLibrary Panshilar::LoadDynamicLibrary(Panshilar::Path path)
+extern "C" PNSLR_DynamicLibrary PNSLR_GetDynamicLibrary(PNSLR_Path path, b8 noLoad);
+Panshilar::DynamicLibrary Panshilar::GetDynamicLibrary(Panshilar::Path path, b8 noLoad)
 {
-    PNSLR_DynamicLibrary zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_LoadDynamicLibrary(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+    PNSLR_DynamicLibrary zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetDynamicLibrary(PNSLR_Bindings_Convert(path), PNSLR_Bindings_Convert(noLoad)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
 extern "C" rawptr PNSLR_GetDynamicLibraryFunction(PNSLR_DynamicLibrary lib, PNSLR_UTF8STR name);
