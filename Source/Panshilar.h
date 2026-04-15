@@ -9,6 +9,7 @@
 #include "Chrono.h"
 #include "Strings.h"
 #include "IO.h"
+#include "DynaLib.h"
 #include "Process.h"
 #include "Network.h"
 #include "Stream.h"

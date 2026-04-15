@@ -1395,6 +1395,9 @@ foreign {
 	Converts a UTF-8 string to a UTF-16 string.
 	The returned string is allocated using the specified allocator.
 	Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+	 *
+	Warning! - The output string will contain a null terminator and the slice count
+	will not include that null terminator.
 	*/
 	UTF16FromUTF8WindowsOnly :: proc "c" (
 		str: string,
@@ -1408,6 +1411,8 @@ foreign {
 	Converts a UTF-16 string to a UTF-8 string.
 	The returned string is allocated using the specified allocator.
 	Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+	 *
+	Warning! - All the trailing null terminator characters will be ignored.
 	*/
 	UTF8FromUTF16WindowsOnly :: proc "c" (
 		utf16str: []u16,
@@ -1873,6 +1878,36 @@ foreign {
 		args: []PrimitiveFmtOptions,
 		allocator: Allocator,
 	) -> string ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Format a C-style null-terminated string with the given format and arguments,
+	returning the result as a new allocated string using the specified allocator.
+	*/
+	FormatCString :: proc "c" (
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+		allocator: Allocator,
+	) -> cstring ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Format a UTF-16 string with the given format and arguments, returning the
+	result as a new allocated string using the specified allocator.
+	Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+	 *
+	Warning! - The output string will contain a null terminator and the slice count
+	will not include that null terminator
+	*/
+	FormatUTF16StringWindowsOnly :: proc "c" (
+		fmtStr: string,
+		args: []PrimitiveFmtOptions,
+		allocator: Allocator,
+	) -> []u16 ---
 }
 
 // Conversions to strings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2506,6 +2541,51 @@ foreign {
 		src: Path,
 		dst: Path,
 	) -> b8 ---
+}
+
+// #######################################################################################
+// DynaLib
+// #######################################################################################
+
+/*
+Opaque handle to a loaded dynamic library.
+*/
+DynamicLibrary :: struct  {
+	handle: rawptr,
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Loads a dynamic library from the given path.
+	Returns zero-value on failure.
+	*/
+	LoadDynamicLibrary :: proc "c" (
+		path: Path,
+	) -> DynamicLibrary ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Retrieves a function pointer from a loaded dynamic library by name.
+	Returns nil if the library handle is nil, or if the string is empty.
+	Returns nil if the symbol is not found.
+	*/
+	GetDynamicLibraryFunction :: proc "c" (
+		lib: DynamicLibrary,
+		name: string,
+	) -> rawptr ---
+}
+
+@(link_prefix="PNSLR_")
+foreign {
+	/*
+	Unloads a dynamic library and frees associated resources.
+	*/
+	UnloadDynamicLibrary :: proc "c" (
+		lib: DynamicLibrary,
+	) ---
 }
 
 // #######################################################################################

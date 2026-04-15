@@ -68,6 +68,7 @@ PNSLR_SUPPRESS_WARN
     #include <dirent.h>
     #include <pthread.h>
     #include <semaphore.h>
+    #include <dlfcn.h>
 #endif
 
 #if PNSLR_APPLE

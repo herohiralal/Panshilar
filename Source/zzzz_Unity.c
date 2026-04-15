@@ -12,6 +12,7 @@
 #include "Chrono.c"
 #include "Strings.c"
 #include "IO.c"
+#include "DynaLib.c"
 #include "Process.c"
 #include "Network.c"
 #include "Stream.c"

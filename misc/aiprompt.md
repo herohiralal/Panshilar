@@ -21,7 +21,7 @@
 - `true`/`false` already defined
 - `nil` to be used instead of `NULL`/`nullptr`, already defined
 - `void*`/`char*` typedef'd as `rawptr`/`cstring` and those are to be used instead of originals
-- `EXTERN_C_START`/`EXTERN_C_END` for C++ compatibility
+- `EXTERN_C_BEGIN`/`EXTERN_C_END` for C++ compatibility
 - Enum declaration looks like this:
 ```
 ENUM_START(PNSLR_ExampleEnum, u8 /* /u16/u32/u64/i8/i16/i32/i64 */)
@@ -67,3 +67,4 @@ typedef struct PNSLR_ExampleStruct
  */
 void X();
 ```
+- there's also a path struct

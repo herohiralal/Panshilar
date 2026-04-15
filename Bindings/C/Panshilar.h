@@ -1152,6 +1152,9 @@ PNSLR_DecodedRune PNSLR_DecodeRune(
  * Converts a UTF-8 string to a UTF-16 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - The output string will contain a null terminator and the slice count
+ * will not include that null terminator.
  */
 PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(
     utf8str str,
@@ -1162,6 +1165,8 @@ PNSLR_ArraySlice(u16) PNSLR_UTF16FromUTF8WindowsOnly(
  * Converts a UTF-16 string to a UTF-8 string.
  * The returned string is allocated using the specified allocator.
  * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - All the trailing null terminator characters will be ignored.
  */
 utf8str PNSLR_UTF8FromUTF16WindowsOnly(
     PNSLR_ArraySlice(u16) utf16str,
@@ -1518,6 +1523,30 @@ b8 PNSLR_FormatAndAppendToStringBuilder(
  * as a new allocated string using the specified allocator.
  */
 utf8str PNSLR_FormatString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Format a C-style null-terminated string with the given format and arguments,
+ * returning the result as a new allocated string using the specified allocator.
+ */
+cstring PNSLR_FormatCString(
+    utf8str fmtStr,
+    PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
+    PNSLR_Allocator allocator
+);
+
+/**
+ * Format a UTF-16 string with the given format and arguments, returning the
+ * result as a new allocated string using the specified allocator.
+ * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+ *
+ * Warning! - The output string will contain a null terminator and the slice count
+ * will not include that null terminator
+ */
+PNSLR_ArraySlice(u16) PNSLR_FormatUTF16StringWindowsOnly(
     utf8str fmtStr,
     PNSLR_ArraySlice(PNSLR_PrimitiveFmtOptions) args,
     PNSLR_Allocator allocator
@@ -2013,6 +2042,43 @@ b8 PNSLR_CopyFile(
 b8 PNSLR_MoveFile(
     PNSLR_Path src,
     PNSLR_Path dst
+);
+
+// #######################################################################################
+// DynaLib
+// #######################################################################################
+
+/**
+ * Opaque handle to a loaded dynamic library.
+ */
+typedef struct PNSLR_DynamicLibrary
+{
+    rawptr handle;
+} PNSLR_DynamicLibrary;
+
+/**
+ * Loads a dynamic library from the given path.
+ * Returns zero-value on failure.
+ */
+PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(
+    PNSLR_Path path
+);
+
+/**
+ * Retrieves a function pointer from a loaded dynamic library by name.
+ * Returns nil if the library handle is nil, or if the string is empty.
+ * Returns nil if the symbol is not found.
+ */
+rawptr PNSLR_GetDynamicLibraryFunction(
+    PNSLR_DynamicLibrary lib,
+    utf8str name
+);
+
+/**
+ * Unloads a dynamic library and frees associated resources.
+ */
+void PNSLR_UnloadDynamicLibrary(
+    PNSLR_DynamicLibrary lib
 );
 
 // #######################################################################################

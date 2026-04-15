@@ -39,7 +39,7 @@ def getTestRunnerBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [TEST_RUNNER_MAIN_FILE],
-        ['pthread', 'rt'] if plt.tgt == 'linux' else [],
+        ['pthread', 'rt', 'dl'] if plt.tgt == 'linux' else [],
         FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('TestRunner', plt),
     )
 
@@ -48,7 +48,7 @@ def getBindingsGeneratorBuildCommand(plt: buildutils.Platform) -> list[str]:
         plt,
         True,
         [BINDINGS_GENERATOR_MAIN_FILE],
-        ['pthread', 'rt'] if plt.tgt == 'linux' else [],
+        ['pthread', 'rt', 'dl'] if plt.tgt == 'linux' else [],
         FOLDER_STRUCTURE.binDir + buildutils.getExecOutputFileName('BindingsGenerator', plt),
     )
 

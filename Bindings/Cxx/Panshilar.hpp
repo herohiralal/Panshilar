@@ -1158,6 +1158,9 @@ namespace Panshilar
      * Converts a UTF-8 string to a UTF-16 string.
      * The returned string is allocated using the specified allocator.
      * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     *
+     * Warning! - The output string will contain a null terminator and the slice count
+     * will not include that null terminator.
      */
     ArraySlice<u16> UTF16FromUTF8WindowsOnly(
         utf8str str,
@@ -1168,6 +1171,8 @@ namespace Panshilar
      * Converts a UTF-16 string to a UTF-8 string.
      * The returned string is allocated using the specified allocator.
      * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     *
+     * Warning! - All the trailing null terminator characters will be ignored.
      */
     utf8str UTF8FromUTF16WindowsOnly(
         ArraySlice<u16> utf16str,
@@ -1526,6 +1531,30 @@ namespace Panshilar
      * as a new allocated string using the specified allocator.
      */
     utf8str FormatString(
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args,
+        Allocator allocator
+    );
+
+    /**
+     * Format a C-style null-terminated string with the given format and arguments,
+     * returning the result as a new allocated string using the specified allocator.
+     */
+    cstring FormatCString(
+        utf8str fmtStr,
+        ArraySlice<PrimitiveFmtOptions> args,
+        Allocator allocator
+    );
+
+    /**
+     * Format a UTF-16 string with the given format and arguments, returning the
+     * result as a new allocated string using the specified allocator.
+     * Only available on Windows. Bad decision to use UTF-16 on Windows, but it's a legacy thing.
+     *
+     * Warning! - The output string will contain a null terminator and the slice count
+     * will not include that null terminator
+     */
+    ArraySlice<u16> FormatUTF16StringWindowsOnly(
         utf8str fmtStr,
         ArraySlice<PrimitiveFmtOptions> args,
         Allocator allocator
@@ -2025,6 +2054,43 @@ namespace Panshilar
     b8 MoveFile(
         Path src,
         Path dst
+    );
+
+    // #######################################################################################
+    // DynaLib
+    // #######################################################################################
+
+    /**
+     * Opaque handle to a loaded dynamic library.
+     */
+    struct DynamicLibrary
+    {
+       rawptr handle;
+    };
+
+    /**
+     * Loads a dynamic library from the given path.
+     * Returns zero-value on failure.
+     */
+    DynamicLibrary LoadDynamicLibrary(
+        Path path
+    );
+
+    /**
+     * Retrieves a function pointer from a loaded dynamic library by name.
+     * Returns nil if the library handle is nil, or if the string is empty.
+     * Returns nil if the symbol is not found.
+     */
+    rawptr GetDynamicLibraryFunction(
+        DynamicLibrary lib,
+        utf8str name
+    );
+
+    /**
+     * Unloads a dynamic library and frees associated resources.
+     */
+    void UnloadDynamicLibrary(
+        DynamicLibrary lib
     );
 
     // #######################################################################################
@@ -4098,6 +4164,18 @@ utf8str Panshilar::FormatString(utf8str fmtStr, ArraySlice<Panshilar::PrimitiveF
     PNSLR_UTF8STR zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatString(PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
 }
 
+extern "C" cstring PNSLR_FormatCString(PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_Allocator allocator);
+cstring Panshilar::FormatCString(utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::Allocator allocator)
+{
+    cstring zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatCString(PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" PNSLR_ArraySlice_u16 PNSLR_FormatUTF16StringWindowsOnly(PNSLR_UTF8STR fmtStr, PNSLR_ArraySlice_PNSLR_PrimitiveFmtOptions args, PNSLR_Allocator allocator);
+ArraySlice<u16> Panshilar::FormatUTF16StringWindowsOnly(utf8str fmtStr, ArraySlice<Panshilar::PrimitiveFmtOptions> args, Panshilar::Allocator allocator)
+{
+    PNSLR_ArraySlice_u16 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_FormatUTF16StringWindowsOnly(PNSLR_Bindings_Convert(fmtStr), PNSLR_Bindings_Convert(args), PNSLR_Bindings_Convert(allocator)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
 extern "C" PNSLR_UTF8STR PNSLR_StringFromBoolean(b8 value, PNSLR_Allocator allocator);
 utf8str Panshilar::StringFromBoolean(b8 value, Panshilar::Allocator allocator)
 {
@@ -4426,6 +4504,36 @@ extern "C" b8 PNSLR_MoveFile(PNSLR_Path src, PNSLR_Path dst);
 b8 Panshilar::MoveFile(Panshilar::Path src, Panshilar::Path dst)
 {
     b8 zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_MoveFile(PNSLR_Bindings_Convert(src), PNSLR_Bindings_Convert(dst)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+struct PNSLR_DynamicLibrary
+{
+   rawptr handle;
+};
+static_assert(sizeof(PNSLR_DynamicLibrary) == sizeof(Panshilar::DynamicLibrary), "size mismatch");
+static_assert(alignof(PNSLR_DynamicLibrary) == alignof(Panshilar::DynamicLibrary), "align mismatch");
+PNSLR_DynamicLibrary* PNSLR_Bindings_Convert(Panshilar::DynamicLibrary* x) { return reinterpret_cast<PNSLR_DynamicLibrary*>(x); }
+Panshilar::DynamicLibrary* PNSLR_Bindings_Convert(PNSLR_DynamicLibrary* x) { return reinterpret_cast<Panshilar::DynamicLibrary*>(x); }
+PNSLR_DynamicLibrary& PNSLR_Bindings_Convert(Panshilar::DynamicLibrary& x) { return *PNSLR_Bindings_Convert(&x); }
+Panshilar::DynamicLibrary& PNSLR_Bindings_Convert(PNSLR_DynamicLibrary& x) { return *PNSLR_Bindings_Convert(&x); }
+static_assert(PNSLR_STRUCT_OFFSET(PNSLR_DynamicLibrary, handle) == PNSLR_STRUCT_OFFSET(Panshilar::DynamicLibrary, handle), "handle offset mismatch");
+
+extern "C" PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(PNSLR_Path path);
+Panshilar::DynamicLibrary Panshilar::LoadDynamicLibrary(Panshilar::Path path)
+{
+    PNSLR_DynamicLibrary zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_LoadDynamicLibrary(PNSLR_Bindings_Convert(path)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" rawptr PNSLR_GetDynamicLibraryFunction(PNSLR_DynamicLibrary lib, PNSLR_UTF8STR name);
+rawptr Panshilar::GetDynamicLibraryFunction(Panshilar::DynamicLibrary lib, utf8str name)
+{
+    rawptr zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW = PNSLR_GetDynamicLibraryFunction(PNSLR_Bindings_Convert(lib), PNSLR_Bindings_Convert(name)); return PNSLR_Bindings_Convert(zzzz_RetValXYZABCDEFGHIJKLMNOPQRSTUVW);
+}
+
+extern "C" void PNSLR_UnloadDynamicLibrary(PNSLR_DynamicLibrary lib);
+void Panshilar::UnloadDynamicLibrary(Panshilar::DynamicLibrary lib)
+{
+    PNSLR_UnloadDynamicLibrary(PNSLR_Bindings_Convert(lib));
 }
 
 extern "C" void PNSLR_ExitProcess(i32 exitCode);
