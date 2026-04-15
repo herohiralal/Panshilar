@@ -2557,17 +2557,11 @@ DynamicLibrary :: struct  {
 @(link_prefix="PNSLR_")
 foreign {
 	/*
-	Gets tthe handle to a dynamic library by its path.
-	By default, it'll load the library, unless noLoad argument is passed as true.
-	In that case, the library won't be loaded if it isn't already loaded.
-	 *
-	Returns zero-value on failure (invalid path, failed to load, etc.).
-	Returns zero-value if noLoad is passed as true, but the library is not loaded
-	already.
+	Loads a dynamic library from the given path.
+	Returns zero-value on failure or if the path is empty.
 	*/
-	GetDynamicLibrary :: proc "c" (
+	LoadDynamicLibrary :: proc "c" (
 		path: Path,
-		noLoad: b8 = { },
 	) -> DynamicLibrary ---
 }
 

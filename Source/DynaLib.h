@@ -13,15 +13,10 @@ typedef struct PNSLR_DynamicLibrary
 } PNSLR_DynamicLibrary;
 
 /**
- * Gets tthe handle to a dynamic library by its path.
- * By default, it'll load the library, unless noLoad argument is passed as true.
- * In that case, the library won't be loaded if it isn't already loaded.
- *
- * Returns zero-value on failure (invalid path, failed to load, etc.).
- * Returns zero-value if noLoad is passed as true, but the library is not loaded
- * already.
+ * Loads a dynamic library from the given path.
+ * Returns zero-value on failure or if the path is empty.
  */
-PNSLR_DynamicLibrary PNSLR_GetDynamicLibrary(PNSLR_Path path, b8 noLoad OPT_ARG);
+PNSLR_DynamicLibrary PNSLR_LoadDynamicLibrary(PNSLR_Path path);
 
 /**
  * Retrieves a function pointer from a loaded dynamic library by name.
